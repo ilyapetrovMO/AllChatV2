@@ -10,6 +10,15 @@ import (
 	"allchat/internal/community"
 )
 
+const directMessageShortlistLimit = 5
+
+func directMessageShortlist(items []community.DirectMessage) []community.DirectMessage {
+	if len(items) <= directMessageShortlistLimit {
+		return items
+	}
+	return items[:directMessageShortlistLimit]
+}
+
 func (i *Instance) directMessagesPage(response http.ResponseWriter, request *http.Request) {
 	member, _, ok := i.authenticated(response, request)
 	if !ok {

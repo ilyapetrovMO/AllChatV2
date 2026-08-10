@@ -39,6 +39,10 @@ type bot struct {
 	dmCursors           map[string]int64
 	channelCursors      map[string]int64
 	spontaneousDMChance int
+	publicMessageChance int
+	channelReplyChance  int
+	dmReplyChance       int
+	voiceRequestChance  int
 	controlDir          string
 }
 
@@ -75,9 +79,18 @@ func main() {
 	username := flag.String("username", envOr("ALLCHAT_BOT_USERNAME", "allchat-bot"), "bot Member Username")
 	password := flag.String("password", os.Getenv("ALLCHAT_BOT_PASSWORD"), "bot Member password (prefer ALLCHAT_BOT_PASSWORD)")
 	invite := flag.String("invite", os.Getenv("ALLCHAT_BOT_INVITE"), "Invitation token used to register when login fails")
-	interval := flag.Duration("interval", envDuration("ALLCHAT_BOT_INTERVAL", 3*time.Second), "delay between Messages")
+	interval := flag.Duration("interval", envDuration("ALLCHAT_BOT_INTERVAL", 10*time.Second), "interval at which probabilistic bot actions are considered")
 	spontaneousDMChance := flag.Int("spontaneous-dm-chance", envInt("ALLCHAT_BOT_SPONTANEOUS_DM_CHANCE", 600), "one spontaneous DM attempt per this many public Message intervals (0 disables)")
+	publicMessageChance := flag.Int("public-message-chance", envInt("ALLCHAT_BOT_PUBLIC_MESSAGE_CHANCE", 10), "percent chance of a scheduled public Message per interval")
+	channelReplyChance := flag.Int("channel-reply-chance", envInt("ALLCHAT_BOT_CHANNEL_REPLY_CHANCE", 3), "percent chance of replying to each new public Message")
+	dmReplyChance := flag.Int("dm-reply-chance", envInt("ALLCHAT_BOT_DM_REPLY_CHANCE", 35), "percent chance of replying to each new Direct Message")
+	voiceRequestChance := flag.Int("voice-request-chance", envInt("ALLCHAT_BOT_VOICE_REQUEST_CHANCE", 2), "percent chance of following a public request to go into voice")
 	flag.Parse()
+	for name, value := range map[string]int{"public-message-chance": *publicMessageChance, "channel-reply-chance": *channelReplyChance, "dm-reply-chance": *dmReplyChance, "voice-request-chance": *voiceRequestChance} {
+		if value < 0 || value > 100 {
+			log.Fatalf("-%s must be between 0 and 100", name)
+		}
+	}
 	if *password == "" {
 		log.Fatal("ALLCHAT_BOT_PASSWORD or -password is required")
 	}
@@ -89,7 +102,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := &bot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: *username, password: *password, invite: *invite, interval: *interval, dmCursors: make(map[string]int64), channelCursors: make(map[string]int64), spontaneousDMChance: *spontaneousDMChance, controlDir: strings.TrimSpace(os.Getenv("ALLCHAT_BOT_CONTROL_DIR"))}
+	b := &bot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: *username, password: *password, invite: *invite, interval: *interval, dmCursors: make(map[string]int64), channelCursors: make(map[string]int64), spontaneousDMChance: *spontaneousDMChance, publicMessageChance: *publicMessageChance, channelReplyChance: *channelReplyChance, dmReplyChance: *dmReplyChance, voiceRequestChance: *voiceRequestChance, controlDir: strings.TrimSpace(os.Getenv("ALLCHAT_BOT_CONTROL_DIR"))}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := b.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -137,7 +150,7 @@ func (b *bot) run(ctx context.Context) error {
 			}
 		case <-ticker.C:
 			iteration++
-			if len(channels) > 0 {
+			if len(channels) > 0 && chance(b.publicMessageChance) {
 				selected := channels[rand.IntN(len(channels))]
 				if err := b.publishRandomMessage(ctx, selected); err != nil {
 					log.Printf("post Message: %v", err)
@@ -293,7 +306,7 @@ func (b *bot) pollDirectMessages(ctx context.Context, reply bool) error {
 		}
 		incoming, cursor, ok := newestIncoming(history.Messages, b.dmCursors[dm.ID], b.memberID)
 		b.dmCursors[dm.ID] = cursor
-		if !reply || !ok {
+		if !reply || !ok || !chance(b.dmReplyChance) {
 			continue
 		}
 		if requestsVoice(incoming.Body) {
@@ -327,12 +340,12 @@ func (b *bot) pollChannelMessages(ctx context.Context, channels []channel, react
 			if !react || item.Sequence <= cursor || item.AuthorID == b.memberID || item.Deleted {
 				continue
 			}
-			if requestsVoice(item.Body) && rand.IntN(100) < 5 {
+			if requestsVoice(item.Body) && chance(b.voiceRequestChance) {
 				if err := b.requestVoice(); err != nil {
 					log.Printf("request voice from #%s: %v", target.Name, err)
 				}
 			}
-			if rand.IntN(100) < 10 {
+			if chance(b.channelReplyChance) {
 				payload := map[string]any{"body": channelReply(item.Body), "reply_to": item.ID}
 				if err := b.postJSON(ctx, "/api/v1/channels/"+url.PathEscape(target.ID)+"/messages", payload, nil); err != nil {
 					log.Printf("reply in #%s: %v", target.Name, err)
@@ -350,6 +363,8 @@ func requestsVoice(body string) bool {
 	}
 	return words["go"] && words["into"] && words["voice"]
 }
+
+func chance(percent int) bool { return percent >= 100 || (percent > 0 && rand.IntN(100) < percent) }
 
 func (b *bot) requestVoice() error {
 	if b.controlDir == "" {

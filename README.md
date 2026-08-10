@@ -22,6 +22,8 @@ make dev DEV_DATA_DIR=/path/to/data DEV_LISTEN=0.0.0.0:8080
 
 Attachment uploads default to 10 MiB per file and 1 GiB total. Operators may lower or raise these within the built-in hard ceilings using `ALLCHAT_MAX_ATTACHMENT_BYTES` and `ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES`.
 
+AllChat retains at least 256 MiB of free filesystem space before accepting new Attachment or soundboard uploads. `ALLCHAT_STORAGE_RESERVE_BYTES` may increase this margin up to 10 GiB but cannot reduce or disable the built-in reserve.
+
 ### Development traffic bot
 
 With the development Instance running, a second terminal can start a synthetic Member with a generated avatar that posts random Messages, occasionally attaches a generated PNG, cycles between Online and Do Not Disturb, and periodically changes its Display Name:
@@ -34,7 +36,7 @@ make dev-bot
 
 The Invitation is only needed the first time; afterward the bot signs into the existing `allchat-bot` Member with the configured password. At least one visible Text Channel must exist. Never point this development tool at an Instance unless synthetic activity is intended.
 
-Configuration is available through `ALLCHAT_BOT_URL` (default `http://127.0.0.1:8080`), `ALLCHAT_BOT_USERNAME` (default `allchat-bot`), `ALLCHAT_BOT_PASSWORD`, `ALLCHAT_BOT_INVITE`, and `ALLCHAT_BOT_INTERVAL` (default `3s`). Stop it with Ctrl-C.
+Configuration is available through `ALLCHAT_BOT_URL` (default `http://127.0.0.1:8080`), `ALLCHAT_BOT_USERNAME` (default `allchat-bot`), `ALLCHAT_BOT_PASSWORD`, `ALLCHAT_BOT_INVITE`, and `ALLCHAT_BOT_INTERVAL` (default `10s`). Each interval has a 10% scheduled public-message chance by default; new channel Messages receive a 3% reply chance, DMs a 35% reply chance, and public “go into voice” requests a 2% join chance. Configure these with `ALLCHAT_BOT_PUBLIC_MESSAGE_CHANCE`, `ALLCHAT_BOT_CHANNEL_REPLY_CHANCE`, `ALLCHAT_BOT_DM_REPLY_CHANCE`, and `ALLCHAT_BOT_VOICE_REQUEST_CHANCE`, or their corresponding command flags. Values range from `0` to `100`. Stop the bot with Ctrl-C.
 
 To test voice locally, start a development echo Member in the first visible Voice Channel:
 
@@ -55,6 +57,30 @@ printf '%s\n' 'a new long password' | go run ./cmd/allchat recover-owner --data-
 ```
 
 Only one AllChat process may own a data directory at a time. Stop the process with `SIGINT` or `SIGTERM` to close HTTP and SQLite cleanly.
+
+### Backup, restore, and upgrades
+
+Create a coherent backup while the Instance is running:
+
+```sh
+allchat backup --data-dir /var/lib/allchat --output /srv/backups/allchat-$(date +%F).tar.gz
+```
+
+The archive contains a point-in-time SQLite snapshot and every Attachment and soundboard file referenced by that snapshot. Messages or uploads committed after the database snapshot are intentionally left for the next backup. If a referenced file is missing, backup fails instead of producing an incomplete archive.
+
+Restore into a new or empty directory while the destination Instance is stopped:
+
+```sh
+allchat restore --input /srv/backups/allchat-2026-08-10.tar.gz --data-dir /var/lib/allchat-restored
+```
+
+Restore validates archive paths, checksums, SQLite integrity, and the schema version before installing any files. It never overwrites a nonempty directory. Start the restored directory normally after validation.
+
+Schema migrations are forward-only and transactional. Before startup applies a pending migration, it writes a dated archive under `DATA_DIR/backups/`; startup stops if either that backup or the migration fails. To downgrade the binary, do not attempt to reverse the database schema: stop AllChat and restore the matching pre-upgrade archive into a new directory with the older binary.
+
+Members can download a portable JSON export from `GET /api/v1/account/export`. It contains their profile, authored Messages in currently visible Channels, their complete Direct Message conversations, and metadata plus authenticated download URLs for retained Attachments. It does not expose hidden Channels or unrelated Member profiles.
+
+`POST /api/v1/account/delete` requires the current password, CSRF protection, and the exact confirmation `DELETE MY ACCOUNT`. Deletion revokes every Session and irreversibly replaces credentials and profile identity while preserving shared Message and Direct Message continuity. The Community Owner must transfer ownership before deleting their Account.
 
 ## Public deployment and live media
 
@@ -82,6 +108,8 @@ Allow UDP and TCP 3478 plus the configured UDP relay range. With Instance TLS en
 
 To use an external TURN REST service instead of the embedded listener, omit `--turn-public-ip`, set `--external-turn-urls` to comma-separated `turn:`/`turns:` URLs, and provide its shared REST secret through `ALLCHAT_EXTERNAL_TURN_SECRET`. The secret must be at least 32 characters and is never returned to browsers.
 
+The Community Owner can inspect content-free operational health at `GET /api/v1/admin/diagnostics`. It reports SQLite and migration state, free storage, listener/TLS mode, configured SFU and Relay bounds, and pre-migration backup recency without exposing Member, Message, Session, or credential values. Pass `--metrics` to opt into the unauthenticated `/metrics` Prometheus endpoint; it is disabled by default and emits only Instance-level unlabeled gauges.
+
 ## Test
 
 ```sh
@@ -99,6 +127,8 @@ make test-ui
 ```
 
 Node and Playwright are test dependencies only; the AllChat binary continues to embed every runtime frontend asset.
+
+The embedded client targets the current and previous major desktop releases of Chromium and Firefox plus current Safari. Mobile text messaging is supported responsively; microphone calls depend on browser media permissions, and mobile screen sharing is best-effort because browsers may not expose `getDisplayMedia`. The UI honors reduced-motion preferences, provides visible keyboard focus, and renders stored UTC instants through the browser's local timezone. English strings are routed through a client text catalog seam for later localization.
 
 ## License
 

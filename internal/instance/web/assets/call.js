@@ -1,23 +1,139 @@
 (() => {
   "use strict";
-  const dmID=document.body.dataset.channelId,memberID=document.body.dataset.memberId,csrf=document.querySelector('[name="csrf_token"]')?.value;
-  const actions=document.querySelector(".header-actions"),button=document.createElement("button"),panel=document.createElement("div");
-  button.type="button";button.className="button-ghost";button.textContent="Start Call";button.title="Start Direct Call";actions.prepend(button);
-  panel.className="call-banner";panel.hidden=true;document.querySelector(".conversation-layout").before(panel);
-  let current,peer,socket,microphone,notifiedCallID,mediaConfig={audio_bitrate:64000,screen_bitrate:2500000};
-  fetch("/api/v1/media/config").then(response=>response.json()).then(value=>mediaConfig=value);
-  const request=(url,method="GET")=>fetch(url,{method,headers:{"X-CSRF-Token":csrf}});
-  const gather=pc=>pc.iceGatheringState==="complete"?Promise.resolve():new Promise(resolve=>pc.addEventListener("icegatheringstatechange",()=>pc.iceGatheringState==="complete"&&resolve()));
-	let soundAudioContext;async function playSound(sound){try{soundAudioContext ||= new AudioContext();await soundAudioContext.resume();const data=await fetch(sound.audio_url).then(r=>r.arrayBuffer()),buffer=await soundAudioContext.decodeAudioData(data),source=soundAudioContext.createBufferSource();source.buffer=buffer;source.connect(soundAudioContext.destination);source.start()}catch(_){new Audio(sound.audio_url).play().catch(()=>{})}}async function chooseSound(anchor){const old=document.querySelector('.soundboard-popover');if(old){old.remove();return}const pop=document.createElement('div');pop.className='soundboard-popover';pop.innerHTML='<header><strong>Soundboard</strong><button type="button">×</button></header><div class="soundboard-grid">Loading…</div>';document.body.append(pop);const rect=anchor.getBoundingClientRect();pop.style.right='12px';pop.style.top=(rect.bottom+8)+'px';pop.querySelector('button').onclick=()=>pop.remove();const value=await fetch('/api/v1/soundboard').then(r=>r.json()),grid=pop.querySelector('.soundboard-grid');grid.replaceChildren(...value.sounds.map(sound=>{const item=document.createElement('button');item.className='sound-button';item.textContent=(sound.emoji||'▶')+' '+sound.name;item.onclick=()=>{soundAudioContext ||= new AudioContext();soundAudioContext.resume();socket.send(JSON.stringify({version:1,type:'soundboard-play',sound_id:sound.id}));pop.remove()};return item}))}
-	let iceServers=[];fetch("/api/v1/turn-credentials").then(response=>response.json()).then(value=>iceServers=value.ice_servers||[]);const NativePeerConnection=RTCPeerConnection;window.RTCPeerConnection=function(configuration={}){const connection=new NativePeerConnection({...configuration,iceServers}),addTrack=connection.addTrack.bind(connection);connection.addTrack=(track,...streams)=>{const sender=addTrack(track,...streams),parameters=sender.getParameters();parameters.encodings=parameters.encodings?.length?parameters.encodings:[{}];parameters.encodings[0].maxBitrate=track.kind==="video"?mediaConfig.screen_bitrate:mediaConfig.audio_bitrate;sender.setParameters(parameters).catch(()=>{});return sender};return connection};window.RTCPeerConnection.prototype=NativePeerConnection.prototype;
-	const NativeWebSocket=WebSocket;window.WebSocket=function(...argumentsList){const connection=new NativeWebSocket(...argumentsList);connection.addEventListener("message",event=>{const frame=JSON.parse(event.data);if(frame.type==="soundboard-played"&&frame.sound){playSound(frame.sound);return}if(frame.type!=="screen-low"&&frame.type!=="screen-high")return;const sender=peer?.getSenders().find(item=>item.track?.kind==="video");if(!sender)return;const parameters=sender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);sender.setParameters(parameters).catch(()=>{})});return connection};window.WebSocket.prototype=NativeWebSocket.prototype;Object.setPrototypeOf(window.WebSocket,NativeWebSocket);
-  async function connect(call){if(peer)return;microphone=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});peer=new RTCPeerConnection();microphone.getTracks().forEach(track=>peer.addTrack(track,microphone));peer.addTransceiver("audio",{direction:"sendrecv"});peer.ontrack=event=>{const media=document.createElement(event.track.kind==="video"?"video":"audio");media.autoplay=true;if(event.track.kind==="video"){media.className="shared-screen";media.playsInline=true}media.srcObject=event.streams[0]||new MediaStream([event.track]);document.body.append(media)};const offer=await peer.createOffer();await peer.setLocalDescription(offer);await gather(peer);socket=new WebSocket((location.protocol==="https:"?"wss:":"ws:")+"//"+location.host+"/api/v1/media");socket.onopen=()=>socket.send(JSON.stringify({version:1,type:"join",room_id:call.id,sdp:peer.localDescription}));socket.onmessage=async event=>{const frame=JSON.parse(event.data);if(frame.type==="answer"){await peer.setRemoteDescription(frame.sdp);renderConnected(call)}else if(frame.type==="offer"){await peer.setRemoteDescription(frame.sdp);const answer=await peer.createAnswer();await peer.setLocalDescription(answer);await gather(peer);socket.send(JSON.stringify({version:1,type:"answer",sdp:peer.localDescription}))}};socket.onclose=cleanup}
-  function cleanup(){socket=null;peer?.close();peer=null;microphone?.getTracks().forEach(track=>track.stop());microphone=null;document.querySelectorAll("body>audio,body>.shared-screen").forEach(item=>item.remove())}
-  function renderConnected(call){panel.hidden=false;panel.replaceChildren();const label=document.createElement("strong"),mute=document.createElement("button"),screen=document.createElement("button"),end=document.createElement("button");label.textContent="Direct Call connected";mute.textContent="Mute";mute.className="button-secondary";screen.textContent="Share Screen";screen.className="button-secondary";end.textContent="End Call";end.className="button-danger";mute.onclick=()=>{const track=microphone?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;mute.textContent=track.enabled?"Mute":"Unmute"}};screen.onclick=async()=>{try{const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}),track=stream.getVideoTracks()[0],senders=[];let sender;try{sender=peer.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,mediaConfig.screen_bitrate)},{rid:"f",scaleResolutionDownBy:1,maxBitrate:mediaConfig.screen_bitrate}]}).sender}catch(_){sender=peer.addTrack(track,stream)}senders.push(sender);stream.getAudioTracks().forEach(audioTrack=>senders.push(peer.addTrack(audioTrack,stream)));screen.textContent=stream.getAudioTracks().length?"Stop Sharing (with audio)":"Stop Sharing";track.onended=async()=>{senders.forEach(item=>peer.removeTrack(item));screen.textContent="Share Screen";await renegotiate()};await renegotiate()}catch(error){alert(error.message||"Screen sharing is unavailable on this browser or operating system.")}};end.onclick=async()=>{await request("/api/v1/calls/"+call.id+"/end","POST");cleanup();panel.hidden=true;current=null};panel.append(label,mute,screen,end);button.disabled=true}
-  async function renegotiate(){const offer=await peer.createOffer();await peer.setLocalDescription(offer);await gather(peer);socket.send(JSON.stringify({version:1,type:"offer",sdp:peer.localDescription}))}
-  function render(call){current=call;if(!call){panel.hidden=true;button.disabled=false;button.textContent="Start Call";return}if(["missed","declined","ended","blocked","suspended"].includes(call.state)){cleanup();panel.hidden=false;panel.textContent=call.state==="missed"?"Missed Direct Call":"Direct Call "+call.state;button.disabled=false;return}button.disabled=true;if(call.state==="accepted"){panel.hidden=false;panel.textContent="Connecting Direct Call…";connect(call).catch(error=>{panel.textContent=error.message})}else if(call.state==="ringing"&&call.recipient_id===memberID){panel.hidden=false;panel.replaceChildren();const label=document.createElement("strong"),accept=document.createElement("button"),decline=document.createElement("button");label.textContent="Incoming Direct Call";accept.textContent="Accept";decline.textContent="Decline";decline.className="button-danger";accept.onclick=async()=>{const response=await request("/api/v1/calls/"+call.id+"/accept","POST");if(response.ok)render(await response.json())};decline.onclick=async()=>{const response=await request("/api/v1/calls/"+call.id+"/decline","POST");if(response.ok)render(await response.json())};panel.append(label,accept,decline);if(notifiedCallID!==call.id&&document.hidden&&Notification.permission==="granted"){new Notification("Incoming AllChat call",{body:"Open this Direct Message to accept or decline.",tag:"allchat-call"});notifiedCallID=call.id}}else{panel.hidden=false;panel.textContent="Calling… Waiting for an answer."}}
-  async function poll(){const response=await request("/api/v1/dms/"+dmID+"/call");if(response.status===204){if(current&&!peer){current=null;render(null)}return}if(response.ok){const call=await response.json();if(!current||current.id!==call.id||current.state!==call.state)render(call)}}
-  button.onclick=async()=>{const response=await request("/api/v1/dms/"+dmID+"/calls","POST");if(response.ok)render(await response.json());else if(response.status===409)alert("One of you is already in another call.")};
-  new MutationObserver(()=>{if(!peer||panel.querySelector('[data-call-soundboard]'))return;const soundboard=document.createElement('button');soundboard.type='button';soundboard.className='button-secondary';soundboard.dataset.callSoundboard='';soundboard.textContent='Soundboard';soundboard.onclick=()=>chooseSound(soundboard);const end=[...panel.querySelectorAll('button')].find(item=>item.textContent==='End Call');end?end.before(soundboard):panel.append(soundboard)}).observe(panel,{childList:true});
-  setInterval(poll,1000);poll();document.addEventListener("visibilitychange",()=>socket?.readyState===WebSocket.OPEN&&socket.send(JSON.stringify({version:1,type:"screen-visibility",visible:!document.hidden})));addEventListener("pagehide",()=>{if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify({version:1,type:"leave"}));cleanup()});
+  if (window.__allchatCallRuntime) return;
+  window.__allchatCallRuntime = true;
+
+  let call = null, peer = null, socket = null, microphone = null, screenStream = null;
+  let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0;
+  let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
+  const panel = document.createElement("section");
+  panel.className = "call-banner";
+  panel.hidden = true;
+
+  const csrf = () => document.querySelector('[name="csrf_token"]')?.value || document.cookie.split("; ").find(value => value.startsWith("allchat_csrf="))?.split("=").slice(1).join("=") || "";
+  const request = (url, method = "GET") => fetch(url, {method, headers: {"X-CSRF-Token": decodeURIComponent(csrf())}});
+  const isDMView = () => document.querySelector(".channel-topic")?.textContent.trim() === "Direct Message";
+  const currentDM = () => isDMView() ? document.body.dataset.channelId : "";
+  const attachPanel = () => {
+    const conversation = document.querySelector(".conversation-layout"), content = document.querySelector(".content-shell");
+    if (conversation) conversation.before(panel); else if (content && call) {const header=content.querySelector(":scope > .content-header"); header ? header.after(panel) : content.prepend(panel);}
+  };
+
+  const installView = () => {
+    startButton?.remove(); startButton = null;
+    if (isDMView()) {
+      const actions = document.querySelector(".header-actions");
+      if (actions) {
+        startButton = document.createElement("button");
+        startButton.type = "button"; startButton.className = "button-ghost dm-call-button";
+        startButton.textContent = "Start Call"; startButton.title = "Start one-to-one Call";
+        startButton.onclick = startCall; actions.prepend(startButton);
+      }
+    }
+    attachPanel();
+    if (startButton) startButton.disabled = !!call;
+  };
+
+  const cleanupMedia = () => {
+    generation++;
+    socket?.close(); socket = null;
+    peer?.close(); peer = null;
+    microphone?.getTracks().forEach(track => track.stop()); microphone = null;
+    screenStream?.getTracks().forEach(track => track.stop()); screenStream = null;
+    panel.querySelectorAll("audio,video").forEach(media => media.remove());
+  };
+
+  const endCall = async () => {
+    if (call) await request(`/api/v1/calls/${call.id}/end`, "POST");
+    cleanupMedia(); call = null; panel.hidden = true; installView();
+  };
+
+  const renderConnected = () => {
+    panel.hidden = false; panel.replaceChildren();
+    const label = document.createElement("strong"), controls = document.createElement("div"), media = document.createElement("div");
+    const mute = document.createElement("button"), screen = document.createElement("button"), end = document.createElement("button");
+    label.textContent = "Direct Call connected"; controls.className = "call-controls"; media.className = "call-media";
+    mute.textContent = "Mute"; screen.textContent = "Share Screen"; end.textContent = "End Call";
+    mute.className = screen.className = "button-secondary"; end.className = "button-danger";
+    mute.onclick = () => {const track = microphone?.getAudioTracks()[0]; if (track) {track.enabled = !track.enabled; mute.textContent = track.enabled ? "Mute" : "Unmute";}};
+    screen.onclick = () => toggleScreen(screen);
+    end.onclick = endCall;
+    controls.append(mute, screen, end); panel.append(label, controls, media); attachPanel();
+  };
+
+  const addRemoteMedia = event => {
+    const mediaHost = panel.querySelector(".call-media") || panel;
+    const element = document.createElement(event.track.kind === "video" ? "video" : "audio");
+    element.autoplay = true; element.playsInline = true;
+    if (event.track.kind === "video") element.className = "shared-screen";
+    element.srcObject = event.streams[0] || new MediaStream([event.track]); mediaHost.append(element);
+    event.track.addEventListener("ended", () => element.remove());
+  };
+
+  const connect = async activeCall => {
+    if (peer) return;
+    const run = ++generation;
+    panel.hidden = false; panel.textContent = "Connecting Direct Call…"; attachPanel();
+    const [stream, ice, config] = await Promise.all([
+      navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false}),
+      fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []}),
+      fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig)
+    ]);
+    if (run !== generation) return stream.getTracks().forEach(track => track.stop());
+    microphone = stream; mediaConfig = config;
+    peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
+    const outgoing = [], incoming = [];
+    peer.onicecandidate = event => {if (!event.candidate) return; const value = JSON.stringify({version: 1, type: "candidate", candidate: event.candidate.toJSON()}); socket?.readyState === WebSocket.OPEN ? socket.send(value) : outgoing.push(value);};
+    peer.ontrack = addRemoteMedia;
+    stream.getTracks().forEach(track => peer.addTrack(track, stream)); peer.addTransceiver("audio", {direction: "sendrecv"});
+    const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
+    socket = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/api/v1/media`);
+    socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: activeCall.id, sdp: peer.localDescription})); outgoing.splice(0).forEach(value => socket.send(value));};
+    socket.onmessage = async event => {
+      const frame = JSON.parse(event.data);
+      if (frame.type === "answer") {await peer.setRemoteDescription(frame.sdp); for (const candidate of incoming.splice(0)) await peer.addIceCandidate(candidate); renderConnected();}
+      else if (frame.type === "candidate" && frame.candidate) {peer.remoteDescription ? await peer.addIceCandidate(frame.candidate) : incoming.push(frame.candidate);}
+      else if (frame.type === "offer") {await peer.setRemoteDescription(frame.sdp); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); socket.send(JSON.stringify({version: 1, type: "answer", sdp: peer.localDescription}));}
+      else if (frame.type === "error") {panel.textContent = frame.error || "Direct Call failed";}
+    };
+    socket.onclose = () => {if (run === generation && call) panel.textContent = "Direct Call disconnected";};
+  };
+
+  const renegotiate = async () => {if (!peer || socket?.readyState !== WebSocket.OPEN) return; const offer = await peer.createOffer(); await peer.setLocalDescription(offer); socket.send(JSON.stringify({version: 1, type: "offer", sdp: peer.localDescription}));};
+  const toggleScreen = async button => {
+    if (screenStream) {screenStream.getTracks().forEach(track => track.stop()); screenStream = null; button.textContent = "Share Screen"; return;}
+    screenStream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
+    const tracks = screenStream.getTracks(), senders = tracks.map(track => peer.addTrack(track, screenStream));
+    button.textContent = "Stop Sharing";
+    const stop = async () => {senders.forEach(sender => {try {peer.removeTrack(sender);} catch (_) {}}); screenStream = null; button.textContent = "Share Screen"; await renegotiate();};
+    tracks.forEach(track => track.addEventListener("ended", () => {if (screenStream) stop();}, {once: true})); await renegotiate();
+  };
+
+  const render = next => {
+    call = next; installView();
+    if (!next) {if (!peer) panel.hidden = true; return;}
+    panel.hidden = false; attachPanel();
+    if (next.state === "accepted") {connect(next).catch(error => panel.textContent = error.message || "Direct Call failed"); return;}
+    if (next.state !== "ringing") {cleanupMedia(); panel.textContent = `Direct Call ${next.state}`; return;}
+    panel.replaceChildren();
+    const label = document.createElement("strong"); label.textContent = next.recipient_id === document.body.dataset.memberId ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);
+    if (next.recipient_id === document.body.dataset.memberId) {
+      const accept = document.createElement("button"), decline = document.createElement("button"); accept.textContent = "Accept"; decline.textContent = "Decline"; decline.className = "button-danger";
+      accept.onclick = async () => {const response = await request(`/api/v1/calls/${next.id}/accept`, "POST"); if (response.ok) render(await response.json());};
+      decline.onclick = async () => {await request(`/api/v1/calls/${next.id}/decline`, "POST"); cleanupMedia(); call = null; panel.hidden = true; installView();};
+      panel.append(accept, decline);
+      if (notifiedCallID !== next.id && document.hidden && Notification.permission === "granted") {const notice = new Notification("Incoming AllChat Call", {body: "Open AllChat to accept or decline.", tag: "allchat-call"}); notice.onclick = () => {window.focus(); window.allchatNavigate?.(`/channels/${next.direct_message_id}`);}; notifiedCallID = next.id;}
+    } else {const cancel = document.createElement("button"); cancel.textContent = "Cancel"; cancel.className = "button-danger"; cancel.onclick = endCall; panel.append(cancel);}
+  };
+
+  async function startCall() {
+    const dm = currentDM(); if (!dm) return;
+    const response = await request(`/api/v1/dms/${dm}/calls`, "POST");
+    if (response.ok) render(await response.json()); else if (response.status === 409) alert("One of you is already in another Call.");
+  }
+  const poll = async () => {if (pollBusy) return; pollBusy = true; try {const response = await request("/api/v1/calls/current"); if (response.status === 204) {if (call) {cleanupMedia(); call = null; panel.hidden = true; installView();} return;} if (response.ok) {const next = await response.json(); if (!call || call.id !== next.id || call.state !== next.state) render(next);}} finally {pollBusy = false;}};
+
+  installView(); poll(); setInterval(poll, 1000);
+  document.addEventListener("allchat:view-swapped", installView);
+  addEventListener("pagehide", () => cleanupMedia());
 })();

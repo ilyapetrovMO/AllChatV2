@@ -54,6 +54,7 @@
     overlay.replaceChildren(imported);
     document.body.classList.add("app-overlay-open");
     document.title = next.title;
+    document.dispatchEvent(new CustomEvent("allchat:view-swapped", {detail: {root: overlay}}));
     if (push) history.pushState({allchatOverlay: true}, "", url);
   };
   const preserveVoicePanel = sidebar => {
@@ -106,6 +107,11 @@
     const link = event.target.closest("a[href]");
     if (!link || !link.closest(".app-shell") || link.matches(".voice-link") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target || link.hasAttribute("download")) return;
     const url = new URL(link.href, location.href);
+    if (link.closest("[data-app-overlay]") && url.pathname === "/") {
+      event.preventDefault();
+      closeOverlay();
+      return;
+    }
     if (url.origin !== location.origin || (!url.pathname.startsWith("/channels/") && url.pathname !== "/" && url.pathname !== "/dms" && !isOverlayPath(url.pathname))) return;
     event.preventDefault();
     navigate(url.href).catch(() => location.assign(url.href));

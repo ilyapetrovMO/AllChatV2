@@ -18,6 +18,9 @@ func TestDirectCallRequiresConsentAndEnforcesBusyState(t *testing.T) {
 	if manager.CanJoinDirectCall(call.ID, "caller") {
 		t.Fatal("caller could join before consent")
 	}
+	if current, found := manager.CurrentDirectCall("recipient"); !found || current.ID != call.ID || current.State != "ringing" {
+		t.Fatalf("current call = %+v, %v", current, found)
+	}
 	if _, err = manager.StartDirectCall("other", "caller", "third"); !errors.Is(err, ErrBusy) {
 		t.Fatalf("busy error = %v", err)
 	}

@@ -84,6 +84,9 @@ func (s *Service) UploadSound(ctx context.Context, actor identity.Member, name, 
 	if s.dataDir == "" {
 		return SoundboardSound{}, fmt.Errorf("Soundboard storage is unavailable")
 	}
+	if err := requireStorageReserve(s.dataDir, maxSoundBytes); err != nil {
+		return SoundboardSound{}, err
+	}
 	data, err := io.ReadAll(io.LimitReader(source, maxSoundBytes+1))
 	if err != nil || len(data) == 0 || int64(len(data)) > maxSoundBytes {
 		return SoundboardSound{}, fmt.Errorf("%w: sound exceeds 1 MiB", ErrInvalidInput)

@@ -103,7 +103,7 @@ func (s *Service) DirectMessage(ctx context.Context, member identity.Member, id 
 func (s *Service) ListDirectMessages(ctx context.Context, member identity.Member) ([]DirectMessage, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id FROM direct_messages
 		WHERE member_low_id = ? OR member_high_id = ?
-		ORDER BY COALESCE((SELECT MAX(sequence) FROM messages WHERE channel_id = direct_messages.id), 0) DESC, created_at DESC`, member.ID, member.ID)
+		ORDER BY COALESCE((SELECT MAX(created_at) FROM messages WHERE channel_id = direct_messages.id), created_at) DESC`, member.ID, member.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -151,7 +151,7 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
 test('SPA-opened channel receives remote messages before local input and starts at present', async ({page}) => {
   const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
   const second = await request.newContext({baseURL, storageState: fixture.secondState});
-  for (let index = 0; index < 28; index++) {
+  for (let index = 0; index < 78; index++) {
     await post(owner, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: `Scroll fixture ${String(index + 1).padStart(2, '0')}`});
   }
   await authenticate(page);
@@ -162,6 +162,92 @@ test('SPA-opened channel receives remote messages before local input and starts 
   await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: remoteBody});
   await expect(page.locator('#messages')).toContainText(remoteBody);
   await expect.poll(() => page.locator('#messages').evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(3);
+  await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
+  await expect(page.locator('#messages')).toContainText('Scroll fixture 01');
   await owner.dispose();
   await second.dispose();
+});
+
+test('message authors open the member popover and replies retain their target', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+
+  const message = page.locator('#messages .message').first();
+  await message.locator('strong').click();
+  await expect(page.locator('.member-popover')).toBeVisible();
+
+  await page.locator('#message-body').click();
+  await message.hover();
+  await message.locator('[data-reply-message]').click();
+  await expect(page.locator('.composer-wrap .editing-banner[role="status"]')).toContainText('Replying to');
+
+  const sent = page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith(`/api/v1/channels/${fixture.textChannel.id}/messages`));
+  await page.locator('#message-body').fill(`Reply UI fixture ${Date.now()}`);
+  await page.locator('#composer-submit').click();
+  const request = await sent;
+  expect(request.postDataJSON().reply_to).toBe(await message.getAttribute('id').then(id => id.replace('message-', '')));
+  await expect(page.locator('#messages .message').last().locator('.reply-preview')).toContainText('Reply to');
+  await expect(page.locator('.composer-wrap .editing-banner[role="status"]')).toBeHidden();
+});
+
+test('voice sidebar participants support profile and context interactions', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await addVoiceState(page);
+
+  const participant = page.locator('[data-voice-participants] [data-participant-id]').first();
+  await participant.click();
+  await expect(page.locator('.member-popover')).toBeVisible();
+  await page.locator('#message-body').click();
+
+  await participant.click({button: 'right'});
+  const menu = page.locator('.voice-member-context');
+  await expect(menu).toBeVisible();
+  await expect(menu).toContainText('Profile');
+  await expect(menu).toContainText('Copy User ID');
+});
+
+test('member settings expose avatar upload and removal', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('.member-settings').click();
+  await expect(page.locator('[data-app-overlay]')).toBeVisible();
+  await expect(page.locator('[data-avatar-control] input[type="file"]')).toBeAttached();
+  await expect(page.locator('[data-avatar-save]')).toHaveText('Upload avatar');
+  await expect(page.locator('[data-avatar-remove]')).toHaveText('Remove avatar');
+  await page.locator('[data-avatar-control] input[type="file"]').setInputFiles({name: 'avatar.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')});
+  await page.locator('[data-avatar-save]').click();
+  await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar updated.');
+  await page.locator('[data-avatar-remove]').click();
+  await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar removed.');
+});
+
+test('community mark closes settings without rebuilding the underlying conversation', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('.member-settings').click();
+  await expect(page.locator('[data-app-overlay]')).toBeVisible();
+  await page.locator('[data-app-overlay] .community-mark[href="/"]').click();
+  await expect(page.locator('[data-app-overlay]')).toHaveCount(0);
+  await expect(page.locator('.channel-content')).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/channels/${fixture.textChannel.id}$`));
+});
+
+test('incoming one-to-one calls surface outside the DM and can be declined', async ({page}) => {
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  await authenticate(page);
+  await page.context().clearCookies();
+  await page.context().addCookies(fixture.secondState.cookies);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+
+  const started = await post(owner, `/api/v1/dms/${fixture.dm.id}/calls`, {});
+  const banner = page.locator('.call-banner');
+  await expect(banner).toContainText('Incoming Direct Call', {timeout: 3000});
+  await expect(banner.getByRole('button', {name: 'Accept'})).toBeVisible();
+  await banner.getByRole('button', {name: 'Decline'}).click();
+  await expect(banner).toBeHidden();
+  const current = await owner.get('/api/v1/calls/current');
+  expect(current.status()).toBe(204);
+  expect(started.state).toBe('ringing');
+  await owner.dispose();
 });

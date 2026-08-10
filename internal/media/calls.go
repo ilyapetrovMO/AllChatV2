@@ -60,6 +60,17 @@ func (m *Manager) DirectCallForMember(dmID, memberID string) (DirectCall, bool) 
 	}
 	return DirectCall{}, false
 }
+
+// CurrentDirectCall returns the active ringing or accepted call for a Member.
+func (m *Manager) CurrentDirectCall(memberID string) (DirectCall, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.expireCallsLocked()
+	if call := m.callForMemberLocked(memberID); call != nil {
+		return *call, true
+	}
+	return DirectCall{}, false
+}
 func (m *Manager) AcceptDirectCall(callID, memberID string) (DirectCall, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

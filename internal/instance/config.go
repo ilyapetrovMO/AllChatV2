@@ -29,6 +29,7 @@ type Config struct {
 	MediaMaxParticipants int
 	MediaAudioBitrate    int
 	MediaScreenBitrate   int
+	MetricsEnabled       bool
 }
 
 // ConfigureExternalTURN disables the embedded listener and uses an operator's

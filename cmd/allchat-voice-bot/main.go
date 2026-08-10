@@ -216,15 +216,17 @@ func (b *echoBot) run(ctx context.Context) error {
 	if b.shareScreen {
 		log.Printf("voice echo bot is sharing its embedded SMPTE test image")
 	}
+	remoteCandidates := []webrtc.ICECandidateInit{}
 	for {
 		_, payload, readErr := socket.Read(ctx)
 		if readErr != nil {
 			return readErr
 		}
 		var frame struct {
-			Type  string                     `json:"type"`
-			SDP   *webrtc.SessionDescription `json:"sdp"`
-			Error string                     `json:"error"`
+			Type      string                     `json:"type"`
+			SDP       *webrtc.SessionDescription `json:"sdp"`
+			Candidate *webrtc.ICECandidateInit   `json:"candidate"`
+			Error     string                     `json:"error"`
 		}
 		if json.Unmarshal(payload, &frame) != nil {
 			continue
@@ -235,7 +237,22 @@ func (b *echoBot) run(ctx context.Context) error {
 				if err = peer.SetRemoteDescription(*frame.SDP); err != nil {
 					return err
 				}
+				for _, candidate := range remoteCandidates {
+					if err = peer.AddICECandidate(candidate); err != nil {
+						return err
+					}
+				}
+				remoteCandidates = nil
 				log.Printf("voice echo bot connected to %q", target.Name)
+			}
+		case "candidate":
+			if frame.Candidate == nil {
+				continue
+			}
+			if peer.RemoteDescription() == nil {
+				remoteCandidates = append(remoteCandidates, *frame.Candidate)
+			} else if err = peer.AddICECandidate(*frame.Candidate); err != nil {
+				return err
 			}
 		case "offer":
 			if frame.SDP == nil {

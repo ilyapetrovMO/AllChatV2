@@ -194,18 +194,19 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 	var member Member
 	var passwordHash string
 	var hasAvatar bool
+	var suspendedUntil sql.NullString
 	err := s.db.QueryRowContext(ctx, `
 		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.password_hash,
-		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id)
+		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id), m.suspended_until
 		FROM members m WHERE m.username_key = ?`, usernameKey(username)).
-		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &passwordHash, &member.Owner)
+		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &passwordHash, &member.Owner, &suspendedUntil)
 	if errors.Is(err, sql.ErrNoRows) {
 		passwordHash = s.dummyHash
 	} else if err != nil {
 		return Member{}, SessionCredentials{}, fmt.Errorf("find Member: %w", err)
 	}
 	valid, err := verifyPassword(password, passwordHash)
-	if err != nil || !valid || member.ID == "" {
+	if err != nil || !valid || member.ID == "" || (suspendedUntil.Valid && suspendedUntil.String > databaseTime(s.now())) {
 		s.limiter.Failed(key, s.now())
 		s.limiter.Failed(sourceKey, s.now())
 		return Member{}, SessionCredentials{}, ErrInvalidCredentials
@@ -234,8 +235,9 @@ func (s *Service) MemberForSession(ctx context.Context, token string) (Member, e
 		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id)
 		FROM sessions s JOIN members m ON m.id = s.member_id
 		WHERE s.token_hash = ? AND s.csrf_token_hash IS NOT NULL
-		  AND s.revoked_at IS NULL AND s.expires_at > ?`,
-		hash[:], databaseTime(s.now())).Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &member.Owner)
+		  AND s.revoked_at IS NULL AND s.expires_at > ?
+		  AND (m.suspended_until IS NULL OR m.suspended_until <= ?)`,
+		hash[:], databaseTime(s.now()), databaseTime(s.now())).Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &member.Owner)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Member{}, ErrInvalidCredentials
 	}
@@ -575,6 +577,41 @@ func (s *Service) VerifyMemberPassword(ctx context.Context, memberID, password s
 	}
 	valid, err := verifyPassword(password, encoded)
 	return err == nil && valid
+}
+
+func (s *Service) AnonymizeMember(ctx context.Context, member Member, password, confirmation string) error {
+	if member.Owner {
+		return fmt.Errorf("Owner must transfer ownership before Account Deletion")
+	}
+	if confirmation != "DELETE MY ACCOUNT" || !s.VerifyMemberPassword(ctx, member.ID, password) {
+		return ErrInvalidCredentials
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	now := databaseTime(s.now())
+	username := "deleted-" + member.ID
+	if len(username) > 64 {
+		username = username[:64]
+	}
+	if _, err = tx.ExecContext(ctx, `UPDATE members SET username=?,username_key=?,display_name=NULL,avatar=NULL,avatar_content_type=NULL,password_hash=?,presence_mode='available',suspended_until=NULL,timed_out_until=NULL WHERE id=?`, username, username, "account-deleted", member.ID); err != nil {
+		return err
+	}
+	for _, statement := range []string{`UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL`, `DELETE FROM member_roles WHERE member_id=?`, `DELETE FROM read_positions WHERE member_id=?`, `DELETE FROM message_reactions WHERE member_id=?`, `DELETE FROM message_mentions WHERE member_id=?`, `DELETE FROM channel_notification_settings WHERE member_id=?`, `DELETE FROM member_blocks WHERE blocker_id=? OR blocked_id=?`} {
+		args := []any{member.ID}
+		if strings.Contains(statement, "revoked_at") {
+			args = []any{now, member.ID}
+		}
+		if strings.Contains(statement, " OR ") {
+			args = []any{member.ID, member.ID}
+		}
+		if _, err = tx.ExecContext(ctx, statement, args...); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 func (s *Service) ownerExists(ctx context.Context) (bool, error) {

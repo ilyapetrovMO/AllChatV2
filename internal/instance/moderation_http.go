@@ -3,6 +3,8 @@ package instance
 
 import (
 	"net/http"
+
+	"allchat/internal/community"
 )
 
 func (i *Instance) reportsAPI(w http.ResponseWriter, r *http.Request) {
@@ -68,4 +70,42 @@ func (i *Instance) moderationRecordsAPI(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, 200, map[string]any{"records": items})
+}
+
+func (i *Instance) moderationActionAPI(w http.ResponseWriter, r *http.Request) {
+	m, _, ok := i.authenticatedCSRF(w, r)
+	if !ok {
+		return
+	}
+	var input community.ModerationAction
+	if decodeJSON(r, &input) != nil {
+		writeJSON(w, 400, map[string]string{"error": "invalid request"})
+		return
+	}
+	record, err := i.community.ApplyModeration(r.Context(), m, input)
+	if err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, record)
+}
+
+func (i *Instance) purgeModerationRecordsAPI(w http.ResponseWriter, r *http.Request) {
+	m, _, ok := i.authenticatedCSRF(w, r)
+	if !ok {
+		return
+	}
+	var input struct {
+		Before string `json:"before"`
+	}
+	if decodeJSON(r, &input) != nil {
+		writeJSON(w, 400, map[string]string{"error": "invalid request"})
+		return
+	}
+	record, err := i.community.PurgeModerationRecords(r.Context(), m, input.Before)
+	if err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, record)
 }

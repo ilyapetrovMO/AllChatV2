@@ -1588,10 +1588,11 @@ func searchMessages(t *testing.T, client *http.Client, app *runningInstance, que
 }
 
 type realtimeFrameView struct {
-	Type      string          `json:"type"`
-	Cursor    int64           `json:"cursor"`
-	ChannelID string          `json:"channel_id"`
-	Payload   json.RawMessage `json:"payload"`
+	Type      string              `json:"type"`
+	Cursor    int64               `json:"cursor"`
+	ChannelID string              `json:"channel_id"`
+	Payload   json.RawMessage     `json:"payload"`
+	Events    []realtimeFrameView `json:"events,omitempty"`
 	Snapshot  *struct {
 		Cursor   int64                    `json:"cursor"`
 		Messages map[string][]messageView `json:"messages"`
@@ -1658,6 +1659,13 @@ func readRealtimeType(t *testing.T, connection *websocket.Conn, wanted string) r
 		frame := readRealtime(t, connection)
 		if frame.Type == wanted {
 			return frame
+		}
+		if frame.Type == "events" {
+			for _, event := range frame.Events {
+				if event.Type == wanted {
+					return event
+				}
+			}
 		}
 	}
 	t.Fatalf("realtime stream did not deliver %q", wanted)

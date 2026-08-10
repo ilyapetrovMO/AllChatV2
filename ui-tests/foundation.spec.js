@@ -164,8 +164,9 @@ test('voice stage fills width with two, triforce three, and two-by-two four part
 });
 
 test('clicking a voice channel joins in place without replacing the text conversation', async ({ page }) => {
+  let voiceParticipants = [{member_id: 'member-one', connected: true, speaking: false, screen_sharing: true}];
   await page.route('**/api/v1/channels', route => route.fulfill({json: {channels: [{id: 'voice-one', name: 'General', type: 'voice'}]}}));
-  await page.route('**/api/v1/voice/voice-one/participants', route => route.fulfill({json: {participants: [{member_id: 'member-one', connected: true, speaking: false, screen_sharing: true}], names: {'member-one': 'Akko'}, members: {'member-one': {id: 'member-one', username: 'akko', display_name: 'Akko'}}}}));
+  await page.route('**/api/v1/voice/voice-one/participants', route => route.fulfill({json: {participants: voiceParticipants, names: {'member-one': 'Akko', 'member-two': 'Spikey'}, members: {'member-one': {id: 'member-one', username: 'akko', display_name: 'Akko'}, 'member-two': {id: 'member-two', username: 'spikey', display_name: 'Spikey'}}}}));
   await page.route('**/api/v1/turn-credentials', route => route.fulfill({json: {ice_servers: []}}));
   await page.route('**/channels/text-two', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title># second — AllChat</title></head><body data-channel-id="text-two" data-member-id="member-one" data-last-sequence="0"><div class="app-shell"><nav class="channel-nav"><a class="channel-link voice-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two" aria-current="page">second</a></nav><main class="content-shell" id="second-conversation">Second text conversation</main></div></body></html>`}));
   await page.route('**/channels/voice-one', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title>General — AllChat Voice</title></head><body data-channel-id="voice-one" data-member-id="member-one"><div class="app-shell"><nav class="channel-nav"><a class="channel-link voice-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two">second</a></nav><main class="content-shell media-stage-view" data-media-stage="voice-one"><header class="content-header"><h1>General</h1></header><section class="media-stage"><div class="media-stage-grid" data-media-stage-grid></div></section></main></div></body></html>`}));
@@ -178,15 +179,16 @@ test('clicking a voice channel joins in place without replacing the text convers
     const audioTrack = {kind: 'audio', enabled: true, stop() { window.voiceTrackStopped = true; }};
     Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => {window.voiceCaptureRequests++; return {getTracks: () => [audioTrack], getAudioTracks: () => [audioTrack]};}}});
     window.RTCPeerConnection = class {
-      constructor() { this.iceGatheringState = 'complete'; this.localDescription = null; window.voicePeer = this; }
+      constructor() { this.iceGatheringState = 'gathering'; this.localDescription = null; this.listeners = {}; window.voicePeer = this; }
       addTrack() { return {}; }
       addTransceiver() {}
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'mock-offer'}); }
       createAnswer() { return Promise.resolve({type: 'answer', sdp: 'mock-client-answer'}); }
-      setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
+      setLocalDescription(value) { this.localDescription = value; setTimeout(() => this.onicecandidate?.({candidate: {toJSON: () => ({candidate: 'candidate:mock'})}}), 10); setTimeout(() => {this.iceGatheringState = 'complete'; (this.listeners.icegatheringstatechange || []).forEach(listener => listener());}, 1500); return Promise.resolve(); }
       setRemoteDescription() { return Promise.resolve(); }
-      addEventListener() {}
-      removeEventListener() {}
+      addIceCandidate() { return Promise.resolve(); }
+      addEventListener(type, listener) { (this.listeners[type] ||= []).push(listener); }
+      removeEventListener(type, listener) { this.listeners[type] = (this.listeners[type] || []).filter(item => item !== listener); }
       close() {}
     };
     window.WebSocket = class {
@@ -207,12 +209,19 @@ test('clicking a voice channel joins in place without replacing the text convers
     <script src="/assets/app.js"></script>
   `);
   await expect(page.locator('.channel-nav')).toHaveAttribute('data-voice-sidebar-ready', 'true');
+  const voiceStarted = Date.now();
   await page.locator('a[href="/channels/voice-one"]').click();
   await expect(page.locator('#text-conversation')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toBeVisible();
   await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText('Connecting');
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  expect(Date.now() - voiceStarted).toBeLessThan(1000);
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
+  await page.evaluate(() => {window.voiceEarcons = []; window.allchatVoiceEarcon = kind => window.voiceEarcons.push(kind);});
+  voiceParticipants = [...voiceParticipants, {member_id: 'member-two', connected: true, speaking: false}];
+  await expect.poll(() => page.evaluate(() => window.voiceEarcons)).toContain('join');
+  voiceParticipants = voiceParticipants.filter(item => item.member_id !== 'member-two');
+  await expect.poll(() => page.evaluate(() => window.voiceEarcons)).toContain('leave');
   await page.evaluate(() => {
     window.botOneAudio = new MediaStream();
     window.botTwoAudio = new MediaStream();

@@ -31,7 +31,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 16
+const schemaVersion = 17
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -89,6 +89,9 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 	}()
 	db.SetMaxOpenConns(1)
 
+	if err := backupBeforeMigration(context.Background(), db, config.DataDir); err != nil {
+		return nil, err
+	}
 	if err := initializeSchema(db); err != nil {
 		return nil, err
 	}
@@ -156,6 +159,29 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		IdleTimeout:       60 * time.Second,
 	}
 	return app, nil
+}
+
+func backupBeforeMigration(ctx context.Context, db *sql.DB, dataDir string) error {
+	exists, err := tableExists(ctx, db, "schema_migrations")
+	if err != nil || !exists {
+		return err
+	}
+	var version int
+	if err := db.QueryRowContext(ctx, "SELECT COALESCE(MAX(version), 0) FROM schema_migrations").Scan(&version); err != nil {
+		return err
+	}
+	if version >= schemaVersion {
+		return nil
+	}
+	directory := filepath.Join(dataDir, "backups")
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		return fmt.Errorf("create pre-migration backup directory: %w", err)
+	}
+	name := fmt.Sprintf("pre-migration-v%d-to-v%d-%s.tar.gz", version, schemaVersion, time.Now().UTC().Format("20060102T150405.000000000Z"))
+	if err := Backup(ctx, dataDir, filepath.Join(directory, name)); err != nil {
+		return fmt.Errorf("create pre-migration backup: %w", err)
+	}
+	return nil
 }
 
 // Run serves the Instance until the context is cancelled, then shuts down
@@ -642,6 +668,14 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Soundboard schema: %w", err)
 		}
 	}
+	if currentVersion < 17 {
+		if _, err := tx.ExecContext(ctx, `ALTER TABLE moderation_records ADD COLUMN target_resource_id TEXT;`); err != nil {
+			return fmt.Errorf("extend Moderation Record schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 17, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Moderation Record schema: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -651,6 +685,10 @@ func initializeSchema(db *sql.DB) error {
 func (i *Instance) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", i.health)
+	mux.HandleFunc("GET /api/v1/admin/diagnostics", i.diagnosticsAPI)
+	if i.config.MetricsEnabled {
+		mux.HandleFunc("GET /metrics", i.metrics)
+	}
 	mux.HandleFunc("POST /api/v1/auth/setup", i.setupAPI)
 	mux.HandleFunc("POST /api/v1/auth/login", i.loginAPI)
 	mux.HandleFunc("POST /api/v1/auth/logout", i.logoutAPI)
@@ -721,6 +759,10 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /api/v1/reports", i.createReportAPI)
 	mux.HandleFunc("POST /api/v1/reports/{reportID}/resolve", i.resolveReportAPI)
 	mux.HandleFunc("GET /api/v1/moderation-records", i.moderationRecordsAPI)
+	mux.HandleFunc("POST /api/v1/moderation-actions", i.moderationActionAPI)
+	mux.HandleFunc("POST /api/v1/moderation-records/purge", i.purgeModerationRecordsAPI)
+	mux.HandleFunc("GET /api/v1/account/export", i.exportAccountAPI)
+	mux.HandleFunc("POST /api/v1/account/delete", i.deleteAccountAPI)
 	mux.HandleFunc("GET /api/v1/media", i.mediaWebSocket)
 	mux.HandleFunc("GET /api/v1/media/config", i.mediaConfigAPI)
 	mux.HandleFunc("GET /api/v1/soundboard", i.soundboardAPI)
@@ -731,6 +773,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("PUT /api/v1/soundboard/settings", i.soundboardSettingsAPI)
 	mux.HandleFunc("GET /api/v1/voice/{channelID}/participants", i.voiceParticipantsAPI)
 	mux.HandleFunc("GET /api/v1/dms/{dmID}/call", i.directCallAPI)
+	mux.HandleFunc("GET /api/v1/calls/current", i.currentDirectCallAPI)
 	mux.HandleFunc("POST /api/v1/dms/{dmID}/calls", i.startDirectCallAPI)
 	mux.HandleFunc("POST /api/v1/calls/{callID}/accept", i.acceptDirectCallAPI)
 	mux.HandleFunc("POST /api/v1/calls/{callID}/decline", i.declineDirectCallAPI)
@@ -782,7 +825,7 @@ func (i *Instance) routes() http.Handler {
 func openDatabase(dataDir string) (*sql.DB, error) {
 	databasePath := filepath.Join(dataDir, "allchat.db")
 	databaseURL := (&url.URL{Scheme: "file", Path: databasePath}).String()
-	dsn := databaseURL + "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)"
+	dsn := databaseURL + "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=wal_autocheckpoint(1000)&_pragma=cache_size(-16384)"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open SQLite: %w", err)

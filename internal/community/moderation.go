@@ -5,6 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -26,15 +28,16 @@ type Report struct {
 }
 
 type ModerationRecord struct {
-	ID              int64  `json:"id"`
-	ActorID         string `json:"actor_id"`
-	Action          string `json:"action"`
-	TargetMemberID  string `json:"target_member_id,omitempty"`
-	TargetMessageID string `json:"target_message_id,omitempty"`
-	ReportID        string `json:"report_id,omitempty"`
-	Reason          string `json:"reason"`
-	Outcome         string `json:"outcome"`
-	CreatedAt       string `json:"created_at"`
+	ID               int64  `json:"id"`
+	ActorID          string `json:"actor_id"`
+	Action           string `json:"action"`
+	TargetMemberID   string `json:"target_member_id,omitempty"`
+	TargetMessageID  string `json:"target_message_id,omitempty"`
+	TargetResourceID string `json:"target_resource_id,omitempty"`
+	ReportID         string `json:"report_id,omitempty"`
+	Reason           string `json:"reason"`
+	Outcome          string `json:"outcome"`
+	CreatedAt        string `json:"created_at"`
 }
 
 func (s *Service) CreateReport(ctx context.Context, reporter identity.Member, targetMemberID, targetMessageID, reason string) (Report, error) {
@@ -140,7 +143,7 @@ func (s *Service) ListModerationRecords(ctx context.Context, actor identity.Memb
 	if allowed, _ := s.HasPermission(ctx, actor.ID, PermissionViewAudit); !allowed {
 		return nil, ErrForbidden
 	}
-	rows, err := s.db.QueryContext(ctx, "SELECT id, actor_id, action, COALESCE(target_member_id,''), COALESCE(target_message_id,''), COALESCE(report_id,''), reason, outcome, created_at FROM moderation_records ORDER BY id DESC")
+	rows, err := s.db.QueryContext(ctx, "SELECT id, actor_id, action, COALESCE(target_member_id,''), COALESCE(target_message_id,''), COALESCE(report_id,''), reason, outcome, created_at, COALESCE(target_resource_id,'') FROM moderation_records ORDER BY id DESC")
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +151,148 @@ func (s *Service) ListModerationRecords(ctx context.Context, actor identity.Memb
 	var records []ModerationRecord
 	for rows.Next() {
 		var item ModerationRecord
-		if err := rows.Scan(&item.ID, &item.ActorID, &item.Action, &item.TargetMemberID, &item.TargetMessageID, &item.ReportID, &item.Reason, &item.Outcome, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.ActorID, &item.Action, &item.TargetMemberID, &item.TargetMessageID, &item.ReportID, &item.Reason, &item.Outcome, &item.CreatedAt, &item.TargetResourceID); err != nil {
 			return nil, err
 		}
 		records = append(records, item)
 	}
 	return records, rows.Err()
+}
+
+type ModerationAction struct {
+	Action          string `json:"action"`
+	TargetMemberID  string `json:"target_member_id,omitempty"`
+	TargetMessageID string `json:"target_message_id,omitempty"`
+	InvitationID    string `json:"invitation_id,omitempty"`
+	Reason          string `json:"reason"`
+	DurationMinutes int    `json:"duration_minutes,omitempty"`
+}
+
+func (s *Service) ApplyModeration(ctx context.Context, actor identity.Member, input ModerationAction) (ModerationRecord, error) {
+	input.Action, input.Reason = strings.TrimSpace(input.Action), strings.TrimSpace(input.Reason)
+	if utf8.RuneCountInString(input.Reason) < 3 || utf8.RuneCountInString(input.Reason) > 1000 {
+		return ModerationRecord{}, ErrInvalidInput
+	}
+	if input.Action != "delete_message" && input.Action != "revoke_invitation" {
+		if err := s.CanModerateMember(ctx, actor, input.TargetMemberID); err != nil {
+			return ModerationRecord{}, err
+		}
+	} else if allowed, _ := s.HasPermission(ctx, actor.ID, PermissionModerate); !allowed {
+		return ModerationRecord{}, ErrForbidden
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return ModerationRecord{}, err
+	}
+	defer tx.Rollback()
+	now, outcome := databaseTime(time.Now()), "applied"
+	switch input.Action {
+	case "warn":
+		if input.TargetMemberID == "" {
+			return ModerationRecord{}, ErrInvalidInput
+		}
+	case "timeout", "suspend":
+		if input.DurationMinutes < 1 || input.DurationMinutes > 525600 {
+			return ModerationRecord{}, ErrInvalidInput
+		}
+		column := "timed_out_until"
+		if input.Action == "suspend" {
+			column = "suspended_until"
+		}
+		until := databaseTime(time.Now().Add(time.Duration(input.DurationMinutes) * time.Minute))
+		if _, err = tx.ExecContext(ctx, "UPDATE members SET "+column+"=? WHERE id=?", until, input.TargetMemberID); err != nil {
+			return ModerationRecord{}, err
+		}
+		outcome = "applied until " + until
+		if input.Action == "suspend" {
+			if _, err = tx.ExecContext(ctx, "UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL", now, input.TargetMemberID); err != nil {
+				return ModerationRecord{}, err
+			}
+		}
+	case "kick":
+		result, e := tx.ExecContext(ctx, "UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL", now, input.TargetMemberID)
+		if e != nil {
+			return ModerationRecord{}, e
+		}
+		count, _ := result.RowsAffected()
+		outcome = "revoked " + strconv.FormatInt(count, 10) + " sessions"
+	case "revoke_invitation":
+		result, e := tx.ExecContext(ctx, "UPDATE invitations SET revoked_at=? WHERE id=? AND revoked_at IS NULL", now, input.InvitationID)
+		if e != nil {
+			return ModerationRecord{}, e
+		}
+		if count, _ := result.RowsAffected(); count != 1 {
+			return ModerationRecord{}, ErrNotFound
+		}
+	case "delete_message":
+		var channelID string
+		err = tx.QueryRowContext(ctx, "SELECT channel_id FROM messages WHERE id=? AND deleted_at IS NULL", input.TargetMessageID).Scan(&channelID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ModerationRecord{}, ErrNotFound
+		}
+		if err != nil {
+			return ModerationRecord{}, err
+		}
+		if _, err = tx.ExecContext(ctx, "UPDATE messages SET body=NULL, rendered_html='', edited_at=NULL, deleted_at=? WHERE id=?", now, input.TargetMessageID); err != nil {
+			return ModerationRecord{}, err
+		}
+		if _, err = tx.ExecContext(ctx, "DELETE FROM message_search WHERE message_id=?", input.TargetMessageID); err != nil {
+			return ModerationRecord{}, err
+		}
+		if err = s.markMessageAttachmentsForGC(ctx, tx, input.TargetMessageID); err != nil {
+			return ModerationRecord{}, err
+		}
+		var message Message
+		e := tx.QueryRowContext(ctx, `SELECT id,channel_id,author_id,sequence,created_at FROM messages WHERE id=?`, input.TargetMessageID).Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.Sequence, &message.CreatedAt)
+		if e != nil {
+			return ModerationRecord{}, e
+		}
+		message.Deleted = true
+		if err = appendRealtimeEvent(ctx, tx, "message.deleted", channelID, message); err != nil {
+			return ModerationRecord{}, err
+		}
+	default:
+		return ModerationRecord{}, ErrInvalidInput
+	}
+	result, err := tx.ExecContext(ctx, `INSERT INTO moderation_records(actor_id,action,target_member_id,target_message_id,target_resource_id,reason,outcome,created_at) VALUES(?,?,NULLIF(?,''),NULLIF(?,''),NULLIF(?,''),?,?,?)`, actor.ID, input.Action, input.TargetMemberID, input.TargetMessageID, input.InvitationID, input.Reason, outcome, now)
+	if err != nil {
+		return ModerationRecord{}, err
+	}
+	id, _ := result.LastInsertId()
+	if err = tx.Commit(); err != nil {
+		return ModerationRecord{}, err
+	}
+	return ModerationRecord{ID: id, ActorID: actor.ID, Action: input.Action, TargetMemberID: input.TargetMemberID, TargetMessageID: input.TargetMessageID, TargetResourceID: input.InvitationID, Reason: input.Reason, Outcome: outcome, CreatedAt: now}, nil
+}
+
+func (s *Service) PurgeModerationRecords(ctx context.Context, actor identity.Member, before string) (ModerationRecord, error) {
+	if !actor.Owner {
+		return ModerationRecord{}, ErrForbidden
+	}
+	cutoff, err := time.Parse(time.RFC3339, before)
+	if err != nil || !cutoff.Before(time.Now()) {
+		return ModerationRecord{}, ErrInvalidInput
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return ModerationRecord{}, err
+	}
+	defer tx.Rollback()
+	result, err := tx.ExecContext(ctx, "DELETE FROM moderation_records WHERE created_at < ?", databaseTime(cutoff))
+	if err != nil {
+		return ModerationRecord{}, err
+	}
+	count, _ := result.RowsAffected()
+	now, outcome := databaseTime(time.Now()), fmt.Sprintf("purged %d records before %s", count, databaseTime(cutoff))
+	insert, err := tx.ExecContext(ctx, "INSERT INTO moderation_records(actor_id,action,reason,outcome,created_at) VALUES(?,'purge_records','Owner maintenance action',?,?)", actor.ID, outcome, now)
+	if err != nil {
+		return ModerationRecord{}, err
+	}
+	id, _ := insert.LastInsertId()
+	if err = tx.Commit(); err != nil {
+		return ModerationRecord{}, err
+	}
+	return ModerationRecord{ID: id, ActorID: actor.ID, Action: "purge_records", Reason: "Owner maintenance action", Outcome: outcome, CreatedAt: now}, nil
 }
 
 func (s *Service) CanModerateMember(ctx context.Context, actor identity.Member, targetMemberID string) error {

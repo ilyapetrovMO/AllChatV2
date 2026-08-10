@@ -53,7 +53,7 @@ func TestSessionWithoutCSRFSecretIsRejected(t *testing.T) {
 	defer database.Close()
 	database.SetMaxOpenConns(1)
 	if _, err := database.Exec(`
-		CREATE TABLE members (id TEXT PRIMARY KEY, username TEXT, username_key TEXT, password_hash TEXT, created_at TEXT, display_name TEXT, avatar BLOB);
+		CREATE TABLE members (id TEXT PRIMARY KEY, username TEXT, username_key TEXT, password_hash TEXT, created_at TEXT, display_name TEXT, avatar BLOB, suspended_until TEXT);
 		CREATE TABLE community (id INTEGER PRIMARY KEY, owner_member_id TEXT);
 		CREATE TABLE sessions (token_hash BLOB PRIMARY KEY, member_id TEXT, created_at TEXT, last_seen_at TEXT, expires_at TEXT, revoked_at TEXT, session_id TEXT, user_agent TEXT, csrf_token_hash BLOB);
 		INSERT INTO members(id, username, username_key, password_hash, created_at) VALUES ('owner-id', 'owner', 'owner', 'unused', 'now');

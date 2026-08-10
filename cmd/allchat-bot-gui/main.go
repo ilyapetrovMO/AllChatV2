@@ -29,25 +29,30 @@ import (
 )
 
 type botProcess struct {
-	ID, Username   string
-	StartedAt      time.Time
-	Commands       []*exec.Cmd
-	Running        bool
-	activeChildren int
-	Exit           string
-	log            *logBuffer
-	controlDir     string
-	Chat, Voice    bool
-	Screen, Echo   bool
-	Roleplay       bool
-	stopping       bool
-	voiceBinary    string
-	voiceEnv       []string
-	voiceCommand   *exec.Cmd
-	requestedUntil time.Time
+	ID, Username                          string
+	StartedAt                             time.Time
+	Commands                              []*exec.Cmd
+	Running                               bool
+	activeChildren                        int
+	Exit                                  string
+	log                                   *logBuffer
+	controlDir                            string
+	Chat, Voice                           bool
+	Screen, Echo                          bool
+	Roleplay                              bool
+	GenerateAudioChance, ReplyAudioChance int
+	stopping                              bool
+	voiceBinary                           string
+	voiceEnv                              []string
+	voiceCommand                          *exec.Cmd
+	requestedUntil                        time.Time
 }
 
-type botConfig struct{ Chat, Voice, Screen, Echo, Roleplay bool }
+type botConfig struct {
+	Chat, Voice, Screen, Echo, Roleplay                                        bool
+	PublicMessageChance, ChannelReplyChance, DMReplyChance, VoiceRequestChance int
+	GenerateAudioChance, ReplyAudioChance                                      int
+}
 
 type logBuffer struct {
 	mu    sync.Mutex
@@ -161,17 +166,18 @@ func (m *manager) spawn(config botConfig, username, baseURL, password, invite, i
 		return err
 	}
 	buffer := &logBuffer{}
-	bot := &botProcess{ID: id, Username: username, StartedAt: time.Now(), Running: true, log: buffer, controlDir: controlDir, Chat: config.Chat, Voice: config.Voice, Screen: config.Screen, Echo: config.Echo, Roleplay: config.Roleplay}
+	bot := &botProcess{ID: id, Username: username, StartedAt: time.Now(), Running: true, log: buffer, controlDir: controlDir, Chat: config.Chat, Voice: config.Voice, Screen: config.Screen, Echo: config.Echo, Roleplay: config.Roleplay, GenerateAudioChance: config.GenerateAudioChance, ReplyAudioChance: config.ReplyAudioChance}
 	baseEnv := append(os.Environ(), "ALLCHAT_BOT_URL="+baseURL, "ALLCHAT_BOT_PASSWORD="+password, "ALLCHAT_BOT_INVITE="+invite, "ALLCHAT_BOT_REGISTER_FIRST=1", "ALLCHAT_BOT_CONTROL_DIR="+controlDir)
 	if config.Chat {
 		binary, err := m.binary("allchat-bot")
 		if err != nil {
 			return err
 		}
-		command := exec.Command(binary, "-username", username, "-interval", interval)
-		if config.Roleplay {
-			command.Args = append(command.Args, "-spontaneous-dm-chance", "6")
-		}
+		command := exec.Command(binary, "-username", username, "-interval", interval,
+			"-public-message-chance", strconv.Itoa(config.PublicMessageChance),
+			"-channel-reply-chance", strconv.Itoa(config.ChannelReplyChance),
+			"-dm-reply-chance", strconv.Itoa(config.DMReplyChance),
+			"-voice-request-chance", strconv.Itoa(config.VoiceRequestChance))
 		command.Dir, command.Stdout, command.Stderr, command.Env = m.repo, buffer, buffer, baseEnv
 		bot.Commands = append(bot.Commands, command)
 	}
@@ -414,7 +420,14 @@ func (m *manager) runSimulationSession() {
 			return
 		case <-ticker.C:
 			bot := selected[rand.IntN(len(selected))]
-			_ = m.playMelody(bot.ID)
+			if chancePercent(bot.GenerateAudioChance) {
+				_ = m.playMelody(bot.ID)
+				for _, listener := range selected {
+					if listener.ID != bot.ID && chancePercent(listener.ReplyAudioChance) {
+						time.AfterFunc(time.Duration(500+rand.IntN(2000))*time.Millisecond, func() { _ = m.playMelody(listener.ID) })
+					}
+				}
+			}
 			if bot.Screen && rand.IntN(3) == 0 {
 				_ = m.newScreenImage(bot.ID)
 			}
@@ -560,6 +573,20 @@ func (m *manager) authorized(request *http.Request) bool {
 	return request.FormValue("csrf") == m.csrf
 }
 
+func formChance(request *http.Request, name string, fallback int) int {
+	value := strings.TrimSpace(request.FormValue(name))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return -1
+	}
+	return parsed
+}
+
+func chancePercent(value int) bool { return value >= 100 || (value > 0 && rand.IntN(100) < value) }
+
 func (m *manager) serve(response http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
 		if request.URL.Path == "/assets/htmx.min.js" {
@@ -589,6 +616,18 @@ func (m *manager) serve(response http.ResponseWriter, request *http.Request) {
 			return
 		}
 		config := botConfig{Chat: request.FormValue("chat") != "", Voice: request.FormValue("voice") != "", Screen: request.FormValue("screen") != "", Echo: request.FormValue("echo") != "", Roleplay: request.FormValue("roleplay") != ""}
+		config.PublicMessageChance = formChance(request, "public_message_chance", 10)
+		config.ChannelReplyChance = formChance(request, "channel_reply_chance", 3)
+		config.DMReplyChance = formChance(request, "dm_reply_chance", 35)
+		config.VoiceRequestChance = formChance(request, "voice_request_chance", 2)
+		config.GenerateAudioChance = formChance(request, "generate_audio_chance", 10)
+		config.ReplyAudioChance = formChance(request, "reply_audio_chance", 20)
+		for name, value := range map[string]int{"public message": config.PublicMessageChance, "channel reply": config.ChannelReplyChance, "DM reply": config.DMReplyChance, "voice request": config.VoiceRequestChance, "generate audio": config.GenerateAudioChance, "reply to audio": config.ReplyAudioChance} {
+			if value < 0 || value > 100 {
+				http.Error(response, name+" chance must be between 0 and 100", http.StatusBadRequest)
+				return
+			}
+		}
 		if config.Screen {
 			config.Voice = true
 		}
@@ -660,4 +699,4 @@ func main() {
 
 var page = template.Must(template.New("page").Parse(`{{define "bots"}}{{range .Bots}}<article class="bot"><header><strong>{{.Username}}</strong><span>{{.Capabilities}}</span><span class="status {{.Status}}">{{.Status}}</span><small>started {{.Started}}</small></header>{{if .Exit}}<p>{{.Exit}}</p>{{end}}<pre>{{.Logs}}</pre><div class="actions">{{if eq .Status "Running"}}{{if .Voice}}<form method="post" action="/bots/{{.ID}}/melody" hx-post="/bots/{{.ID}}/melody" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Play melody</button></form>{{if .Screen}}<form method="post" action="/bots/{{.ID}}/image" hx-post="/bots/{{.ID}}/image" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>New screen image</button></form>{{end}}{{end}}<form method="post" action="/bots/{{.ID}}/stop" hx-post="/bots/{{.ID}}/stop" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="secondary">Stop</button></form>{{end}}<form method="post" action="/bots/{{.ID}}/remove" hx-post="/bots/{{.ID}}/remove" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="danger">Remove</button></form></div></article>{{else}}<section class="panel">No bots are running yet.</section>{{end}}{{end}}<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AllChat Bot Lab</title><script src="/assets/htmx.min.js" defer></script><style>
 :root{color-scheme:dark;font:15px/1.4 system-ui;background:#1e1f22;color:#f2f3f5}*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1100px;margin:auto}h1{margin-top:0}.panel,.bot{background:#2b2d31;border:1px solid #444;border-radius:10px;padding:16px;margin-bottom:16px}form{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}label{display:grid;gap:4px;color:#b5bac1;font-size:.8rem}input,select,button{font:inherit;border:0;border-radius:5px;padding:9px;background:#1e1f22;color:#fff}button{background:#5865f2;font-weight:700;cursor:pointer}.danger{background:#da373c}.secondary{background:#4e5058}.wide{grid-column:span 2}.actions{display:flex;gap:8px}.actions form{display:block}.bot header{display:flex;align-items:center;gap:10px}.bot header strong{font-size:1.1rem}.status{padding:2px 8px;border-radius:999px;background:#4e5058}.status.Running{background:#248046}.bot pre{max-height:220px;overflow:auto;white-space:pre-wrap;background:#111214;padding:10px;border-radius:6px;color:#dbdee1}@media(max-width:760px){body{padding:10px}form{grid-template-columns:1fr}.wide{grid-column:auto}}
-</style></head><body><main><h1>AllChat Bot Lab</h1><p>Spawn bots with independent capabilities. Autonomous bots coordinate text, DM, and occasional voice sessions.</p><section class="panel"><form method="post" action="/bots" hx-post="/bots" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{.CSRF}}"><label>Count<input name="count" type="number" value="1" min="1" max="20" required></label><label>Message interval<input name="interval" value="3s" required></label><label class="wide">Instance URL<input name="url" value="http://127.0.0.1:8080" type="url" required></label><label><span><input name="chat" type="checkbox" checked> Text, DMs, images and files</span></label><label><span><input name="voice" type="checkbox" checked> Voice</span></label><label><span><input name="screen" type="checkbox" checked> Screen sharing</span></label><label><span><input name="echo" type="checkbox"> Echo room audio</span></label><label><span><input name="roleplay" type="checkbox"> Autonomous roleplay</span></label><label><span><input name="auto_password" type="checkbox" checked> Auto development password</span><input name="password" type="password" placeholder="Optional manual password"></label><label>Invitation token<input name="invite" autocomplete="off"></label><button type="submit">Spawn bots</button></form></section><section id="bot-list" hx-get="/bots/fragment" hx-trigger="every 1s" hx-swap="innerHTML">{{template "bots" .}}</section></main></body></html>`))
+</style></head><body><main><h1>AllChat Bot Lab</h1><p>Spawn bots with independent capabilities. Autonomous bots coordinate text, DM, and occasional voice sessions.</p><section class="panel"><form method="post" action="/bots" hx-post="/bots" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{.CSRF}}"><label>Count<input name="count" type="number" value="1" min="1" max="20" required></label><label>Action interval<input name="interval" value="10s" required></label><label>Scheduled public message %<input name="public_message_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to channel message %<input name="channel_reply_chance" type="number" value="3" min="0" max="100" required></label><label>Reply to DM %<input name="dm_reply_chance" type="number" value="35" min="0" max="100" required></label><label>Follow public voice request %<input name="voice_request_chance" type="number" value="2" min="0" max="100" required></label><label>Generate audio %<input name="generate_audio_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to audio with audio %<input name="reply_audio_chance" type="number" value="20" min="0" max="100" required></label><label class="wide">Instance URL<input name="url" value="http://127.0.0.1:8080" type="url" required></label><label><span><input name="chat" type="checkbox" checked> Text, DMs, images and files</span></label><label><span><input name="voice" type="checkbox" checked> Voice</span></label><label><span><input name="screen" type="checkbox" checked> Screen sharing</span></label><label><span><input name="echo" type="checkbox"> Echo room audio</span></label><label><span><input name="roleplay" type="checkbox"> Autonomous roleplay</span></label><label><span><input name="auto_password" type="checkbox" checked> Auto development password</span><input name="password" type="password" placeholder="Optional manual password"></label><label>Invitation token<input name="invite" autocomplete="off"></label><button type="submit">Spawn bots</button></form></section><section id="bot-list" hx-get="/bots/fragment" hx-trigger="every 1s" hx-swap="innerHTML">{{template "bots" .}}</section></main></body></html>`))

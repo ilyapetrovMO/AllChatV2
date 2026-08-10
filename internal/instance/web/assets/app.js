@@ -15,6 +15,11 @@
         try { frame = JSON.parse(event.data); } catch (_) { this.emit("message", event); return; }
         if (frame.type !== "events" || !Array.isArray(frame.events)) { this.emit("message", event); return; }
         this.queue.push(...frame.events.map(item => JSON.stringify({type: item.type, cursor: item.cursor, channel_id: item.channel_id, payload: item.payload})));
+        if (this.queue.length > 1000) {
+          this.queue.length = 0;
+          this.emit("message", {data: JSON.stringify({type:"snapshot_required", cursor:frame.cursor})});
+          return;
+        }
         this.drain();
       });
     }
@@ -36,6 +41,18 @@
 
 (() => {
   "use strict";
+
+  // Keep user-facing strings and instant formatting behind one small seam so
+  // later locale packs do not need to rewrite feature code.
+  window.allchatText ||= Object.freeze({screenUnavailable: "Screen sharing is unavailable on this browser.", microphoneUnavailable: "Microphone access is unavailable on this browser."});
+  window.allchatFormatInstant ||= value => new Intl.DateTimeFormat(undefined, {dateStyle: "medium", timeStyle: "short"}).format(new Date(value));
+  const localizeInstants = root => root.querySelectorAll?.("time[data-utc]").forEach(node => { try { node.textContent = window.allchatFormatInstant(node.dataset.utc); } catch (_) {} });
+  localizeInstants(document);
+  new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => { if(node.nodeType !== 1)return;localizeInstants(node); }))).observe(document.documentElement, {subtree:true, childList:true});
+  const nameInteractiveMembers = root => root.querySelectorAll?.(".participant-list li, .voice-channel-members li").forEach(item => { item.tabIndex = 0; item.setAttribute("role", "button"); });
+  nameInteractiveMembers(document);
+  document.addEventListener("allchat:view-swapped", () => nameInteractiveMembers(document));
+  document.addEventListener("keydown", event => { if ((event.key === "Enter" || event.key === " ") && event.target.matches?.(".participant-list li, .voice-channel-members li")) { event.preventDefault(); event.target.click(); } });
 
   // Channel runtimes are installed by the SPA router without reloading head
   // scripts, so the conversation follower must exist in the persistent shell.
@@ -70,6 +87,16 @@
       toggle?.setAttribute("aria-expanded", "false");
       toggle?.focus();
     }
+  });
+
+  document.addEventListener("keydown", event => {
+    const item = event.target.closest?.('[role="menuitem"]');
+    if (!item || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const items = [...item.closest('[role="menu"]')?.querySelectorAll('[role="menuitem"]') || []].filter(candidate => !candidate.disabled);
+    if (!items.length) return;
+    event.preventDefault();
+    const index = items.indexOf(item), next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+    items[next].focus();
   });
 
   document.querySelectorAll("[data-confirm]").forEach(control => control.addEventListener("click", event => {
@@ -269,29 +296,39 @@
 
 	const installVoiceChannelPresence=async()=>{
 	  window.allchatVoicePending ||= new Map();
+	  const participantSnapshots=new Map();
 	  const response=await fetch("/api/v1/channels");if(!response.ok)return;
 	  const overview=await response.json(),voiceChannels=(overview.channels||[]).filter(channel=>channel.type==="voice");
 	  const discover=()=>{const rows=[];voiceChannels.forEach(channel=>document.querySelectorAll(`a[href="/channels/${CSS.escape(channel.id)}"]`).forEach(link=>{link.classList.add("voice-link");let list=link.nextElementSibling;if(!list?.matches(`[data-voice-participants="${CSS.escape(channel.id)}"]`)){list=document.createElement("ul");list.className="voice-channel-members participant-list";list.dataset.voiceParticipants=channel.id;list.setAttribute("aria-label",`${channel.name} participants`);link.after(list)}rows.push({channel,list})}));return rows};
-	  const refresh=async({channel,list})=>{try{const result=await fetch(`/api/v1/voice/${channel.id}/participants`);if(!result.ok)return;const state=await result.json(),profiles=state.members||{},participants=[...(state.participants||[])],pending=window.allchatVoicePending.get(channel.id);if(pending){profiles[pending.member_id]=pending.profile||profiles[pending.member_id]||{};const existing=participants.find(item=>item.member_id===pending.member_id);if(existing)existing.pending_status=pending.status;else participants.push({member_id:pending.member_id,connected:false,server_muted:false,speaking:false,pending_status:pending.status})}list.replaceChildren();participants.forEach(participant=>{const profile=profiles[participant.member_id]||{},item=document.createElement("li"),avatar=document.createElement(profile.avatar_url?"img":"span"),name=document.createElement("span");item.dataset.participantId=participant.member_id;item.classList.toggle("reconnecting",!participant.connected);item.classList.toggle("speaking",!!participant.speaking);if(profile.avatar_url){avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.textContent=Array.from(profile.username||state.names?.[participant.member_id]||"?")[0].toUpperCase();avatar.className="voice-member-fallback"}name.textContent=profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";item.append(avatar,name);if(participant.screen_sharing){const sharing=document.createElement("span");sharing.className="voice-member-screen";sharing.textContent="▣";sharing.title="Sharing screen";sharing.setAttribute("aria-label",sharing.title);item.append(sharing)}if(participant.pending_status){const pendingState=document.createElement("small");pendingState.className="voice-member-state";pendingState.textContent=participant.pending_status;item.append(pendingState)}if(participant.server_muted||participant.muted){const muted=document.createElement("span");muted.className="voice-member-muted";muted.textContent="⌁";muted.title=participant.server_muted?"Server muted":"Muted";muted.setAttribute("aria-label",muted.title);item.append(muted)}list.append(item)})}catch(_){}};
+	  const refresh=async({channel,list})=>{try{const result=await fetch(`/api/v1/voice/${channel.id}/participants`);if(!result.ok)return;const state=await result.json(),profiles=state.members||{},participants=[...(state.participants||[])],connected=new Set(participants.filter(item=>item.connected).map(item=>item.member_id)),previous=participantSnapshots.get(channel.id),pending=window.allchatVoicePending.get(channel.id);participantSnapshots.set(channel.id,connected);if(previous&&window.allchatActiveVoiceRoom===channel.id){const self=document.body.dataset.memberId,joined=[...connected].some(id=>id!==self&&!previous.has(id)),left=[...previous].some(id=>id!==self&&!connected.has(id));if(joined)window.allchatVoiceEarcon?.("join");if(left)window.allchatVoiceEarcon?.("leave")}if(pending){profiles[pending.member_id]=pending.profile||profiles[pending.member_id]||{};const existing=participants.find(item=>item.member_id===pending.member_id);if(existing)existing.pending_status=pending.status;else participants.push({member_id:pending.member_id,connected:false,server_muted:false,speaking:false,pending_status:pending.status})}list.replaceChildren();participants.forEach(participant=>{const profile=profiles[participant.member_id]||{},item=document.createElement("li"),avatar=document.createElement(profile.avatar_url?"img":"span"),name=document.createElement("span");item.dataset.participantId=participant.member_id;item.dataset.voiceRoom=channel.id;item.dataset.serverMuted=String(!!participant.server_muted);item.classList.toggle("reconnecting",!participant.connected);item.classList.toggle("speaking",!!participant.speaking);if(profile.avatar_url){avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.textContent=Array.from(profile.username||state.names?.[participant.member_id]||"?")[0].toUpperCase();avatar.className="voice-member-fallback"}name.textContent=profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";item.append(avatar,name);if(participant.screen_sharing){const sharing=document.createElement("span");sharing.className="voice-member-screen";sharing.textContent="▣";sharing.title="Sharing screen";sharing.setAttribute("aria-label",sharing.title);item.append(sharing)}if(participant.pending_status){const pendingState=document.createElement("small");pendingState.className="voice-member-state";pendingState.textContent=participant.pending_status;item.append(pendingState)}if(participant.server_muted||participant.muted){const muted=document.createElement("span");muted.className="voice-member-muted";muted.textContent="⌁";muted.title=participant.server_muted?"Server muted":"Muted";muted.setAttribute("aria-label",muted.title);item.append(muted)}list.append(item)})}catch(_){}};
 	  const refreshAll=()=>discover().forEach(refresh);document.addEventListener("allchat:voice-pending",refreshAll);document.addEventListener("allchat:view-swapped",refreshAll);await Promise.all(discover().map(refresh));setInterval(()=>{if(!document.hidden)refreshAll()},2000);
 	};
 	if(document.querySelector(".channel-nav"))installVoiceChannelPresence().catch(()=>{}).finally(()=>import("/assets/voice-sidebar.js").catch(()=>{}));
 	if(document.querySelector(".channel-nav"))import("/assets/channel-navigation.js").catch(()=>{});
 
   const conversation = document.querySelector(".conversation-layout");
-  if (conversation) {
+  if (document.body.dataset.memberId) {
     const popover = document.createElement("section");
     popover.className = "member-popover";
     popover.hidden = true;
     popover.setAttribute("aria-label", "Member profile");
     popover.innerHTML = `<div class="member-popover-banner"><button class="member-popover-more" type="button" aria-label="Member actions" aria-expanded="false">•••</button><div class="member-action-menu" role="menu" hidden><button type="button" role="menuitem" data-member-action="dm">Message</button><button type="button" role="menuitem" class="danger-text" data-member-action="block">Block</button><button type="button" role="menuitem" class="danger-text" data-member-action="report">Report Member</button><button type="button" role="menuitem" data-member-action="copy">Copy Member ID</button></div></div><div class="member-popover-body"><div class="member-popover-avatar"></div><h2></h2><p class="member-popover-username"></p><span class="badge member-popover-role" hidden>Community Owner</span><p class="member-popover-status" aria-live="polite"></p></div>`;
     document.body.append(popover);
+    const voiceMenu = document.createElement("div");
+    voiceMenu.className = "voice-member-context";
+    voiceMenu.hidden = true;
+    voiceMenu.setAttribute("role", "menu");
+    voiceMenu.innerHTML = `<button type="button" role="menuitem" data-voice-member-action="profile">Profile</button><button type="button" role="menuitem" data-voice-member-action="mention">Mention</button><button type="button" role="menuitem" data-voice-member-action="dm">Message</button><hr><button type="button" role="menuitem" data-voice-member-action="server-mute">Server Mute</button><button type="button" role="menuitem" class="danger-text" data-voice-member-action="disconnect">Disconnect</button><hr><button type="button" role="menuitem" data-voice-member-action="copy">Copy User ID</button>`;
+    document.body.append(voiceMenu);
     const more = popover.querySelector(".member-popover-more");
     const menu = popover.querySelector(".member-action-menu");
     const status = popover.querySelector(".member-popover-status");
     const currentMemberID = document.body.dataset.memberId;
     const csrf = document.querySelector('[name="csrf_token"]')?.value || "";
     let selectedMember;
+    let selectedVoiceItem;
+    let canModerate = false;
+    fetch("/api/v1/moderation-records?limit=1").then(response => {canModerate=response.ok}).catch(()=>{});
     let membersPromise;
     const members = () => membersPromise ||= fetch("/api/v1/members").then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load Member profile."))).then(value => value.members || value);
     const setActionsOpen = open => {
@@ -336,6 +373,7 @@
       popover.hidden = false;
     };
     document.addEventListener("click", async event => {
+      if (!event.target.closest(".voice-member-context")) voiceMenu.hidden = true;
       const trigger = event.target.closest(".message > strong, .participant-list li, .dm-profile-card");
       if (trigger) {
         event.preventDefault();
@@ -348,6 +386,35 @@
         return;
       }
       if (!popover.hidden && !event.target.closest(".member-popover")) popover.hidden = true;
+    });
+    document.addEventListener("contextmenu", async event => {
+      const item=event.target.closest("[data-voice-participants] > [data-participant-id]");
+      if(!item)return;
+      event.preventDefault();
+      selectedVoiceItem=item;
+      selectedMember=await identifyMember(item).catch(()=>null);
+      if(!selectedMember)return;
+      const own=selectedMember.id===currentMemberID;
+      voiceMenu.querySelector('[data-voice-member-action="mention"]').hidden=own;
+      voiceMenu.querySelector('[data-voice-member-action="dm"]').hidden=own;
+      voiceMenu.querySelector('[data-voice-member-action="server-mute"]').hidden=own||!canModerate;
+      voiceMenu.querySelector('[data-voice-member-action="disconnect"]').hidden=own||!canModerate;
+      voiceMenu.querySelector('[data-voice-member-action="server-mute"]').textContent=item.dataset.serverMuted==="true"?"Server Unmute":"Server Mute";
+      voiceMenu.hidden=false;
+      voiceMenu.style.left=`${Math.max(8,Math.min(innerWidth-224,event.clientX))}px`;
+      voiceMenu.style.top=`${Math.max(8,Math.min(innerHeight-voiceMenu.offsetHeight-8,event.clientY))}px`;
+    });
+    voiceMenu.addEventListener("click",async event=>{
+      const action=event.target.closest("[data-voice-member-action]")?.dataset.voiceMemberAction;
+      if(!action||!selectedMember||!selectedVoiceItem)return;
+      voiceMenu.hidden=true;
+      if(action==="profile")return showMember(selectedMember,selectedVoiceItem);
+      if(action==="copy")return navigator.clipboard.writeText(selectedMember.id);
+      if(action==="mention"){const input=document.getElementById("message-body");if(input){input.value+=`${input.value?" ":""}@${selectedMember.username} `;input.focus()}return}
+      if(action==="dm"){const response=await fetch("/api/v1/dms",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify({member_id:selectedMember.id})});if(response.ok)location.href=`/channels/${(await response.json()).id}`;return}
+      const room=selectedVoiceItem.dataset.voiceRoom,reason=prompt(action==="disconnect"?"Reason for disconnecting this Member? (optional)":"Reason for changing Server Mute? (optional)")||"";
+      const muted=selectedVoiceItem.dataset.serverMuted==="true",method=action==="disconnect"?"POST":muted?"DELETE":"PUT",suffix=action==="disconnect"?"disconnect":"mute";
+      await fetch(`/api/v1/media/rooms/${room}/participants/${selectedMember.id}/${suffix}`,{method,headers:{"Content-Type":"application/json","X-CSRF-Token":csrf},body:JSON.stringify({reason})});
     });
     more.addEventListener("click", () => setActionsOpen(menu.hidden));
     menu.addEventListener("click", async event => {
@@ -387,7 +454,14 @@
     });
   }
 
-  if (document.querySelector(".channel-topic")?.textContent.trim() === "Direct Message") {
-	import("/assets/call.js");
-  }
+  if (document.body.dataset.memberId) import("/assets/call.js");
+  const installAvatarControls=root=>{
+    const profileForm=root.querySelector?.('form[action="/profile"]');if(!profileForm||profileForm.querySelector("[data-avatar-control]"))return;
+    const control=document.createElement("fieldset");control.dataset.avatarControl="";control.innerHTML='<legend>Avatar</legend><div class="profile-avatar-editor"><img alt="Current avatar" hidden><span class="member-avatar-fallback">?</span><label>Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label><button type="button" data-avatar-save>Upload avatar</button><button type="button" class="button-ghost danger-text" data-avatar-remove>Remove avatar</button></div><p class="muted" data-avatar-status aria-live="polite"></p>';
+    profileForm.insertBefore(control,profileForm.firstElementChild?.nextElementSibling||profileForm.firstElementChild);const file=control.querySelector('input[type="file"]'),image=control.querySelector("img"),fallback=control.querySelector("span"),status=control.querySelector("[data-avatar-status]"),csrf=profileForm.querySelector('[name="csrf_token"]').value,avatarURL=document.querySelector('.member-summary img')?.src;
+    if(avatarURL){image.src=avatarURL;image.hidden=false;fallback.hidden=true}
+    control.querySelector("[data-avatar-save]").onclick=async()=>{if(!file.files[0]){status.textContent="Choose an image first.";return}const response=await fetch("/api/v1/profile/avatar",{method:"PUT",headers:{"X-CSRF-Token":csrf,"Content-Type":file.files[0].type||"application/octet-stream"},body:file.files[0]});status.textContent=response.ok?"Avatar updated.":"Could not update avatar.";if(response.ok){image.src=URL.createObjectURL(file.files[0]);image.hidden=false;fallback.hidden=true}};
+    control.querySelector("[data-avatar-remove]").onclick=async()=>{const response=await fetch("/api/v1/profile/avatar",{method:"DELETE",headers:{"X-CSRF-Token":csrf}});status.textContent=response.ok?"Avatar removed.":"Could not remove avatar.";if(response.ok){image.hidden=true;fallback.hidden=false}};
+  };
+  installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
 })();

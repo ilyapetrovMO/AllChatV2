@@ -26,6 +26,12 @@ func run(args []string) int {
 	if len(args) > 0 && args[0] == "recover-owner" {
 		return runRecoverOwner(args[1:], os.Stdin)
 	}
+	if len(args) > 0 && args[0] == "backup" {
+		return runBackup(args[1:])
+	}
+	if len(args) > 0 && args[0] == "restore" {
+		return runRestore(args[1:])
+	}
 	flags := flag.NewFlagSet("allchat", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	dataDir := flags.String("data-dir", "", "directory containing Instance data")
@@ -44,6 +50,7 @@ func run(args []string) int {
 	mediaParticipants := flags.Int("media-max-participants", 25, "maximum participants in one Media Session")
 	mediaAudioBitrate := flags.Int("media-audio-bitrate", 64000, "maximum sender audio bitrate in bits per second")
 	mediaScreenBitrate := flags.Int("media-screen-bitrate", 2500000, "maximum sender screen bitrate in bits per second")
+	metrics := flags.Bool("metrics", false, "enable the unlabeled Prometheus endpoint at /metrics")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -77,6 +84,7 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "invalid media bitrate configuration: %v\n", err)
 		return 2
 	}
+	config.MetricsEnabled = *metrics
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	app, err := instance.Open(config, logger)
@@ -92,6 +100,46 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "run Instance: %v\n", err)
 		return 1
 	}
+	return 0
+}
+
+func runBackup(args []string) int {
+	flags := flag.NewFlagSet("allchat backup", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	dataDir := flags.String("data-dir", "", "directory containing Instance data")
+	output := flags.String("output", "", "destination .tar.gz archive")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if *dataDir == "" || *output == "" || flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "backup requires --data-dir and --output")
+		return 2
+	}
+	if err := instance.Backup(context.Background(), *dataDir, *output); err != nil {
+		fmt.Fprintf(os.Stderr, "backup Instance: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(os.Stdout, "Backup written to %s\n", *output)
+	return 0
+}
+
+func runRestore(args []string) int {
+	flags := flag.NewFlagSet("allchat restore", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	dataDir := flags.String("data-dir", "", "new or empty Instance data directory")
+	input := flags.String("input", "", "source .tar.gz archive")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if *dataDir == "" || *input == "" || flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "restore requires --data-dir and --input")
+		return 2
+	}
+	if err := instance.Restore(context.Background(), *dataDir, *input); err != nil {
+		fmt.Fprintf(os.Stderr, "restore Instance: %v\n", err)
+		return 1
+	}
+	fmt.Fprintf(os.Stdout, "Backup restored to %s\n", *dataDir)
 	return 0
 }
 

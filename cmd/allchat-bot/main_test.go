@@ -27,6 +27,17 @@ func TestRandomBotContentIsNonEmpty(t *testing.T) {
 	}
 }
 
+func TestChanceHonorsDisabledAndCertainBoundaries(t *testing.T) {
+	for index := 0; index < 100; index++ {
+		if chance(0) {
+			t.Fatal("zero-percent chance fired")
+		}
+		if !chance(100) {
+			t.Fatal("certain chance did not fire")
+		}
+	}
+}
+
 func TestNewestIncomingAdvancesCursorAndIgnoresBotMessages(t *testing.T) {
 	messages := []message{
 		{ID: "old", AuthorID: "member", Sequence: 2, Body: "old"},

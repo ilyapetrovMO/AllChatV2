@@ -2,7 +2,7 @@ DEV_DATA_DIR ?= .dev/data
 DEV_LISTEN ?= 127.0.0.1:8080
 GOFLAGS ?= -buildvcs=false
 
-.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-bot-gui test test-ui test-ui-update vet build clean
+.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-bot-gui drop-db test test-ui test-ui-update vet build clean
 
 dev:
 	go run $(GOFLAGS) ./cmd/allchat --data-dir "$(DEV_DATA_DIR)" --listen "$(DEV_LISTEN)"
@@ -18,6 +18,9 @@ dev-echo-bot:
 
 dev-bot-gui:
 	go run $(GOFLAGS) ./cmd/allchat-bot-gui
+
+drop-db:
+	$(RM) -- "$(DEV_DATA_DIR)/allchat.db" "$(DEV_DATA_DIR)/allchat.db-wal" "$(DEV_DATA_DIR)/allchat.db-shm"
 
 test:
 	go test $(GOFLAGS) ./...

@@ -26,6 +26,7 @@ type mediaCommand struct {
 	Visible     bool                      `json:"visible,omitempty"`
 	Muted       bool                      `json:"muted,omitempty"`
 	SoundID     string                    `json:"sound_id,omitempty"`
+	Candidate   webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 }
 
 type mediaFrame struct {
@@ -37,6 +38,7 @@ type mediaFrame struct {
 	Error        string                     `json:"error,omitempty"`
 	MemberID     string                     `json:"member_id,omitempty"`
 	Sound        *community.SoundboardSound `json:"sound,omitempty"`
+	Candidate    *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 }
 
 func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +84,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	var answer webrtc.SessionDescription
 	var token string
 	forward := func(signal media.Signal) {
-		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID}
+		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate}
 		if signal.SoundID != "" {
 			frame.Sound = &community.SoundboardSound{ID: signal.SoundID, Name: signal.SoundName, Emoji: signal.SoundEmoji, AudioURL: signal.SoundURL}
 		}
@@ -120,6 +122,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		switch command.Type {
 		case "answer":
 			_ = i.media.HandleAnswer(member.ID, command.SDP)
+		case "candidate":
+			_ = i.media.AddICECandidate(member.ID, command.Candidate)
 		case "offer":
 			if answer, offerErr := i.media.HandleOffer(member.ID, command.SDP); offerErr == nil {
 				write(mediaFrame{Version: 1, Type: "answer", SDP: answer})

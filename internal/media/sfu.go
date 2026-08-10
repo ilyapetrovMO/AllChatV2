@@ -20,6 +20,7 @@ type Signal struct {
 	SoundName  string                     `json:"sound_name,omitempty"`
 	SoundEmoji string                     `json:"sound_emoji,omitempty"`
 	SoundURL   string                     `json:"sound_url,omitempty"`
+	Candidate  *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 }
 
 type Peer struct {
@@ -135,6 +136,12 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 			m.DisconnectPeer(memberID)
 		}
 	})
+	connection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
+		if candidate != nil {
+			value := candidate.ToJSON()
+			signal(Signal{Type: "candidate", Candidate: &value})
+		}
+	})
 	if err := connection.SetRemoteDescription(offer); err != nil {
 		m.RemovePeer(memberID)
 		return webrtc.SessionDescription{}, "", err
@@ -144,13 +151,22 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 		m.RemovePeer(memberID)
 		return webrtc.SessionDescription{}, "", err
 	}
-	gathered := webrtc.GatheringCompletePromise(connection)
 	if err := connection.SetLocalDescription(answer); err != nil {
 		m.RemovePeer(memberID)
 		return webrtc.SessionDescription{}, "", err
 	}
-	<-gathered
 	return *connection.LocalDescription(), joined.ResumeToken, nil
+}
+
+// AddICECandidate applies a trickled browser candidate to an active peer.
+func (m *Manager) AddICECandidate(memberID string, candidate webrtc.ICECandidateInit) error {
+	m.mu.Lock()
+	peer := m.peers[memberID]
+	m.mu.Unlock()
+	if peer == nil {
+		return ErrNotPresent
+	}
+	return peer.connection.AddICECandidate(candidate)
 }
 
 func audioLevelIndicatesSpeech(value byte) bool {

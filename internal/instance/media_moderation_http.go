@@ -1,7 +1,10 @@
 // AllChat is free software under the GNU Affero General Public License v3.0 or later.
 package instance
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 func (i *Instance) muteMediaParticipantAPI(w http.ResponseWriter, r *http.Request) {
 	i.moderateMediaParticipant(w, r, "mute")
@@ -29,9 +32,15 @@ func (i *Instance) moderateMediaParticipant(w http.ResponseWriter, r *http.Reque
 	var input struct {
 		Reason string `json:"reason"`
 	}
-	if decodeJSON(r, &input) != nil || input.Reason == "" {
-		writeJSON(w, 400, map[string]string{"error": "reason is required"})
-		return
+	if r.Body != nil && r.ContentLength != 0 {
+		if decodeJSON(r, &input) != nil {
+			writeJSON(w, 400, map[string]string{"error": "invalid request"})
+			return
+		}
+	}
+	input.Reason = strings.TrimSpace(input.Reason)
+	if input.Reason == "" {
+		input.Reason = "No reason provided"
 	}
 	if err := i.community.RecordModeration(r.Context(), actor, "media_"+action, targetID, input.Reason, "requested"); err != nil {
 		writeJSON(w, 500, map[string]string{"error": "moderation record failed"})

@@ -180,6 +180,7 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 		return
 	}
 	directMessages, _ := i.community.ListDirectMessages(r.Context(), member)
+	directMessages = directMessageShortlist(directMessages)
 	members, _ := i.identity.ListMembers(r.Context())
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

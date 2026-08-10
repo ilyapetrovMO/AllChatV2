@@ -96,6 +96,14 @@ func TestPageOffersAutomaticPasswordsAndVoiceControls(t *testing.T) {
 			t.Fatalf("page lacks capability toggle %s", capability)
 		}
 	}
+	for _, chance := range []string{`name="public_message_chance"`, `name="channel_reply_chance"`, `name="dm_reply_chance"`, `name="voice_request_chance"`, `name="generate_audio_chance"`, `name="reply_audio_chance"`} {
+		if !strings.Contains(output, chance) {
+			t.Fatalf("page lacks chance control %s", chance)
+		}
+	}
+	if !strings.Contains(output, `name="interval" value="10s"`) {
+		t.Fatal("page does not use the quieter interval default")
+	}
 }
 
 func TestGeneratedDevelopmentPasswordIsStableAndValidLength(t *testing.T) {

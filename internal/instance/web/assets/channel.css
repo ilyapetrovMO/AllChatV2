@@ -4,6 +4,7 @@
   grid-template-rows: 48px minmax(0, 1fr) auto;
   overflow: hidden;
 }
+.channel-content:has(> .call-banner:not([hidden])) { grid-template-rows: 48px auto minmax(0, 1fr) auto; }
 .conversation-layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; min-height: 0; }
 .conversation-layout.search-open { grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
 .conversation-layout.search-open .participant-sidebar { display: none; }
@@ -16,7 +17,7 @@
 .header-search { display: block; }
 .header-search input { width: 180px; height: 28px; padding: 4px 28px 4px 8px; background: var(--bg-input); font-size: .85rem; }
 .message-actions {
-  position: absolute; right: 16px; top: -18px; display: flex; gap: 0;
+  position: absolute; z-index: 2; right: 16px; top: 4px; display: flex; gap: 0;
   background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 4px;
   box-shadow: var(--shadow); opacity: 0; visibility: hidden; transform: translateY(3px);
   transition: opacity .12s, transform .12s;
@@ -99,9 +100,13 @@
 .voice-controls { display: flex; justify-content: center; gap: 10px; padding: 12px; border-radius: 10px; background: var(--bg-sidebar); }
 #remote-audio { display: none; }
 .shared-screen { width: min(100%, 960px); max-height: 65vh; margin: 16px auto; border-radius: 8px; background: #000; object-fit: contain; }
-.call-banner { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 8px 16px; background: #232428; border-bottom: 1px solid var(--border); }
+.call-banner { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; min-height: 48px; padding: 8px 16px; background: #232428; border-bottom: 1px solid var(--border); }
 .call-banner[hidden] { display: none; }
 .call-banner button { min-height: 32px; padding: 5px 10px; }
+.call-controls { display: flex; align-items: center; gap: 8px; }
+.call-media { flex: 1 0 100%; display: grid; place-items: center; }
+.call-media:empty { display: none; }
+.call-media audio { display: none; }
 .member-popover { position: fixed; z-index: 20; width: min(300px, calc(100vw - 16px)); overflow: visible; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-sidebar); box-shadow: var(--shadow); }
 .member-popover[hidden] { display: none; }
 .member-popover-banner { position: relative; height: 86px; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, #7d2940, #a43b55); }
@@ -119,6 +124,13 @@
 .member-action-menu button { min-height: 36px; padding: 7px 9px; background: transparent; color: var(--text); text-align: left; }
 .member-action-menu button:hover { background: var(--brand); }
 .member-action-menu .danger-text { color: #ff7b7d; }
+.voice-channel-members li { cursor: pointer; }
+.voice-member-context { position: fixed; z-index: 40; display: grid; width: 216px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elevated); box-shadow: var(--shadow); }
+.voice-member-context[hidden] { display: none; }
+.voice-member-context button { min-height: 34px; padding: 7px 9px; border-radius: 4px; background: transparent; color: var(--text); text-align: left; }
+.voice-member-context button:hover { background: var(--brand); color: white; }
+.voice-member-context .danger-text { color: #ff7b7d; }
+.voice-member-context hr { width: 100%; margin: 6px 0; border: 0; border-top: 1px solid var(--border); }
 .member-panel { position: relative; display: flex; align-items: center; gap: 4px; min-height: 52px; padding: 6px 8px; background: #232428; }
 .member-summary { position: relative; min-width: 0; flex: 1; display: grid; grid-template-columns: 32px minmax(0, 1fr); grid-template-rows: 16px 16px; column-gap: 8px; padding: 3px; min-height: 38px; background: transparent; text-align: left; }
 .member-summary:hover, .member-settings:hover { background: var(--bg-hover); }
@@ -221,3 +233,4 @@
   .media-stage-tile.participant-tile > strong { font-size: .78rem; }
   .media-stage-tile:not(.sharing) .screen-sharing-badge { display: none; }
 }
+.message { content-visibility: auto; contain-intrinsic-size: 52px; }

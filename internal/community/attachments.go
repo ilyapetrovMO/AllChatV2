@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 
@@ -57,6 +58,9 @@ func configuredLimit(name string, fallback, ceiling int64) int64 {
 func (s *Service) UploadAttachment(ctx context.Context, member identity.Member, originalName, contentType string, source io.Reader) (Attachment, error) {
 	if s.dataDir == "" {
 		return Attachment{}, fmt.Errorf("Attachment storage is unavailable")
+	}
+	if err := requireStorageReserve(s.dataDir, s.maxAttachmentBytes); err != nil {
+		return Attachment{}, err
 	}
 	name := safeAttachmentName(originalName)
 	if name == "" {
@@ -107,6 +111,22 @@ func (s *Service) UploadAttachment(ctx context.Context, member identity.Member, 
 		return Attachment{}, err
 	}
 	return Attachment{ID: id, Name: name, ContentType: contentType, Size: size}, nil
+}
+
+func requireStorageReserve(dataDir string, incoming int64) error {
+	var stat syscall.Statfs_t
+	if err := syscall.Statfs(dataDir, &stat); err != nil {
+		return err
+	}
+	available := int64(stat.Bavail) * int64(stat.Bsize)
+	reserve := int64(256 << 20)
+	if value := configuredLimit("ALLCHAT_STORAGE_RESERVE_BYTES", reserve, 10<<30); value > reserve {
+		reserve = value
+	}
+	if available-incoming < reserve {
+		return fmt.Errorf("%w: storage reserve reached", ErrInvalidInput)
+	}
+	return nil
 }
 
 func safeAttachmentName(value string) string {

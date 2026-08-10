@@ -23,6 +23,17 @@ func (i *Instance) directCallAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+func (i *Instance) currentDirectCallAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticated(w, r)
+	if !ok {
+		return
+	}
+	if call, found := i.media.CurrentDirectCall(member.ID); found {
+		writeJSON(w, http.StatusOK, call)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
 func (i *Instance) startDirectCallAPI(w http.ResponseWriter, r *http.Request) {
 	member, _, ok := i.authenticatedCSRF(w, r)
 	if !ok {

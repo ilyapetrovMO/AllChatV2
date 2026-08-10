@@ -6,6 +6,8 @@
   nav.dataset.voiceSidebarReady = "true";
 
   let active = null;
+	let earconContext;
+	const prepareEarcons=async()=>{try{earconContext ||= new AudioContext();await earconContext.resume();window.allchatVoiceEarcon=kind=>{const now=earconContext.currentTime,notes=kind==="join"?[523.25,659.25]:[440,329.63];notes.forEach((frequency,index)=>{const oscillator=earconContext.createOscillator(),gain=earconContext.createGain(),start=now+index*.09;oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.08,start+.015);gain.gain.exponentialRampToValueAtTime(.0001,start+.13);oscillator.connect(gain).connect(earconContext.destination);oscillator.start(start);oscillator.stop(start+.14)})}}catch(_){}};
 	const currentProfile = () => {
 	  const summary = document.querySelector(".member-summary"), image = summary?.querySelector("img"), name = summary?.querySelector("strong")?.textContent.trim() || "You";
 	  return {id: document.body.dataset.memberId || "current-member", display_name: name, username: name, avatar_url: image?.getAttribute("src") || ""};
@@ -16,12 +18,14 @@
 	  document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
 	};
   const waitForGathering = peer => peer.iceGatheringState === "complete" ? Promise.resolve() : new Promise(resolve => {
-    const changed = () => {
-      if (peer.iceGatheringState === "complete") {
-        peer.removeEventListener("icegatheringstatechange", changed);
-        resolve();
-      }
+    const done = () => {
+      peer.removeEventListener("icecandidate", candidate);
+      peer.removeEventListener("icegatheringstatechange", changed);
+      resolve();
     };
+    const candidate = event => { if (event.candidate) done(); };
+    const changed = () => { if (peer.iceGatheringState === "complete") done(); };
+    peer.addEventListener("icecandidate", candidate);
     peer.addEventListener("icegatheringstatechange", changed);
   });
 
@@ -44,6 +48,7 @@
   };
   const toggleScreen = async session => {
     if(session.screenStream)return stopScreen(session);
+    if(!navigator.mediaDevices?.getDisplayMedia)throw new Error(window.allchatText?.screenUnavailable||"Screen sharing is unavailable on this browser.");
     const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}),track=stream.getVideoTracks()[0],senders=[];
     let sender;
     try{sender=session.peer.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]}).sender}catch(_){sender=session.peer.addTrack(track,stream)}
@@ -121,6 +126,7 @@
     const session = active;
 	setPending(session, "Disconnecting");
     active = null;
+	if(window.allchatActiveVoiceRoom===session.roomID)window.allchatActiveVoiceRoom="";
     if (explicit && session.socket?.readyState === WebSocket.OPEN) {
       session.socket.send(JSON.stringify({version: 1, type: "leave"}));
       sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
@@ -147,6 +153,7 @@
     const leave = panel.querySelector("[data-voice-leave]");
     const session = {roomID, name, panel, peer: null, socket: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), generation: 0, profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
+	prepareEarcons();
 	setPending(session, "Connecting");
     leave.addEventListener("click", () => disconnect());
     screen.addEventListener("click", () => toggleScreen(session).catch(error => { status.textContent=error?.message||"Screen sharing is unavailable.";panel.classList.add("error") }));
@@ -163,8 +170,11 @@
       status.textContent = "Requesting microphone";
       session.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false});
       if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
-      const ice = await fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []});
-      session.mediaConfig = await fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig);
+      const [ice,mediaConfig] = await Promise.all([
+        fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []}),
+        fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig)
+      ]);
+      session.mediaConfig = mediaConfig;
 
       const negotiate = async allowResume => {
         const generation = ++session.generation;
@@ -172,6 +182,9 @@
         session.socket?.close();
         const peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
         session.peer = peer;
+        const pendingCandidates=[];
+        const remoteCandidates=[];
+        peer.onicecandidate=event=>{if(!event.candidate)return;const frame=JSON.stringify({version:1,type:"candidate",candidate:event.candidate.toJSON()});if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(frame);else pendingCandidates.push(frame)};
         session.stream.getTracks().forEach(track => peer.addTrack(track, session.stream));
         peer.addTransceiver("audio", {direction: "sendrecv"});
         peer.ontrack = event => {
@@ -196,13 +209,12 @@
         };
         const offer = await peer.createOffer();
         await peer.setLocalDescription(offer);
-        await waitForGathering(peer);
         if (active !== session || generation !== session.generation) return;
         const socket = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/api/v1/media`);
         session.socket = socket;
         const resumeKey = `allchat-media-resume:${roomID}`;
         const resumeToken = allowResume ? sessionStorage.getItem(resumeKey) || "" : "";
-        socket.onopen = () => socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));
+        socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));pendingCandidates.splice(0).forEach(candidate=>socket.send(candidate))};
         socket.onmessage = async event => {
           if (active !== session || generation !== session.generation) return;
           const frame = JSON.parse(event.data);
@@ -218,10 +230,14 @@
           }
           if (frame.type === "answer") {
             await peer.setRemoteDescription(frame.sdp);
+            for(const candidate of remoteCandidates.splice(0))await peer.addIceCandidate(candidate);
             if (frame.resume_token) sessionStorage.setItem(resumeKey, frame.resume_token);
             status.textContent = "Voice Connected";
+			window.allchatActiveVoiceRoom=roomID;
             mute.disabled = screen.disabled = soundboard.disabled = false;
-			window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
+            window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
+          } else if(frame.type === "candidate" && frame.candidate) {
+            if(peer.remoteDescription)await peer.addIceCandidate(frame.candidate);else remoteCandidates.push(frame.candidate);
           } else if (frame.type === "offer") {
             await peer.setRemoteDescription(frame.sdp);
             const answer = await peer.createAnswer();

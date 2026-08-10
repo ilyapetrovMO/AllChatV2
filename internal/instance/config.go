@@ -95,8 +95,8 @@ func (c *Config) ConfigureTLS(certFile, keyFile, acmeHost, acmeEmail string) err
 		return fmt.Errorf("supplied TLS and ACME modes are mutually exclusive")
 	}
 	if acmeHost != "" {
-		if net.ParseIP(acmeHost) != nil || strings.ContainsAny(acmeHost, "/:\\ ") {
-			return fmt.Errorf("ACME host must be a public DNS hostname")
+		if strings.ContainsAny(acmeHost, "/\\ ") || (net.ParseIP(acmeHost) == nil && strings.Contains(acmeHost, ":")) {
+			return fmt.Errorf("ACME identifier must be a DNS hostname or IP address")
 		}
 	}
 	c.TLSCertFile = certFile

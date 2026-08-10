@@ -91,8 +91,11 @@ func TestTLSModesRejectAmbiguousOrInvalidConfiguration(t *testing.T) {
 	if config.ConfigureTLS("cert.pem", "key.pem", "example.com", "") == nil {
 		t.Fatal("supplied and ACME modes combined")
 	}
-	if config.ConfigureTLS("", "", "127.0.0.1", "") == nil {
-		t.Fatal("IP accepted as ACME hostname")
+	if err = config.ConfigureTLS("", "", "127.0.0.1", ""); err != nil {
+		t.Fatalf("IP rejected as ACME identifier: %v", err)
+	}
+	if config.ConfigureTLS("", "", "https://example.com", "") == nil {
+		t.Fatal("URL accepted as ACME identifier")
 	}
 }
 

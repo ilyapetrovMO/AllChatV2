@@ -26,8 +26,6 @@ import (
 	"allchat/internal/identity"
 	"allchat/internal/media"
 	"allchat/internal/relay"
-	"golang.org/x/crypto/acme/autocert"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -49,6 +47,7 @@ type Instance struct {
 	lock           *os.File
 	server         *http.Server
 	tlsConfig      *tls.Config
+	acme           *acmeCertificateManager
 	relay          *relay.Relay
 	turnURLs       []string
 	turnSecret     string
@@ -109,6 +108,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		return nil, fmt.Errorf("clean Attachment storage: %w", err)
 	}
 	var tlsConfig *tls.Config
+	var acmeManager *acmeCertificateManager
 	if config.TLSCertFile != "" {
 		certificate, loadErr := tls.LoadX509KeyPair(config.TLSCertFile, config.TLSKeyFile)
 		if loadErr != nil {
@@ -125,19 +125,18 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		tlsConfig = &tls.Config{MinVersion: tls.VersionTLS12, Certificates: []tls.Certificate{certificate}}
 	}
 	if config.ACMEHost != "" {
-		cacheDir := filepath.Join(config.DataDir, "acme-cache")
-		if err := os.MkdirAll(cacheDir, 0o700); err != nil {
-			return nil, fmt.Errorf("create ACME cache: %w", err)
+		manager, managerErr := newACMECertificateManager(config.ACMEHost, config.ACMEEmail, config.DataDir, logger)
+		if managerErr != nil {
+			return nil, managerErr
 		}
-		manager := &autocert.Manager{Prompt: autocert.AcceptTOS, Cache: autocert.DirCache(cacheDir), HostPolicy: autocert.HostWhitelist(config.ACMEHost), Email: config.ACMEEmail}
 		tlsConfig = manager.TLSConfig()
-		tlsConfig.MinVersion = tls.VersionTLS12
+		acmeManager = manager
 	}
 	mediaManager, mediaErr := media.NewManagerWithLimits(15*time.Second, config.MediaPortMin, config.MediaPortMax, config.MediaMaxParticipants)
 	if mediaErr != nil {
 		return nil, fmt.Errorf("configure media limits: %w", mediaErr)
 	}
-	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, turnIssued: map[string][]time.Time{}}
+	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}}
 	if config.TURNPublicIP != "" {
 		secret, secretErr := loadOrCreateSecret(filepath.Join(config.DataDir, "turn-secret"))
 		if secretErr != nil {
@@ -205,6 +204,9 @@ func (i *Instance) Run(ctx context.Context) error {
 		logArguments = append(logArguments, "setup_url", setupURL)
 	}
 	i.logger.Info("Instance listening", logArguments...)
+	if i.acme != nil {
+		go i.acme.Run(ctx.Done())
+	}
 	go i.runAttachmentCleanup(ctx)
 
 	serveResult := make(chan error, 1)

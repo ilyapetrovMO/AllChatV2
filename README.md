@@ -84,14 +84,66 @@ Members can download a portable JSON export from `GET /api/v1/account/export`. I
 
 ## Public deployment and live media
 
-Plain HTTP is intended only for local development or behind a trusted reverse proxy that terminates HTTPS. For direct HTTPS, provide an existing certificate and key:
+The following example installs one Instance on a Linux VPS. Commands assume a checkout containing the desired release and a host with systemd. Replace every `example.com`, email address, and documentation IP with values belonging to the deployment.
+
+### Build and install
+
+Build a static application binary, create a dedicated unprivileged account, and prepare persistent storage:
+
+```sh
+go build -trimpath -ldflags='-s -w' -o allchat ./cmd/allchat
+sudo install -o root -g root -m 0755 allchat /usr/local/bin/allchat
+sudo useradd --system --home-dir /var/lib/allchat --create-home --shell /usr/sbin/nologin allchat
+sudo install -d -o allchat -g allchat -m 0700 /var/lib/allchat
+sudo install -d -o allchat -g allchat -m 0700 /srv/backups/allchat
+```
+
+The systemd unit below grants only the capability needed to bind ports 80 and 443, so the Instance itself remains unprivileged. For a different service manager, grant the equivalent bind capability or place AllChat behind a trusted reverse proxy.
+
+### Automatic HTTPS
+
+For a DNS name, create an A or AAAA record pointing at the VPS, then start AllChat with the name:
+
+```sh
+allchat --data-dir /var/lib/allchat \
+  --acme chat.example.com --acme-email admin@example.com
+```
+
+For a VPS reached directly by a stable public IP, pass that IP instead:
+
+```sh
+allchat --data-dir /var/lib/allchat --acme 192.0.2.10
+```
+
+`--acme` defaults the application listener to `:443`. It obtains and renews certificates automatically, stores private ACME state under `DATA_DIR/acme-cache`, and uses Let's Encrypt's mandatory short-lived certificate profile for IP identifiers. TCP 80 must also reach the Instance for HTTP-01 validation. Browse to the same DNS name or IP supplied to `--acme`.
+
+To use an existing certificate instead, omit `--acme` and provide the certificate and key:
 
 ```sh
 allchat --data-dir /var/lib/allchat --listen :443 \
   --tls-cert /etc/allchat/fullchain.pem --tls-key /etc/allchat/privkey.pem
 ```
 
-Alternatively, `--acme-host chat.example.com --acme-email admin@example.com` enables automatic ACME certificates. The hostname must resolve publicly to the Instance and TCP 443 must reach it for TLS-ALPN validation. Certificates are persisted under `DATA_DIR/acme-cache` and reused across restarts. When HTTPS is active, browser sessions use Secure cookies.
+Plain HTTP is intended only for local development or behind a trusted reverse proxy that terminates HTTPS. When HTTPS is active, browser sessions use Secure cookies. The older `--acme-host` option remains supported for compatibility.
+
+### Firewall and live media
+
+For automatic HTTPS, the default SFU range, and the embedded Relay, configure UFW as follows:
+
+```sh
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp comment 'AllChat ACME'
+sudo ufw allow 443/tcp comment 'AllChat HTTPS'
+sudo ufw allow 3478/tcp comment 'AllChat Relay TCP'
+sudo ufw allow 3478/udp comment 'AllChat Relay UDP'
+sudo ufw allow 5349/tcp comment 'AllChat Relay TLS'
+sudo ufw allow 49160:49259/udp comment 'AllChat Relay allocation range'
+sudo ufw allow 50000:50100/udp comment 'AllChat SFU media range'
+sudo ufw enable
+sudo ufw status numbered
+```
+
+Open port 80 only when AllChat manages ACME certificates. Port 5349 is used by the embedded Relay only when Instance TLS is active. If the VPS provider has a separate network firewall, apply the same rules there.
 
 The SFU uses UDP `50000-50100` by default. Configure its bounded range, room capacity, and sender ceilings with `--media-min-port`, `--media-max-port`, `--media-max-participants`, `--media-audio-bitrate`, and `--media-screen-bitrate`, then allow that UDP range through the VPS firewall.
 
@@ -107,6 +159,70 @@ allchat --data-dir /var/lib/allchat --listen :443 \
 Allow UDP and TCP 3478 plus the configured UDP relay range. With Instance TLS enabled, TURN/TLS also listens on TCP 5349. On a VPS behind 1:1 NAT, `--turn-public-ip` is the advertised public address while `--turn-listen` binds the local interface; the relay range must be forwarded without port translation. AllChat issues authenticated Members short-lived per-Member TURN REST credentials, limits concurrent allocations, and denies internal/special relay destinations.
 
 To use an external TURN REST service instead of the embedded listener, omit `--turn-public-ip`, set `--external-turn-urls` to comma-separated `turn:`/`turns:` URLs, and provide its shared REST secret through `ALLCHAT_EXTERNAL_TURN_SECRET`. The secret must be at least 32 characters and is never returned to browsers.
+
+### systemd service
+
+Create `/etc/systemd/system/allchat.service`. For a DNS deployment, use:
+
+```ini
+[Unit]
+Description=AllChat Instance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=allchat
+Group=allchat
+WorkingDirectory=/var/lib/allchat
+ExecStart=/usr/local/bin/allchat --data-dir /var/lib/allchat --acme chat.example.com --acme-email admin@example.com --turn-public-ip 192.0.2.10
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/allchat
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace the ACME identifier and Relay public IP. If using an external Relay, replace `--turn-public-ip` with the external TURN flags and supply `ALLCHAT_EXTERNAL_TURN_SECRET` through a root-readable systemd environment file. Avoid placing secrets directly in the unit.
+
+Enable and inspect the Instance:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now allchat
+sudo systemctl status allchat
+sudo journalctl -u allchat -f
+```
+
+On first start, the journal contains a one-time setup URL. Open it promptly to create the Community Owner. Treat the bootstrap token in that URL as a secret.
+
+Check the public health endpoint after setup:
+
+```sh
+curl --fail --show-error https://chat.example.com/api/v1/health
+```
+
+### Backups and upgrades
+
+Schedule `allchat backup` to storage outside `/var/lib/allchat`, monitor backup failures, and periodically test restoration. Before upgrading, create an explicit backup, install the new binary, and restart:
+
+```sh
+sudo -u allchat /usr/local/bin/allchat backup \
+  --data-dir /var/lib/allchat \
+  --output /srv/backups/allchat/allchat-before-upgrade.tar.gz
+sudo install -o root -g root -m 0755 allchat /usr/local/bin/allchat
+sudo systemctl restart allchat
+curl --fail --show-error https://chat.example.com/api/v1/health
+```
+
+Retain the previous binary and its matching pre-upgrade backup until the new Instance has been verified. Schema migrations are forward-only; rollback means restoring the matching backup into a new or empty data directory.
 
 The Community Owner can inspect content-free operational health at `GET /api/v1/admin/diagnostics`. It reports SQLite and migration state, free storage, listener/TLS mode, configured SFU and Relay bounds, and pre-migration backup recency without exposing Member, Message, Session, or credential values. Pass `--metrics` to opt into the unauthenticated `/metrics` Prometheus endpoint; it is disabled by default and emits only Instance-level unlabeled gauges.
 

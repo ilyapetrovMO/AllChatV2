@@ -39,6 +39,7 @@ func run(args []string) int {
 	tlsCert := flags.String("tls-cert", "", "PEM TLS certificate file")
 	tlsKey := flags.String("tls-key", "", "PEM TLS private key file")
 	acmeHost := flags.String("acme-host", "", "public DNS hostname for automatic ACME TLS")
+	acme := flags.String("acme", "", "automatically manage HTTPS for a public DNS hostname or IP address")
 	acmeEmail := flags.String("acme-email", "", "contact email for ACME registration")
 	turnPublicIP := flags.String("turn-public-ip", "", "public IP advertised by the embedded TURN relay")
 	turnListen := flags.String("turn-listen", ":3478", "embedded TURN UDP listen address")
@@ -56,6 +57,10 @@ func run(args []string) int {
 	}
 	if flags.NArg() != 0 {
 		fmt.Fprintln(os.Stderr, "unexpected positional arguments")
+		return 2
+	}
+	if err := applyACMEShorthand(flags, listenAddress, acme, acmeHost); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid TLS configuration: %v\n", err)
 		return 2
 	}
 
@@ -101,6 +106,22 @@ func run(args []string) int {
 		return 1
 	}
 	return 0
+}
+
+func applyACMEShorthand(flags *flag.FlagSet, listenAddress, acme, acmeHost *string) error {
+	if *acme != "" && *acmeHost != "" {
+		return fmt.Errorf("--acme and --acme-host are mutually exclusive")
+	}
+	if *acme == "" {
+		return nil
+	}
+	*acmeHost = *acme
+	listenWasSet := false
+	flags.Visit(func(current *flag.Flag) { listenWasSet = listenWasSet || current.Name == "listen" })
+	if !listenWasSet {
+		*listenAddress = ":443"
+	}
+	return nil
 }
 
 func runBackup(args []string) int {

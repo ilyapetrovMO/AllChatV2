@@ -13,7 +13,8 @@ dev-bot:
 dev-voice-bot:
 	go run $(GOFLAGS) ./cmd/allchat-voice-bot
 
-dev-echo-bot: dev-voice-bot
+dev-echo-bot:
+	ALLCHAT_VOICE_BOT_SCREEN=1 go run $(GOFLAGS) ./cmd/allchat-voice-bot
 
 test:
 	go test $(GOFLAGS) ./...

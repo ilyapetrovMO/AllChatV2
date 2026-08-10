@@ -121,6 +121,22 @@ func TestSpeakingStateClearsAfterAudioStops(t *testing.T) {
 	}
 }
 
+func TestSpeakingStateStillDecaysAfterServerMuteCheck(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("speaker", "room"); err != nil {
+		t.Fatal(err)
+	}
+	manager.MarkSpeaking("speaker")
+	if manager.IsServerMuted("speaker") {
+		t.Fatal("speaker unexpectedly server muted")
+	}
+	time.Sleep(750 * time.Millisecond)
+	if participant := manager.Participants("room")[0]; participant.Speaking {
+		t.Fatalf("speaking state survived the final RTP packet: %+v", participant)
+	}
+}
+
 func TestAudioLevelRejectsQuietBackgroundEvenWithVADBit(t *testing.T) {
 	if audioLevelIndicatesSpeech(0x80 | 80) {
 		t.Fatal("quiet background level was classified as speech")

@@ -44,7 +44,9 @@ ALLCHAT_VOICE_BOT_INVITE='an unused Invitation token' \
 make dev-voice-bot
 ```
 
-After its first registration, the Invitation is no longer required. Speak in that Voice Channel to hear the bot return the active speaker's Opus audio. Configuration uses `ALLCHAT_VOICE_BOT_URL` (falling back to `ALLCHAT_BOT_URL`), `ALLCHAT_VOICE_BOT_USERNAME` (default `allchat-echo-bot`), `ALLCHAT_VOICE_BOT_PASSWORD`, and `ALLCHAT_VOICE_BOT_INVITE`. The generic bot password and Invitation variables are accepted as fallbacks.
+After its first registration, the Invitation is no longer required. Speak in that Voice Channel to hear the bot return the active speaker's Opus audio. The echo bot also shares its embedded SMPTE test image by default. Configuration uses `ALLCHAT_VOICE_BOT_URL` (falling back to `ALLCHAT_BOT_URL`), `ALLCHAT_VOICE_BOT_USERNAME` (default `allchat-echo-bot`), `ALLCHAT_VOICE_BOT_PASSWORD`, and `ALLCHAT_VOICE_BOT_INVITE`. The generic bot password and Invitation variables are accepted as fallbacks. Set `ALLCHAT_VOICE_BOT_SCREEN=0` for an audio-only bot.
+
+`make dev-echo-bot` is the explicit alias for the same echo-and-screen behavior. The image is encoded into the bot binary; FFmpeg or an external media file is not required at runtime.
 
 If the Owner credentials are lost, stop the Instance and pipe a replacement password to the offline recovery command:
 

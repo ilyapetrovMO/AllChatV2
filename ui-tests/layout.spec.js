@@ -39,7 +39,7 @@ test.beforeAll(async () => {
   const dm = await post(owner, '/api/v1/dms', {member_id: secondMember.id});
   await post(owner, `/api/v1/dms/${dm.id}/messages`, {body: 'This is a private conversation.'});
   await post(second, `/api/v1/dms/${dm.id}/messages`, {body: 'The participant pane belongs on the right.'});
-  fixture = {ownerState: await owner.storageState(), ownerMember, secondMember, textChannel, voiceChannel, dm};
+  fixture = {ownerState: await owner.storageState(), secondState: await second.storageState(), ownerMember, secondMember, textChannel, voiceChannel, dm};
   await owner.dispose();
   await second.dispose();
 });
@@ -138,3 +138,21 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
     await shot(page, `soundboard-settings-${viewport.name}.png`);
   });
 }
+
+test('SPA-opened channel receives remote messages before local input and starts at present', async ({page}) => {
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  const second = await request.newContext({baseURL, storageState: fixture.secondState});
+  for (let index = 0; index < 28; index++) {
+    await post(owner, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: `Scroll fixture ${String(index + 1).padStart(2, '0')}`});
+  }
+  await authenticate(page);
+  await page.goto('/');
+  await page.locator(`a[href="/channels/${fixture.textChannel.id}"]`).click();
+  await page.locator('#messages').waitFor();
+  const remoteBody = `Remote before local input ${Date.now()}`;
+  await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: remoteBody});
+  await expect(page.locator('#messages')).toContainText(remoteBody);
+  await expect.poll(() => page.locator('#messages').evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(3);
+  await owner.dispose();
+  await second.dispose();
+});

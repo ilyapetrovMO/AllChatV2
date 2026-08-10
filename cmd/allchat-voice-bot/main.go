@@ -5,9 +5,12 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -23,6 +26,7 @@ import (
 	"github.com/pion/interceptor"
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
+	"github.com/pion/webrtc/v4/pkg/media"
 )
 
 type channel struct {
@@ -35,6 +39,7 @@ type echoBot struct {
 	baseURL                    *url.URL
 	client                     *http.Client
 	username, password, invite string
+	shareScreen                bool
 }
 
 func main() {
@@ -53,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	bot := &echoBot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: username, password: password, invite: invite}
+	bot := &echoBot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: username, password: password, invite: invite, shareScreen: envEnabled("ALLCHAT_VOICE_BOT_SCREEN", true)}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := bot.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -99,6 +104,20 @@ func (b *echoBot) run(ctx context.Context) error {
 	}
 	if _, err = peer.AddTrack(echo); err != nil {
 		return err
+	}
+	if b.shareScreen {
+		screen, screenErr := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000}, "screen", "allchat-echo-bot-screen")
+		if screenErr != nil {
+			return screenErr
+		}
+		if _, screenErr = peer.AddTrack(screen); screenErr != nil {
+			return screenErr
+		}
+		frame, frameErr := dummyScreenFrame()
+		if frameErr != nil {
+			return frameErr
+		}
+		go publishDummyScreen(ctx, screen, frame)
 	}
 	var sourceMu sync.Mutex
 	var activeSource string
@@ -166,6 +185,9 @@ func (b *echoBot) run(ctx context.Context) error {
 		return err
 	}
 	log.Printf("voice echo bot %q joining %q; speak in the room to hear your audio returned", b.username, target.Name)
+	if b.shareScreen {
+		log.Printf("voice echo bot is sharing its embedded SMPTE test image")
+	}
 	for {
 		_, payload, readErr := socket.Read(ctx)
 		if readErr != nil {
@@ -326,4 +348,44 @@ func envOr(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func envEnabled(name string, fallback bool) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(name))) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	default:
+		return fallback
+	}
+}
+
+const dummyScreenIVF = "REtJRgAAIABWUDgwQAG0AAEAAAABAAAAAQAAAAAAAACnAgAAAAAAAAAAAACwJgCdASpAAbQAAAcIhYWIhYSIAgIC0MXF+Jfg9yldK+Afjf4Efrb/W98D+yXyCsD/gP4D/Jfwy/pPAA///0/7bF/Af6L/AeAB/gPWA/wH+Fev/1f+WS/0f4Znp/3X+kD/Vf8Ap23PUaRhlt308l+DGeX+HMZG6+sev/G8ndQHZlosBbZciM66FoZyIAZHz4swUL2kMaXz1j3c7dzVnLxLfmHZtpDGl89gwksSS9py8S35h3dYduxpaj63dzt3NWcvEt7Fsea2iEMTEJjdyIIv5PikfKUjOsZq+UpGesLVeGOpjOdS4o6N0tnlTWvWtFssUeQWw2d7tHuRfa1qJb1L5PGIQ3O8x4V41DRdWyIDa8CxwFBC9a1VU4flnZFmtxA2NTkRnUdTi1k7WxEMQxpa20T/LisvbGl89ZcyLs4A/v3xQAw3ceDi1ytQbMGOPoo1w6/RnBHPYRtGrqk+VT8Laafv4L28ETK+8OY1oOwOK7HYz1StFIYerWhUZ7GxTH0b+MzYZpiJtTJw9G4n7lvV88onxai60C+c74cQbOyR/mxWu8Di0NY547anYFb214wz5riR8sYsT2qCOGS0WJmfK0WM9tAClE8JSmUqTwpROSAKUBShLewwK2ms2gG8SQf5PKMAEqkH8wFgqtwMoFAANSChP/8fGjEgbzxuAeGXEFjtkAmzbwUmgv//noK19XYbOiXFCgxCoZeZnvkoBP6TN94U0huQNGniiYAAcE6iEAFYbf0FQKXH3gcU9KQ/jS3/0JheQVVnltuLRvvnV3+qQCXCH/wAduQCHvLK/ZIvs6MED0tNTJUAKeYpI9QACAP6rmB3HNLQKIhchmVAAWc/AAaCuNwfWrPahZ0hjMnABjv7QAABGYYeryEADFPHnAAAAAAAABlA"
+
+func dummyScreenFrame() ([]byte, error) {
+	ivf, err := base64.StdEncoding.DecodeString(dummyScreenIVF)
+	if err != nil || len(ivf) < 44 || string(ivf[:4]) != "DKIF" || string(ivf[8:12]) != "VP80" {
+		return nil, fmt.Errorf("decode embedded dummy screen")
+	}
+	size := int(binary.LittleEndian.Uint32(ivf[32:36]))
+	if size < 1 || 44+size > len(ivf) {
+		return nil, fmt.Errorf("embedded dummy screen frame is invalid")
+	}
+	return ivf[44 : 44+size], nil
+}
+
+func publishDummyScreen(ctx context.Context, track *webrtc.TrackLocalStaticSample, frame []byte) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		if err := track.WriteSample(media.Sample{Data: frame, Duration: time.Second}); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
 }

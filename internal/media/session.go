@@ -252,9 +252,6 @@ func (m *Manager) clearSpeaking(memberID string) {
 }
 func (m *Manager) IsServerMuted(memberID string) bool {
 	m.mu.Lock()
-	for _, timer := range m.speakingTimers {
-		timer.Stop()
-	}
 	defer m.mu.Unlock()
 	item := m.byMember[memberID]
 	return item != nil && item.participant.ServerMuted

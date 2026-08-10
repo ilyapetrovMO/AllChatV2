@@ -6,6 +6,7 @@ import (
 	"context"
 	crand "crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -37,7 +38,7 @@ type botProcess struct {
 	Exit                                  string
 	log                                   *logBuffer
 	controlDir                            string
-	Chat, Voice                           bool
+	Chat, Voice, Music                    bool
 	Screen, Echo                          bool
 	Roleplay                              bool
 	GenerateAudioChance, ReplyAudioChance int
@@ -49,7 +50,7 @@ type botProcess struct {
 }
 
 type botConfig struct {
-	Chat, Voice, Screen, Echo, Roleplay                                        bool
+	Chat, Voice, Music, Screen, Echo, Roleplay                                 bool
 	PublicMessageChance, ChannelReplyChance, DMReplyChance, VoiceRequestChance int
 	GenerateAudioChance, ReplyAudioChance                                      int
 }
@@ -157,8 +158,8 @@ func (m *manager) binary(command string) (string, error) {
 }
 
 func (m *manager) spawn(config botConfig, username, baseURL, password, invite, interval string) error {
-	if !config.Chat && !config.Voice {
-		return fmt.Errorf("select at least chat or voice")
+	if !config.Chat && !config.Voice && !config.Music {
+		return fmt.Errorf("select at least chat, voice, or music")
 	}
 	id := strconv.FormatInt(time.Now().UnixNano(), 36)
 	controlDir := filepath.Join(m.buildDir, "controls", id)
@@ -166,7 +167,7 @@ func (m *manager) spawn(config botConfig, username, baseURL, password, invite, i
 		return err
 	}
 	buffer := &logBuffer{}
-	bot := &botProcess{ID: id, Username: username, StartedAt: time.Now(), Running: true, log: buffer, controlDir: controlDir, Chat: config.Chat, Voice: config.Voice, Screen: config.Screen, Echo: config.Echo, Roleplay: config.Roleplay, GenerateAudioChance: config.GenerateAudioChance, ReplyAudioChance: config.ReplyAudioChance}
+	bot := &botProcess{ID: id, Username: username, StartedAt: time.Now(), Running: true, log: buffer, controlDir: controlDir, Chat: config.Chat, Voice: config.Voice, Music: config.Music, Screen: config.Screen, Echo: config.Echo, Roleplay: config.Roleplay, GenerateAudioChance: config.GenerateAudioChance, ReplyAudioChance: config.ReplyAudioChance}
 	baseEnv := append(os.Environ(), "ALLCHAT_BOT_URL="+baseURL, "ALLCHAT_BOT_PASSWORD="+password, "ALLCHAT_BOT_INVITE="+invite, "ALLCHAT_BOT_REGISTER_FIRST=1", "ALLCHAT_BOT_CONTROL_DIR="+controlDir)
 	if config.Chat {
 		binary, err := m.binary("allchat-bot")
@@ -196,6 +197,21 @@ func (m *manager) spawn(config botConfig, username, baseURL, password, invite, i
 			bot.Commands = append(bot.Commands, command)
 			bot.voiceCommand = command
 		}
+	}
+	if config.Music {
+		binary, err := m.binary("allchat-music-bot")
+		if err != nil {
+			return err
+		}
+		musicEnv := append(baseEnv,
+			"ALLCHAT_MUSIC_BOT_USERNAME="+username,
+			"ALLCHAT_MUSIC_BOT_PASSWORD="+password,
+			"ALLCHAT_MUSIC_BOT_INVITE="+invite,
+			"ALLCHAT_MUSIC_BOT_CONTROL_DIR="+controlDir,
+			"ALLCHAT_MUSIC_BOT_DATA_DIR="+filepath.Join(m.repo, ".dev", "music", id))
+		command := exec.Command(binary)
+		command.Dir, command.Stdout, command.Stderr, command.Env = m.repo, buffer, buffer, musicEnv
+		bot.Commands = append(bot.Commands, command)
 	}
 	for index, command := range bot.Commands {
 		if index > 0 && config.Chat && config.Voice {
@@ -255,6 +271,19 @@ func (m *manager) botAction(id string, action func(*botProcess) error) error {
 		return err
 	}
 	return nil
+}
+
+func (m *manager) musicControl(id, action string) error {
+	m.mu.Lock()
+	bot := m.bots[id]
+	m.mu.Unlock()
+	if bot == nil || !bot.Running || !bot.Music {
+		return fmt.Errorf("running music bot not found")
+	}
+	if action != "drop-signaling" && action != "drop-peer" && action != "enqueue-test-tone" {
+		return fmt.Errorf("invalid music control")
+	}
+	return os.WriteFile(filepath.Join(bot.controlDir, action), []byte(time.Now().Format(time.RFC3339Nano)), 0600)
 }
 
 func (m *manager) voiceCommand(bot *botProcess) *exec.Cmd {
@@ -536,6 +565,8 @@ type botView struct {
 	Logs         string `json:"logs"`
 	Voice        bool   `json:"voice"`
 	Screen       bool   `json:"screen"`
+	Music        bool   `json:"music"`
+	MusicStatus  string `json:"music_status"`
 }
 
 func (m *manager) views() []botView {
@@ -563,7 +594,34 @@ func (m *manager) views() []botView {
 		if bot.Roleplay {
 			capabilities = append(capabilities, "roleplay")
 		}
-		result = append(result, botView{ID: bot.ID, Capabilities: strings.Join(capabilities, " · "), Username: bot.Username, Started: bot.StartedAt.Format("15:04:05"), Status: status, Exit: bot.Exit, Logs: bot.log.String(), Voice: bot.Voice, Screen: bot.Screen})
+		musicStatus := ""
+		if bot.Music {
+			capabilities = append(capabilities, "music", "resilience controls")
+			if data, err := os.ReadFile(filepath.Join(bot.controlDir, "status.json")); err == nil {
+				var value struct {
+					Media struct {
+						State      string `json:"state"`
+						RoomID     string `json:"room_id"`
+						Recoveries int    `json:"recoveries"`
+						LastError  string `json:"last_error"`
+					} `json:"media"`
+					Player struct {
+						Current *struct{ Title string } `json:"current"`
+						Paused  bool
+					} `json:"player"`
+				}
+				if json.Unmarshal(data, &value) == nil {
+					musicStatus = fmt.Sprintf("media: %s · room: %s · recoveries: %d", value.Media.State, value.Media.RoomID, value.Media.Recoveries)
+					if value.Player.Current != nil {
+						musicStatus += " · playing: " + value.Player.Current.Title
+					}
+					if value.Media.LastError != "" {
+						musicStatus += " · last error: " + value.Media.LastError
+					}
+				}
+			}
+		}
+		result = append(result, botView{ID: bot.ID, Capabilities: strings.Join(capabilities, " · "), Username: bot.Username, Started: bot.StartedAt.Format("15:04:05"), Status: status, Exit: bot.Exit, Logs: bot.log.String(), Voice: bot.Voice, Screen: bot.Screen, Music: bot.Music, MusicStatus: musicStatus})
 	}
 	sort.Slice(result, func(left, right int) bool { return result[left].Started < result[right].Started })
 	return result
@@ -615,7 +673,11 @@ func (m *manager) serve(response http.ResponseWriter, request *http.Request) {
 			http.Error(response, "count must be between 1 and 20", http.StatusBadRequest)
 			return
 		}
-		config := botConfig{Chat: request.FormValue("chat") != "", Voice: request.FormValue("voice") != "", Screen: request.FormValue("screen") != "", Echo: request.FormValue("echo") != "", Roleplay: request.FormValue("roleplay") != ""}
+		config := botConfig{Chat: request.FormValue("chat") != "", Voice: request.FormValue("voice") != "", Music: request.FormValue("music") != "", Screen: request.FormValue("screen") != "", Echo: request.FormValue("echo") != "", Roleplay: request.FormValue("roleplay") != ""}
+		if config.Music {
+			// The music bot is a separate Member/process, not an added capability of a traffic bot.
+			config.Chat, config.Voice, config.Screen, config.Echo, config.Roleplay = false, false, false, false, false
+		}
 		config.PublicMessageChance = formChance(request, "public_message_chance", 10)
 		config.ChannelReplyChance = formChance(request, "channel_reply_chance", 3)
 		config.DMReplyChance = formChance(request, "dm_reply_chance", 35)
@@ -657,6 +719,12 @@ func (m *manager) serve(response http.ResponseWriter, request *http.Request) {
 		_ = m.playMelody(strings.TrimSuffix(strings.TrimPrefix(request.URL.Path, "/bots/"), "/melody"))
 	case strings.HasSuffix(request.URL.Path, "/image"):
 		_ = m.newScreenImage(strings.TrimSuffix(strings.TrimPrefix(request.URL.Path, "/bots/"), "/image"))
+	case strings.HasSuffix(request.URL.Path, "/drop-signaling"):
+		_ = m.musicControl(strings.TrimSuffix(strings.TrimPrefix(request.URL.Path, "/bots/"), "/drop-signaling"), "drop-signaling")
+	case strings.HasSuffix(request.URL.Path, "/drop-peer"):
+		_ = m.musicControl(strings.TrimSuffix(strings.TrimPrefix(request.URL.Path, "/bots/"), "/drop-peer"), "drop-peer")
+	case strings.HasSuffix(request.URL.Path, "/test-tone"):
+		_ = m.musicControl(strings.TrimSuffix(strings.TrimPrefix(request.URL.Path, "/bots/"), "/test-tone"), "enqueue-test-tone")
 	default:
 		http.NotFound(response, request)
 		return
@@ -697,6 +765,6 @@ func main() {
 	}
 }
 
-var page = template.Must(template.New("page").Parse(`{{define "bots"}}{{range .Bots}}<article class="bot"><header><strong>{{.Username}}</strong><span>{{.Capabilities}}</span><span class="status {{.Status}}">{{.Status}}</span><small>started {{.Started}}</small></header>{{if .Exit}}<p>{{.Exit}}</p>{{end}}<pre>{{.Logs}}</pre><div class="actions">{{if eq .Status "Running"}}{{if .Voice}}<form method="post" action="/bots/{{.ID}}/melody" hx-post="/bots/{{.ID}}/melody" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Play melody</button></form>{{if .Screen}}<form method="post" action="/bots/{{.ID}}/image" hx-post="/bots/{{.ID}}/image" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>New screen image</button></form>{{end}}{{end}}<form method="post" action="/bots/{{.ID}}/stop" hx-post="/bots/{{.ID}}/stop" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="secondary">Stop</button></form>{{end}}<form method="post" action="/bots/{{.ID}}/remove" hx-post="/bots/{{.ID}}/remove" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="danger">Remove</button></form></div></article>{{else}}<section class="panel">No bots are running yet.</section>{{end}}{{end}}<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AllChat Bot Lab</title><script src="/assets/htmx.min.js" defer></script><style>
+var page = template.Must(template.New("page").Parse(`{{define "bots"}}{{range .Bots}}<article class="bot"><header><strong>{{.Username}}</strong><span>{{.Capabilities}}</span><span class="status {{.Status}}">{{.Status}}</span><small>started {{.Started}}</small></header>{{if .Exit}}<p>{{.Exit}}</p>{{end}}{{if .MusicStatus}}<p>{{.MusicStatus}}</p>{{end}}<pre>{{.Logs}}</pre><div class="actions">{{if eq .Status "Running"}}{{if .Voice}}<form method="post" action="/bots/{{.ID}}/melody" hx-post="/bots/{{.ID}}/melody" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Play melody</button></form>{{if .Screen}}<form method="post" action="/bots/{{.ID}}/image" hx-post="/bots/{{.ID}}/image" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>New screen image</button></form>{{end}}{{end}}{{if .Music}}<form method="post" action="/bots/{{.ID}}/test-tone" hx-post="/bots/{{.ID}}/test-tone" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Test tone</button></form><form method="post" action="/bots/{{.ID}}/drop-signaling" hx-post="/bots/{{.ID}}/drop-signaling" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Drop signaling</button></form><form method="post" action="/bots/{{.ID}}/drop-peer" hx-post="/bots/{{.ID}}/drop-peer" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button>Drop peer</button></form>{{end}}<form method="post" action="/bots/{{.ID}}/stop" hx-post="/bots/{{.ID}}/stop" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="secondary">Stop</button></form>{{end}}<form method="post" action="/bots/{{.ID}}/remove" hx-post="/bots/{{.ID}}/remove" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="danger">Remove</button></form></div></article>{{else}}<section class="panel">No bots are running yet.</section>{{end}}{{end}}<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AllChat Bot Lab</title><script src="/assets/htmx.min.js" defer></script><style>
 :root{color-scheme:dark;font:15px/1.4 system-ui;background:#1e1f22;color:#f2f3f5}*{box-sizing:border-box}body{margin:0;padding:24px}main{max-width:1100px;margin:auto}h1{margin-top:0}.panel,.bot{background:#2b2d31;border:1px solid #444;border-radius:10px;padding:16px;margin-bottom:16px}form{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}label{display:grid;gap:4px;color:#b5bac1;font-size:.8rem}input,select,button{font:inherit;border:0;border-radius:5px;padding:9px;background:#1e1f22;color:#fff}button{background:#5865f2;font-weight:700;cursor:pointer}.danger{background:#da373c}.secondary{background:#4e5058}.wide{grid-column:span 2}.actions{display:flex;gap:8px}.actions form{display:block}.bot header{display:flex;align-items:center;gap:10px}.bot header strong{font-size:1.1rem}.status{padding:2px 8px;border-radius:999px;background:#4e5058}.status.Running{background:#248046}.bot pre{max-height:220px;overflow:auto;white-space:pre-wrap;background:#111214;padding:10px;border-radius:6px;color:#dbdee1}@media(max-width:760px){body{padding:10px}form{grid-template-columns:1fr}.wide{grid-column:auto}}
-</style></head><body><main><h1>AllChat Bot Lab</h1><p>Spawn bots with independent capabilities. Autonomous bots coordinate text, DM, and occasional voice sessions.</p><section class="panel"><form method="post" action="/bots" hx-post="/bots" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{.CSRF}}"><label>Count<input name="count" type="number" value="1" min="1" max="20" required></label><label>Action interval<input name="interval" value="10s" required></label><label>Scheduled public message %<input name="public_message_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to channel message %<input name="channel_reply_chance" type="number" value="3" min="0" max="100" required></label><label>Reply to DM %<input name="dm_reply_chance" type="number" value="35" min="0" max="100" required></label><label>Follow public voice request %<input name="voice_request_chance" type="number" value="2" min="0" max="100" required></label><label>Generate audio %<input name="generate_audio_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to audio with audio %<input name="reply_audio_chance" type="number" value="20" min="0" max="100" required></label><label class="wide">Instance URL<input name="url" value="http://127.0.0.1:8080" type="url" required></label><label><span><input name="chat" type="checkbox" checked> Text, DMs, images and files</span></label><label><span><input name="voice" type="checkbox" checked> Voice</span></label><label><span><input name="screen" type="checkbox" checked> Screen sharing</span></label><label><span><input name="echo" type="checkbox"> Echo room audio</span></label><label><span><input name="roleplay" type="checkbox"> Autonomous roleplay</span></label><label><span><input name="auto_password" type="checkbox" checked> Auto development password</span><input name="password" type="password" placeholder="Optional manual password"></label><label>Invitation token<input name="invite" autocomplete="off"></label><button type="submit">Spawn bots</button></form></section><section id="bot-list" hx-get="/bots/fragment" hx-trigger="every 1s" hx-swap="innerHTML">{{template "bots" .}}</section></main></body></html>`))
+</style></head><body><main><h1>AllChat Bot Lab</h1><p>Spawn synthetic traffic bots or a local music bot with media recovery controls.</p><section class="panel"><form method="post" action="/bots" hx-post="/bots" hx-target="#bot-list" hx-swap="innerHTML"><input type="hidden" name="csrf" value="{{.CSRF}}"><label>Count<input name="count" type="number" value="1" min="1" max="20" required></label><label>Action interval<input name="interval" value="10s" required></label><label>Scheduled public message %<input name="public_message_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to channel message %<input name="channel_reply_chance" type="number" value="3" min="0" max="100" required></label><label>Reply to DM %<input name="dm_reply_chance" type="number" value="35" min="0" max="100" required></label><label>Follow public voice request %<input name="voice_request_chance" type="number" value="2" min="0" max="100" required></label><label>Generate audio %<input name="generate_audio_chance" type="number" value="10" min="0" max="100" required></label><label>Reply to audio with audio %<input name="reply_audio_chance" type="number" value="20" min="0" max="100" required></label><label class="wide">Instance URL<input name="url" value="http://127.0.0.1:8080" type="url" required></label><label><span><input name="chat" type="checkbox" checked> Text, DMs, images and files</span></label><label><span><input name="voice" type="checkbox" checked> Voice</span></label><label><span><input name="music" type="checkbox"> Music bot and resilience harness</span></label><label><span><input name="screen" type="checkbox" checked> Screen sharing</span></label><label><span><input name="echo" type="checkbox"> Echo room audio</span></label><label><span><input name="roleplay" type="checkbox"> Autonomous roleplay</span></label><label><span><input name="auto_password" type="checkbox" checked> Auto development password</span><input name="password" type="password" placeholder="Optional manual password"></label><label>Invitation token<input name="invite" autocomplete="off"></label><button type="submit">Spawn bots</button></form></section><section id="bot-list" hx-get="/bots/fragment" hx-trigger="every 1s" hx-swap="innerHTML">{{template "bots" .}}</section></main></body></html>`))

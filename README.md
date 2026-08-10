@@ -50,6 +50,22 @@ After its first registration, the Invitation is no longer required. Speak in tha
 
 `make dev-echo-bot` is the explicit alias for the same echo-and-screen behavior. The image is encoded into the bot binary; FFmpeg or an external media file is not required at runtime.
 
+### Local music and resilience bot
+
+The music bot is an optional, separate development process. Install `ffmpeg`, `ffprobe`, and `yt-dlp`, create or reuse a Member password and Invitation, then run:
+
+```sh
+ALLCHAT_MUSIC_BOT_PASSWORD='development-password' \
+ALLCHAT_MUSIC_BOT_INVITE='development-invitation' \
+make dev-music-bot
+```
+
+It listens for `!` commands in Community Text Channels. The first playback request makes it follow the requester into their current Voice Room; while active, playback controls are accepted only from Members in that same room. Start with `!help`, or use `!play test:tone` for a deterministic WebRTC recovery test. Other common commands include `!play`, `!search`, `!pause`, `!resume`, `!seek`, `!replay`, `!skip`, `!stop`, `!queue`, `!nowplaying`, `!remove`, `!move`, `!clear`, `!shuffle`, `!loop`, `!volume`, and `!leave`.
+
+Runtime files live under `.dev/music` by default. Place local tracks in `.dev/music/library` and enqueue them with `!play local:relative/path.ogg`; paths outside that directory are rejected. Queue state is intentionally memory-only. Override the Instance URL, Member name, prefix, or data directory with `ALLCHAT_MUSIC_BOT_URL`, `ALLCHAT_MUSIC_BOT_USERNAME`, `ALLCHAT_MUSIC_BOT_PREFIX`, and `ALLCHAT_MUSIC_BOT_DATA_DIR`.
+
+The local bot GUI (`make dev-bot-gui`) can launch the music bot and displays its media state, current track, recovery count, and last error. Its controls can drop signaling, drop the peer connection, or enqueue a test tone. These fault controls use local files and are not exposed by the production Instance.
+
 If the Owner credentials are lost, stop the Instance and pipe a replacement password to the offline recovery command:
 
 ```sh

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AllChat</title>
+    <script src="/assets/htmx.min.js" defer></script>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { display: grid; min-height: 100vh; margin: 0; place-items: center; }
+      main { max-width: 40rem; padding: 2rem; }
+      button { font: inherit; padding: .6rem 1rem; }
+      pre { min-height: 1.5rem; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AllChat</h1>
+      <p>Your self-hosted Community Instance is running.</p>
+      <p><a href="/sessions">Manage signed-in devices</a></p>
+      <button type="button" hx-get="/api/v1/health" hx-target="#health">Check Instance health</button>
+      <pre id="health" aria-live="polite"></pre>
+    </main>
+  </body>
+</html>

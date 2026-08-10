@@ -1,0 +1,11 @@
+{
+  "name": "allchat-ui-tests",
+  "private": true,
+  "scripts": {
+    "test:ui": "playwright test",
+    "test:ui:update": "playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}

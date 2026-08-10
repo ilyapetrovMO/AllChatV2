@@ -1,0 +1,277 @@
+// AllChat is free software under the GNU Affero General Public License v3.0 or later.
+package community
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"html"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"allchat/internal/identity"
+)
+
+type Mention struct {
+	MemberID    string `json:"member_id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name,omitempty"`
+}
+
+type ReplyPreview struct {
+	MessageID  string `json:"message_id"`
+	AuthorName string `json:"author_name"`
+	Body       string `json:"body,omitempty"`
+	Deleted    bool   `json:"deleted"`
+}
+
+type Reaction struct {
+	Emoji string `json:"emoji"`
+	Count int    `json:"count"`
+	Me    bool   `json:"me"`
+}
+
+var (
+	markdownCode   = regexp.MustCompile("`([^`\\n]+)`")
+	markdownBold   = regexp.MustCompile(`\*\*([^*\n]+)\*\*`)
+	markdownItalic = regexp.MustCompile(`\*([^*\n]+)\*`)
+)
+
+func renderMarkdown(body string) string {
+	rendered := html.EscapeString(body)
+	rendered = markdownCode.ReplaceAllString(rendered, "<code>$1</code>")
+	rendered = markdownBold.ReplaceAllString(rendered, "<strong>$1</strong>")
+	rendered = markdownItalic.ReplaceAllString(rendered, "<em>$1</em>")
+	return strings.ReplaceAll(rendered, "\n", "<br>")
+}
+
+func validateReply(ctx context.Context, tx *sql.Tx, channelID, replyID string) error {
+	if replyID == "" {
+		return nil
+	}
+	var replyChannel string
+	if err := tx.QueryRowContext(ctx, "SELECT channel_id FROM messages WHERE id = ?", replyID).Scan(&replyChannel); err != nil || replyChannel != channelID {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func validateMentions(ctx context.Context, tx *sql.Tx, memberIDs []string) error {
+	if len(memberIDs) > 50 {
+		return ErrInvalidInput
+	}
+	for _, memberID := range uniqueStrings(memberIDs) {
+		var exists bool
+		if err := tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM members WHERE id = ?)", memberID).Scan(&exists); err != nil || !exists {
+			return ErrNotFound
+		}
+	}
+	return nil
+}
+
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]bool, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" && !seen[value] {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+type richQueryer interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+func (s *Service) decorateMessage(ctx context.Context, viewerID string, message *Message) error {
+	return s.decorateMessageWith(ctx, s.db, viewerID, message)
+}
+
+func (s *Service) decorateMessageWith(ctx context.Context, queryer richQueryer, viewerID string, message *Message) error {
+	var replyID string
+	var authorHasAvatar bool
+	if err := queryer.QueryRowContext(ctx, `SELECT COALESCE(msg.reply_to_message_id, ''), msg.rendered_html, author.avatar IS NOT NULL
+		FROM messages msg JOIN members author ON author.id = msg.author_id WHERE msg.id = ?`, message.ID).Scan(&replyID, &message.RenderedHTML, &authorHasAvatar); err != nil {
+		return err
+	}
+	if authorHasAvatar {
+		message.AuthorAvatarURL = "/api/v1/members/" + message.AuthorID + "/avatar"
+	}
+	if replyID != "" {
+		preview := &ReplyPreview{MessageID: replyID}
+		err := queryer.QueryRowContext(ctx, `SELECT COALESCE(NULLIF(m.display_name, ''), m.username), COALESCE(msg.body, ''), msg.deleted_at IS NOT NULL
+			FROM messages msg JOIN members m ON m.id = msg.author_id WHERE msg.id = ?`, replyID).Scan(&preview.AuthorName, &preview.Body, &preview.Deleted)
+		if err == nil {
+			if len([]rune(preview.Body)) > 120 {
+				preview.Body = string([]rune(preview.Body)[:120])
+			}
+			message.Reply = preview
+		}
+	}
+	rows, err := queryer.QueryContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, '') FROM message_mentions mm
+		JOIN members m ON m.id = mm.member_id WHERE mm.message_id = ? ORDER BY m.username_key`, message.ID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var mention Mention
+		if err := rows.Scan(&mention.MemberID, &mention.Username, &mention.DisplayName); err != nil {
+			rows.Close()
+			return err
+		}
+		message.Mentions = append(message.Mentions, mention)
+	}
+	rows.Close()
+	rows, err = queryer.QueryContext(ctx, `SELECT emoji, COUNT(*), MAX(member_id = ?) FROM message_reactions
+		WHERE message_id = ? GROUP BY emoji ORDER BY emoji`, viewerID, message.ID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var reaction Reaction
+		if err := rows.Scan(&reaction.Emoji, &reaction.Count, &reaction.Me); err != nil {
+			rows.Close()
+			return err
+		}
+		message.Reactions = append(message.Reactions, reaction)
+	}
+	rows.Close()
+	_ = queryer.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM pinned_messages WHERE message_id = ?)", message.ID).Scan(&message.Pinned)
+	attachments, err := s.messageAttachments(ctx, queryer, message.ID)
+	if err != nil {
+		return err
+	}
+	message.Attachments = attachments
+	return nil
+}
+
+func (s *Service) SetReaction(ctx context.Context, member identity.Member, messageID, emoji string, add bool) error {
+	if !validEmoji(emoji) {
+		return ErrInvalidInput
+	}
+	message, err := s.message(ctx, messageID)
+	if err != nil {
+		return ErrNotFound
+	}
+	if visible, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionViewChannels, true); !visible {
+		return ErrNotFound
+	}
+	if add {
+		if direct, err := s.isDirectMessage(ctx, message.ChannelID); err != nil {
+			return err
+		} else if direct {
+			blocked, err := s.directMessageBlocked(ctx, message.ChannelID)
+			if err != nil {
+				return err
+			}
+			if blocked {
+				return ErrForbidden
+			}
+		}
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if add {
+		_, err = tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_reactions(message_id, member_id, emoji, created_at) VALUES (?, ?, ?, ?)", messageID, member.ID, emoji, databaseTime(time.Now()))
+	} else {
+		_, err = tx.ExecContext(ctx, "DELETE FROM message_reactions WHERE message_id = ? AND member_id = ? AND emoji = ?", messageID, member.ID, emoji)
+	}
+	if err != nil {
+		return err
+	}
+	payload := map[string]any{"message_id": messageID, "member_id": member.ID, "emoji": emoji, "active": add}
+	if err := appendRealtimeEvent(ctx, tx, "reaction.updated", message.ChannelID, payload); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func validEmoji(value string) bool {
+	if value == "" || utf8.RuneCountInString(value) > 12 {
+		return false
+	}
+	for _, r := range value {
+		if unicode.Is(unicode.So, r) || unicode.Is(unicode.Sk, r) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Service) SetPinned(ctx context.Context, member identity.Member, messageID string, pinned bool) error {
+	message, err := s.message(ctx, messageID)
+	if err != nil {
+		return ErrNotFound
+	}
+	if allowed, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionSendMessages, false); !allowed {
+		return ErrForbidden
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if pinned {
+		_, err = tx.ExecContext(ctx, "INSERT OR IGNORE INTO pinned_messages(channel_id, message_id, pinned_by, pinned_at) VALUES (?, ?, ?, ?)", message.ChannelID, messageID, member.ID, databaseTime(time.Now()))
+	} else {
+		_, err = tx.ExecContext(ctx, "DELETE FROM pinned_messages WHERE message_id = ?", messageID)
+	}
+	if err != nil {
+		return err
+	}
+	if err := appendRealtimeEvent(ctx, tx, "pin.updated", message.ChannelID, map[string]any{"message_id": messageID, "pinned": pinned}); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *Service) PinnedMessages(ctx context.Context, member identity.Member, channelID string) ([]Message, error) {
+	visible, _ := s.CanUseChannel(ctx, member.ID, channelID, PermissionViewChannels, true)
+	if !visible {
+		return nil, ErrNotFound
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT msg.id FROM pinned_messages p JOIN messages msg ON msg.id = p.message_id
+		WHERE p.channel_id = ? ORDER BY p.pinned_at DESC`, channelID)
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	rows.Close()
+	result := make([]Message, 0, len(ids))
+	for _, id := range ids {
+		message, err := s.message(ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		var name string
+		_ = s.db.QueryRowContext(ctx, `SELECT COALESCE(NULLIF(m.display_name, ''), m.username) FROM members m WHERE m.id = ?`, message.AuthorID).Scan(&name)
+		message.AuthorName = name
+		if err := s.decorateMessage(ctx, member.ID, &message); err != nil {
+			return nil, err
+		}
+		result = append(result, message)
+	}
+	sort.SliceStable(result, func(a, b int) bool { return result[a].Sequence < result[b].Sequence })
+	return result, nil
+}

@@ -1,0 +1,249 @@
+(() => {
+  "use strict";
+
+  const nav = document.querySelector(".channel-nav");
+  if (!nav) return;
+  nav.dataset.voiceSidebarReady = "true";
+
+  let active = null;
+	const currentProfile = () => {
+	  const summary = document.querySelector(".member-summary"), image = summary?.querySelector("img"), name = summary?.querySelector("strong")?.textContent.trim() || "You";
+	  return {id: document.body.dataset.memberId || "current-member", display_name: name, username: name, avatar_url: image?.getAttribute("src") || ""};
+	};
+	const setPending = (session, status) => {
+	  window.allchatVoicePending ||= new Map();
+	  window.allchatVoicePending.set(session.roomID, {member_id: session.profile.id, profile: session.profile, status});
+	  document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
+	};
+  const waitForGathering = peer => peer.iceGatheringState === "complete" ? Promise.resolve() : new Promise(resolve => {
+    const changed = () => {
+      if (peer.iceGatheringState === "complete") {
+        peer.removeEventListener("icegatheringstatechange", changed);
+        resolve();
+      }
+    };
+    peer.addEventListener("icegatheringstatechange", changed);
+  });
+
+  const renegotiate = async session => {
+    if (!session.peer || session.socket?.readyState !== WebSocket.OPEN) return;
+    const offer = await session.peer.createOffer();
+    await session.peer.setLocalDescription(offer);
+    await waitForGathering(session.peer);
+    session.socket.send(JSON.stringify({version:1,type:"offer",sdp:session.peer.localDescription}));
+  };
+  const stopScreen = async session => {
+    const stream=session.screenStream;
+    session.screenStream=null;
+    stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
+    session.screenSenders.forEach(sender=>{try{session.peer?.removeTrack(sender)}catch(_){}});
+    session.screenSenders=[];session.screenSender=null;
+    session.panel.querySelector("[data-voice-screen]")?.classList.remove("active");
+    renderStage();
+    await renegotiate(session);
+  };
+  const toggleScreen = async session => {
+    if(session.screenStream)return stopScreen(session);
+    const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}),track=stream.getVideoTracks()[0],senders=[];
+    let sender;
+    try{sender=session.peer.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]}).sender}catch(_){sender=session.peer.addTrack(track,stream)}
+    session.screenStream=stream;session.screenSender=sender;senders.push(sender);stream.getAudioTracks().forEach(audio=>senders.push(session.peer.addTrack(audio,stream)));session.screenSenders=senders;
+    session.panel.querySelector("[data-voice-screen]")?.classList.add("active");
+    track.onended=()=>stopScreen(session).catch(()=>{});
+    renderStage();
+    await renegotiate(session);
+  };
+  let stageRenderSequence=0;
+  const renderStage = async () => {
+    const grid=document.querySelector("[data-media-stage-grid]"),roomID=document.querySelector("[data-media-stage]")?.dataset.mediaStage;
+    if(!grid||!active||roomID!==active.roomID)return;
+    const session=active,sequence=++stageRenderSequence;
+    let state={participants:[],members:{},names:{}};
+    try{const response=await fetch(`/api/v1/voice/${roomID}/participants`);if(response.ok)state=await response.json()}catch(_){}
+    if(sequence!==stageRenderSequence||active!==session||!grid.isConnected)return;
+    const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[];
+    const screenTile=(key,label,video)=>{let tile=existing.get(key);if(!tile){tile=document.createElement("button");tile.type="button";tile.className="media-stage-tile screen-tile";tile.dataset.stageKey=key;tile.onclick=()=>tile.classList.toggle("expanded")}tile.setAttribute("aria-label",label);if(video.parentElement!==tile)tile.replaceChildren(video);desired.push(tile)};
+    if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screenTile("screen:local","Your shared screen",local)}
+    for(const [trackID,video] of session.remoteVideos||[])screenTile(`screen:${trackID}`,"Shared screen",video);
+    for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{};let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;tile.append(document.createElement("span"),document.createElement("strong"))}tile.classList.toggle("speaking",!!participant.speaking);let avatar=tile.firstElementChild;const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if(participant.screen_sharing&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!participant.screen_sharing){badge?.remove()}desired.push(tile)}
+    if(!desired.length){let empty=existing.get("empty");if(!empty){empty=document.createElement("p");empty.className="media-stage-empty";empty.dataset.stageKey="empty";empty.textContent="No one is connected to this Voice Room."}desired.push(empty)}
+    desired.forEach((node,index)=>{if(grid.children[index]!==node)grid.insertBefore(node,grid.children[index]||null)});
+    const keep=new Set(desired);for(const node of [...grid.children])if(!keep.has(node))node.remove();
+  };
+  let audioContext;
+  const playSound=async sound=>{try{audioContext ||= new AudioContext();await audioContext.resume();const buffer=await fetch(sound.audio_url).then(response=>response.arrayBuffer()).then(data=>audioContext.decodeAudioData(data));const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);source.start()}catch(_){const audio=new Audio(sound.audio_url);audio.play().catch(()=>{})}};
+  const openSoundboard=async(session,anchor)=>{
+    document.querySelector(".soundboard-popover")?.remove();
+    const popover=document.createElement("div");popover.className="soundboard-popover";popover.setAttribute("role","dialog");popover.setAttribute("aria-label","Community soundboard");popover.innerHTML='<header><strong>Soundboard</strong><button type="button" aria-label="Close">×</button></header><div class="soundboard-grid"><span class="muted">Loading sounds…</span></div>';document.body.append(popover);const rect=anchor.getBoundingClientRect();popover.style.left=Math.max(8,rect.right-320)+"px";popover.style.bottom=Math.max(8,innerHeight-rect.top+8)+"px";popover.querySelector("header button").onclick=()=>popover.remove();
+    try{const response=await fetch("/api/v1/soundboard");if(!response.ok)throw new Error();const value=await response.json(),grid=popover.querySelector(".soundboard-grid");grid.replaceChildren();(value.sounds||[]).forEach(sound=>{const button=document.createElement("button");button.type="button";button.className="sound-button";button.innerHTML='<span></span><strong></strong>';button.querySelector("span").textContent=sound.emoji||"▶";button.querySelector("strong").textContent=sound.name;button.onclick=()=>{audioContext ||= new AudioContext();audioContext.resume();if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(JSON.stringify({version:1,type:"soundboard-play",sound_id:sound.id}));popover.remove()};grid.append(button)});if(!grid.children.length)grid.textContent="No Community sounds have been added yet."}catch(_){popover.querySelector(".soundboard-grid").textContent="Soundboard unavailable."}
+  };
+
+  const makePanel = (roomID, name) => {
+    document.querySelector(".voice-connection-panel")?.remove();
+    const panel = document.createElement("section");
+    panel.className = "voice-connection-panel";
+    panel.dataset.voiceConnection = roomID;
+    panel.innerHTML = `<div><strong>Voice Connecting</strong><span></span></div><div class="voice-connection-actions"><button class="voice-soundboard" type="button" data-voice-soundboard disabled aria-label="Open soundboard" title="Soundboard">♫</button><button class="voice-screen" type="button" data-voice-screen disabled aria-label="Share screen" title="Share Screen">▣</button><button class="voice-mute" type="button" data-voice-mute disabled aria-label="Mute microphone"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4Zm7-4a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.08A7 7 0 0 0 19 11Z"/></svg></button><button class="voice-hangup" type="button" data-voice-leave aria-label="Disconnect voice">☎</button></div>`;
+    panel.querySelector("span").textContent = name;
+    const sidebar = document.querySelector(".channel-sidebar");
+    const anchor = sidebar?.querySelector(".member-panel, .sidebar-footer");
+    if (anchor) anchor.before(panel); else nav.after(panel);
+    return panel;
+  };
+
+  const disconnect = ({explicit = true, removePanel = true} = {}) => {
+    if (!active) return;
+    const session = active;
+	setPending(session, "Disconnecting");
+    active = null;
+    if (explicit && session.socket?.readyState === WebSocket.OPEN) {
+      session.socket.send(JSON.stringify({version: 1, type: "leave"}));
+      sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
+    }
+    session.socket?.close();
+    session.peer?.close();
+    session.stream?.getTracks().forEach(track => track.stop());
+    session.screenStream?.getTracks().forEach(track => track.stop());
+    session.remoteVideos?.forEach(video => video.remove());
+    session.audio?.remove();
+    if (removePanel) session.panel.remove();
+	setTimeout(()=>{const pending=window.allchatVoicePending?.get(session.roomID);if(pending?.member_id===session.profile.id&&pending.status==="Disconnecting"){window.allchatVoicePending.delete(session.roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"))}},650);
+  };
+
+  const connect = async (roomID, name) => {
+    if (active?.roomID === roomID) return;
+    disconnect();
+    const panel = makePanel(roomID, name);
+    const status = panel.querySelector("strong");
+    const mute = panel.querySelector("[data-voice-mute]");
+    const screen = panel.querySelector("[data-voice-screen]");
+    const soundboard = panel.querySelector("[data-voice-soundboard]");
+    const leave = panel.querySelector("[data-voice-leave]");
+    const session = {roomID, name, panel, peer: null, socket: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, audio: null, remoteVideos: new Map(), generation: 0, profile: currentProfile(), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
+    active = session;
+	setPending(session, "Connecting");
+    leave.addEventListener("click", () => disconnect());
+    screen.addEventListener("click", () => toggleScreen(session).catch(error => { status.textContent=error?.message||"Screen sharing is unavailable.";panel.classList.add("error") }));
+    soundboard.addEventListener("click",()=>openSoundboard(session,soundboard));
+    mute.addEventListener("click", () => {
+      const track = session.stream?.getAudioTracks()[0];
+      if (!track) return;
+      track.enabled = !track.enabled;
+      mute.classList.toggle("muted", !track.enabled);
+      mute.setAttribute("aria-label", track.enabled ? "Mute microphone" : "Unmute microphone");
+	  if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(JSON.stringify({version:1,type:"mute-state",muted:!track.enabled}));
+    });
+    try {
+      status.textContent = "Requesting microphone";
+      session.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false});
+      if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
+      const ice = await fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []});
+      session.mediaConfig = await fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig);
+
+      const negotiate = async allowResume => {
+        const generation = ++session.generation;
+        session.peer?.close();
+        session.socket?.close();
+        const peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
+        session.peer = peer;
+        session.stream.getTracks().forEach(track => peer.addTrack(track, session.stream));
+        peer.addTransceiver("audio", {direction: "sendrecv"});
+        peer.ontrack = event => {
+          if (event.track.kind === "video") {
+            const video = document.createElement("video");
+            video.autoplay = true; video.playsInline = true; video.className = "shared-screen";
+            video.srcObject = event.streams[0] || new MediaStream([event.track]);
+            session.remoteVideos.set(event.track.id, video);
+            event.track.addEventListener("ended", () => { session.remoteVideos.delete(event.track.id); video.remove(); renderStage(); });
+            renderStage();
+            return;
+          }
+          if (!session.audio) {
+            session.audio = document.createElement("audio");
+            session.audio.autoplay = true;
+            document.body.append(session.audio);
+          }
+          session.audio.srcObject = event.streams[0] || new MediaStream([event.track]);
+        };
+        const offer = await peer.createOffer();
+        await peer.setLocalDescription(offer);
+        await waitForGathering(peer);
+        if (active !== session || generation !== session.generation) return;
+        const socket = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/api/v1/media`);
+        session.socket = socket;
+        const resumeKey = `allchat-media-resume:${roomID}`;
+        const resumeToken = allowResume ? sessionStorage.getItem(resumeKey) || "" : "";
+        socket.onopen = () => socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));
+        socket.onmessage = async event => {
+          if (active !== session || generation !== session.generation) return;
+          const frame = JSON.parse(event.data);
+          if (frame.type === "error") {
+            if (resumeToken) {
+              sessionStorage.removeItem(resumeKey);
+              status.textContent = "Rejoining voice";
+              await negotiate(false);
+              return;
+            }
+            showError(new Error(frame.error || "Voice connection failed"));
+            return;
+          }
+          if (frame.type === "answer") {
+            await peer.setRemoteDescription(frame.sdp);
+            if (frame.resume_token) sessionStorage.setItem(resumeKey, frame.resume_token);
+            status.textContent = "Voice Connected";
+            mute.disabled = screen.disabled = soundboard.disabled = false;
+			window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
+          } else if (frame.type === "offer") {
+            await peer.setRemoteDescription(frame.sdp);
+            const answer = await peer.createAnswer();
+            await peer.setLocalDescription(answer);
+            await waitForGathering(peer);
+            socket.send(JSON.stringify({version: 1, type: "answer", sdp: peer.localDescription}));
+          } else if ((frame.type === "screen-low" || frame.type === "screen-high") && session.screenSender) {
+            const parameters=session.screenSender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);session.screenSender.setParameters(parameters).catch(()=>{});
+          } else if (frame.type === "screen-rejected") {
+            stopScreen(session); showError(new Error("Someone else is already sharing their screen."));
+          } else if(frame.type === "soundboard-played" && frame.sound) {
+            playSound(frame.sound);
+          }
+        };
+        socket.onerror = () => { if (active === session) status.textContent = "Voice connection failed"; };
+        socket.onclose = () => {
+          if (active === session && generation === session.generation && status.textContent === "Voice Connected") {
+            status.textContent = "Reconnecting voice";
+            setTimeout(() => active === session && negotiate(true).catch(showError), 750);
+          }
+        };
+      };
+      const showError = error => {
+        if (active !== session) return;
+        status.textContent = error?.message || "Voice connection failed";
+        panel.classList.add("error");
+		setPending(session, "Connection failed");
+      };
+      await negotiate(true);
+    } catch (error) {
+      if (active === session) {
+        status.textContent = error?.message || "Could not join voice";
+        panel.classList.add("error");
+		setPending(session, "Connection failed");
+      }
+    }
+  };
+
+  document.addEventListener("click", event => {
+    const link = event.target.closest("a.voice-link");
+    if (!link) return;
+    event.preventDefault();
+    const roomID = new URL(link.href, location.href).pathname.split("/").pop();
+    if (active?.roomID === roomID) {
+      window.allchatNavigate?.(link.href).catch(() => location.assign(link.href));
+      return;
+    }
+    connect(roomID, link.textContent.trim());
+  });
+  document.addEventListener("allchat:view-swapped", () => renderStage());
+  setInterval(renderStage,1000);
+  document.addEventListener("visibilitychange",()=>active?.socket?.readyState===WebSocket.OPEN&&active.socket.send(JSON.stringify({version:1,type:"screen-visibility",visible:!document.hidden})));
+  addEventListener("pagehide", () => disconnect({explicit: false}));
+})();

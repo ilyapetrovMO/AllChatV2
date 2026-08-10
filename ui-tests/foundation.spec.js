@@ -1,0 +1,226 @@
+const { test, expect } = require('@playwright/test');
+
+test('authentication uses the embedded AllChat design system', async ({ page }) => {
+  const externalRequests = [];
+  page.on('request', request => {
+    const target = new URL(request.url());
+    if (target.hostname !== '127.0.0.1') externalRequests.push(request.url());
+  });
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: 'Sign in to AllChat' })).toBeVisible();
+  await expect(page.locator('.auth-card')).toBeVisible();
+  await expect(page.locator('link[href="/assets/app.css"]')).toHaveCount(1);
+  await page.getByLabel('Username').focus();
+  await expect(page.getByLabel('Username')).toBeFocused();
+  expect(externalRequests).toEqual([]);
+});
+
+test('narrow layouts do not overflow horizontally', async ({ page }) => {
+  await page.goto('/login');
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(overflow).toBe(false);
+  const card = page.locator('.auth-card');
+  await expect(card).toBeVisible();
+  expect((await card.boundingBox()).width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+});
+
+test('reduced motion disables interface transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/login');
+  const duration = await page.locator('.auth-card').evaluate(element => getComputedStyle(element).transitionDuration);
+  expect(duration).toBe('0s');
+});
+
+test('message editing banner is hidden until editing starts', async ({ page }) => {
+  await page.goto('/login');
+  await page.setContent(`
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/channel.css">
+    <div class="editing-banner" id="editing-banner" hidden>Editing Message</div>
+  `);
+  await expect(page.locator('#editing-banner')).toBeHidden();
+});
+
+test('member menu is hidden until its avatar control opens it', async ({ page }) => {
+  await page.goto('/login');
+  await page.setContent(`
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/channel.css">
+    <div class="community-switcher"><button data-community-menu-toggle aria-expanded="false">AllChat Community</button><nav data-community-menu hidden><a href="/admin/roles">Roles</a></nav></div>
+    <div class="member-panel"><div class="member-menu" id="member-menu" hidden><button role="menuitem">Online</button></div><button id="member-menu-toggle" aria-expanded="false">Member</button><a class="member-settings" href="/profile" aria-label="User Settings">Settings</a></div>
+    <script src="/assets/app.js"></script>
+  `);
+  await expect(page.locator('#member-menu')).toBeHidden();
+  await page.locator('#member-menu-toggle').click();
+  await expect(page.locator('#member-menu')).toBeVisible();
+  await expect(page.locator('.member-settings')).toHaveAttribute('href', '/profile');
+  await page.locator('#member-menu-toggle').click();
+  await expect(page.locator('#member-menu')).toBeHidden();
+  await page.locator('[data-community-menu-toggle]').click();
+  await expect(page.locator('[data-community-menu]')).toBeVisible();
+  await expect(page.locator('[data-community-menu] a')).toHaveAttribute('href', '/admin/roles');
+});
+
+test('ordinary text inputs disable browser completion suggestions', async ({ page }) => {
+  await page.goto('/login');
+  await page.setContent('<input id="ordinary"><script src="/assets/app.js"></script>');
+  await expect(page.locator('#ordinary')).toHaveAttribute('autocomplete', 'off');
+  await expect(page.locator('#ordinary')).toHaveAttribute('autocorrect', 'off');
+  await expect(page.locator('#ordinary')).toHaveAttribute('spellcheck', 'false');
+});
+
+test('jump-to-present prompt is hidden while following current messages', async ({ page }) => {
+  await page.goto('/login');
+  await page.setContent(`
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/channel.css">
+    <button class="jump-to-present" id="jump-to-present" hidden>Jump to present</button>
+  `);
+  await expect(page.locator('#jump-to-present')).toBeHidden();
+});
+
+test('conversation follows late media growth only while at the present', async ({ page }) => {
+  await page.goto('/login');
+  await page.setContent(`
+    <style>#messages{height:120px;overflow:auto}.spacer{height:300px}.media{display:block;height:0}</style>
+    <section id="messages"><div class="spacer"></div><img class="media"></section>
+    <button id="jump" hidden>Jump</button>
+    <script src="/assets/channel-scroll.js"></script>
+  `);
+  const result = await page.evaluate(async () => {
+    const messages = document.querySelector('#messages');
+    const media = document.querySelector('.media');
+    const controller = window.createConversationFollower(messages, document.querySelector('#jump'), 40);
+    controller.scrollToLatest();
+    media.style.height = '180px';
+    media.dispatchEvent(new Event('load'));
+    await new Promise(requestAnimationFrame);
+    const followed = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 2;
+    messages.scrollTop = 0;
+    messages.dispatchEvent(new Event('scroll'));
+    media.style.height = '260px';
+    media.dispatchEvent(new Event('load'));
+    await new Promise(requestAnimationFrame);
+    return { followed, preserved: messages.scrollTop === 0 };
+  });
+  expect(result).toEqual({ followed: true, preserved: true });
+});
+
+test('voice participants render directly beneath their voice channel', async ({ page }) => {
+  await page.route('**/api/v1/channels', route => route.fulfill({json: {channels: [{id: 'voice-one', name: 'General', type: 'voice'}]}}));
+  await page.route('**/api/v1/voice/voice-one/participants', route => route.fulfill({json: {
+    participants: [{member_id: 'member-one', connected: true, server_muted: true, speaking: true}, {member_id: 'member-two', connected: true, server_muted: false, speaking: false}],
+    names: {'member-one': 'Akko', 'member-two': 'Spikey'},
+    members: {'member-one': {id: 'member-one', username: 'akko', display_name: 'Akko', avatar_url: '/avatar.png'}, 'member-two': {id: 'member-two', username: 'spikey', display_name: 'Spikey'}}
+  }}));
+  await page.goto('/login');
+  await page.setContent(`
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/channel.css">
+    <nav class="channel-nav"><a class="channel-link voice-link" href="/channels/voice-one">General</a></nav>
+    <script src="/assets/app.js"></script>
+  `);
+  const channel = page.locator('a[href="/channels/voice-one"]');
+  const participant = channel.locator('+ .voice-channel-members li').nth(0);
+  await expect(channel).toHaveClass(/voice-link/);
+  await expect(participant).toContainText('Akko');
+  await expect(participant.locator('img')).toHaveAttribute('src', '/avatar.png');
+  await expect(participant).toHaveClass(/speaking/);
+  await expect(participant.locator('img')).toHaveCSS('box-shadow', /rgb\(35, 165, 89\)/);
+  await expect(participant.locator('.voice-member-muted')).toHaveAttribute('aria-label', 'Server muted');
+  await expect(channel.locator('+ .voice-channel-members li').nth(0)).toContainText('Akko');
+  await expect(channel.locator('+ .voice-channel-members li').nth(1)).toContainText('Spikey');
+});
+
+test('clicking a voice channel joins in place without replacing the text conversation', async ({ page }) => {
+  await page.route('**/api/v1/channels', route => route.fulfill({json: {channels: [{id: 'voice-one', name: 'General', type: 'voice'}]}}));
+  await page.route('**/api/v1/voice/voice-one/participants', route => route.fulfill({json: {participants: [{member_id: 'member-one', connected: true, speaking: false, screen_sharing: true}], names: {'member-one': 'Akko'}, members: {'member-one': {id: 'member-one', username: 'akko', display_name: 'Akko'}}}}));
+  await page.route('**/api/v1/turn-credentials', route => route.fulfill({json: {ice_servers: []}}));
+  await page.route('**/channels/text-two', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title># second — AllChat</title></head><body data-channel-id="text-two" data-member-id="member-one" data-last-sequence="0"><div class="app-shell"><nav class="channel-nav"><a class="channel-link voice-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two" aria-current="page">second</a></nav><main class="content-shell" id="second-conversation">Second text conversation</main></div></body></html>`}));
+  await page.route('**/channels/voice-one', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title>General — AllChat Voice</title></head><body data-channel-id="voice-one" data-member-id="member-one"><div class="app-shell"><nav class="channel-nav"><a class="channel-link voice-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two">second</a></nav><main class="content-shell media-stage-view" data-media-stage="voice-one"><header class="content-header"><h1>General</h1></header><section class="media-stage"><div class="media-stage-grid" data-media-stage-grid></div></section></main></div></body></html>`}));
+  await page.route('**/profile', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title>Profile — AllChat</title></head><body><div class="app-shell"><aside class="channel-sidebar"><nav class="settings-nav"><a href="/profile" aria-current="page">My Account</a><a href="/sessions">Sessions</a></nav></aside><main class="content-shell" id="profile-settings">Profile settings</main></div></body></html>`}));
+  await page.route('**/sessions', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title>Sessions — AllChat</title></head><body><div class="app-shell"><aside class="channel-sidebar"><nav class="settings-nav"><a href="/profile">My Account</a><a href="/sessions" aria-current="page">Sessions</a></nav></aside><main class="content-shell" id="session-settings">Session settings</main></div></body></html>`}));
+  await page.route('**/dms', route => route.fulfill({contentType: 'text/html', body: `<!doctype html><html><head><title>Direct Messages — AllChat</title></head><body><div class="app-shell"><aside class="community-rail"><a href="/">AC</a></aside><aside class="channel-sidebar" id="dm-sidebar"><nav class="channel-nav"><a href="/channels/text-two">second</a></nav></aside><main class="content-shell" id="dm-home"><button data-sidebar-toggle>Menu</button>Direct Messages</main></div></body></html>`}));
+  await page.goto('/login');
+  await page.evaluate(() => {
+    window.voiceCaptureRequests = 0;
+    const audioTrack = {kind: 'audio', enabled: true, stop() { window.voiceTrackStopped = true; }};
+    Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => {window.voiceCaptureRequests++; return {getTracks: () => [audioTrack], getAudioTracks: () => [audioTrack]};}}});
+    window.RTCPeerConnection = class {
+      constructor() { this.iceGatheringState = 'complete'; this.localDescription = null; }
+      addTrack() { return {}; }
+      addTransceiver() {}
+      createOffer() { return Promise.resolve({type: 'offer', sdp: 'mock-offer'}); }
+      createAnswer() { return Promise.resolve({type: 'answer', sdp: 'mock-client-answer'}); }
+      setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
+      setRemoteDescription() { return Promise.resolve(); }
+      addEventListener() {}
+      removeEventListener() {}
+      close() {}
+    };
+    window.WebSocket = class {
+      static OPEN = 1;
+      constructor() { this.readyState = 1; setTimeout(() => this.onopen?.(), 0); }
+      send(value) { const frame = JSON.parse(value); if (frame.type === 'join') { window.voiceJoinFrame = frame; setTimeout(() => this.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'mock-answer'}, resume_token: 'resume'}),}), 500); } if (frame.type === 'mute-state') window.voiceMuteFrame = frame; }
+      close() { this.readyState = 3; }
+    };
+  });
+  await page.setContent(`
+    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/channel.css">
+    <div class="app-shell">
+      <a id="dm-navigation" href="/dms">Direct Messages</a>
+      <aside class="channel-sidebar" data-open="true"><nav class="channel-nav"><a class="channel-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two">second</a></nav><a href="/profile">Settings</a></aside>
+      <main class="content-shell" id="text-conversation">Text conversation remains open</main>
+    </div>
+    <script src="/assets/app.js"></script>
+  `);
+  await expect(page.locator('.channel-nav')).toHaveAttribute('data-voice-sidebar-ready', 'true');
+  await page.locator('a[href="/channels/voice-one"]').click();
+  await expect(page.locator('#text-conversation')).toBeVisible();
+  await expect(page.locator('[data-voice-connection="voice-one"]')).toBeVisible();
+  await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText('Connecting');
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
+  await page.locator('a[href="/channels/voice-one"]').click();
+  await expect(page.locator('[data-media-stage-grid] .participant-tile')).toContainText('Akko');
+  await page.evaluate(() => {
+    document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity = 'preserved';
+    window.stageChildMutations = 0;
+    new MutationObserver(records => { window.stageChildMutations += records.filter(record => record.type === 'childList').length; }).observe(document.querySelector('[data-media-stage-grid]'), {childList: true});
+  });
+  await page.waitForTimeout(1100);
+  expect(await page.evaluate(() => document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity)).toBe('preserved');
+  expect(await page.evaluate(() => window.stageChildMutations)).toBe(0);
+  await page.locator('a[href="/channels/text-two"]').click();
+  await expect(page.locator('#second-conversation')).toBeVisible();
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, trackStopped: window.voiceTrackStopped || false}))).toEqual({captureRequests: 1, trackStopped: false});
+  expect(new URL(page.url()).pathname).toBe('/channels/text-two');
+  await page.locator('a[href="/profile"]').click();
+  await expect(page.locator('[data-app-overlay] #profile-settings')).toBeVisible();
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  await page.locator('[data-app-overlay] a[href="/sessions"]').evaluate(link => link.click());
+  await expect(page.locator('[data-app-overlay] #session-settings')).toBeVisible();
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  await page.locator('[data-overlay-close]').click();
+  await expect(page.locator('[data-app-overlay]')).toHaveCount(0);
+  await page.locator('#dm-navigation').evaluate(link => link.click());
+  await expect(page.locator('#dm-home')).toBeVisible();
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
+  expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, trackStopped: window.voiceTrackStopped || false}))).toEqual({captureRequests: 1, trackStopped: false});
+  const mobileMenu = page.locator('#dm-home [data-sidebar-toggle]');
+  if (await mobileMenu.isVisible()) await mobileMenu.click();
+  const mute = page.locator('[data-voice-mute]');
+  await expect(mute.locator('svg')).toBeVisible();
+  await expect(mute).toHaveCSS('color', 'rgb(255, 93, 98)');
+  await mute.click();
+  expect(await page.evaluate(() => window.voiceMuteFrame)).toMatchObject({type: 'mute-state', muted: true});
+  const hangup = page.locator('[data-voice-leave]');
+  await expect(hangup).toHaveText('☎');
+  await expect(hangup).toHaveCSS('color', 'rgb(255, 93, 98)');
+  await hangup.click();
+  await expect(page.locator('[data-voice-connection="voice-one"]')).toHaveCount(0);
+  expect(await page.evaluate(() => window.voiceTrackStopped)).toBe(true);
+  expect(new URL(page.url()).pathname).toBe('/dms');
+});

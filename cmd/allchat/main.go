@@ -1,0 +1,123 @@
+// AllChat is free software: you can redistribute it and/or modify it under the
+// terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or any later version.
+package main
+
+import (
+	"context"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"log/slog"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+
+	"allchat/internal/instance"
+)
+
+func main() {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) > 0 && args[0] == "recover-owner" {
+		return runRecoverOwner(args[1:], os.Stdin)
+	}
+	flags := flag.NewFlagSet("allchat", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	dataDir := flags.String("data-dir", "", "directory containing Instance data")
+	listenAddress := flags.String("listen", "127.0.0.1:8080", "HTTP listen address")
+	tlsCert := flags.String("tls-cert", "", "PEM TLS certificate file")
+	tlsKey := flags.String("tls-key", "", "PEM TLS private key file")
+	acmeHost := flags.String("acme-host", "", "public DNS hostname for automatic ACME TLS")
+	acmeEmail := flags.String("acme-email", "", "contact email for ACME registration")
+	turnPublicIP := flags.String("turn-public-ip", "", "public IP advertised by the embedded TURN relay")
+	turnListen := flags.String("turn-listen", ":3478", "embedded TURN UDP listen address")
+	turnMin := flags.Int("turn-relay-min-port", 49160, "first embedded TURN UDP relay port")
+	turnMax := flags.Int("turn-relay-max-port", 49259, "last embedded TURN UDP relay port")
+	externalTURNURLs := flags.String("external-turn-urls", "", "comma-separated external TURN REST URLs")
+	mediaMin := flags.Int("media-min-port", 50000, "first WebRTC SFU UDP port")
+	mediaMax := flags.Int("media-max-port", 50100, "last WebRTC SFU UDP port")
+	mediaParticipants := flags.Int("media-max-participants", 25, "maximum participants in one Media Session")
+	mediaAudioBitrate := flags.Int("media-audio-bitrate", 64000, "maximum sender audio bitrate in bits per second")
+	mediaScreenBitrate := flags.Int("media-screen-bitrate", 2500000, "maximum sender screen bitrate in bits per second")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "unexpected positional arguments")
+		return 2
+	}
+
+	config, err := instance.NewConfig(*dataDir, *listenAddress)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "invalid configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureTLS(*tlsCert, *tlsKey, *acmeHost, *acmeEmail); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid TLS configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureTURN(*turnPublicIP, *turnListen, *turnMin, *turnMax); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid TURN configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureExternalTURN(*externalTURNURLs, os.Getenv("ALLCHAT_EXTERNAL_TURN_SECRET")); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid external TURN configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureMedia(*mediaMin, *mediaMax, *mediaParticipants); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid media configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureMediaBitrates(*mediaAudioBitrate, *mediaScreenBitrate); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid media bitrate configuration: %v\n", err)
+		return 2
+	}
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	app, err := instance.Open(config, logger)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "start Instance: %v\n", err)
+		return 1
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	if err := app.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		fmt.Fprintf(os.Stderr, "run Instance: %v\n", err)
+		return 1
+	}
+	return 0
+}
+
+func runRecoverOwner(args []string, passwordInput io.Reader) int {
+	flags := flag.NewFlagSet("allchat recover-owner", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	dataDir := flags.String("data-dir", "", "directory containing offline Instance data")
+	username := flags.String("username", "", "replacement Owner username")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if *dataDir == "" || *username == "" || flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "recover-owner requires --data-dir and --username")
+		return 2
+	}
+	passwordBytes, err := io.ReadAll(io.LimitReader(passwordInput, 1025))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "read replacement password: %v\n", err)
+		return 1
+	}
+	password := string(passwordBytes)
+	password = string([]byte(strings.TrimRight(password, "\r\n")))
+	if err := instance.RecoverOwner(context.Background(), *dataDir, *username, password); err != nil {
+		fmt.Fprintf(os.Stderr, "recover Owner: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(os.Stdout, "Community Owner credentials recovered; all existing Sessions were revoked")
+	return 0
+}

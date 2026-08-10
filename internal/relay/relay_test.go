@@ -61,7 +61,7 @@ func TestForcedRelayWebRTCPeerConnectsThroughTURN(t *testing.T) {
 	}
 	manager := media.NewManager(5 * time.Second)
 	defer manager.Close()
-	answer, _, err := manager.AcceptOffer("member", "room", *client.LocalDescription(), func(media.Signal) {})
+	answer, _, _, err := manager.AcceptOffer("member", "room", *client.LocalDescription(), func(media.Signal) {})
 	if err != nil {
 		t.Fatal(err)
 	}

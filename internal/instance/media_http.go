@@ -4,6 +4,7 @@ package instance
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"net/http"
 	"sync"
@@ -36,6 +37,7 @@ type mediaFrame struct {
 	ResumeToken  string                     `json:"resume_token,omitempty"`
 	Participants []media.Participant        `json:"participants,omitempty"`
 	Error        string                     `json:"error,omitempty"`
+	Code         string                     `json:"code,omitempty"`
 	MemberID     string                     `json:"member_id,omitempty"`
 	Sound        *community.SoundboardSound `json:"sound,omitempty"`
 	Candidate    *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
@@ -83,6 +85,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	var answer webrtc.SessionDescription
 	var token string
+	var peerLease uint64
 	forward := func(signal media.Signal) {
 		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate}
 		if signal.SoundID != "" {
@@ -91,20 +94,26 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		write(frame)
 	}
 	if command.ResumeToken != "" {
-		answer, token, err = i.media.ResumeOffer(member.ID, mediaRoomID, command.ResumeToken, command.SDP, forward)
+		answer, token, peerLease, err = i.media.ResumeOffer(member.ID, mediaRoomID, command.ResumeToken, command.SDP, forward)
 	} else {
-		answer, token, err = i.media.AcceptOffer(member.ID, mediaRoomID, command.SDP, forward)
+		answer, token, peerLease, err = i.media.AcceptOffer(member.ID, mediaRoomID, command.SDP, forward)
 	}
 	if err != nil {
-		write(mediaFrame{Version: 1, Type: "error", Error: err.Error()})
+		code := "join_failed"
+		if errors.Is(err, media.ErrInvalidResume) {
+			code = "invalid_resume"
+		} else if errors.Is(err, media.ErrModerated) {
+			code = "moderated"
+		}
+		write(mediaFrame{Version: 1, Type: "error", Code: code, Error: err.Error()})
 		return
 	}
 	explicitLeave := false
 	defer func() {
 		if explicitLeave {
-			i.media.RemovePeer(member.ID)
+			i.media.RemovePeerLease(member.ID, peerLease)
 		} else {
-			i.media.DisconnectPeer(member.ID)
+			i.media.DisconnectPeer(member.ID, peerLease)
 		}
 	}()
 	if !write(mediaFrame{Version: 1, Type: "answer", SDP: answer, ResumeToken: token, Participants: i.media.Participants(mediaRoomID)}) {
@@ -123,6 +132,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		case "heartbeat":
 			// Keep otherwise-idle media signaling connections alive through
 			// proxies and NAT mappings. Media state is carried by WebRTC.
+			write(mediaFrame{Version: 1, Type: "heartbeat-ack"})
 		case "answer":
 			_ = i.media.HandleAnswer(member.ID, command.SDP)
 		case "candidate":

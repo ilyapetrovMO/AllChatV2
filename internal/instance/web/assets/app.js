@@ -9,8 +9,22 @@
       if (typeof this.native.addEventListener !== "function") return this.native;
       this.queue = [];
       this.draining = false;
-      for (const type of ["open", "close", "error"]) this.native.addEventListener(type, event => this.emit(type, event));
+      this.livenessTimer = null;
+      this.lastInboundAt = Date.now();
+      const liveness = window.__allchatWebSocketLiveness || {};
+      const checkInterval = liveness.checkInterval || 5000;
+      const timeout = liveness.timeout || 15000;
+      this.native.addEventListener("open", event => {
+        this.lastInboundAt = Date.now();
+        if (String(url).includes("/api/v1/realtime")) this.livenessTimer = setInterval(() => {
+          if (this.native.readyState === NativeWebSocket.OPEN && Date.now() - this.lastInboundAt > timeout) this.native.close(4000, "Realtime connection timed out");
+        }, checkInterval);
+        this.emit("open", event);
+      });
+      this.native.addEventListener("close", event => { clearInterval(this.livenessTimer); this.emit("close", event); });
+      this.native.addEventListener("error", event => this.emit("error", event));
       this.native.addEventListener("message", event => {
+        this.lastInboundAt = Date.now();
         let frame;
         try { frame = JSON.parse(event.data); } catch (_) { this.emit("message", event); return; }
         if (frame.type !== "events" || !Array.isArray(frame.events)) { this.emit("message", event); return; }
@@ -26,7 +40,7 @@
     emit(type, source) { const event = type === "message" ? new MessageEvent(type, {data: source.data}) : new Event(type); this.dispatchEvent(event); this[`on${type}`]?.call(this, event); }
     drain() { if (this.draining || !this.queue.length) return; this.draining = true; const next = () => { const data = this.queue.shift(); if (data !== undefined) this.emit("message", {data}); if (this.queue.length) setTimeout(next, 32); else this.draining = false; }; next(); }
     send(data) { return this.native.send(data); }
-    close(code, reason) { this.queue.length = 0; return this.native.close(code, reason); }
+    close(code, reason) { this.queue.length = 0; clearInterval(this.livenessTimer); return this.native.close(code, reason); }
     get readyState() { return this.native.readyState; }
     get url() { return this.native.url; }
     get protocol() { return this.native.protocol; }
@@ -303,7 +317,7 @@
 	  const refresh=async({channel,list})=>{try{const result=await fetch(`/api/v1/voice/${channel.id}/participants`);if(!result.ok)return;const state=await result.json(),profiles=state.members||{},participants=[...(state.participants||[])],connected=new Set(participants.filter(item=>item.connected).map(item=>item.member_id)),previous=participantSnapshots.get(channel.id),pending=window.allchatVoicePending.get(channel.id);participantSnapshots.set(channel.id,connected);if(previous&&window.allchatActiveVoiceRoom===channel.id){const self=document.body.dataset.memberId,joined=[...connected].some(id=>id!==self&&!previous.has(id)),left=[...previous].some(id=>id!==self&&!connected.has(id));if(joined)window.allchatVoiceEarcon?.("join");if(left)window.allchatVoiceEarcon?.("leave")}if(pending){profiles[pending.member_id]=pending.profile||profiles[pending.member_id]||{};const existing=participants.find(item=>item.member_id===pending.member_id);if(existing)existing.pending_status=pending.status;else participants.push({member_id:pending.member_id,connected:false,server_muted:false,speaking:false,pending_status:pending.status})}list.replaceChildren();participants.forEach(participant=>{const profile=profiles[participant.member_id]||{},item=document.createElement("li"),avatar=document.createElement(profile.avatar_url?"img":"span"),name=document.createElement("span");item.dataset.participantId=participant.member_id;item.dataset.voiceRoom=channel.id;item.dataset.serverMuted=String(!!participant.server_muted);item.classList.toggle("reconnecting",!participant.connected);item.classList.toggle("speaking",!!participant.speaking);if(profile.avatar_url){avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.textContent=Array.from(profile.username||state.names?.[participant.member_id]||"?")[0].toUpperCase();avatar.className="voice-member-fallback"}name.textContent=profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";item.append(avatar,name);if(participant.screen_sharing){const sharing=document.createElement("span");sharing.className="voice-member-screen";sharing.textContent="▣";sharing.title="Sharing screen";sharing.setAttribute("aria-label",sharing.title);item.append(sharing)}if(participant.pending_status){const pendingState=document.createElement("small");pendingState.className="voice-member-state";pendingState.textContent=participant.pending_status;item.append(pendingState)}if(participant.server_muted||participant.muted){const muted=document.createElement("span");muted.className="voice-member-muted";muted.textContent="⌁";muted.title=participant.server_muted?"Server muted":"Muted";muted.setAttribute("aria-label",muted.title);item.append(muted)}list.append(item)})}catch(_){}};
 	  const refreshAll=()=>discover().forEach(refresh);document.addEventListener("allchat:voice-pending",refreshAll);document.addEventListener("allchat:view-swapped",refreshAll);await Promise.all(discover().map(refresh));setInterval(()=>{if(!document.hidden)refreshAll()},2000);
 	};
-	if(document.querySelector(".channel-nav"))installVoiceChannelPresence().catch(()=>{}).finally(()=>import("/assets/voice-sidebar.js").catch(()=>{}));
+	if(document.querySelector(".channel-nav"))installVoiceChannelPresence().catch(()=>{}).finally(()=>import("/assets/voice-connection.js").then(()=>import("/assets/voice-sidebar.js")).catch(()=>{}));
 	if(document.querySelector(".channel-nav"))import("/assets/channel-navigation.js").catch(()=>{});
 
   const conversation = document.querySelector(".conversation-layout");

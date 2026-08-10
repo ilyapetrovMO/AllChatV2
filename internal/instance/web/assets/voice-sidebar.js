@@ -17,30 +17,14 @@
 	  window.allchatVoicePending.set(session.roomID, {member_id: session.profile.id, profile: session.profile, status});
 	  document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
 	};
-  const waitForGathering = peer => peer.iceGatheringState === "complete" ? Promise.resolve() : new Promise(resolve => {
-    const done = () => {
-      peer.removeEventListener("icecandidate", candidate);
-      peer.removeEventListener("icegatheringstatechange", changed);
-      resolve();
-    };
-    const candidate = event => { if (event.candidate) done(); };
-    const changed = () => { if (peer.iceGatheringState === "complete") done(); };
-    peer.addEventListener("icecandidate", candidate);
-    peer.addEventListener("icegatheringstatechange", changed);
-  });
-
   const renegotiate = async session => {
-    if (!session.peer || session.socket?.readyState !== WebSocket.OPEN) return;
-    const offer = await session.peer.createOffer();
-    await session.peer.setLocalDescription(offer);
-    await waitForGathering(session.peer);
-    session.socket.send(JSON.stringify({version:1,type:"offer",sdp:session.peer.localDescription}));
+    await session.connection?.renegotiate();
   };
   const stopScreen = async session => {
     const stream=session.screenStream;
     session.screenStream=null;
     stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
-    session.screenSenders.forEach(sender=>{try{session.peer?.removeTrack(sender)}catch(_){}});
+    session.screenSenders.forEach(sender=>{try{session.connection?.removeTrack(sender)}catch(_){}});
     session.screenSenders=[];session.screenSender=null;
     session.panel.querySelector("[data-voice-screen]")?.classList.remove("active");
     renderStage();
@@ -51,8 +35,8 @@
     if(!navigator.mediaDevices?.getDisplayMedia)throw new Error(window.allchatText?.screenUnavailable||"Screen sharing is unavailable on this browser.");
     const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}),track=stream.getVideoTracks()[0],senders=[];
     let sender;
-    try{sender=session.peer.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]}).sender}catch(_){sender=session.peer.addTrack(track,stream)}
-    session.screenStream=stream;session.screenSender=sender;senders.push(sender);stream.getAudioTracks().forEach(audio=>senders.push(session.peer.addTrack(audio,stream)));session.screenSenders=senders;
+    try{sender=session.connection.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]}).sender}catch(_){sender=session.connection.addTrack(track,stream)}
+    session.screenStream=stream;session.screenSender=sender;senders.push(sender);stream.getAudioTracks().forEach(audio=>senders.push(session.connection.addTrack(audio,stream)));session.screenSenders=senders;
     session.panel.querySelector("[data-voice-screen]")?.classList.add("active");
     track.onended=()=>stopScreen(session).catch(()=>{});
     renderStage();
@@ -80,7 +64,7 @@
   const openSoundboard=async(session,anchor)=>{
     document.querySelector(".soundboard-popover")?.remove();
     const popover=document.createElement("div");popover.className="soundboard-popover";popover.setAttribute("role","dialog");popover.setAttribute("aria-label","Community soundboard");popover.innerHTML='<header><strong>Soundboard</strong><button type="button" aria-label="Close">×</button></header><div class="soundboard-grid"><span class="muted">Loading sounds…</span></div>';document.body.append(popover);const rect=anchor.getBoundingClientRect();popover.style.left=Math.max(8,rect.right-320)+"px";popover.style.bottom=Math.max(8,innerHeight-rect.top+8)+"px";popover.querySelector("header button").onclick=()=>popover.remove();
-    try{const response=await fetch("/api/v1/soundboard");if(!response.ok)throw new Error();const value=await response.json(),grid=popover.querySelector(".soundboard-grid");grid.replaceChildren();(value.sounds||[]).forEach(sound=>{const button=document.createElement("button");button.type="button";button.className="sound-button";button.innerHTML='<span></span><strong></strong>';button.querySelector("span").textContent=sound.emoji||"▶";button.querySelector("strong").textContent=sound.name;button.onclick=()=>{audioContext ||= new AudioContext();audioContext.resume();if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(JSON.stringify({version:1,type:"soundboard-play",sound_id:sound.id}));popover.remove()};grid.append(button)});if(!grid.children.length)grid.textContent="No Community sounds have been added yet."}catch(_){popover.querySelector(".soundboard-grid").textContent="Soundboard unavailable."}
+    try{const response=await fetch("/api/v1/soundboard");if(!response.ok)throw new Error();const value=await response.json(),grid=popover.querySelector(".soundboard-grid");grid.replaceChildren();(value.sounds||[]).forEach(sound=>{const button=document.createElement("button");button.type="button";button.className="sound-button";button.innerHTML='<span></span><strong></strong>';button.querySelector("span").textContent=sound.emoji||"▶";button.querySelector("strong").textContent=sound.name;button.onclick=()=>{audioContext ||= new AudioContext();audioContext.resume();session.connection?.send("soundboard-play",{sound_id:sound.id});popover.remove()};grid.append(button)});if(!grid.children.length)grid.textContent="No Community sounds have been added yet."}catch(_){popover.querySelector(".soundboard-grid").textContent="Soundboard unavailable."}
   };
 
   const makePanel = (roomID, name) => {
@@ -88,7 +72,7 @@
     const panel = document.createElement("section");
     panel.className = "voice-connection-panel";
     panel.dataset.voiceConnection = roomID;
-    panel.innerHTML = `<div><strong>Voice Connecting</strong><span></span></div><div class="voice-connection-actions"><button class="voice-soundboard" type="button" data-voice-soundboard disabled aria-label="Open soundboard" title="Soundboard">♫</button><button class="voice-screen" type="button" data-voice-screen disabled aria-label="Share screen" title="Share Screen">▣</button><button class="voice-mute" type="button" data-voice-mute disabled aria-label="Mute microphone"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4Zm7-4a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.08A7 7 0 0 0 19 11Z"/></svg></button><button class="voice-hangup" type="button" data-voice-leave aria-label="Disconnect voice">☎</button></div>`;
+    panel.innerHTML = `<div><strong>Voice Connecting</strong><span></span></div><div class="voice-connection-actions"><button type="button" data-voice-retry hidden>Retry</button><button class="voice-soundboard" type="button" data-voice-soundboard disabled aria-label="Open soundboard" title="Soundboard">♫</button><button class="voice-screen" type="button" data-voice-screen disabled aria-label="Share screen" title="Share Screen">▣</button><button class="voice-mute" type="button" data-voice-mute disabled aria-label="Mute microphone"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4Zm7-4a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.08A7 7 0 0 0 19 11Z"/></svg></button><button class="voice-hangup" type="button" data-voice-leave aria-label="Disconnect voice">☎</button></div>`;
     panel.querySelector("span").textContent = name;
     const sidebar = document.querySelector(".channel-sidebar");
     const anchor = sidebar?.querySelector(".member-panel, .sidebar-footer");
@@ -127,13 +111,8 @@
 	setPending(session, "Disconnecting");
     active = null;
 	if(window.allchatActiveVoiceRoom===session.roomID)window.allchatActiveVoiceRoom="";
-    if (explicit && session.socket?.readyState === WebSocket.OPEN) {
-      session.socket.send(JSON.stringify({version: 1, type: "leave"}));
-      sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
-    }
-    session.socket?.close();
-	clearInterval(session.heartbeat);session.heartbeat=null;
-    session.peer?.close();
+    session.connection?.stop({explicit});
+    if (explicit) sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
     session.stream?.getTracks().forEach(track => track.stop());
     session.screenStream?.getTracks().forEach(track => track.stop());
     session.remoteVideos?.forEach(video => video.remove());
@@ -151,8 +130,9 @@
     const mute = panel.querySelector("[data-voice-mute]");
     const screen = panel.querySelector("[data-voice-screen]");
     const soundboard = panel.querySelector("[data-voice-soundboard]");
+    const retry = panel.querySelector("[data-voice-retry]");
     const leave = panel.querySelector("[data-voice-leave]");
-    const session = {roomID, name, panel, peer: null, socket: null, heartbeat: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), generation: 0, profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
+    const session = {roomID, name, panel, connection: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
 	prepareEarcons();
 	setPending(session, "Connecting");
@@ -165,111 +145,61 @@
       track.enabled = !track.enabled;
       mute.classList.toggle("muted", !track.enabled);
       mute.setAttribute("aria-label", track.enabled ? "Mute microphone" : "Unmute microphone");
-	  if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(JSON.stringify({version:1,type:"mute-state",muted:!track.enabled}));
+	  session.connection?.send("mute-state",{muted:!track.enabled});
     });
     try {
       status.textContent = "Requesting microphone";
       session.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false});
       if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
-      const [ice,mediaConfig] = await Promise.all([
-        fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []}),
-        fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig)
-      ]);
-      session.mediaConfig = mediaConfig;
-
-      const negotiate = async allowResume => {
-        const generation = ++session.generation;
-		clearInterval(session.heartbeat);session.heartbeat=null;
-        session.peer?.close();
-        session.socket?.close();
-        const peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
-        session.peer = peer;
-        const pendingCandidates=[];
-        const remoteCandidates=[];
-        peer.onicecandidate=event=>{if(!event.candidate)return;const frame=JSON.stringify({version:1,type:"candidate",candidate:event.candidate.toJSON()});if(session.socket?.readyState===WebSocket.OPEN)session.socket.send(frame);else pendingCandidates.push(frame)};
-        session.stream.getTracks().forEach(track => peer.addTrack(track, session.stream));
-        peer.addTransceiver("audio", {direction: "sendrecv"});
-        peer.ontrack = event => {
-          if (event.track.kind === "video") {
-            const video = document.createElement("video");
-            video.autoplay = true; video.playsInline = true; video.className = "shared-screen";
-            video.srcObject = event.streams[0] || new MediaStream([event.track]);
-            session.remoteVideos.set(event.track.id, video);
-            event.track.addEventListener("ended", () => { session.remoteVideos.delete(event.track.id); video.remove(); renderStage(); });
-            renderStage();
-            return;
-          }
-          let audio = session.remoteAudios.get(event.track);
-          if (!audio) {
-            audio = document.createElement("audio");
-            audio.autoplay = true;
-            session.remoteAudios.set(event.track, audio);
-            document.body.append(audio);
-            event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
-          }
-          audio.srcObject = event.streams[0] || new MediaStream([event.track]);
-        };
-        const offer = await peer.createOffer();
-        await peer.setLocalDescription(offer);
-        if (active !== session || generation !== session.generation) return;
-        const socket = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/api/v1/media`);
-        session.socket = socket;
-        const resumeKey = `allchat-media-resume:${roomID}`;
-        const resumeToken = allowResume ? sessionStorage.getItem(resumeKey) || "" : "";
-        socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));pendingCandidates.splice(0).forEach(candidate=>socket.send(candidate));session.heartbeat=setInterval(()=>{if(session.socket===socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({version:1,type:"heartbeat"}))},1000)};
-        socket.onmessage = async event => {
-          if (active !== session || generation !== session.generation) return;
-          const frame = JSON.parse(event.data);
-          if (frame.type === "error") {
-            if (resumeToken) {
-              sessionStorage.removeItem(resumeKey);
-              status.textContent = "Rejoining voice";
-              await negotiate(false);
-              return;
-            }
-            showError(new Error(frame.error || "Voice connection failed"));
-            return;
-          }
-          if (frame.type === "answer") {
-            await peer.setRemoteDescription(frame.sdp);
-            for(const candidate of remoteCandidates.splice(0))await peer.addIceCandidate(candidate);
-            if (frame.resume_token) sessionStorage.setItem(resumeKey, frame.resume_token);
-            status.textContent = "Voice Connected";
-			window.allchatActiveVoiceRoom=roomID;
-            mute.disabled = screen.disabled = soundboard.disabled = false;
-            window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
-          } else if(frame.type === "candidate" && frame.candidate) {
-            if(peer.remoteDescription)await peer.addIceCandidate(frame.candidate);else remoteCandidates.push(frame.candidate);
-          } else if (frame.type === "offer") {
-            await peer.setRemoteDescription(frame.sdp);
-            const answer = await peer.createAnswer();
-            await peer.setLocalDescription(answer);
-            await waitForGathering(peer);
-            socket.send(JSON.stringify({version: 1, type: "answer", sdp: peer.localDescription}));
-          } else if ((frame.type === "screen-low" || frame.type === "screen-high") && session.screenSender) {
-            const parameters=session.screenSender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);session.screenSender.setParameters(parameters).catch(()=>{});
-          } else if (frame.type === "screen-rejected") {
-            stopScreen(session); showError(new Error("Someone else is already sharing their screen."));
-          } else if(frame.type === "soundboard-played" && frame.sound) {
-            playSound(frame.sound);
-          }
-        };
-        socket.onerror = () => { if (active === session) status.textContent = "Voice connection failed"; };
-        socket.onclose = () => {
-		  clearInterval(session.heartbeat);session.heartbeat=null;
-          if (active === session && generation === session.generation && status.textContent === "Voice Connected") {
-            status.textContent = "Reconnecting voice";
-            setTimeout(() => active === session && negotiate(true).catch(showError), 750);
-          }
-        };
+      session.mediaConfig = await fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig);
+      const resumeKey = `allchat-media-resume:${roomID}`;
+      const receiveTrack = event => {
+        if (event.track.kind === "video") {
+          const video = document.createElement("video");
+          video.autoplay = true; video.playsInline = true; video.className = "shared-screen";
+          video.srcObject = event.streams[0] || new MediaStream([event.track]);
+          session.remoteVideos.set(event.track.id, video);
+          event.track.addEventListener("ended", () => { session.remoteVideos.delete(event.track.id); video.remove(); renderStage(); });
+          renderStage();
+          return;
+        }
+        let audio = session.remoteAudios.get(event.track);
+        if (!audio) {
+          audio = document.createElement("audio"); audio.autoplay = true;
+          session.remoteAudios.set(event.track, audio); document.body.append(audio);
+          event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
+        }
+        audio.srcObject = event.streams[0] || new MediaStream([event.track]);
       };
-      const showError = error => {
+      const receiveFrame = frame => {
+        if ((frame.type === "screen-low" || frame.type === "screen-high") && session.screenSender) {
+          const parameters=session.screenSender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);session.screenSender.setParameters(parameters).catch(()=>{});
+        } else if (frame.type === "screen-rejected") {
+          stopScreen(session); status.textContent = "Someone else is already sharing their screen.";
+        } else if(frame.type === "soundboard-played" && frame.sound) playSound(frame.sound);
+      };
+      const connectionState = (state, error) => {
         if (active !== session) return;
-        status.textContent = error?.message || "Voice connection failed";
-        panel.classList.add("error");
-		setPending(session, "Connection failed");
+        retry.hidden = state !== "failed";
+        panel.classList.toggle("error", state === "failed");
+        if (state === "connecting") { status.textContent = "Voice Connecting"; setPending(session, "Connecting"); }
+        if (state === "recovering") {
+          status.textContent = "Reconnecting voice"; setPending(session, "Reconnecting");
+          if (session.screenStream) {
+            session.screenStream.getTracks().forEach(track => {track.onended=null;track.stop()});
+            session.screenStream=null;session.screenSenders=[];session.screenSender=null;screen.classList.remove("active");renderStage();
+          }
+        }
+        if (state === "connected") {
+          status.textContent = "Voice Connected"; window.allchatActiveVoiceRoom=roomID;
+          mute.disabled = screen.disabled = soundboard.disabled = false;
+          window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
+        }
+        if (state === "failed") { status.textContent = error?.message || "Voice connection failed"; setPending(session, "Connection failed"); }
       };
-      await negotiate(true);
+      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onTrack:receiveTrack,onFrame:receiveFrame,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
+      retry.onclick = () => session.connection.start();
+      await session.connection.start();
     } catch (error) {
       if (active === session) {
         status.textContent = error?.message || "Could not join voice";
@@ -292,6 +222,6 @@
   });
   document.addEventListener("allchat:view-swapped", () => renderStage());
   setInterval(renderStage,1000);
-  document.addEventListener("visibilitychange",()=>active?.socket?.readyState===WebSocket.OPEN&&active.socket.send(JSON.stringify({version:1,type:"screen-visibility",visible:!document.hidden})));
+  document.addEventListener("visibilitychange",()=>active?.connection?.send("screen-visibility",{visible:!document.hidden}));
   addEventListener("pagehide", () => disconnect({explicit: false}));
 })();

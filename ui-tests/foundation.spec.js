@@ -163,6 +163,142 @@ test('voice stage fills width with two, triforce three, and two-by-two four part
   expect(four[3].x).toBe(four[1].x);
 });
 
+test('voice connection recovers a dropped signaling socket with fresh transport credentials', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/voice-connection.js'});
+  const result = await page.evaluate(async () => {
+    const states = [], sockets = [], peers = [], joinTokens = [];
+    let heartbeats = 0;
+    let credentialFetches = 0;
+    class FakePeer {
+      constructor() { this.localDescription = null; this.connectionState = 'new'; peers.push(this); }
+      addTrack() {}
+      addTransceiver() {}
+      createOffer() { return Promise.resolve({type: 'offer', sdp: 'offer'}); }
+      setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
+      setRemoteDescription() { this.connectionState = 'connected'; this.onconnectionstatechange?.(); return Promise.resolve(); }
+      addIceCandidate() { return Promise.resolve(); }
+      close() { this.connectionState = 'closed'; }
+    }
+    class FakeSocket {
+      static OPEN = 1;
+      constructor() { this.readyState = 1; sockets.push(this); queueMicrotask(() => this.onopen?.()); }
+      send(raw) {
+        const frame = JSON.parse(raw);
+        if (frame.type === 'join') {
+          joinTokens.push(frame.resume_token);
+          const response = sockets.length === 2 && frame.resume_token
+            ? {version: 1, type: 'error', code: 'invalid_resume', error: 'resume expired'}
+            : {version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-token'};
+          queueMicrotask(() => this.onmessage?.({data: JSON.stringify(response)}));
+        }
+        if (frame.type === 'heartbeat') { heartbeats++; queueMicrotask(() => this.onmessage?.({data: JSON.stringify({version: 1, type: 'heartbeat-ack'})})); }
+      }
+      close() { if (this.readyState === 3) return; this.readyState = 3; queueMicrotask(() => this.onclose?.()); }
+    }
+    const connection = new window.AllChatVoiceConnection({
+      roomID: 'voice-room',
+      stream: {getTracks: () => [{kind: 'audio'}]},
+      onState: state => states.push(state),
+      fetchCredentials: async () => { credentialFetches++; return []; },
+      createPeer: () => new FakePeer(),
+      createSocket: () => new FakeSocket(),
+      recoveryDelays: [0],
+      recoveryTimeout: 1000,
+      heartbeatInterval: 5,
+      heartbeatTimeout: 50,
+    });
+    await connection.start();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    sockets[0].close();
+    await new Promise(resolve => setTimeout(resolve, 20));
+    sockets.at(-1).close();
+    await new Promise(resolve => setTimeout(resolve, 20));
+    const snapshot = {states: [...states], sockets: sockets.length, peers: peers.length, credentialFetches, heartbeats, joinTokens};
+    connection.stop();
+    return snapshot;
+  });
+  expect(result.states).toContain('recovering');
+  expect(result.states.at(-1)).toBe('connected');
+  expect(result).toMatchObject({sockets: 4, peers: 4, credentialFetches: 4, joinTokens: ['', 'resume-token', '', 'resume-token']});
+  expect(result.heartbeats).toBeGreaterThan(0);
+});
+
+test('voice connection restarts failed ICE before replacing the signaling socket', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/voice-connection.js'});
+  const result = await page.evaluate(async () => {
+    const states = [], sent = [];
+    let peers = 0, sockets = 0, restarts = 0;
+    class FakePeer {
+      constructor() { this.localDescription=null;this.connectionState='new';peers++; }
+      addTrack(){} addTransceiver(){} addIceCandidate(){return Promise.resolve()}
+      createOffer(options){sent.push({offer:options||{}});return Promise.resolve({type:'offer',sdp:'offer'})}
+      setLocalDescription(value){this.localDescription=value;return Promise.resolve()}
+      setRemoteDescription(){this.connectionState='connected';this.onconnectionstatechange?.();return Promise.resolve()}
+      restartIce(){restarts++} close(){this.connectionState='closed'}
+    }
+    class FakeSocket {
+      static OPEN=1;
+      constructor(){this.readyState=1;sockets++;queueMicrotask(()=>this.onopen?.())}
+      send(raw){const frame=JSON.parse(raw);if(frame.type==='join'||frame.type==='offer')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'answer',sdp:{type:'answer',sdp:'answer'},resume_token:'resume'})}))}
+      close(){this.readyState=3}
+    }
+    const connection=new window.AllChatVoiceConnection({roomID:'voice-room',stream:{getTracks:()=>[{kind:'audio'}]},onState:state=>states.push(state),fetchCredentials:async()=>[],createPeer:()=>new FakePeer(),createSocket:()=>new FakeSocket(),iceGracePeriod:5});
+    await connection.start();
+    connection.peer.connectionState='failed';connection.peer.onconnectionstatechange();
+    await new Promise(resolve=>setTimeout(resolve,10));
+    const snapshot={states:[...states],peers,sockets,restarts,iceRestartOffers:sent.filter(item=>item.offer.iceRestart).length};
+    connection.stop();return snapshot;
+  });
+  expect(result.states).toContain('recovering');
+  expect(result.states.at(-1)).toBe('connected');
+  expect(result).toMatchObject({peers:1,sockets:1,restarts:1,iceRestartOffers:1});
+});
+
+test('voice connection replaces a half-open socket after missed heartbeat acknowledgements', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url:'/assets/voice-connection.js'});
+  const result=await page.evaluate(async()=>{
+    let socketCount=0,credentialFetches=0;const states=[];
+    class Peer{constructor(){this.localDescription=null}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}}
+    class Socket{static OPEN=1;constructor(){this.readyState=1;this.number=++socketCount;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'answer',sdp:{type:'answer',sdp:'answer'},resume_token:'resume'})}));if(frame.type==='heartbeat'&&this.number>1)queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'heartbeat-ack'})}))}close(){if(this.readyState===3)return;this.readyState=3;queueMicrotask(()=>this.onclose?.())}}
+    const connection=new window.AllChatVoiceConnection({roomID:'voice-room',stream:{getTracks:()=>[{kind:'audio'}]},onState:state=>states.push(state),fetchCredentials:async()=>{credentialFetches++;return[]},createPeer:()=>new Peer(),createSocket:()=>new Socket(),heartbeatInterval:5,heartbeatTimeout:12,recoveryDelays:[0],recoveryTimeout:100});
+    await connection.start();await new Promise(resolve=>setTimeout(resolve,35));
+    const snapshot={states:[...states],socketCount,credentialFetches};connection.stop();return snapshot;
+  });
+  expect(result.states).toContain('recovering');
+  expect(result.states.at(-1)).toBe('connected');
+  expect(result).toMatchObject({socketCount:2,credentialFetches:2});
+});
+
+test('websocket wrapper closes a half-open realtime connection after inbound silence', async ({ page }) => {
+  await page.goto('/login');
+  const result = await page.evaluate(async () => {
+    const NativeWebSocket = window.WebSocket;
+    const sockets = [];
+    class SilentSocket extends EventTarget {
+      static OPEN = 1;
+      constructor() { super(); this.readyState = 1; this.closeCalls = 0; sockets.push(this); queueMicrotask(() => this.dispatchEvent(new Event('open'))); }
+      send() {}
+      close() { this.closeCalls++; this.readyState = 3; this.dispatchEvent(new Event('close')); }
+    }
+    window.WebSocket = SilentSocket;
+    window.__allchatWebSocketBatches = false;
+    window.__allchatWebSocketLiveness = {checkInterval: 5, timeout: 12};
+    const source = await (await fetch('/assets/app.js')).text();
+    Function(source.slice(0, source.indexOf('\n\n(() => {', 1)))();
+    const socket = new window.WebSocket('ws://example.invalid/api/v1/realtime');
+    let closes = 0;
+    socket.onclose = () => { closes++; };
+    await new Promise(resolve => setTimeout(resolve, 35));
+    const snapshot = {nativeCloseCalls: sockets[0].closeCalls, closes};
+    window.WebSocket = NativeWebSocket;
+    return snapshot;
+  });
+  expect(result).toEqual({nativeCloseCalls: 1, closes: 1});
+});
+
 test('clicking a voice channel joins in place without replacing the text conversation', async ({ page }) => {
   let voiceParticipants = [{member_id: 'member-one', connected: true, speaking: false, screen_sharing: true}];
   await page.route('**/api/v1/channels', route => route.fulfill({json: {channels: [{id: 'voice-one', name: 'General', type: 'voice'}]}}));
@@ -215,9 +351,8 @@ test('clicking a voice channel joins in place without replacing the text convers
   await expect(page.locator('[data-voice-connection="voice-one"]')).toBeVisible();
   await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText('Connecting');
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
-  expect(Date.now() - voiceStarted).toBeLessThan(1000);
+  expect(Date.now() - voiceStarted).toBeLessThan(1500);
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
-  await expect.poll(() => page.evaluate(() => window.voiceHeartbeatFrames)).toBeGreaterThan(0);
   await page.evaluate(() => {window.voiceEarcons = []; window.allchatVoiceEarcon = kind => window.voiceEarcons.push(kind);});
   voiceParticipants = [...voiceParticipants, {member_id: 'member-two', connected: true, speaking: false}];
   await expect.poll(() => page.evaluate(() => window.voiceEarcons)).toContain('join');

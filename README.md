@@ -147,6 +147,8 @@ Open port 80 only when AllChat manages ACME certificates. Port 5349 is used by t
 
 The SFU uses UDP `50000-50100` by default. Configure its bounded range, room capacity, and sender ceilings with `--media-min-port`, `--media-max-port`, `--media-max-participants`, `--media-audio-bitrate`, and `--media-screen-bitrate`, then allow that UDP range through the VPS firewall.
 
+Voice signaling uses acknowledged heartbeats to detect half-open WebSockets. If signaling closes, or WebRTC reports failed ICE, the browser first attempts an ICE restart and then recreates its signaling socket and peer with fresh Relay credentials. A token-bound Media Session can be resumed for 30 seconds; recovery uses bounded backoff for up to 30 seconds, falls back to a fresh join when the resume token has expired, and then presents a manual Retry action. Local screen sharing stops during transport recovery and must be started again after audio reconnects.
+
 The embedded TURN relay requires the VPS public address because automatic address discovery would be unreliable behind cloud 1:1 NAT:
 
 ```sh

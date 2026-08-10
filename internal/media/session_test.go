@@ -36,6 +36,45 @@ func TestManagerEnforcesOneSessionAndBoundedResume(t *testing.T) {
 	}
 }
 
+func TestResumeTokenCanTakeOverBeforeStaleConnectionCleanup(t *testing.T) {
+	manager := NewManager(30 * time.Second)
+	joined, err := manager.Join("member-a", "voice-one")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumed, err := manager.Resume("member-a", "voice-one", joined.ResumeToken)
+	if err != nil {
+		t.Fatalf("token-authenticated takeover failed: %v", err)
+	}
+	if resumed.ResumeToken != joined.ResumeToken || !resumed.Participant.Connected {
+		t.Fatalf("resumed session = %+v", resumed)
+	}
+}
+
+func TestStalePeerLeaseCannotDisconnectReplacement(t *testing.T) {
+	manager := NewManager(30 * time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("member-a", "voice-one"); err != nil {
+		t.Fatal(err)
+	}
+	connection, err := manager.api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager.mu.Lock()
+	manager.peers["member-a"] = &Peer{memberID: "member-a", roomID: "voice-one", lease: 2, connection: connection}
+	manager.mu.Unlock()
+	manager.DisconnectPeer("member-a", 1)
+	manager.RemovePeerLease("member-a", 1)
+	if participants := manager.Participants("voice-one"); len(participants) != 1 || !participants[0].Connected {
+		t.Fatalf("stale cleanup changed replacement session: %+v", participants)
+	}
+	manager.DisconnectPeer("member-a", 2)
+	if participants := manager.Participants("voice-one"); len(participants) != 1 || participants[0].Connected {
+		t.Fatalf("current cleanup did not disconnect session: %+v", participants)
+	}
+}
+
 func TestManagerNeverHidesParticipantsAndRestartClearsSessions(t *testing.T) {
 	manager := NewManager(time.Second)
 	if _, err := manager.Join("one", "room"); err != nil {

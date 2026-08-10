@@ -40,7 +40,7 @@ func TestAcceptOfferNegotiatesRealPionPeer(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("client ICE gathering timed out")
 	}
-	answer, _, err := manager.AcceptOffer("member", "room", *client.LocalDescription(), func(Signal) {})
+	answer, _, _, err := manager.AcceptOffer("member", "room", *client.LocalDescription(), func(Signal) {})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestSFUForwardsNonSimulcastScreenToExistingViewer(t *testing.T) {
 		t.Fatal(err)
 	}
 	viewerSignals := make(chan Signal, 4)
-	viewerAnswer, _, err := manager.AcceptOffer("viewer", "room", viewerOffer, func(signal Signal) { viewerSignals <- signal })
+	viewerAnswer, _, _, err := manager.AcceptOffer("viewer", "room", viewerOffer, func(signal Signal) { viewerSignals <- signal })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func TestSFUForwardsNonSimulcastScreenToExistingViewer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sourceAnswer, _, err := manager.AcceptOffer("source", "room", sourceOffer, func(Signal) {})
+	sourceAnswer, _, _, err := manager.AcceptOffer("source", "room", sourceOffer, func(Signal) {})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +186,7 @@ func TestSFUForwardsScreensFromMultiplePublishers(t *testing.T) {
 		t.Fatal(err)
 	}
 	signals := make(chan Signal, 8)
-	answer, _, err := manager.AcceptOffer("viewer", "room", offer, func(signal Signal) { signals <- signal })
+	answer, _, _, err := manager.AcceptOffer("viewer", "room", offer, func(signal Signal) { signals <- signal })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +216,7 @@ func TestSFUForwardsScreensFromMultiplePublishers(t *testing.T) {
 		if offerErr != nil {
 			t.Fatal(offerErr)
 		}
-		sourceAnswer, _, acceptErr := manager.AcceptOffer(memberID, "room", sourceOffer, func(Signal) {})
+		sourceAnswer, _, _, acceptErr := manager.AcceptOffer(memberID, "room", sourceOffer, func(Signal) {})
 		if acceptErr != nil {
 			t.Fatal(acceptErr)
 		}
@@ -280,7 +280,7 @@ func TestSFUForwardsAudioFromMultiplePublishers(t *testing.T) {
 		t.Fatal(err)
 	}
 	signals := make(chan Signal, 8)
-	answer, _, err := manager.AcceptOffer("viewer", "room", offer, func(signal Signal) { signals <- signal })
+	answer, _, _, err := manager.AcceptOffer("viewer", "room", offer, func(signal Signal) { signals <- signal })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -314,7 +314,7 @@ func TestSFUForwardsAudioFromMultiplePublishers(t *testing.T) {
 		if offerErr != nil {
 			t.Fatal(offerErr)
 		}
-		sourceAnswer, _, acceptErr := manager.AcceptOffer(memberID, "room", sourceOffer, func(Signal) {})
+		sourceAnswer, _, _, acceptErr := manager.AcceptOffer(memberID, "room", sourceOffer, func(Signal) {})
 		if acceptErr != nil {
 			t.Fatal(acceptErr)
 		}

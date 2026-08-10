@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 16 {
-		t.Fatalf("health = %+v, want status ok at schema version 16", health)
+	if health.Status != "ok" || health.SchemaVersion != 17 {
+		t.Fatalf("health = %+v, want status ok at schema version 17", health)
 	}
 
 	client := newClient(t)
@@ -138,11 +138,54 @@ func TestAcceptedDirectCallNegotiatesRealPeersThroughPublicMediaWebSocket(t *tes
 	ownerPeer, ownerSignal := connectMediaPeer(t, ownerClient, app, call.ID)
 	defer ownerPeer.Close()
 	defer ownerSignal.Close(websocket.StatusNormalClosure, "test complete")
+	assertMediaHeartbeatAcknowledged(t, ownerPeer, ownerSignal)
 	memberPeer, memberSignal := connectMediaPeer(t, memberClient, app, call.ID)
 	defer memberPeer.Close()
 	defer memberSignal.Close(websocket.StatusNormalClosure, "test complete")
 	if owner["id"] == "" || member.ID == "" {
 		t.Fatal("test participants were not created")
+	}
+}
+
+func assertMediaHeartbeatAcknowledged(t *testing.T, peer *webrtc.PeerConnection, connection *websocket.Conn) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	encoded, _ := json.Marshal(map[string]any{"version": 1, "type": "heartbeat"})
+	if err := connection.Write(ctx, websocket.MessageText, encoded); err != nil {
+		t.Fatalf("write media heartbeat: %v", err)
+	}
+	for {
+		_, encoded, err := connection.Read(ctx)
+		if err != nil {
+			t.Fatalf("read media heartbeat acknowledgement: %v", err)
+		}
+		var frame struct {
+			Type string                     `json:"type"`
+			SDP  *webrtc.SessionDescription `json:"sdp"`
+		}
+		if err = json.Unmarshal(encoded, &frame); err != nil {
+			t.Fatal(err)
+		}
+		if frame.Type == "heartbeat-ack" {
+			return
+		}
+		if frame.Type == "offer" && frame.SDP != nil {
+			if err = peer.SetRemoteDescription(*frame.SDP); err != nil {
+				t.Fatal(err)
+			}
+			answer, answerErr := peer.CreateAnswer(nil)
+			if answerErr != nil {
+				t.Fatal(answerErr)
+			}
+			if err = peer.SetLocalDescription(answer); err != nil {
+				t.Fatal(err)
+			}
+			response, _ := json.Marshal(map[string]any{"version": 1, "type": "answer", "sdp": peer.LocalDescription()})
+			if err = connection.Write(ctx, websocket.MessageText, response); err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
 }
 
@@ -239,7 +282,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(16) {
+	if health["status"] != "ok" || health["schema_version"] != float64(17) {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }

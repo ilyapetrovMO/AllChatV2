@@ -161,6 +161,11 @@ test('SPA-opened channel receives remote messages before local input and starts 
   const remoteBody = `Remote before local input ${Date.now()}`;
   await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: remoteBody});
   await expect(page.locator('#messages')).toContainText(remoteBody);
+  await page.evaluate(() => { window.replacedRealtimeSocket = window.allchatSocket; window.allchatSocket.close(); });
+  await expect.poll(() => page.evaluate(() => window.allchatSocket !== window.replacedRealtimeSocket && window.allchatSocket?.readyState === WebSocket.OPEN)).toBe(true);
+  const recoveredBody = `Remote after realtime recovery ${Date.now()}`;
+  await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: recoveredBody});
+  await expect(page.locator('#messages')).toContainText(recoveredBody);
   await expect.poll(() => page.locator('#messages').evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(3);
   await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
   await expect(page.locator('#messages')).toContainText('Scroll fixture 01');

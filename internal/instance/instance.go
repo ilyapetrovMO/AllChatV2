@@ -132,7 +132,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		tlsConfig = manager.TLSConfig()
 		acmeManager = manager
 	}
-	mediaManager, mediaErr := media.NewManagerWithLimits(15*time.Second, config.MediaPortMin, config.MediaPortMax, config.MediaMaxParticipants)
+	mediaManager, mediaErr := media.NewManagerWithLimits(30*time.Second, config.MediaPortMin, config.MediaPortMax, config.MediaMaxParticipants)
 	if mediaErr != nil {
 		return nil, fmt.Errorf("configure media limits: %w", mediaErr)
 	}

@@ -26,6 +26,7 @@ type Signal struct {
 type Peer struct {
 	memberID   string
 	roomID     string
+	lease      uint64
 	connection *webrtc.PeerConnection
 	signal     func(Signal)
 	negotiate  sync.Mutex
@@ -49,15 +50,15 @@ func (m *Manager) Broadcast(roomID string, signal Signal) {
 
 // AcceptOffer creates one SFU PeerConnection and returns a fully gathered
 // answer. Further participants are delivered through server-initiated offers.
-func (m *Manager) AcceptOffer(memberID, roomID string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, error) {
+func (m *Manager) AcceptOffer(memberID, roomID string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
 	return m.acceptOffer(memberID, roomID, "", offer, signal)
 }
 
-func (m *Manager) ResumeOffer(memberID, roomID, resumeToken string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, error) {
+func (m *Manager) ResumeOffer(memberID, roomID, resumeToken string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
 	return m.acceptOffer(memberID, roomID, resumeToken, offer, signal)
 }
 
-func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, error) {
+func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
 	var joined JoinResult
 	var err error
 	if resumeToken == "" {
@@ -66,15 +67,18 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 		joined, err = m.Resume(memberID, roomID, resumeToken)
 	}
 	if err != nil {
-		return webrtc.SessionDescription{}, "", err
+		return webrtc.SessionDescription{}, "", 0, err
 	}
 	connection, err := m.api.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
 		_ = m.Leave(memberID, roomID)
-		return webrtc.SessionDescription{}, "", err
+		return webrtc.SessionDescription{}, "", 0, err
 	}
-	peer := &Peer{memberID: memberID, roomID: roomID, connection: connection, signal: signal}
 	m.mu.Lock()
+	m.nextPeerLease++
+	lease := m.nextPeerLease
+	peer := &Peer{memberID: memberID, roomID: roomID, lease: lease, connection: connection, signal: signal}
+	previousPeer := m.peers[memberID]
 	for sourceTrackID, track := range m.tracks[roomID] {
 		if !strings.HasPrefix(sourceTrackID, memberID+":") {
 			_, _ = connection.AddTrack(track)
@@ -87,6 +91,9 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 	}
 	m.peers[memberID] = peer
 	m.mu.Unlock()
+	if previousPeer != nil {
+		_ = previousPeer.connection.Close()
+	}
 	connection.OnTrack(func(remote *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remote.Kind() == webrtc.RTPCodecTypeVideo {
 			m.forwardScreen(peer, remote)
@@ -129,11 +136,11 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 	connection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
 		switch state {
 		case webrtc.PeerConnectionStateConnected:
-			m.markConnected(memberID)
+			m.markConnected(memberID, lease)
 		case webrtc.PeerConnectionStateDisconnected:
-			m.DisconnectPeer(memberID)
+			m.disconnectPeer(memberID, lease)
 		case webrtc.PeerConnectionStateFailed, webrtc.PeerConnectionStateClosed:
-			m.DisconnectPeer(memberID)
+			m.disconnectPeer(memberID, lease)
 		}
 	})
 	connection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
@@ -143,19 +150,21 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 		}
 	})
 	if err := connection.SetRemoteDescription(offer); err != nil {
-		m.RemovePeer(memberID)
-		return webrtc.SessionDescription{}, "", err
+		m.removePeerLease(memberID, lease)
+		return webrtc.SessionDescription{}, "", 0, err
 	}
 	answer, err := connection.CreateAnswer(nil)
 	if err != nil {
-		m.RemovePeer(memberID)
-		return webrtc.SessionDescription{}, "", err
+		m.removePeerLease(memberID, lease)
+		return webrtc.SessionDescription{}, "", 0, err
 	}
+	gathered := webrtc.GatheringCompletePromise(connection)
 	if err := connection.SetLocalDescription(answer); err != nil {
-		m.RemovePeer(memberID)
-		return webrtc.SessionDescription{}, "", err
+		m.removePeerLease(memberID, lease)
+		return webrtc.SessionDescription{}, "", 0, err
 	}
-	return *connection.LocalDescription(), joined.ResumeToken, nil
+	<-gathered
+	return *connection.LocalDescription(), joined.ResumeToken, lease, nil
 }
 
 // AddICECandidate applies a trickled browser candidate to an active peer.
@@ -271,17 +280,33 @@ func (m *Manager) SetScreenVisible(memberID string, visible bool) error {
 }
 
 func (m *Manager) RemovePeer(memberID string) {
-	m.detachPeer(memberID, true)
+	m.detachPeer(memberID, 0, true, true)
 }
 
-func (m *Manager) DisconnectPeer(memberID string) {
-	m.detachPeer(memberID, false)
+// RemovePeerLease removes a Media Session only when the explicit leave came
+// from its current signaling lease.
+func (m *Manager) RemovePeerLease(memberID string, lease uint64) {
+	m.removePeerLease(memberID, lease)
 }
 
-func (m *Manager) detachPeer(memberID string, removeSession bool) {
+// DisconnectPeer disconnects only the peer created by the matching signaling
+// lease. Cleanup from a stale WebSocket must never detach its replacement.
+func (m *Manager) DisconnectPeer(memberID string, lease uint64) {
+	m.detachPeer(memberID, lease, false, false)
+}
+
+func (m *Manager) disconnectPeer(memberID string, lease uint64) {
+	m.DisconnectPeer(memberID, lease)
+}
+
+func (m *Manager) removePeerLease(memberID string, lease uint64) {
+	m.detachPeer(memberID, lease, true, false)
+}
+
+func (m *Manager) detachPeer(memberID string, lease uint64, removeSession, force bool) {
 	m.mu.Lock()
 	peer := m.peers[memberID]
-	if peer == nil {
+	if peer == nil || (!force && peer.lease != lease) {
 		m.mu.Unlock()
 		return
 	}
@@ -385,7 +410,12 @@ func (m *Manager) publishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) 
 
 func (m *Manager) unpublishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) {
 	m.mu.Lock()
-	delete(m.tracks[source.roomID], source.memberID+":"+track.ID())
+	trackKey := source.memberID + ":" + track.ID()
+	if m.tracks[source.roomID][trackKey] != track {
+		m.mu.Unlock()
+		return
+	}
+	delete(m.tracks[source.roomID], trackKey)
 	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {

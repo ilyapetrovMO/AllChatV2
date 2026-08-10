@@ -65,6 +65,7 @@ type Manager struct {
 	speakingTimers  map[string]*time.Timer
 	lastSpoke       map[string]time.Time
 	nextJoinOrder   uint64
+	nextPeerLease   uint64
 }
 
 func NewManager(rejoinWindow time.Duration) *Manager {
@@ -139,9 +140,12 @@ func (m *Manager) Disconnect(memberID string) {
 	}
 }
 
-func (m *Manager) markConnected(memberID string) {
+func (m *Manager) markConnected(memberID string, lease uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if peer := m.peers[memberID]; peer == nil || peer.lease != lease {
+		return
+	}
 	if item := m.byMember[memberID]; item != nil {
 		item.participant.Connected = true
 		item.participant.RejoinBefore = ""
@@ -153,7 +157,7 @@ func (m *Manager) Resume(memberID, roomID, token string) (JoinResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	item := m.byMember[memberID]
-	if item == nil || item.participant.RoomID != roomID || item.participant.Connected || token == "" || token != item.resumeToken || !m.now().Before(item.rejoinUntil) {
+	if item == nil || item.participant.RoomID != roomID || token == "" || token != item.resumeToken || (!item.participant.Connected && !m.now().Before(item.rejoinUntil)) {
 		m.expireLocked()
 		return JoinResult{}, ErrInvalidResume
 	}

@@ -132,6 +132,7 @@
       sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
     }
     session.socket?.close();
+	clearInterval(session.heartbeat);session.heartbeat=null;
     session.peer?.close();
     session.stream?.getTracks().forEach(track => track.stop());
     session.screenStream?.getTracks().forEach(track => track.stop());
@@ -151,7 +152,7 @@
     const screen = panel.querySelector("[data-voice-screen]");
     const soundboard = panel.querySelector("[data-voice-soundboard]");
     const leave = panel.querySelector("[data-voice-leave]");
-    const session = {roomID, name, panel, peer: null, socket: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), generation: 0, profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
+    const session = {roomID, name, panel, peer: null, socket: null, heartbeat: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), generation: 0, profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
 	prepareEarcons();
 	setPending(session, "Connecting");
@@ -178,6 +179,7 @@
 
       const negotiate = async allowResume => {
         const generation = ++session.generation;
+		clearInterval(session.heartbeat);session.heartbeat=null;
         session.peer?.close();
         session.socket?.close();
         const peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
@@ -214,7 +216,7 @@
         session.socket = socket;
         const resumeKey = `allchat-media-resume:${roomID}`;
         const resumeToken = allowResume ? sessionStorage.getItem(resumeKey) || "" : "";
-        socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));pendingCandidates.splice(0).forEach(candidate=>socket.send(candidate))};
+        socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token: resumeToken, sdp: peer.localDescription}));pendingCandidates.splice(0).forEach(candidate=>socket.send(candidate));session.heartbeat=setInterval(()=>{if(session.socket===socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({version:1,type:"heartbeat"}))},1000)};
         socket.onmessage = async event => {
           if (active !== session || generation !== session.generation) return;
           const frame = JSON.parse(event.data);
@@ -254,6 +256,7 @@
         };
         socket.onerror = () => { if (active === session) status.textContent = "Voice connection failed"; };
         socket.onclose = () => {
+		  clearInterval(session.heartbeat);session.heartbeat=null;
           if (active === session && generation === session.generation && status.textContent === "Voice Connected") {
             status.textContent = "Reconnecting voice";
             setTimeout(() => active === session && negotiate(true).catch(showError), 750);

@@ -120,6 +120,9 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		switch command.Type {
+		case "heartbeat":
+			// Keep otherwise-idle media signaling connections alive through
+			// proxies and NAT mappings. Media state is carried by WebRTC.
 		case "answer":
 			_ = i.media.HandleAnswer(member.ID, command.SDP)
 		case "candidate":

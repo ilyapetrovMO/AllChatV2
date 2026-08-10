@@ -193,8 +193,8 @@ test('clicking a voice channel joins in place without replacing the text convers
     };
     window.WebSocket = class {
       static OPEN = 1;
-      constructor() { this.readyState = 1; setTimeout(() => this.onopen?.(), 0); }
-      send(value) { const frame = JSON.parse(value); if (frame.type === 'join') { window.voiceJoinFrame = frame; setTimeout(() => this.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'mock-answer'}, resume_token: 'resume'}),}), 500); } if (frame.type === 'mute-state') window.voiceMuteFrame = frame; }
+      constructor() { this.readyState = 1; window.voiceHeartbeatFrames = 0; setTimeout(() => this.onopen?.(), 0); }
+      send(value) { const frame = JSON.parse(value); if (frame.type === 'join') { window.voiceJoinFrame = frame; setTimeout(() => this.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'mock-answer'}, resume_token: 'resume'}),}), 500); } if (frame.type === 'heartbeat') window.voiceHeartbeatFrames++; if (frame.type === 'mute-state') window.voiceMuteFrame = frame; }
       close() { this.readyState = 3; }
     };
   });
@@ -217,6 +217,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   expect(Date.now() - voiceStarted).toBeLessThan(1000);
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
+  await expect.poll(() => page.evaluate(() => window.voiceHeartbeatFrames)).toBeGreaterThan(0);
   await page.evaluate(() => {window.voiceEarcons = []; window.allchatVoiceEarcon = kind => window.voiceEarcons.push(kind);});
   voiceParticipants = [...voiceParticipants, {member_id: 'member-two', connected: true, speaking: false}];
   await expect.poll(() => page.evaluate(() => window.voiceEarcons)).toContain('join');

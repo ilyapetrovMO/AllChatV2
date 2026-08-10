@@ -10,7 +10,7 @@
   const participantList = document.getElementById("voice-participants");
   const remoteAudio = document.getElementById("remote-audio");
   const resumeKey=`allchat-media-resume:${roomID}`;
-  let socket, peer, microphone, polling, screenStream, screenSender, canModerate=false, mediaConfig={audio_bitrate:64000,screen_bitrate:2500000};
+  let socket, peer, microphone, polling, heartbeat, screenStream, screenSender, canModerate=false, mediaConfig={audio_bitrate:64000,screen_bitrate:2500000};
   fetch("/api/v1/media/config").then(response=>response.json()).then(value=>mediaConfig=value);
   fetch("/api/v1/moderation-records").then(response=>{canModerate=response.ok;refreshParticipants()});
   const screen=document.createElement("button");screen.type="button";screen.className="button-secondary";screen.textContent="Share Screen";screen.disabled=true;mute.after(screen);
@@ -35,6 +35,7 @@
   };
   const stop = () => {
     clearInterval(polling);
+	clearInterval(heartbeat);
     if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({version: 1, type: "leave"}));
     socket?.close();
     peer?.close();
@@ -67,7 +68,7 @@
       await waitForGathering(peer);
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       socket = new WebSocket(`${protocol}//${location.host}/api/v1/media`);
-      socket.onopen = () => socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token:sessionStorage.getItem(resumeKey)||"", sdp: peer.localDescription}));
+      socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: roomID, resume_token:sessionStorage.getItem(resumeKey)||"", sdp: peer.localDescription}));heartbeat=setInterval(()=>socket?.readyState===WebSocket.OPEN&&socket.send(JSON.stringify({version:1,type:"heartbeat"})),1000)};
       socket.onmessage = async event => {
         const frame = JSON.parse(event.data);
         if (frame.type === "error") throw new Error(frame.error);

@@ -12,6 +12,17 @@
     if (!response.ok) throw new Error(`Navigation failed (${response.status})`);
     return new DOMParser().parseFromString(await response.text(), "text/html");
   };
+  const syncStyles = next => Promise.all([...next.querySelectorAll('link[rel="stylesheet"][href]')].map(source => {
+    const href = new URL(source.getAttribute("href"), location.href).href;
+    if ([...document.styleSheets].some(sheet => sheet.href === href)) return Promise.resolve();
+    return new Promise(resolve => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = source.getAttribute("href");
+      link.onload = link.onerror = resolve;
+      document.head.append(link);
+    });
+  }));
   const syncBody = next => {
     for (const name of ["channelId", "memberId", "lastSequence"]) next.body.dataset[name] === undefined ? delete document.body.dataset[name] : document.body.dataset[name] = next.body.dataset[name];
     document.title = next.title;
@@ -95,7 +106,11 @@
   const render = (next, url, options = {}) => {
     isOverlayPath(new URL(url, location.href).pathname) ? showOverlay(next, url, options) : showView(next, url, options);
   };
-  const navigate = async (url, options = {}) => render(await load(url), url, options);
+  const navigate = async (url, options = {}) => {
+    const next = await load(url);
+    await syncStyles(next);
+    render(next, url, options);
+  };
   window.allchatNavigate = navigate;
 
   document.addEventListener("click", event => {

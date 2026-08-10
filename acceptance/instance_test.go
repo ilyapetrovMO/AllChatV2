@@ -234,20 +234,38 @@ func connectMediaPeer(t *testing.T, client *http.Client, app *runningInstance, r
 		peer.Close()
 		t.Fatal(err)
 	}
-	_, encoded, err = connection.Read(ctx)
-	if err != nil {
-		connection.CloseNow()
-		peer.Close()
-		t.Fatal(err)
-	}
 	var frame struct {
-		Type string                     `json:"type"`
-		SDP  *webrtc.SessionDescription `json:"sdp"`
+		Type      string                     `json:"type"`
+		SDP       *webrtc.SessionDescription `json:"sdp"`
+		Candidate *webrtc.ICECandidateInit   `json:"candidate"`
 	}
-	if err = json.Unmarshal(encoded, &frame); err != nil || frame.Type != "answer" || frame.SDP == nil {
-		connection.CloseNow()
-		peer.Close()
-		t.Fatalf("media answer = %s, %v", encoded, err)
+	var candidates []webrtc.ICECandidateInit
+	for frame.SDP == nil {
+		_, encoded, err = connection.Read(ctx)
+		if err != nil {
+			connection.CloseNow()
+			peer.Close()
+			t.Fatal(err)
+		}
+		if err = json.Unmarshal(encoded, &frame); err != nil {
+			connection.CloseNow()
+			peer.Close()
+			t.Fatalf("decode media frame = %s, %v", encoded, err)
+		}
+		if frame.Type == "candidate" && frame.Candidate != nil {
+			candidates = append(candidates, *frame.Candidate)
+			frame = struct {
+				Type      string                     `json:"type"`
+				SDP       *webrtc.SessionDescription `json:"sdp"`
+				Candidate *webrtc.ICECandidateInit   `json:"candidate"`
+			}{}
+			continue
+		}
+		if frame.Type != "answer" {
+			connection.CloseNow()
+			peer.Close()
+			t.Fatalf("media answer = %s", encoded)
+		}
 	}
 	connected := make(chan struct{}, 1)
 	peer.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
@@ -259,6 +277,13 @@ func connectMediaPeer(t *testing.T, client *http.Client, app *runningInstance, r
 		connection.CloseNow()
 		peer.Close()
 		t.Fatal(err)
+	}
+	for _, candidate := range candidates {
+		if err = peer.AddICECandidate(candidate); err != nil {
+			connection.CloseNow()
+			peer.Close()
+			t.Fatal(err)
+		}
 	}
 	select {
 	case <-connected:

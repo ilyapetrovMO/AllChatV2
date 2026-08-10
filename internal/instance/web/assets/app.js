@@ -471,11 +471,18 @@
   if (document.body.dataset.memberId) import("/assets/call.js");
   const installAvatarControls=root=>{
     const profileForm=root.querySelector?.('form[action="/profile"]');if(!profileForm||profileForm.querySelector("[data-avatar-control]"))return;
-    const control=document.createElement("fieldset");control.dataset.avatarControl="";control.innerHTML='<legend>Avatar</legend><div class="profile-avatar-editor"><img alt="Current avatar" hidden><span class="member-avatar-fallback">?</span><label>Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label><button type="button" data-avatar-save>Upload avatar</button><button type="button" class="button-ghost danger-text" data-avatar-remove>Remove avatar</button></div><p class="muted" data-avatar-status aria-live="polite"></p>';
-    profileForm.insertBefore(control,profileForm.firstElementChild?.nextElementSibling||profileForm.firstElementChild);const file=control.querySelector('input[type="file"]'),image=control.querySelector("img"),fallback=control.querySelector("span"),status=control.querySelector("[data-avatar-status]"),csrf=profileForm.querySelector('[name="csrf_token"]').value,avatarURL=document.querySelector('.member-summary img')?.src;
+    const control=document.createElement("fieldset");control.dataset.avatarControl="";control.innerHTML='<legend>Avatar</legend><div class="profile-avatar-editor"><div class="profile-avatar-preview"><img alt="Current avatar" hidden><span class="member-avatar-fallback">?</span></div><label>Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label><div class="profile-avatar-actions"><button type="button" data-avatar-save>Upload avatar</button><button type="button" class="button-ghost danger-text" data-avatar-remove>Remove avatar</button></div></div><p class="muted" data-avatar-status aria-live="polite"></p>';
+    profileForm.insertBefore(control,profileForm.firstElementChild?.nextElementSibling||profileForm.firstElementChild);const file=control.querySelector('input[type="file"]'),image=control.querySelector("img"),fallback=control.querySelector("span"),status=control.querySelector("[data-avatar-status]"),csrf=profileForm.querySelector('[name="csrf_token"]').value,avatarURL=profileForm.dataset.avatarUrl||document.querySelector('.member-summary img')?.src;
     if(avatarURL){image.src=avatarURL;image.hidden=false;fallback.hidden=true}
     control.querySelector("[data-avatar-save]").onclick=async()=>{if(!file.files[0]){status.textContent="Choose an image first.";return}const response=await fetch("/api/v1/profile/avatar",{method:"PUT",headers:{"X-CSRF-Token":csrf,"Content-Type":file.files[0].type||"application/octet-stream"},body:file.files[0]});status.textContent=response.ok?"Avatar updated.":"Could not update avatar.";if(response.ok){image.src=URL.createObjectURL(file.files[0]);image.hidden=false;fallback.hidden=true}};
     control.querySelector("[data-avatar-remove]").onclick=async()=>{const response=await fetch("/api/v1/profile/avatar",{method:"DELETE",headers:{"X-CSRF-Token":csrf}});status.textContent=response.ok?"Avatar removed.":"Could not remove avatar.";if(response.ok){image.hidden=true;fallback.hidden=false}};
   };
   installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
+
+  const installSoundboard = root => {
+    if (!root.querySelector?.("#sound-upload")) return;
+    import("/assets/soundboard-admin.js").then(module => module.installSoundboardAdmin(root)).catch(() => {});
+  };
+  installSoundboard(document);
+  document.addEventListener("allchat:view-swapped", event => installSoundboard(event.detail?.root || document));
 })();

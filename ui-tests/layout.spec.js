@@ -19,6 +19,15 @@ async function post(context, url, data) {
   return response.json();
 }
 
+function wavFixture() {
+  const samples = 800, rate = 8000, data = Buffer.alloc(samples, 128), value = Buffer.alloc(44 + samples);
+  value.write('RIFF', 0); value.writeUInt32LE(36 + samples, 4); value.write('WAVEfmt ', 8);
+  value.writeUInt32LE(16, 16); value.writeUInt16LE(1, 20); value.writeUInt16LE(1, 22);
+  value.writeUInt32LE(rate, 24); value.writeUInt32LE(rate, 28); value.writeUInt16LE(1, 32); value.writeUInt16LE(8, 34);
+  value.write('data', 36); value.writeUInt32LE(samples, 40); data.copy(value, 44);
+  return value;
+}
+
 test.beforeAll(async () => {
   const dataDirectory = fs.readFileSync(path.join(os.tmpdir(), 'allchat-playwright-data-path'), 'utf8').trim();
   const setupToken = fs.readFileSync(path.join(dataDirectory, 'setup.token'), 'utf8').trim();
@@ -173,6 +182,66 @@ test('SPA-opened channel receives remote messages before local input and starts 
   await second.dispose();
 });
 
+test('soundboard upload works when administration is opened in the settings overlay', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-community-menu-toggle]').click();
+  await page.locator('[data-community-menu] a[href="/admin/soundboard"]').click();
+  const upload = page.locator('[data-app-overlay] #sound-upload');
+  await upload.locator('[name="name"]').fill('Example tone');
+  await upload.locator('[name="emoji"]').fill('🔔');
+  await upload.locator('[name="file"]').setInputFiles({name: 'example-tone.wav', mimeType: 'audio/wav', buffer: wavFixture()});
+  const request = page.waitForRequest(value => value.method() === 'POST' && value.url().endsWith('/api/v1/soundboard'));
+  await upload.locator('button').click();
+  await request;
+  await expect(page.locator('[data-app-overlay] #sound-status')).toHaveText('Sound uploaded.');
+  const card = page.locator('[data-app-overlay] .sound-card').filter({hasText: 'Example tone'});
+  await expect(card).toContainText('0.1s');
+  expect(page.url()).not.toContain('csrf_token=');
+  await page.locator('[data-app-overlay] #sound-settings [name="seconds"]').fill('12');
+  await page.locator('[data-app-overlay] #sound-settings button').click();
+  await expect(page.locator('[data-app-overlay] #sound-status')).toHaveText('Sound duration limit saved.');
+  await card.locator('.button-danger').click();
+  await expect(card).toHaveCount(0);
+  await expect(page.locator('[data-app-overlay] .soundboard-empty')).toBeVisible();
+});
+
+test('composer aligns controls, fills the member rail, and previews removable attachments', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const input = page.locator('#attachment');
+  await input.setInputFiles([
+    {name: 'example-image.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')},
+    {name: 'example-notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Example attachment')},
+  ]);
+  const previews = page.locator('[data-attachment-preview]');
+  await expect(previews).toHaveCount(2);
+  await expect(previews.filter({hasText: 'example-image.png'}).locator('img')).toBeVisible();
+  await expect(previews.filter({hasText: 'example-notes.txt'}).locator('.attachment-file-icon')).toHaveText('📄');
+  await previews.filter({hasText: 'example-notes.txt'}).getByRole('button', {name: 'Remove attachment'}).click();
+  await expect(previews).toHaveCount(1);
+  await expect(previews).not.toContainText('example-notes.txt');
+  const geometry = await page.evaluate(() => {
+    const box = selector => document.querySelector(selector).getBoundingClientRect();
+    const memberRail = box('.participant-sidebar'), add = box('.attachment-button'), send = box('#composer-submit'), body = box('#message-body');
+    const center = value => value.top + value.height / 2;
+    return {viewportBottom: innerHeight, viewportRight: innerWidth, memberRailBottom: memberRail.bottom, memberRailRight: memberRail.right, addCenter: center(add), sendCenter: center(send), bodyCenter: center(body)};
+  });
+  expect(Math.abs(geometry.viewportBottom - geometry.memberRailBottom)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry.viewportRight - geometry.memberRailRight)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry.addCenter - geometry.bodyCenter)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry.sendCenter - geometry.bodyCenter)).toBeLessThanOrEqual(1);
+  await stabilize(page);
+  await expect(page.locator('#attachment-previews')).toHaveScreenshot('composer-attachment-preview.png', {animations: 'disabled', caret: 'hide'});
+  let attachmentUploads = 0;
+  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/v1/attachments')) attachmentUploads++; });
+  await page.locator('#message-body').fill('Message with a selected image');
+  await page.locator('#composer-submit').click();
+  await expect(page.locator('#messages')).toContainText('Message with a selected image');
+  await expect(page.locator('#attachment-previews')).toBeHidden();
+  expect(attachmentUploads).toBe(1);
+});
+
 test('message authors open the member popover and replies retain their target', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);
@@ -223,8 +292,37 @@ test('member settings expose avatar upload and removal', async ({page}) => {
   await page.locator('[data-avatar-control] input[type="file"]').setInputFiles({name: 'avatar.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')});
   await page.locator('[data-avatar-save]').click();
   await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar updated.');
+  await expect(page.locator('[data-avatar-control] img')).toBeVisible();
+  await expect(page.locator('[data-avatar-control] .member-avatar-fallback')).toBeHidden();
+  const avatarLayout = await page.locator('[data-avatar-control]').evaluate(control => {
+    const box = selector => control.querySelector(selector).getBoundingClientRect();
+    const preview = box('.profile-avatar-preview'), file = box('input[type="file"]'), upload = box('[data-avatar-save]'), remove = box('[data-avatar-remove]');
+    return {previewRight: preview.right, fileLeft: file.left, fileBottom: file.bottom, uploadTop: upload.top, uploadBottom: upload.bottom, removeTop: remove.top, removeBottom: remove.bottom};
+  });
+  expect(avatarLayout.previewRight).toBeLessThan(avatarLayout.fileLeft);
+  expect(avatarLayout.uploadTop).toBeGreaterThanOrEqual(avatarLayout.fileBottom);
+  expect(avatarLayout.removeTop).toBe(avatarLayout.uploadTop);
+  expect(avatarLayout.removeBottom).toBe(avatarLayout.uploadBottom);
+  await stabilize(page);
+  await shot(page, 'avatar-editor-uploaded.png');
+  await page.goto('/profile');
+  await expect(page.locator('[data-avatar-control] img')).toBeVisible();
+  await expect(page.locator('[data-avatar-control] img')).toHaveAttribute('src', /\/api\/v1\/members\/.+\/avatar/);
+  await expect(page.locator('[data-avatar-control] .member-avatar-fallback')).toBeHidden();
   await page.locator('[data-avatar-remove]').click();
   await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar removed.');
+  await expect(page.locator('[data-avatar-control] img')).toBeHidden();
+  await expect(page.locator('[data-avatar-control] .member-avatar-fallback')).toBeVisible();
+});
+
+test('returning from a directly opened settings page installs Community styles', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/profile');
+  await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(0);
+  await page.locator('.settings-nav a[href="/"]').click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(1);
+  await expect(page.locator('.channel-link').first()).toHaveCSS('display', 'flex');
 });
 
 test('community mark closes settings without rebuilding the underlying conversation', async ({page}) => {

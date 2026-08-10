@@ -29,6 +29,8 @@
 .message-action:hover { background: var(--bg-hover); color: var(--text); }
 .message-action.danger-text:hover { color: #ff7b7d; }
 .message-image { display: block; width: auto; max-width: min(100%, 520px); max-height: 420px; margin-top: 8px; border-radius: 4px; object-fit: contain; background: var(--bg-rail); }
+.message-video { display: block; width: min(100%, 640px); max-height: 480px; margin-top: 8px; border-radius: 8px; background: #000; }
+.message-audio { display: block; width: min(100%, 480px); height: 44px; margin-top: 8px; }
 .message-avatar { object-fit: cover; }
 .message-avatar-fallback { display: grid; place-items: center; }
 .message > strong { cursor: pointer; }
@@ -178,6 +180,7 @@
   .search-pane { position: fixed; z-index: 5; inset: 48px 0 0; }
   .message-actions { right: 8px; }
   .message-image { max-height: 320px; }
+  .message-video { max-height: 320px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .message-actions { transition: none; }

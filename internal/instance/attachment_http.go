@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func (i *Instance) uploadAttachmentAPI(response http.ResponseWriter, request *http.Request) {
@@ -46,9 +47,16 @@ func (i *Instance) downloadAttachmentAPI(response http.ResponseWriter, request *
 		http.NotFound(response, request)
 		return
 	}
-	disposition := mime.FormatMediaType("attachment", map[string]string{"filename": filepath.Base(attachment.Name)})
+	media := strings.HasPrefix(attachment.ContentType, "image/") || strings.HasPrefix(attachment.ContentType, "audio/") || strings.HasPrefix(attachment.ContentType, "video/")
+	dispositionKind := "attachment"
+	contentType := "application/octet-stream"
+	if media {
+		dispositionKind = "inline"
+		contentType = attachment.ContentType
+	}
+	disposition := mime.FormatMediaType(dispositionKind, map[string]string{"filename": filepath.Base(attachment.Name)})
 	response.Header().Set("Content-Disposition", disposition)
-	response.Header().Set("Content-Type", "application/octet-stream")
+	response.Header().Set("Content-Type", contentType)
 	response.Header().Set("X-Content-Type-Options", "nosniff")
 	response.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	response.Header().Set("Cache-Control", "private, no-store")

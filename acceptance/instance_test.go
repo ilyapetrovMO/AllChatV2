@@ -1287,11 +1287,24 @@ func TestAttachmentsPublishSafelyAndRequireMessageAuthorization(t *testing.T) {
 	imageMessageResponse := requestJSON(t, client, http.MethodPost, app.url("/api/v1/channels/"+channel.ID+"/messages"), map[string]any{"body": "with image", "attachment_ids": []string{image.ID}})
 	var imageMessage messageView
 	decodeResponse(t, imageMessageResponse, http.StatusCreated, &imageMessage)
+	video := uploadAttachment(t, client, app, "sample.webm", "video/webm", []byte("example video bytes"))
+	audio := uploadAttachment(t, client, app, "sample.ogg", "audio/ogg", []byte("example audio bytes"))
+	mediaMessageResponse := requestJSON(t, client, http.MethodPost, app.url("/api/v1/channels/"+channel.ID+"/messages"), map[string]any{"body": "with playable media", "attachment_ids": []string{video.ID, audio.ID}})
+	var mediaMessage messageView
+	decodeResponse(t, mediaMessageResponse, http.StatusCreated, &mediaMessage)
 	channelPage := getWithClient(t, client, app.url("/channels/"+channel.ID))
 	channelHTML := readAll(t, channelPage.Body)
 	channelPage.Body.Close()
 	if channelPage.StatusCode != http.StatusOK || !strings.Contains(channelHTML, `class="message-image"`) || !strings.Contains(channelHTML, `alt="preview.png"`) {
 		t.Fatalf("image Attachment was not rendered inline: status=%d", channelPage.StatusCode)
+	}
+	if !strings.Contains(channelHTML, `class="message-video"`) || !strings.Contains(channelHTML, `class="message-audio"`) || strings.Count(channelHTML, ` controls`) < 2 {
+		t.Fatalf("audio and video Attachments were not rendered as players: %s", channelHTML)
+	}
+	videoDownload := getWithClient(t, client, app.url("/api/v1/attachments/"+video.ID))
+	videoDownload.Body.Close()
+	if videoDownload.StatusCode != http.StatusOK || videoDownload.Header.Get("Content-Type") != "video/webm" || !strings.HasPrefix(videoDownload.Header.Get("Content-Disposition"), "inline;") {
+		t.Fatalf("video Attachment response is not playable: status=%d headers=%v", videoDownload.StatusCode, videoDownload.Header)
 	}
 	download := getWithClient(t, client, app.url("/api/v1/attachments/"+attachment.ID))
 	downloaded := readAll(t, download.Body)

@@ -19,6 +19,12 @@ async function post(context, url, data) {
   return response.json();
 }
 
+async function uploadFile(context, name, mimeType, buffer) {
+  const response = await context.post('/api/v1/attachments', {data: buffer, headers: {'X-CSRF-Token': await csrf(context), 'X-AllChat-Filename': name, 'Content-Type': mimeType}});
+  if (!response.ok()) throw new Error(`attachment upload: ${response.status()} ${await response.text()}`);
+  return response.json();
+}
+
 function wavFixture() {
   const samples = 800, rate = 8000, data = Buffer.alloc(samples, 128), value = Buffer.alloc(44 + samples);
   value.write('RIFF', 0); value.writeUInt32LE(36 + samples, 4); value.write('WAVEfmt ', 8);
@@ -240,6 +246,26 @@ test('composer aligns controls, fills the member rail, and previews removable at
   await expect(page.locator('#messages')).toContainText('Message with a selected image');
   await expect(page.locator('#attachment-previews')).toBeHidden();
   expect(attachmentUploads).toBe(1);
+});
+
+test('incoming audio and video attachments render as players and survive reload', async ({page}) => {
+  const sender = await request.newContext({baseURL, storageState: fixture.secondState});
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(() => window.allchatSocket?.readyState === WebSocket.OPEN)).toBe(true);
+  const video = await uploadFile(sender, 'example-video.webm', 'video/webm', Buffer.from('example video payload'));
+  const audio = await uploadFile(sender, 'example-audio.ogg', 'audio/ogg', Buffer.from('example audio payload'));
+  await post(sender, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: 'Playable media examples', attachment_ids: [video.id, audio.id]});
+  const message = page.locator('.message').filter({hasText: 'Playable media examples'});
+  await expect(message.locator('video.message-video[controls]')).toHaveCount(1);
+  await expect(message.locator('audio.message-audio[controls]')).toHaveCount(1);
+  await expect(message.locator('video source')).toHaveAttribute('type', 'video/webm');
+  await expect(message.locator('audio source')).toHaveAttribute('type', 'audio/ogg');
+  await page.reload();
+  const persisted = page.locator('.message').filter({hasText: 'Playable media examples'});
+  await expect(persisted.locator('video.message-video[controls]')).toHaveCount(1);
+  await expect(persisted.locator('audio.message-audio[controls]')).toHaveCount(1);
+  await sender.dispose();
 });
 
 test('message authors open the member popover and replies retain their target', async ({page}) => {

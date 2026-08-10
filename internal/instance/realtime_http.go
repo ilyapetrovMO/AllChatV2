@@ -22,6 +22,7 @@ type realtimeFrame struct {
 	ChannelID string                      `json:"channel_id,omitempty"`
 	Payload   json.RawMessage             `json:"payload,omitempty"`
 	Snapshot  *community.RealtimeSnapshot `json:"snapshot,omitempty"`
+	Events    []community.RealtimeEvent   `json:"events,omitempty"`
 }
 
 type realtimeCommand struct {
@@ -185,10 +186,8 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 				cursor = snapshot.Cursor
 				continue
 			}
-			for _, event := range events {
-				if !writeRealtimeFrame(request.Context(), connection, realtimeFrame{Type: event.Type, Cursor: event.Cursor, ChannelID: event.ChannelID, Payload: event.Payload}) {
-					return
-				}
+			if len(events) > 0 && !writeRealtimeFrame(request.Context(), connection, realtimeFrame{Type: "events", Cursor: nextCursor, Events: events}) {
+				return
 			}
 			if nextCursor > cursor {
 				cursor = nextCursor

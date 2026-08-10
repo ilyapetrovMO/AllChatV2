@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/pion/interceptor"
+	"github.com/pion/rtp"
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 	"github.com/pion/webrtc/v4/pkg/media"
@@ -40,6 +42,8 @@ type echoBot struct {
 	client                     *http.Client
 	username, password, invite string
 	shareScreen                bool
+	echoEnabled                bool
+	controlDir                 string
 }
 
 func main() {
@@ -58,7 +62,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	bot := &echoBot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: username, password: password, invite: invite, shareScreen: envEnabled("ALLCHAT_VOICE_BOT_SCREEN", true)}
+	bot := &echoBot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: username, password: password, invite: invite, shareScreen: envEnabled("ALLCHAT_VOICE_BOT_SCREEN", true), echoEnabled: envEnabled("ALLCHAT_VOICE_BOT_ECHO", false), controlDir: strings.TrimSpace(os.Getenv("ALLCHAT_VOICE_BOT_CONTROL_DIR"))}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := bot.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -98,15 +102,29 @@ func (b *echoBot) run(ctx context.Context) error {
 		return err
 	}
 	defer peer.Close()
-	echo, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus, ClockRate: 48000, Channels: 2}, "echo", "allchat-echo-bot")
-	if err != nil {
-		return err
+	var echo *webrtc.TrackLocalStaticRTP
+	if b.echoEnabled {
+		echo, err = webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus, ClockRate: 48000, Channels: 2}, "echo-"+b.username, "member-"+b.username)
+		if err != nil {
+			return err
+		}
+		if _, err = peer.AddTrack(echo); err != nil {
+			return err
+		}
 	}
-	if _, err = peer.AddTrack(echo); err != nil {
-		return err
+	var melody *audioLevelTrack
+	if b.controlDir != "" {
+		melody, err = newAudioLevelTrack("melody-"+b.username, "member-"+b.username)
+		if err != nil {
+			return err
+		}
+		if _, err = peer.AddTrack(melody); err != nil {
+			return err
+		}
 	}
+	var screenFrames *frameStore
 	if b.shareScreen {
-		screen, screenErr := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000}, "screen", "allchat-echo-bot-screen")
+		screen, screenErr := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000}, "screen-"+b.username, "screen-"+b.username)
 		if screenErr != nil {
 			return screenErr
 		}
@@ -117,7 +135,11 @@ func (b *echoBot) run(ctx context.Context) error {
 		if frameErr != nil {
 			return frameErr
 		}
-		go publishDummyScreen(ctx, screen, frame)
+		screenFrames = &frameStore{frame: frame}
+		go publishDummyScreen(ctx, screen, screenFrames)
+	}
+	if b.controlDir != "" {
+		go watchDebugControls(ctx, b.controlDir, melody, screenFrames)
 	}
 	var sourceMu sync.Mutex
 	var activeSource string
@@ -137,6 +159,9 @@ func (b *echoBot) run(ctx context.Context) error {
 			packet, _, readErr := remote.ReadRTP()
 			if readErr != nil {
 				return
+			}
+			if echo == nil {
+				continue
 			}
 			if audioLevelID != 0 {
 				level := packet.Header.GetExtension(audioLevelID)
@@ -184,7 +209,10 @@ func (b *echoBot) run(ctx context.Context) error {
 	if err = writeSignal(ctx, socket, map[string]any{"version": 1, "type": "join", "room_id": target.ID, "sdp": peer.LocalDescription()}); err != nil {
 		return err
 	}
-	log.Printf("voice echo bot %q joining %q; speak in the room to hear your audio returned", b.username, target.Name)
+	log.Printf("voice bot %q joining %q", b.username, target.Name)
+	if b.echoEnabled {
+		log.Printf("echo is enabled; room audio will be returned")
+	}
 	if b.shareScreen {
 		log.Printf("voice echo bot is sharing its embedded SMPTE test image")
 	}
@@ -249,14 +277,33 @@ func firstVoiceChannel(channels []channel) (channel, bool) {
 
 func (b *echoBot) authenticate(ctx context.Context) error {
 	input := map[string]string{"username": b.username, "password": b.password}
+	if envEnabled("ALLCHAT_BOT_REGISTER_FIRST", false) && envEnabled("ALLCHAT_VOICE_BOT_REGISTER", true) && b.invite != "" {
+		registration := map[string]string{"username": b.username, "password": b.password, "token": b.invite}
+		if err := b.sendJSON(ctx, http.MethodPost, "/api/v1/auth/register", registration, nil); err == nil {
+			return nil
+		}
+	}
 	if err := b.sendJSON(ctx, http.MethodPost, "/api/v1/auth/login", input, nil); err == nil {
 		return nil
 	}
 	if b.invite == "" {
 		return fmt.Errorf("login failed and no ALLCHAT_VOICE_BOT_INVITE was provided")
 	}
+	if !envEnabled("ALLCHAT_VOICE_BOT_REGISTER", true) {
+		return fmt.Errorf("login failed after the chat worker was assigned account registration")
+	}
 	input["token"] = b.invite
 	if err := b.sendJSON(ctx, http.MethodPost, "/api/v1/auth/register", input, nil); err != nil {
+		for attempt := 0; attempt < 3; attempt++ {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(200 * time.Millisecond):
+			}
+			if loginErr := b.sendJSON(ctx, http.MethodPost, "/api/v1/auth/login", map[string]string{"username": b.username, "password": b.password}, nil); loginErr == nil {
+				return nil
+			}
+		}
 		return fmt.Errorf("authenticate voice bot: %w", err)
 	}
 	return nil
@@ -375,11 +422,19 @@ func dummyScreenFrame() ([]byte, error) {
 	return ivf[44 : 44+size], nil
 }
 
-func publishDummyScreen(ctx context.Context, track *webrtc.TrackLocalStaticSample, frame []byte) {
+type frameStore struct {
+	mu    sync.RWMutex
+	frame []byte
+}
+
+func (store *frameStore) get() []byte      { store.mu.RLock(); defer store.mu.RUnlock(); return store.frame }
+func (store *frameStore) set(frame []byte) { store.mu.Lock(); store.frame = frame; store.mu.Unlock() }
+
+func publishDummyScreen(ctx context.Context, track *webrtc.TrackLocalStaticSample, frames *frameStore) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
-		if err := track.WriteSample(media.Sample{Data: frame, Duration: time.Second}); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+		if err := track.WriteSample(media.Sample{Data: frames.get(), Duration: time.Second}); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 			return
 		}
 		select {
@@ -388,4 +443,167 @@ func publishDummyScreen(ctx context.Context, track *webrtc.TrackLocalStaticSampl
 		case <-ticker.C:
 		}
 	}
+}
+
+func watchDebugControls(ctx context.Context, dir string, melody *audioLevelTrack, frames *frameStore) {
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+	var melodyTime, screenTime time.Time
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		if melody != nil {
+			if info, err := os.Stat(filepath.Join(dir, "melody.ogg")); err == nil && info.ModTime().After(melodyTime) {
+				melodyTime = info.ModTime()
+				go playOggMelody(ctx, melody, filepath.Join(dir, "melody.ogg"))
+			}
+		}
+		if frames != nil {
+			if info, err := os.Stat(filepath.Join(dir, "screen.ivf")); err == nil && info.ModTime().After(screenTime) {
+				screenTime = info.ModTime()
+				if frame, err := ivfFrame(filepath.Join(dir, "screen.ivf")); err != nil {
+					log.Printf("load debug screen image: %v", err)
+				} else {
+					frames.set(frame)
+				}
+			}
+		}
+	}
+}
+
+func ivfFrame(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) < 44 || string(data[:4]) != "DKIF" || string(data[8:12]) != "VP80" {
+		return nil, fmt.Errorf("invalid VP8 IVF")
+	}
+	size := int(binary.LittleEndian.Uint32(data[32:36]))
+	if size < 1 || 44+size > len(data) {
+		return nil, fmt.Errorf("invalid IVF frame")
+	}
+	return append([]byte(nil), data[44:44+size]...), nil
+}
+
+func playOggMelody(ctx context.Context, track *audioLevelTrack, path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Printf("read debug melody: %v", err)
+		return
+	}
+	packets, err := oggPackets(data)
+	if err != nil {
+		log.Printf("parse debug melody: %v", err)
+		return
+	}
+	for _, packet := range packets {
+		if bytes.HasPrefix(packet, []byte("OpusHead")) || bytes.HasPrefix(packet, []byte("OpusTags")) {
+			continue
+		}
+		if err := track.WriteOpus(packet); err != nil {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(20 * time.Millisecond):
+		}
+	}
+}
+
+type audioLevelTrack struct {
+	track       *webrtc.TrackLocalStaticRTP
+	mu          sync.Mutex
+	extensionID uint8
+	sequence    uint16
+	timestamp   uint32
+}
+
+func newAudioLevelTrack(id, streamID string) (*audioLevelTrack, error) {
+	track, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus, ClockRate: 48000, Channels: 2}, id, streamID)
+	if err != nil {
+		return nil, err
+	}
+	return &audioLevelTrack{track: track}, nil
+}
+
+func (track *audioLevelTrack) Bind(ctx webrtc.TrackLocalContext) (webrtc.RTPCodecParameters, error) {
+	track.mu.Lock()
+	for _, extension := range ctx.HeaderExtensions() {
+		if extension.URI == sdp.AudioLevelURI {
+			track.extensionID = uint8(extension.ID)
+			break
+		}
+	}
+	track.mu.Unlock()
+	return track.track.Bind(ctx)
+}
+func (track *audioLevelTrack) Unbind(ctx webrtc.TrackLocalContext) error {
+	return track.track.Unbind(ctx)
+}
+func (track *audioLevelTrack) ID() string                { return track.track.ID() }
+func (track *audioLevelTrack) RID() string               { return track.track.RID() }
+func (track *audioLevelTrack) StreamID() string          { return track.track.StreamID() }
+func (track *audioLevelTrack) Kind() webrtc.RTPCodecType { return track.track.Kind() }
+
+func (track *audioLevelTrack) WriteOpus(payload []byte) error {
+	track.mu.Lock()
+	packet, err := melodyRTPPacket(payload, track.extensionID, track.sequence, track.timestamp)
+	track.sequence++
+	track.timestamp += 960
+	track.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	return track.track.WriteRTP(packet)
+}
+
+func melodyRTPPacket(payload []byte, extensionID uint8, sequence uint16, timestamp uint32) (*rtp.Packet, error) {
+	packet := &rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: sequence, Timestamp: timestamp}, Payload: payload}
+	if extensionID != 0 {
+		level, err := (rtp.AudioLevelExtension{Level: 10, Voice: true}).Marshal()
+		if err != nil {
+			return nil, err
+		}
+		if err = packet.Header.SetExtension(extensionID, level); err != nil {
+			return nil, err
+		}
+	}
+	return packet, nil
+}
+
+func oggPackets(data []byte) ([][]byte, error) {
+	var packets [][]byte
+	var packet []byte
+	for offset := 0; offset < len(data); {
+		if offset+27 > len(data) || string(data[offset:offset+4]) != "OggS" {
+			return nil, fmt.Errorf("invalid Ogg page")
+		}
+		segments := int(data[offset+26])
+		if offset+27+segments > len(data) {
+			return nil, fmt.Errorf("truncated Ogg lacing")
+		}
+		body := offset + 27 + segments
+		for _, lengthByte := range data[offset+27 : body] {
+			length := int(lengthByte)
+			if body+length > len(data) {
+				return nil, fmt.Errorf("truncated Ogg packet")
+			}
+			packet = append(packet, data[body:body+length]...)
+			body += length
+			if length < 255 {
+				packets = append(packets, packet)
+				packet = nil
+			}
+		}
+		offset = body
+	}
+	if len(packet) != 0 {
+		return nil, fmt.Errorf("unfinished Ogg packet")
+	}
+	return packets, nil
 }

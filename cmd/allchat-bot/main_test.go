@@ -42,3 +42,16 @@ func TestNewestIncomingAdvancesCursorAndIgnoresBotMessages(t *testing.T) {
 		t.Fatalf("unchanged poll cursor = %d, ok = %v", cursor, ok)
 	}
 }
+
+func TestVoiceRequestRequiresAllThreeWholeWords(t *testing.T) {
+	for _, input := range []string{"go into voice", "VOICE: go into it", "Could you go, please, into voice?"} {
+		if !requestsVoice(input) {
+			t.Fatalf("%q did not request voice", input)
+		}
+	}
+	for _, input := range []string{"go voice", "going into voice", "go into voicemail"} {
+		if requestsVoice(input) {
+			t.Fatalf("%q unexpectedly requested voice", input)
+		}
+	}
+}

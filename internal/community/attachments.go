@@ -38,7 +38,9 @@ type Attachment struct {
 func newServiceWithAttachmentLimits(db *sql.DB, dataDir string) *Service {
 	perFile := configuredLimit("ALLCHAT_MAX_ATTACHMENT_BYTES", defaultAttachmentBytes, hardAttachmentBytes)
 	total := configuredLimit("ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES", defaultStorageBytes, hardStorageBytes)
-	return &Service{db: db, dataDir: dataDir, maxAttachmentBytes: perFile, maxStorageBytes: total}
+	service := &Service{db: db, dataDir: dataDir, maxAttachmentBytes: perFile, maxStorageBytes: total, messageRequests: make(chan messagePublishRequest, 1024), messageStop: make(chan struct{}), messageDone: make(chan struct{})}
+	go service.runMessageWriter()
+	return service
 }
 
 func configuredLimit(name string, fallback, ceiling int64) int64 {

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"allchat/internal/identity"
@@ -51,6 +52,10 @@ type Service struct {
 	dataDir            string
 	maxAttachmentBytes int64
 	maxStorageBytes    int64
+	messageRequests    chan messagePublishRequest
+	messageStop        chan struct{}
+	messageDone        chan struct{}
+	messageClose       sync.Once
 }
 
 func New(db *sql.DB, dataDir ...string) *Service {

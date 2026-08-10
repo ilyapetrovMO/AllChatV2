@@ -75,51 +75,8 @@ func (s *Service) PublishRichMessage(ctx context.Context, member identity.Member
 		return Message{}, err
 	}
 	now := databaseTime(time.Now())
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return Message{}, err
-	}
-	defer tx.Rollback()
-	if err := validateReply(ctx, tx, channelID, input.ReplyTo); err != nil {
-		return Message{}, err
-	}
-	if err := validateMentions(ctx, tx, input.MentionIDs); err != nil {
-		return Message{}, err
-	}
-	if _, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO channel_sequences(channel_id, next_sequence) VALUES (?, 1)", channelID); err != nil {
-		return Message{}, err
-	}
-	var sequence int64
-	if err := tx.QueryRowContext(ctx, "UPDATE channel_sequences SET next_sequence = next_sequence + 1 WHERE channel_id = ? RETURNING next_sequence - 1", channelID).Scan(&sequence); err != nil {
-		return Message{}, err
-	}
 	rendered := renderMarkdown(body)
-	if _, err := tx.ExecContext(ctx, "INSERT INTO messages(id, channel_id, author_id, sequence, body, created_at, reply_to_message_id, rendered_html) VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?)",
-		id, channelID, member.ID, sequence, body, now, input.ReplyTo, rendered); err != nil {
-		return Message{}, err
-	}
-	if _, err := tx.ExecContext(ctx, "INSERT INTO message_search(message_id, channel_id, body) VALUES (?, ?, ?)", id, channelID, body); err != nil {
-		return Message{}, err
-	}
-	for _, mentionedID := range uniqueStrings(input.MentionIDs) {
-		if _, err := tx.ExecContext(ctx, "INSERT INTO message_mentions(message_id, member_id) VALUES (?, ?)", id, mentionedID); err != nil {
-			return Message{}, err
-		}
-	}
-	if err := s.publishAttachments(ctx, tx, member.ID, id, input.AttachmentIDs); err != nil {
-		return Message{}, err
-	}
-	message := Message{ID: id, ChannelID: channelID, AuthorID: member.ID, AuthorName: nameForMember(member), Sequence: sequence, Body: body, CreatedAt: now, RenderedHTML: rendered}
-	if err := s.decorateMessageWith(ctx, tx, member.ID, &message); err != nil {
-		return Message{}, err
-	}
-	if err := appendRealtimeEvent(ctx, tx, "message.created", channelID, message); err != nil {
-		return Message{}, err
-	}
-	if err := tx.Commit(); err != nil {
-		return Message{}, err
-	}
-	return message, nil
+	return s.enqueueMessage(messagePublishRequest{ctx: ctx, member: member, channelID: channelID, id: id, now: now, rendered: rendered, input: input, result: make(chan messagePublishResult, 1)})
 }
 
 func (s *Service) ListMessages(ctx context.Context, member identity.Member, channelID string, before int64, limit int) ([]Message, error) {

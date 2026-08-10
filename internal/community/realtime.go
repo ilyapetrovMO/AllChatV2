@@ -32,6 +32,15 @@ type eventWriter interface {
 }
 
 func appendRealtimeEvent(ctx context.Context, target eventWriter, eventType, channelID string, payload any) error {
+	if err := appendRealtimeEventWithoutPrune(ctx, target, eventType, channelID, payload); err != nil {
+		return err
+	}
+	_, _ = target.ExecContext(ctx, `DELETE FROM realtime_events WHERE cursor <=
+		(SELECT COALESCE(MAX(cursor), 0) - ? FROM realtime_events)`, realtimeRetention)
+	return nil
+}
+
+func appendRealtimeEventWithoutPrune(ctx context.Context, target eventWriter, eventType, channelID string, payload any) error {
 	encoded, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode realtime event: %w", err)
@@ -40,8 +49,6 @@ func appendRealtimeEvent(ctx context.Context, target eventWriter, eventType, cha
 		VALUES (?, ?, ?, ?)`, eventType, channelID, string(encoded), databaseTimeNow()); err != nil {
 		return fmt.Errorf("append realtime event: %w", err)
 	}
-	_, _ = target.ExecContext(ctx, `DELETE FROM realtime_events WHERE cursor <=
-		(SELECT COALESCE(MAX(cursor), 0) - ? FROM realtime_events)`, realtimeRetention)
 	return nil
 }
 

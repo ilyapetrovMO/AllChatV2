@@ -19,10 +19,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/coder/websocket"
 )
 
 type bot struct {
@@ -34,7 +37,9 @@ type bot struct {
 	interval            time.Duration
 	memberID            string
 	dmCursors           map[string]int64
+	channelCursors      map[string]int64
 	spontaneousDMChance int
+	controlDir          string
 }
 
 type channel struct {
@@ -54,6 +59,7 @@ type member struct {
 	ID          string `json:"id"`
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
+	Owner       bool   `json:"owner"`
 }
 
 type message struct {
@@ -83,7 +89,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := &bot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: *username, password: *password, invite: *invite, interval: *interval, dmCursors: make(map[string]int64), spontaneousDMChance: *spontaneousDMChance}
+	b := &bot{baseURL: parsed, client: &http.Client{Jar: jar, Timeout: 15 * time.Second}, username: *username, password: *password, invite: *invite, interval: *interval, dmCursors: make(map[string]int64), channelCursors: make(map[string]int64), spontaneousDMChance: *spontaneousDMChance, controlDir: strings.TrimSpace(os.Getenv("ALLCHAT_BOT_CONTROL_DIR"))}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := b.run(ctx); err != nil && !errors.Is(err, context.Canceled) {
@@ -105,6 +111,13 @@ func (b *bot) run(ctx context.Context) error {
 	if err := b.pollDirectMessages(ctx, false); err != nil {
 		log.Printf("initialize Direct Messages: %v", err)
 	}
+	if err := b.pollChannelMessages(ctx, channels, false); err != nil {
+		log.Printf("initialize Text Channels: %v", err)
+	}
+	go b.maintainPresence(ctx)
+	if b.controlDir != "" {
+		go b.watchControls(ctx)
+	}
 	log.Printf("development bot %q connected; posting to %d Text Channel(s) and answering Direct Messages", b.username, len(channels))
 	ticker := time.NewTicker(b.interval)
 	defer ticker.Stop()
@@ -118,6 +131,9 @@ func (b *bot) run(ctx context.Context) error {
 		case <-dmTicker.C:
 			if err := b.pollDirectMessages(ctx, true); err != nil {
 				log.Printf("poll Direct Messages: %v", err)
+			}
+			if err := b.pollChannelMessages(ctx, channels, true); err != nil {
+				log.Printf("poll Text Channels: %v", err)
 			}
 		case <-ticker.C:
 			iteration++
@@ -152,6 +168,112 @@ func (b *bot) run(ctx context.Context) error {
 	}
 }
 
+func (b *bot) watchControls(ctx context.Context) {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	var calloutTime time.Time
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		path := filepath.Join(b.controlDir, "voice-callout")
+		if info, err := os.Stat(path); err == nil && info.ModTime().After(calloutTime) {
+			calloutTime = info.ModTime()
+			if err := b.sendVoiceCallout(ctx); err != nil {
+				log.Printf("send voice callout: %v", err)
+			}
+		}
+	}
+}
+
+func (b *bot) sendVoiceCallout(ctx context.Context) error {
+	var list struct {
+		Members []member `json:"members"`
+	}
+	if err := b.getJSON(ctx, "/api/v1/members", &list); err != nil {
+		return err
+	}
+	candidates := make([]member, 0, len(list.Members))
+	for _, candidate := range list.Members {
+		if candidate.ID != b.memberID && !strings.HasPrefix(strings.ToLower(candidate.Username), "bot-") {
+			candidates = append(candidates, candidate)
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	target := candidates[rand.IntN(len(candidates))]
+	for _, candidate := range candidates {
+		if candidate.Owner {
+			target = candidate
+			break
+		}
+	}
+	var dm directMessage
+	if err := b.postJSON(ctx, "/api/v1/dms", map[string]string{"member_id": target.ID}, &dm); err != nil {
+		return err
+	}
+	body := "A few of us just joined voice for a bit — come hang out if you feel like it."
+	if err := b.postJSON(ctx, "/api/v1/dms/"+url.PathEscape(dm.ID)+"/messages", map[string]string{"body": body}, nil); err != nil {
+		return err
+	}
+	log.Printf("called @%s into the simulated voice session", target.Username)
+	return nil
+}
+
+func (b *bot) maintainPresence(ctx context.Context) {
+	for ctx.Err() == nil {
+		endpoint := *b.baseURL
+		if endpoint.Scheme == "https" {
+			endpoint.Scheme = "wss"
+		} else {
+			endpoint.Scheme = "ws"
+		}
+		endpoint.Path = "/api/v1/realtime"
+		endpoint.RawQuery = ""
+		connection, _, err := websocket.Dial(ctx, endpoint.String(), &websocket.DialOptions{HTTPClient: b.client})
+		if err != nil {
+			log.Printf("connect Presence: %v", err)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Second):
+			}
+			continue
+		}
+		readDone := make(chan struct{})
+		go func() {
+			defer close(readDone)
+			for {
+				if _, _, err := connection.Read(ctx); err != nil {
+					return
+				}
+			}
+		}()
+		ticker := time.NewTicker(time.Second)
+		connected := true
+		for connected {
+			select {
+			case <-ctx.Done():
+				connected = false
+			case <-readDone:
+				connected = false
+			case <-ticker.C:
+				writeCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+				err := connection.Write(writeCtx, websocket.MessageText, []byte(`{"type":"heartbeat"}`))
+				cancel()
+				if err != nil {
+					connected = false
+				}
+			}
+		}
+		ticker.Stop()
+		connection.CloseNow()
+	}
+}
+
 func (b *bot) pollDirectMessages(ctx context.Context, reply bool) error {
 	var list struct {
 		DirectMessages []directMessage `json:"direct_messages"`
@@ -174,6 +296,11 @@ func (b *bot) pollDirectMessages(ctx context.Context, reply bool) error {
 		if !reply || !ok {
 			continue
 		}
+		if requestsVoice(incoming.Body) {
+			if err := b.requestVoice(); err != nil {
+				log.Printf("request voice from DM: %v", err)
+			}
+		}
 		payload := map[string]any{"body": directReply(incoming.Body), "reply_to": incoming.ID}
 		if err := b.postJSON(ctx, "/api/v1/dms/"+url.PathEscape(dm.ID)+"/messages", payload, nil); err != nil {
 			log.Printf("reply to @%s: %v", dm.Other.Username, err)
@@ -182,6 +309,53 @@ func (b *bot) pollDirectMessages(ctx context.Context, reply bool) error {
 		log.Printf("replied to @%s in a Direct Message", dm.Other.Username)
 	}
 	return nil
+}
+
+func (b *bot) pollChannelMessages(ctx context.Context, channels []channel, react bool) error {
+	for _, target := range channels {
+		var history struct {
+			Messages []message `json:"messages"`
+		}
+		if err := b.getJSON(ctx, "/api/v1/channels/"+url.PathEscape(target.ID)+"/messages", &history); err != nil {
+			return err
+		}
+		cursor := b.channelCursors[target.ID]
+		for _, item := range history.Messages {
+			if item.Sequence > b.channelCursors[target.ID] {
+				b.channelCursors[target.ID] = item.Sequence
+			}
+			if !react || item.Sequence <= cursor || item.AuthorID == b.memberID || item.Deleted {
+				continue
+			}
+			if requestsVoice(item.Body) && rand.IntN(100) < 5 {
+				if err := b.requestVoice(); err != nil {
+					log.Printf("request voice from #%s: %v", target.Name, err)
+				}
+			}
+			if rand.IntN(100) < 10 {
+				payload := map[string]any{"body": channelReply(item.Body), "reply_to": item.ID}
+				if err := b.postJSON(ctx, "/api/v1/channels/"+url.PathEscape(target.ID)+"/messages", payload, nil); err != nil {
+					log.Printf("reply in #%s: %v", target.Name, err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func requestsVoice(body string) bool {
+	words := map[string]bool{}
+	for _, word := range strings.FieldsFunc(strings.ToLower(body), func(value rune) bool { return value < 'a' || value > 'z' }) {
+		words[word] = true
+	}
+	return words["go"] && words["into"] && words["voice"]
+}
+
+func (b *bot) requestVoice() error {
+	if b.controlDir == "" {
+		return nil
+	}
+	return os.WriteFile(filepath.Join(b.controlDir, "join-voice"), []byte(time.Now().Format(time.RFC3339Nano)), 0600)
 }
 
 func newestIncoming(messages []message, cursor int64, botMemberID string) (message, int64, bool) {
@@ -233,15 +407,45 @@ func (b *bot) authenticate(ctx context.Context) error {
 	var member struct {
 		ID string `json:"id"`
 	}
+	if envEnabled("ALLCHAT_BOT_REGISTER_FIRST", false) && b.invite != "" {
+		err := b.postJSON(ctx, "/api/v1/auth/register", map[string]string{"token": b.invite, "username": b.username, "password": b.password}, &member)
+		if err == nil {
+			b.memberID = member.ID
+			return nil
+		}
+	}
 	err := b.postJSON(ctx, "/api/v1/auth/login", map[string]string{"username": b.username, "password": b.password}, &member)
 	if err != nil && b.invite != "" {
 		err = b.postJSON(ctx, "/api/v1/auth/register", map[string]string{"token": b.invite, "username": b.username, "password": b.password}, &member)
+		if err != nil {
+			// A unified development bot starts its chat and voice workers together.
+			// The sibling worker may have registered this account concurrently.
+			for attempt := 0; attempt < 3 && err != nil; attempt++ {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(200 * time.Millisecond):
+				}
+				err = b.postJSON(ctx, "/api/v1/auth/login", map[string]string{"username": b.username, "password": b.password}, &member)
+			}
+		}
 	}
 	if err != nil {
 		return fmt.Errorf("authenticate bot (provide a valid existing account or ALLCHAT_BOT_INVITE): %w", err)
 	}
 	b.memberID = member.ID
 	return nil
+}
+
+func envEnabled(name string, fallback bool) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(name))) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	default:
+		return fallback
+	}
 }
 
 func (b *bot) channels(ctx context.Context) ([]channel, error) {
@@ -262,8 +466,15 @@ func (b *bot) channels(ctx context.Context) ([]channel, error) {
 
 func (b *bot) publishRandomMessage(ctx context.Context, target channel) error {
 	payload := map[string]any{"body": randomMessage()}
-	if rand.IntN(100) < 30 {
+	roll := rand.IntN(100)
+	if roll < 25 {
 		attachmentID, err := b.uploadImage(ctx)
+		if err != nil {
+			return err
+		}
+		payload["attachment_ids"] = []string{attachmentID}
+	} else if roll < 35 {
+		attachmentID, err := b.uploadFile(ctx)
 		if err != nil {
 			return err
 		}
@@ -276,17 +487,27 @@ func (b *bot) publishRandomMessage(ctx context.Context, target channel) error {
 	return nil
 }
 
+func (b *bot) uploadFile(ctx context.Context) (string, error) {
+	content := []byte("AllChat synthetic member note\nGenerated at " + time.Now().Format(time.RFC3339) + "\n")
+	return b.uploadAttachment(ctx, content, "text/plain", fmt.Sprintf("bot-note-%d.txt", time.Now().Unix()))
+}
+
 func (b *bot) uploadImage(ctx context.Context) (string, error) {
 	var data bytes.Buffer
 	if err := png.Encode(&data, randomImage()); err != nil {
 		return "", err
 	}
-	request, err := b.request(ctx, http.MethodPost, "/api/v1/attachments", &data)
+	return b.uploadAttachment(ctx, data.Bytes(), "image/png", fmt.Sprintf("bot-%d.png", time.Now().Unix()))
+}
+
+func (b *bot) uploadAttachment(ctx context.Context, content []byte, contentType, filename string) (string, error) {
+	data := bytes.NewBuffer(content)
+	request, err := b.request(ctx, http.MethodPost, "/api/v1/attachments", data)
 	if err != nil {
 		return "", err
 	}
-	request.Header.Set("Content-Type", "image/png")
-	request.Header.Set("X-AllChat-Filename", fmt.Sprintf("bot-%d.png", time.Now().Unix()))
+	request.Header.Set("Content-Type", contentType)
+	request.Header.Set("X-AllChat-Filename", filename)
 	b.addCSRF(request)
 	var attachment struct {
 		ID string `json:"id"`
@@ -344,6 +565,14 @@ func directReply(body string) string {
 		return "I saw your attachment — the development bot is awake."
 	}
 	replies := []string{"Got it — the development bot received your DM.", "Hello! I am answering DMs now.", "Message received. The private realtime path is working."}
+	return replies[rand.IntN(len(replies))]
+}
+
+func channelReply(body string) string {
+	if strings.TrimSpace(body) == "" {
+		return "I saw that attachment."
+	}
+	replies := []string{"That makes sense.", "I was thinking the same thing.", "Interesting — tell me more.", "Fair point.", "I noticed that too."}
 	return replies[rand.IntN(len(replies))]
 }
 

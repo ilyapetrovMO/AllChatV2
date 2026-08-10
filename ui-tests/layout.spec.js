@@ -60,6 +60,12 @@ async function shot(page, name) {
 async function openCommunity(page, mobile) {
   await page.goto(`/channels/${fixture.textChannel.id}`);
   await page.locator('.channel-content').waitFor();
+  await expect(page.locator('.channel-sidebar .dm-link')).toHaveCount(1);
+  expect(await page.locator('.channel-sidebar .dm-link').count()).toBeLessThan(6);
+  await expect(page.locator('.channel-sidebar .dm-category-link')).toHaveAttribute('href', '/dms');
+  await expect(page.locator('[data-dm-button]')).toBeVisible();
+  if (mobile) await expect(page.locator('[data-dm-unread]')).toBeAttached();
+  else await expect(page.locator('[data-dm-unread]')).toBeVisible();
   await stabilize(page);
   if (mobile) await page.locator('[data-sidebar-toggle]').click();
 }
@@ -96,6 +102,7 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
     await page.locator('[data-media-stage-grid]').waitFor();
     await page.evaluate(() => {
       const grid = document.querySelector('[data-media-stage-grid]');
+	  grid.dataset.tileCount = '2';
       grid.innerHTML = '<article class="media-stage-tile participant-tile speaking"><span class="media-stage-avatar-fallback">V</span><strong>Visual Owner</strong><span class="screen-sharing-badge">Sharing screen</span></article><article class="media-stage-tile participant-tile"><span class="media-stage-avatar-fallback">M</span><strong>Visual Member</strong></article>';
     });
     await stabilize(page);
@@ -112,6 +119,8 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
     await page.locator('#member-menu-toggle').click();
 
     await page.goto(`/channels/${fixture.dm.id}`);
+    await expect.poll(() => page.evaluate(async () => (await (await fetch('/api/v1/dms')).json()).direct_messages.reduce((total, item) => total + item.unread, 0))).toBe(0);
+    await expect(page.locator('[data-dm-unread]')).toBeHidden();
     await stabilize(page);
     await shot(page, `dm-conversation-${viewport.name}.png`);
 

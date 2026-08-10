@@ -225,6 +225,7 @@ func (i *Instance) runAttachmentCleanup(ctx context.Context) {
 func (i *Instance) Close() error {
 	i.closeOnce.Do(func() {
 		i.media.Close()
+		i.community.Close()
 		if i.relay != nil {
 			_ = i.relay.Close()
 		}

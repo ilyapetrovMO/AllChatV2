@@ -108,6 +108,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	if !write(mediaFrame{Version: 1, Type: "answer", SDP: answer, ResumeToken: token, Participants: i.media.Participants(mediaRoomID)}) {
 		return
 	}
+	i.media.Renegotiate(member.ID)
 	for {
 		_, encoded, err = connection.Read(r.Context())
 		if err != nil {

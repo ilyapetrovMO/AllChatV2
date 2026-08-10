@@ -61,14 +61,14 @@
     let state={participants:[],members:{},names:{}};
     try{const response=await fetch(`/api/v1/voice/${roomID}/participants`);if(response.ok)state=await response.json()}catch(_){}
     if(sequence!==stageRenderSequence||active!==session||!grid.isConnected)return;
-    const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[];
-    const screenTile=(key,label,video)=>{let tile=existing.get(key);if(!tile){tile=document.createElement("button");tile.type="button";tile.className="media-stage-tile screen-tile";tile.dataset.stageKey=key;tile.onclick=()=>tile.classList.toggle("expanded")}tile.setAttribute("aria-label",label);if(video.parentElement!==tile)tile.replaceChildren(video);desired.push(tile)};
-    if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screenTile("screen:local","Your shared screen",local)}
-    for(const [trackID,video] of session.remoteVideos||[])screenTile(`screen:${trackID}`,"Shared screen",video);
-    for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{};let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;tile.append(document.createElement("span"),document.createElement("strong"))}tile.classList.toggle("speaking",!!participant.speaking);let avatar=tile.firstElementChild;const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if(participant.screen_sharing&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!participant.screen_sharing){badge?.remove()}desired.push(tile)}
+    const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[],screensByMember=new Map(),unmatchedScreens=[];
+    if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screensByMember.set(session.profile.id,local)}
+    const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const [trackID,video] of session.remoteVideos||[]){const memberID=trackID.startsWith("screen-")?trackID.slice(7):"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
+    for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{},screen=screensByMember.get(participant.member_id)||(participant.screen_sharing?unmatchedScreens.shift():null);let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;const visual=document.createElement("div");visual.className="media-stage-visual";tile.append(visual,document.createElement("strong"))}const visual=tile.querySelector(".media-stage-visual"),sharing=!!screen;tile.classList.toggle("speaking",!!participant.speaking);tile.classList.toggle("sharing",sharing);tile.onclick=sharing?()=>tile.classList.toggle("expanded"):null;if(sharing){if(screen.parentElement!==visual)visual.replaceChildren(screen)}else{let avatar=visual.firstElementChild;if(!avatar||avatar.matches("video")){avatar=document.createElement(profile.avatar_url?"img":"span");visual.replaceChildren(avatar)}const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if((sharing||participant.screen_sharing)&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!sharing&&!participant.screen_sharing){badge?.remove()}desired.push(tile)}
     if(!desired.length){let empty=existing.get("empty");if(!empty){empty=document.createElement("p");empty.className="media-stage-empty";empty.dataset.stageKey="empty";empty.textContent="No one is connected to this Voice Room."}desired.push(empty)}
     desired.forEach((node,index)=>{if(grid.children[index]!==node)grid.insertBefore(node,grid.children[index]||null)});
     const keep=new Set(desired);for(const node of [...grid.children])if(!keep.has(node))node.remove();
+    grid.dataset.tileCount=String(desired[0]?.dataset.stageKey==="empty"?0:desired.length);
   };
   let audioContext;
   const playSound=async sound=>{try{audioContext ||= new AudioContext();await audioContext.resume();const buffer=await fetch(sound.audio_url).then(response=>response.arrayBuffer()).then(data=>audioContext.decodeAudioData(data));const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);source.start()}catch(_){const audio=new Audio(sound.audio_url);audio.play().catch(()=>{})}};
@@ -91,7 +91,32 @@
     return panel;
   };
 
-  const disconnect = ({explicit = true, removePanel = true} = {}) => {
+  const closestTextChannel = voiceLink => {
+    const links = [...nav.querySelectorAll('a.channel-link[href^="/channels/"]')];
+    const voiceIndex = links.indexOf(voiceLink);
+    return links
+      .map((link, index) => ({link, index}))
+      .filter(item => !item.link.classList.contains("voice-link"))
+      .sort((left, right) => Math.abs(left.index - voiceIndex) - Math.abs(right.index - voiceIndex))[0]?.link.href || "";
+  };
+
+  const leaveVoiceView = session => {
+    if (session.closestTextChannel) {
+      const navigation = window.allchatNavigate?.(session.closestTextChannel);
+      if (navigation) navigation.catch(() => location.assign(session.closestTextChannel));
+      else location.assign(session.closestTextChannel);
+      return;
+    }
+    document.querySelector("[data-app-overlay]")?.remove();
+    const content = document.querySelector(".content-shell");
+    if (!content) return;
+    const empty = document.createElement("main");
+    empty.className = "content-shell empty-center-stage";
+    empty.setAttribute("aria-label", "No text channels");
+    content.replaceWith(empty);
+  };
+
+  const disconnect = ({explicit = true, removePanel = true, changeView = explicit} = {}) => {
     if (!active) return;
     const session = active;
 	setPending(session, "Disconnecting");
@@ -105,21 +130,22 @@
     session.stream?.getTracks().forEach(track => track.stop());
     session.screenStream?.getTracks().forEach(track => track.stop());
     session.remoteVideos?.forEach(video => video.remove());
-    session.audio?.remove();
+    session.remoteAudios?.forEach(audio => audio.remove());
     if (removePanel) session.panel.remove();
 	setTimeout(()=>{const pending=window.allchatVoicePending?.get(session.roomID);if(pending?.member_id===session.profile.id&&pending.status==="Disconnecting"){window.allchatVoicePending.delete(session.roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"))}},650);
+    if (changeView) leaveVoiceView(session);
   };
 
-  const connect = async (roomID, name) => {
+  const connect = async (roomID, name, voiceLink) => {
     if (active?.roomID === roomID) return;
-    disconnect();
+    disconnect({changeView: false});
     const panel = makePanel(roomID, name);
     const status = panel.querySelector("strong");
     const mute = panel.querySelector("[data-voice-mute]");
     const screen = panel.querySelector("[data-voice-screen]");
     const soundboard = panel.querySelector("[data-voice-soundboard]");
     const leave = panel.querySelector("[data-voice-leave]");
-    const session = {roomID, name, panel, peer: null, socket: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, audio: null, remoteVideos: new Map(), generation: 0, profile: currentProfile(), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
+    const session = {roomID, name, panel, peer: null, socket: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), generation: 0, profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
 	setPending(session, "Connecting");
     leave.addEventListener("click", () => disconnect());
@@ -158,12 +184,15 @@
             renderStage();
             return;
           }
-          if (!session.audio) {
-            session.audio = document.createElement("audio");
-            session.audio.autoplay = true;
-            document.body.append(session.audio);
+          let audio = session.remoteAudios.get(event.track);
+          if (!audio) {
+            audio = document.createElement("audio");
+            audio.autoplay = true;
+            session.remoteAudios.set(event.track, audio);
+            document.body.append(audio);
+            event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
           }
-          session.audio.srcObject = event.streams[0] || new MediaStream([event.track]);
+          audio.srcObject = event.streams[0] || new MediaStream([event.track]);
         };
         const offer = await peer.createOffer();
         await peer.setLocalDescription(offer);
@@ -240,7 +269,7 @@
       window.allchatNavigate?.(link.href).catch(() => location.assign(link.href));
       return;
     }
-    connect(roomID, link.textContent.trim());
+    connect(roomID, link.textContent.trim(), link);
   });
   document.addEventListener("allchat:view-swapped", () => renderStage());
   setInterval(renderStage,1000);

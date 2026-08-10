@@ -58,8 +58,7 @@ type Manager struct {
 	rooms           map[string]map[string]*session
 	peers           map[string]*Peer
 	tracks          map[string]map[string]*webrtc.TrackLocalStaticRTP
-	screenTracks    map[string]*webrtc.TrackLocalStaticRTP
-	screenOwner     map[string]string
+	screenTracks    map[string]map[string]*webrtc.TrackLocalStaticRTP
 	screenVisible   map[string]map[string]bool
 	calls           map[string]*DirectCall
 	removedUntil    map[string]time.Time
@@ -93,7 +92,7 @@ func NewManagerWithLimits(rejoinWindow time.Duration, portMin, portMax uint16, m
 		maxParticipants = 2
 	}
 	api := webrtc.NewAPI(webrtc.WithMediaEngine(engine), webrtc.WithInterceptorRegistry(registry), webrtc.WithSettingEngine(settings))
-	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenTracks: map[string]*webrtc.TrackLocalStaticRTP{}, screenOwner: map[string]string{}, screenVisible: map[string]map[string]bool{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
+	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenTracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenVisible: map[string]map[string]bool{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
 }
 
 func (m *Manager) WebRTCAPI() *webrtc.API { return m.api }
@@ -187,7 +186,7 @@ func (m *Manager) Participants(roomID string) []Participant {
 	items := make([]Participant, 0, len(sessions))
 	for _, item := range sessions {
 		participant := item.participant
-		participant.ScreenSharing = m.screenOwner[roomID] == participant.MemberID
+		participant.ScreenSharing = m.screenTracks[roomID][participant.MemberID] != nil
 		items = append(items, participant)
 	}
 	return items
@@ -279,8 +278,7 @@ func (m *Manager) Close() {
 	m.rooms = map[string]map[string]*session{}
 	m.peers = map[string]*Peer{}
 	m.tracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
-	m.screenTracks = map[string]*webrtc.TrackLocalStaticRTP{}
-	m.screenOwner = map[string]string{}
+	m.screenTracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
 	m.screenVisible = map[string]map[string]bool{}
 	m.calls = map[string]*DirectCall{}
 	m.removedUntil = map[string]time.Time{}
@@ -316,8 +314,10 @@ func (m *Manager) removeLocked(item *session) {
 	room := m.rooms[item.participant.RoomID]
 	delete(room, item.participant.MemberID)
 	delete(m.screenVisible[item.participant.RoomID], item.participant.MemberID)
+	delete(m.screenTracks[item.participant.RoomID], item.participant.MemberID)
 	if len(room) == 0 {
 		delete(m.rooms, item.participant.RoomID)
+		delete(m.screenTracks, item.participant.RoomID)
 		delete(m.screenVisible, item.participant.RoomID)
 	}
 }

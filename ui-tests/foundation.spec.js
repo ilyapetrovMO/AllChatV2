@@ -132,6 +132,37 @@ test('voice participants render directly beneath their voice channel', async ({ 
   await expect(channel.locator('+ .voice-channel-members li').nth(1)).toContainText('Spikey');
 });
 
+test('voice stage fills width with two, triforce three, and two-by-two four participant grids', async ({page}) => {
+  await page.goto('/login');
+  await page.setContent(`<link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/channel.css"><section class="media-stage" style="width:900px;height:620px"><div class="media-stage-grid" data-media-stage-grid></div></section>`);
+  const boxesFor = async count => page.evaluate(value => {
+    const grid = document.querySelector('[data-media-stage-grid]');
+    grid.dataset.tileCount = String(value);
+    grid.replaceChildren(...Array.from({length: value}, (_, index) => {
+      const tile = document.createElement('article');
+      tile.className = 'media-stage-tile participant-tile';
+      tile.textContent = String(index + 1);
+      return tile;
+    }));
+    return [...grid.children].map(tile => { const box = tile.getBoundingClientRect(); return {x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width)}; });
+  }, count);
+  const two = await boxesFor(2);
+  expect(two[0].width).toBeGreaterThan(420);
+  expect(two[0].y).toBeGreaterThan(120);
+  expect(two[1].y).toBe(two[0].y);
+  expect(two[1].x).toBeGreaterThan(two[0].x + two[0].width);
+  const three = await boxesFor(3);
+  expect(three[0].y).toBe(three[1].y);
+  expect(three[2].y).toBeGreaterThan(three[0].y);
+  expect(three[2].x).toBeGreaterThan(three[0].x);
+  expect(three[2].x).toBeLessThan(three[1].x);
+  const four = await boxesFor(4);
+  expect(four[0].y).toBe(four[1].y);
+  expect(four[2].y).toBeGreaterThan(four[0].y);
+  expect(four[2].x).toBe(four[0].x);
+  expect(four[3].x).toBe(four[1].x);
+});
+
 test('clicking a voice channel joins in place without replacing the text conversation', async ({ page }) => {
   await page.route('**/api/v1/channels', route => route.fulfill({json: {channels: [{id: 'voice-one', name: 'General', type: 'voice'}]}}));
   await page.route('**/api/v1/voice/voice-one/participants', route => route.fulfill({json: {participants: [{member_id: 'member-one', connected: true, speaking: false, screen_sharing: true}], names: {'member-one': 'Akko'}, members: {'member-one': {id: 'member-one', username: 'akko', display_name: 'Akko'}}}}));
@@ -147,7 +178,7 @@ test('clicking a voice channel joins in place without replacing the text convers
     const audioTrack = {kind: 'audio', enabled: true, stop() { window.voiceTrackStopped = true; }};
     Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => {window.voiceCaptureRequests++; return {getTracks: () => [audioTrack], getAudioTracks: () => [audioTrack]};}}});
     window.RTCPeerConnection = class {
-      constructor() { this.iceGatheringState = 'complete'; this.localDescription = null; }
+      constructor() { this.iceGatheringState = 'complete'; this.localDescription = null; window.voicePeer = this; }
       addTrack() { return {}; }
       addTransceiver() {}
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'mock-offer'}); }
@@ -182,8 +213,20 @@ test('clicking a voice channel joins in place without replacing the text convers
   await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText('Connecting');
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
+  await page.evaluate(() => {
+    window.botOneAudio = new MediaStream();
+    window.botTwoAudio = new MediaStream();
+    window.voicePeer.ontrack({track: {kind: 'audio', id: 'audio-bot1', addEventListener() {}}, streams: [window.botOneAudio]});
+    window.voicePeer.ontrack({track: {kind: 'audio', id: 'audio-bot2', addEventListener() {}}, streams: [window.botTwoAudio]});
+  });
+  await expect(page.locator('body > audio')).toHaveCount(2);
+  expect(await page.evaluate(() => [...document.querySelectorAll('body > audio')].map(audio => audio.srcObject).includes(window.botOneAudio))).toBe(true);
   await page.locator('a[href="/channels/voice-one"]').click();
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).toContainText('Akko');
+  await page.evaluate(() => window.voicePeer.ontrack({track: {kind: 'video', id: 'screen', addEventListener() {}}, streams: [new MediaStream()]}));
+  await expect(page.locator('[data-media-stage-grid]')).toHaveAttribute('data-tile-count', '1');
+  await expect(page.locator('[data-media-stage-grid] .participant-tile video')).toHaveCount(1);
+  await expect(page.locator('[data-media-stage-grid] .screen-tile')).toHaveCount(0);
   await page.evaluate(() => {
     document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity = 'preserved';
     window.stageChildMutations = 0;
@@ -222,5 +265,6 @@ test('clicking a voice channel joins in place without replacing the text convers
   await hangup.click();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toHaveCount(0);
   expect(await page.evaluate(() => window.voiceTrackStopped)).toBe(true);
-  expect(new URL(page.url()).pathname).toBe('/dms');
+  await expect(page.locator('#second-conversation')).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe('/channels/text-two');
 });

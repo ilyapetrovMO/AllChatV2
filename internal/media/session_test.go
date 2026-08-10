@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/pion/webrtc/v4"
 )
 
 func TestManagerEnforcesOneSessionAndBoundedResume(t *testing.T) {
@@ -85,7 +87,7 @@ func TestScreenVisibilitySignalsAdaptiveLayerChoice(t *testing.T) {
 	}
 	signals := make(chan Signal, 2)
 	manager.mu.Lock()
-	manager.screenOwner["room"] = "sharer"
+	manager.screenTracks["room"] = map[string]*webrtc.TrackLocalStaticRTP{"sharer": nil}
 	manager.peers["sharer"] = &Peer{memberID: "sharer", roomID: "room", signal: func(signal Signal) { signals <- signal }}
 	manager.mu.Unlock()
 	if err := manager.SetScreenVisible("viewer", false); err != nil {

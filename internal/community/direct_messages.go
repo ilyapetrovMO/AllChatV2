@@ -18,6 +18,7 @@ type DirectMessage struct {
 	Other       identity.Member `json:"other"`
 	BlockedByMe bool            `json:"blocked_by_me"`
 	BlockedMe   bool            `json:"blocked_me"`
+	Unread      int64           `json:"unread"`
 	CreatedAt   string          `json:"created_at"`
 }
 
@@ -90,12 +91,19 @@ func (s *Service) DirectMessage(ctx context.Context, member identity.Member, id 
 		member.ID, otherID, otherID, member.ID).Scan(&item.BlockedByMe, &item.BlockedMe); err != nil {
 		return DirectMessage{}, err
 	}
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM messages
+		WHERE channel_id = ? AND author_id != ? AND sequence > COALESCE(
+			(SELECT sequence FROM read_positions WHERE member_id = ? AND channel_id = ?), 0)`,
+		id, member.ID, member.ID, id).Scan(&item.Unread); err != nil {
+		return DirectMessage{}, err
+	}
 	return item, nil
 }
 
 func (s *Service) ListDirectMessages(ctx context.Context, member identity.Member) ([]DirectMessage, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id FROM direct_messages
-		WHERE member_low_id = ? OR member_high_id = ? ORDER BY created_at DESC`, member.ID, member.ID)
+		WHERE member_low_id = ? OR member_high_id = ?
+		ORDER BY COALESCE((SELECT MAX(sequence) FROM messages WHERE channel_id = direct_messages.id), 0) DESC, created_at DESC`, member.ID, member.ID)
 	if err != nil {
 		return nil, err
 	}

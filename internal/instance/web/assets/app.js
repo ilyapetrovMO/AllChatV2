@@ -1,4 +1,40 @@
 (() => {
+  if (window.__allchatWebSocketBatches) return;
+  window.__allchatWebSocketBatches = true;
+  const NativeWebSocket = window.WebSocket;
+  class AllChatWebSocket extends EventTarget {
+    constructor(url, protocols) {
+      super();
+      this.native = protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
+      if (typeof this.native.addEventListener !== "function") return this.native;
+      this.queue = [];
+      this.draining = false;
+      for (const type of ["open", "close", "error"]) this.native.addEventListener(type, event => this.emit(type, event));
+      this.native.addEventListener("message", event => {
+        let frame;
+        try { frame = JSON.parse(event.data); } catch (_) { this.emit("message", event); return; }
+        if (frame.type !== "events" || !Array.isArray(frame.events)) { this.emit("message", event); return; }
+        this.queue.push(...frame.events.map(item => JSON.stringify({type: item.type, cursor: item.cursor, channel_id: item.channel_id, payload: item.payload})));
+        this.drain();
+      });
+    }
+    emit(type, source) { const event = type === "message" ? new MessageEvent(type, {data: source.data}) : new Event(type); this.dispatchEvent(event); this[`on${type}`]?.call(this, event); }
+    drain() { if (this.draining || !this.queue.length) return; this.draining = true; const next = () => { const data = this.queue.shift(); if (data !== undefined) this.emit("message", {data}); if (this.queue.length) setTimeout(next, 32); else this.draining = false; }; next(); }
+    send(data) { return this.native.send(data); }
+    close(code, reason) { this.queue.length = 0; return this.native.close(code, reason); }
+    get readyState() { return this.native.readyState; }
+    get url() { return this.native.url; }
+    get protocol() { return this.native.protocol; }
+    get extensions() { return this.native.extensions; }
+    get bufferedAmount() { return this.native.bufferedAmount; }
+    get binaryType() { return this.native.binaryType; }
+    set binaryType(value) { this.native.binaryType = value; }
+  }
+  Object.defineProperties(AllChatWebSocket, {CONNECTING:{value:0},OPEN:{value:1},CLOSING:{value:2},CLOSED:{value:3},allchatBatches:{value:true}});
+  window.WebSocket = AllChatWebSocket;
+})();
+
+(() => {
   "use strict";
 
   // Channel runtimes are installed by the SPA router without reloading head
@@ -107,6 +143,129 @@
     control.setAttribute("autocapitalize", "off");
     control.spellcheck = false;
   });
+
+  const installDirectMessageInbox = () => {
+    window.allchatDirectMessageIDs ||= new Set();
+    window.allchatMutedChannels ||= new Set();
+    const cleanCommunityNavigation = () => {
+      document.querySelectorAll('.community-rail a[href="/dms"], .community-menu a[href="/dms"]').forEach(link => {
+        const separator = link.nextElementSibling?.classList.contains("rail-separator") ? link.nextElementSibling : null;
+        link.remove();
+        separator?.remove();
+      });
+      const communitySidebar = document.querySelector(".channel-sidebar .community-switcher")?.closest(".channel-sidebar");
+      communitySidebar?.querySelectorAll(".channel-nav .channel-category").forEach(heading => {
+        if (heading.textContent.trim().toLowerCase() !== "direct messages") return;
+        if (!heading.querySelector("a")) {
+          const link = document.createElement("a");
+          link.href = "/dms";
+          link.className = "dm-category-link";
+          link.textContent = "Direct Messages";
+          heading.replaceChildren(link);
+        }
+      });
+      [...(communitySidebar?.querySelectorAll(".channel-nav .dm-link") || [])].slice(5).forEach(link => link.remove());
+    };
+    const renderShortlist = items => {
+      const sidebar = document.querySelector(".channel-sidebar .community-switcher")?.closest(".channel-sidebar"), nav = sidebar?.querySelector(".channel-nav");
+      if (!nav) return;
+      nav.querySelectorAll(".dm-link").forEach(link => link.remove());
+      nav.querySelectorAll(".channel-category").forEach(heading => { if (heading.textContent.trim().toLowerCase() === "direct messages") heading.remove(); });
+      const fragment = document.createDocumentFragment(), heading = document.createElement("h2"), headingLink = document.createElement("a");
+      heading.className = "channel-category dm-category";
+      headingLink.className = "dm-category-link";
+      headingLink.href = "/dms";
+      headingLink.textContent = "Direct Messages";
+      heading.append(headingLink);
+      fragment.append(heading);
+      items.slice(0, 5).forEach(item => {
+        const link = document.createElement("a"), avatar = document.createElement(item.other.avatar_url ? "img" : "span"), name = document.createElement("span");
+        link.className = "dm-link";
+        link.href = `/channels/${item.id}`;
+        link.classList.toggle("unread", Number(item.unread || 0) > 0);
+        if (item.other.avatar_url) { avatar.src = item.other.avatar_url; avatar.alt = ""; }
+        else { avatar.className = "dm-avatar-fallback"; avatar.textContent = Array.from(item.other.username || "?")[0].toUpperCase(); }
+        name.textContent = item.other.display_name || item.other.username;
+        link.append(avatar, name);
+        fragment.append(link);
+      });
+      nav.insertBefore(fragment, nav.firstElementChild);
+    };
+    const ensureButton = () => {
+      const header = document.querySelector(".content-header");
+      if (!header) return null;
+      let button = header.querySelector("[data-dm-button]");
+      if (!button) {
+        button = document.createElement("a");
+        button.className = "button-ghost dm-header-button";
+        button.href = "/dms";
+        button.dataset.dmButton = "";
+        button.setAttribute("aria-label", "Direct Messages");
+        button.title = "Direct Messages";
+        button.innerHTML = '<span aria-hidden="true">✦</span><span class="dm-unread-dot" data-dm-unread hidden></span>';
+        const actions = header.querySelector(".header-actions");
+        actions ? actions.prepend(button) : header.append(button);
+      }
+      return button;
+    };
+    let directMessages = new Map(), unread = 0;
+    const renderUnread = () => {
+      const dot = ensureButton()?.querySelector("[data-dm-unread]");
+      if (!dot) return;
+      dot.hidden = unread < 1;
+      dot.setAttribute("aria-label", unread === 1 ? "1 unread Direct Message" : `${unread} unread Direct Messages`);
+    };
+    const refresh = async () => {
+      const response = await fetch("/api/v1/dms");
+      if (!response.ok) return;
+      const value = await response.json();
+      const items = value.direct_messages || [];
+      directMessages = new Map(items.map(item => [item.id, item]));
+      window.allchatDirectMessageIDs = new Set(directMessages.keys());
+      unread = [...directMessages.values()].reduce((total, item) => total + Number(item.unread || 0), 0);
+      renderShortlist(items);
+      renderUnread();
+    };
+    cleanCommunityNavigation();
+    ensureButton();
+    refresh().catch(() => {});
+    fetch("/api/v1/notification-settings").then(response => response.ok ? response.json() : null).then(settings => settings?.muted_channel_ids?.forEach(id => window.allchatMutedChannels.add(id))).catch(() => {});
+    document.addEventListener("allchat:view-swapped", () => { cleanCommunityNavigation(); ensureButton(); refresh().catch(() => {}); });
+    setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 2000);
+
+    let cursor = null, retry = 250, notificationsAllowed = true;
+    const connect = () => {
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const query = cursor === null ? "" : `?cursor=${cursor}`;
+      const socket = new WebSocket(`${protocol}//${location.host}/api/v1/realtime${query}`);
+      let heartbeat;
+      socket.onopen = () => { retry = 250; socket.send(JSON.stringify({type: "heartbeat"})); heartbeat = setInterval(() => { if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: "heartbeat"})); }, 1000); };
+      socket.onmessage = async event => {
+        const frame = JSON.parse(event.data);
+        if (Number.isFinite(frame.cursor)) cursor = frame.cursor;
+        if (frame.type === "state.ephemeral") notificationsAllowed = frame.payload?.presence?.[document.body.dataset.memberId] !== "dnd";
+        if (frame.type !== "message.created" || !frame.payload || frame.payload.author_id === document.body.dataset.memberId) return;
+        if (!directMessages.has(frame.payload.channel_id)) await refresh().catch(() => {});
+        if (!directMessages.has(frame.payload.channel_id)) return;
+        const viewing = document.body.dataset.channelId === frame.payload.channel_id;
+        if (viewing) {
+          const csrf = document.querySelector('[name="csrf_token"]')?.value;
+          if (csrf && frame.payload.sequence) fetch(`/api/v1/dms/${frame.payload.channel_id}/read-position`, {method: "PUT", headers: {"Content-Type": "application/json", "X-CSRF-Token": csrf}, body: JSON.stringify({sequence: frame.payload.sequence})}).then(refresh).catch(() => {});
+          return;
+        }
+        unread++;
+        renderUnread();
+        if (notificationsAllowed && !window.allchatMutedChannels.has(frame.payload.channel_id) && Notification.permission === "granted") {
+          const preview = frame.payload.body || (frame.payload.attachments?.length ? "Sent an attachment" : "New message");
+          const notice = new Notification(`${frame.payload.author_name} sent you a Direct Message`, {body: preview.slice(0, 180), tag: `allchat-dm-${frame.payload.channel_id}`});
+          notice.onclick = () => { window.focus(); location.href = `/channels/${frame.payload.channel_id}`; };
+        }
+      };
+      socket.onclose = () => { clearInterval(heartbeat); setTimeout(connect, retry = Math.min(retry * 2, 5000)); };
+    };
+    connect();
+  };
+  if (document.body.dataset.memberId || document.querySelector(".member-panel")) installDirectMessageInbox();
 
 	const installVoiceChannelPresence=async()=>{
 	  window.allchatVoicePending ||= new Map();

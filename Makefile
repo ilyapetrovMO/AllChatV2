@@ -62,7 +62,13 @@ build-mobile:
 	cd mobile/android && ./gradlew assembleDebug
 
 build-mobile-standalone:
+	cd mobile/android && ./gradlew assembleStandalone -PreactNativeArchitectures=arm64-v8a
+
+build-mobile-standalone-universal:
 	cd mobile/android && ./gradlew assembleStandalone
+
+install-mobile-standalone: build-mobile-standalone
+	adb install -r mobile/android/app/build/outputs/apk/standalone/app-standalone.apk
 
 clean:
 	go clean

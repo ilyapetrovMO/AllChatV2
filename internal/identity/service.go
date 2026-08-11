@@ -55,6 +55,8 @@ type Member struct {
 type SessionCredentials struct {
 	Token     string
 	CSRFToken string
+	SessionID string
+	ExpiresAt time.Time
 }
 
 type SessionInfo struct {
@@ -142,11 +144,11 @@ func (s *Service) Bootstrap(ctx context.Context, token, username, password, devi
 	if err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
-	session, err := newSessionCredentials()
+	now := s.now().UTC()
+	session, err := newSessionCredentials(now)
 	if err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
-	now := s.now().UTC()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -216,11 +218,12 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 		member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
 	}
 
-	session, err := newSessionCredentials()
+	now := s.now().UTC()
+	session, err := newSessionCredentials(now)
 	if err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
-	if err := insertSession(ctx, s.db, session, member.ID, device, s.now().UTC()); err != nil {
+	if err := insertSession(ctx, s.db, session, member.ID, device, now); err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
 	return member, session, nil
@@ -267,11 +270,11 @@ func (s *Service) Register(ctx context.Context, invitationToken, username, passw
 	if err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
-	session, err := newSessionCredentials()
+	now := s.now().UTC()
+	session, err := newSessionCredentials(now)
 	if err != nil {
 		return Member{}, SessionCredentials{}, err
 	}
-	now := s.now().UTC()
 	invitationHash := tokenHash(invitationToken)
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -629,20 +632,16 @@ type sessionInserter interface {
 func insertSession(ctx context.Context, target sessionInserter, credentials SessionCredentials, memberID, device string, now time.Time) error {
 	hash := tokenHash(credentials.Token)
 	csrfHash := tokenHash(credentials.CSRFToken)
-	sessionID, err := randomToken(12)
-	if err != nil {
-		return err
-	}
-	_, err = target.ExecContext(ctx, `
+	_, err := target.ExecContext(ctx, `
 		INSERT INTO sessions(token_hash, member_id, created_at, last_seen_at, expires_at, session_id, user_agent, csrf_token_hash)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, hash[:], memberID, databaseTime(now), databaseTime(now), databaseTime(now.Add(sessionLifetime)), sessionID, device, csrfHash[:])
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, hash[:], memberID, databaseTime(now), databaseTime(now), databaseTime(credentials.ExpiresAt), credentials.SessionID, device, csrfHash[:])
 	if err != nil {
 		return fmt.Errorf("create Session: %w", err)
 	}
 	return nil
 }
 
-func newSessionCredentials() (SessionCredentials, error) {
+func newSessionCredentials(now time.Time) (SessionCredentials, error) {
 	token, err := randomToken(32)
 	if err != nil {
 		return SessionCredentials{}, err
@@ -651,7 +650,11 @@ func newSessionCredentials() (SessionCredentials, error) {
 	if err != nil {
 		return SessionCredentials{}, err
 	}
-	return SessionCredentials{Token: token, CSRFToken: csrf}, nil
+	sessionID, err := randomToken(12)
+	if err != nil {
+		return SessionCredentials{}, err
+	}
+	return SessionCredentials{Token: token, CSRFToken: csrf, SessionID: sessionID, ExpiresAt: now.Add(sessionLifetime)}, nil
 }
 
 func databaseTime(value time.Time) string {

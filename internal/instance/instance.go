@@ -709,9 +709,11 @@ func (i *Instance) routes() http.Handler {
 	}
 	mux.HandleFunc("POST /api/v1/auth/setup", i.setupAPI)
 	mux.HandleFunc("POST /api/v1/auth/login", i.loginAPI)
+	mux.HandleFunc("POST /api/v1/auth/native/login", i.nativeLoginAPI)
 	mux.HandleFunc("POST /api/v1/auth/logout", i.logoutAPI)
 	mux.HandleFunc("POST /api/v1/auth/recover", i.recoverAPI)
 	mux.HandleFunc("POST /api/v1/auth/register", i.registerAPI)
+	mux.HandleFunc("POST /api/v1/auth/native/register", i.nativeRegisterAPI)
 	mux.HandleFunc("GET /api/v1/session", i.sessionAPI)
 	mux.HandleFunc("GET /api/v1/sessions", i.sessionsAPI)
 	mux.HandleFunc("DELETE /api/v1/sessions", i.revokeAllSessionsAPI)

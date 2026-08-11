@@ -42,6 +42,21 @@ func (i *Instance) registerAPI(response http.ResponseWriter, request *http.Reque
 	writeJSON(response, http.StatusCreated, member)
 }
 
+func (i *Instance) nativeRegisterAPI(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Cache-Control", "no-store")
+	var input credentials
+	if err := decodeJSON(request, &input); err != nil {
+		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+	member, session, err := i.identity.Register(request.Context(), input.Token, input.Username, input.Password, nativeDeviceLabel(request))
+	if err != nil {
+		writeIdentityError(response, err)
+		return
+	}
+	writeJSON(response, http.StatusCreated, nativeSession(member, session))
+}
+
 func (i *Instance) invitationsAPI(response http.ResponseWriter, request *http.Request) {
 	member, _, ok := i.authenticated(response, request)
 	if !ok {

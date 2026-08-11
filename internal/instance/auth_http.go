@@ -23,6 +23,13 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
+type nativeSessionResponse struct {
+	Member       identity.Member `json:"member"`
+	SessionToken string          `json:"session_token"`
+	SessionID    string          `json:"session_id"`
+	ExpiresAt    string          `json:"expires_at"`
+}
+
 func (i *Instance) setupAPI(response http.ResponseWriter, request *http.Request) {
 	var input credentials
 	if err := decodeJSON(request, &input); err != nil {
@@ -54,11 +61,46 @@ func (i *Instance) loginAPI(response http.ResponseWriter, request *http.Request)
 	writeJSON(response, http.StatusOK, member)
 }
 
-func (i *Instance) logoutAPI(response http.ResponseWriter, request *http.Request) {
-	if !i.requireCSRF(response, request) {
+func (i *Instance) nativeLoginAPI(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Cache-Control", "no-store")
+	var input credentials
+	if err := decodeJSON(request, &input); err != nil {
+		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid request"})
 		return
 	}
-	i.logout(response, request)
+	member, session, err := i.identity.Authenticate(request.Context(), input.Username, input.Password, sourceIP(request), nativeDeviceLabel(request))
+	if err != nil {
+		writeIdentityError(response, err)
+		return
+	}
+	writeJSON(response, http.StatusOK, nativeSession(member, session))
+}
+
+func nativeSession(member identity.Member, session identity.SessionCredentials) nativeSessionResponse {
+	return nativeSessionResponse{Member: member, SessionToken: session.Token, SessionID: session.SessionID, ExpiresAt: session.ExpiresAt.UTC().Format(time.RFC3339Nano)}
+}
+
+func nativeDeviceLabel(request *http.Request) string {
+	label := strings.TrimSpace(request.Header.Get("X-AllChat-Device"))
+	if label == "" {
+		label = "AllChat Android"
+	}
+	if len(label) > 100 {
+		label = label[:100]
+	}
+	return label
+}
+
+func (i *Instance) logoutAPI(response http.ResponseWriter, request *http.Request) {
+	_, sessionToken, ok := i.authenticatedCSRF(response, request)
+	if !ok {
+		return
+	}
+	if err := i.identity.RevokeSession(request.Context(), sessionToken); err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{"error": "unable to revoke Session"})
+		return
+	}
+	clearSessionCookies(response, request)
 	response.WriteHeader(http.StatusNoContent)
 }
 
@@ -130,11 +172,11 @@ func (i *Instance) homePage(response http.ResponseWriter, request *http.Request)
 }
 
 func (i *Instance) currentMember(request *http.Request) (identity.Member, error) {
-	cookie, err := request.Cookie(sessionCookieName)
+	authentication, err := authenticationFromRequest(request)
 	if err != nil {
 		return identity.Member{}, identity.ErrInvalidCredentials
 	}
-	return i.identity.MemberForSession(request.Context(), cookie.Value)
+	return i.identity.MemberForSession(request.Context(), authentication.token)
 }
 
 func (i *Instance) logout(response http.ResponseWriter, request *http.Request) {

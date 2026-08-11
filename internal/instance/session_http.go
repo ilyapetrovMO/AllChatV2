@@ -5,6 +5,7 @@ import (
 	"context"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"allchat/internal/identity"
 )
@@ -152,25 +153,55 @@ func (i *Instance) recoverWeb(response http.ResponseWriter, request *http.Reques
 }
 
 func (i *Instance) authenticated(response http.ResponseWriter, request *http.Request) (identity.Member, string, bool) {
-	cookie, err := request.Cookie(sessionCookieName)
+	authentication, err := authenticationFromRequest(request)
 	if err != nil {
 		writeJSON(response, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
 		return identity.Member{}, "", false
 	}
-	member, err := i.identity.MemberForSession(request.Context(), cookie.Value)
+	member, err := i.identity.MemberForSession(request.Context(), authentication.token)
 	if err != nil {
 		writeJSON(response, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
 		return identity.Member{}, "", false
 	}
-	return member, cookie.Value, true
+	return member, authentication.token, true
 }
 
 func (i *Instance) authenticatedCSRF(response http.ResponseWriter, request *http.Request) (identity.Member, string, bool) {
-	member, sessionToken, ok := i.authenticated(response, request)
-	if !ok || !i.requireCSRF(response, request) {
+	authentication, err := authenticationFromRequest(request)
+	if err != nil {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
 		return identity.Member{}, "", false
 	}
-	return member, sessionToken, true
+	member, err := i.identity.MemberForSession(request.Context(), authentication.token)
+	if err != nil {
+		writeJSON(response, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
+		return identity.Member{}, "", false
+	}
+	if !authentication.bearer && !i.requireCSRF(response, request) {
+		return identity.Member{}, "", false
+	}
+	return member, authentication.token, true
+}
+
+type requestAuthentication struct {
+	token  string
+	bearer bool
+}
+
+func authenticationFromRequest(request *http.Request) (requestAuthentication, error) {
+	authorization := strings.TrimSpace(request.Header.Get("Authorization"))
+	if authorization != "" {
+		parts := strings.Fields(authorization)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || parts[1] == "" {
+			return requestAuthentication{}, identity.ErrInvalidCredentials
+		}
+		return requestAuthentication{token: parts[1], bearer: true}, nil
+	}
+	cookie, err := request.Cookie(sessionCookieName)
+	if err != nil || cookie.Value == "" {
+		return requestAuthentication{}, identity.ErrInvalidCredentials
+	}
+	return requestAuthentication{token: cookie.Value}, nil
 }
 
 func (i *Instance) requireCSRF(response http.ResponseWriter, request *http.Request) bool {

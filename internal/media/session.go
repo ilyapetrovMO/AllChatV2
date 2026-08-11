@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -102,6 +103,10 @@ func (m *Manager) Join(memberID, roomID string) (JoinResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.expireLocked()
+	return m.joinLocked(memberID, roomID)
+}
+
+func (m *Manager) joinLocked(memberID, roomID string) (JoinResult, error) {
 	if until := m.removedUntil[roomID+":"+memberID]; m.now().Before(until) {
 		return JoinResult{}, ErrModerated
 	}
@@ -128,6 +133,71 @@ func (m *Manager) Join(memberID, roomID string) (JoinResult, error) {
 	}
 	m.screenVisible[roomID][memberID] = true
 	return JoinResult{Participant: item.participant, ResumeToken: token}, nil
+}
+
+// Takeover replaces the authenticated Member's existing Media Session. It is
+// the recovery path when a browser no longer has the token for a stale session.
+func (m *Manager) Takeover(memberID, roomID string) (JoinResult, error) {
+	m.mu.Lock()
+	m.expireLocked()
+	if until := m.removedUntil[roomID+":"+memberID]; m.now().Before(until) {
+		m.mu.Unlock()
+		return JoinResult{}, ErrModerated
+	}
+	targetCount := len(m.rooms[roomID])
+	if current := m.byMember[memberID]; current != nil && current.participant.RoomID == roomID {
+		targetCount--
+	}
+	if targetCount >= m.maxParticipants {
+		m.mu.Unlock()
+		return JoinResult{}, ErrRoomFull
+	}
+	oldPeer := m.peers[memberID]
+	if item := m.byMember[memberID]; item != nil {
+		m.removeLocked(item)
+	}
+	delete(m.peers, memberID)
+	if oldPeer != nil {
+		for sourceTrackID := range m.tracks[oldPeer.roomID] {
+			if strings.HasPrefix(sourceTrackID, memberID+":") {
+				delete(m.tracks[oldPeer.roomID], sourceTrackID)
+			}
+		}
+		delete(m.screenTracks[oldPeer.roomID], memberID)
+	}
+	joined, err := m.joinLocked(memberID, roomID)
+	m.mu.Unlock()
+	if oldPeer != nil {
+		_ = oldPeer.connection.Close()
+	}
+	return joined, err
+}
+
+// End removes the Member only when the request still names their current
+// room. This makes a delayed browser hangup harmless after switching rooms.
+func (m *Manager) End(memberID, roomID string) error {
+	m.mu.Lock()
+	item := m.byMember[memberID]
+	if item == nil || item.participant.RoomID != roomID {
+		m.mu.Unlock()
+		return ErrNotPresent
+	}
+	peer := m.peers[memberID]
+	delete(m.peers, memberID)
+	m.removeLocked(item)
+	if peer != nil {
+		for sourceTrackID := range m.tracks[peer.roomID] {
+			if strings.HasPrefix(sourceTrackID, memberID+":") {
+				delete(m.tracks[peer.roomID], sourceTrackID)
+			}
+		}
+		delete(m.screenTracks[peer.roomID], memberID)
+	}
+	m.mu.Unlock()
+	if peer != nil {
+		_ = peer.connection.Close()
+	}
+	return nil
 }
 
 func (m *Manager) Disconnect(memberID string) {

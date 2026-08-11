@@ -47,18 +47,8 @@
     }
 
     stop({explicit = false} = {}) {
-      this.stopped = true;
-      this.recovering = false;
-      this.generation++;
-      clearInterval(this.heartbeat);
-      clearTimeout(this.iceTimer);
-	  clearInterval(this.diagnosticsTimer);
       if (explicit && this.socket?.readyState === 1) this._send({type: "leave"});
-      this.socket?.close();
-      this.peer?.close();
-      this.socket = null;
-      this.peer = null;
-      this._state("idle");
+      this._terminate("idle");
     }
 
     send(type, fields = {}) { return this._send({type, ...fields}); }
@@ -75,7 +65,7 @@
       this._send({type: "offer", sdp: this.peer.localDescription});
     }
 
-    async _connect(resumeToken) {
+    async _connect(resumeToken, takeover = false) {
       const generation = ++this.generation;
       clearInterval(this.heartbeat);
       clearTimeout(this.iceTimer);
@@ -107,7 +97,7 @@
         const fail = error => { if (!settled) { settled = true; reject(error); } };
         socket.onopen = () => {
           if (this.stopped || generation !== this.generation) return socket.close();
-          this._send({type: "join", room_id: this.roomID, resume_token: resumeToken, sdp: peer.localDescription});
+          this._send({type: "join", room_id: this.roomID, resume_token: resumeToken, takeover, sdp: peer.localDescription});
           pendingLocal.splice(0).forEach(frame => this._send(frame));
           this.lastHeartbeatAck = Date.now();
           this.heartbeat = setInterval(() => this._heartbeat(socket, generation), this.heartbeatInterval);
@@ -169,8 +159,7 @@
     async _recover(cause) {
       if (this.stopped || this.recovering) return;
 	  if (cause?.code === "moderated") {
-		this.stopped = true;
-		this._state("failed", cause);
+		this._terminate("failed", cause);
 		return;
 	  }
       this.recovering = true;
@@ -186,21 +175,39 @@
 		  if (error.code === "moderated") { cause = error; break; }
           if (error.code === "invalid_resume") {
             this.resumeToken = "";
-			try { await this._connect(""); return; } catch (freshError) {
+			try { await this._connect("", true); return; } catch (freshError) {
 			  cause = freshError;
 			  if (freshError.code === "moderated") break;
+			}
+		  } else if (error.code === "already_active") {
+			try { await this._connect("", true); return; } catch (takeoverError) {
+			  cause = takeoverError;
+			  if (takeoverError.code === "moderated") break;
 			}
           } else cause = error;
         }
       }
       if (!this.stopped) {
-        this.recovering = false;
-        this.stopped = true;
-        clearInterval(this.heartbeat);
-        this.socket?.close();
-        this.peer?.close();
-        this._state("failed", cause);
+        this._terminate("failed", cause);
       }
+    }
+
+    _terminate(state, error) {
+      this.stopped = true;
+      this.recovering = false;
+      this.generation++;
+      clearInterval(this.heartbeat);
+      clearTimeout(this.iceTimer);
+	  clearInterval(this.diagnosticsTimer);
+      this.socket?.close();
+      this.peer?.close();
+      this.socket = null;
+      this.peer = null;
+      if (!this.localMediaReleased) {
+        this.localMediaReleased = true;
+        this.stream?.getTracks().forEach(track => track.stop?.());
+      }
+      this._state(state, error);
     }
 
     _peerState(peer, generation) {

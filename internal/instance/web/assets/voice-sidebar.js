@@ -112,7 +112,11 @@
     active = null;
 	if(window.allchatActiveVoiceRoom===session.roomID)window.allchatActiveVoiceRoom="";
     session.connection?.stop({explicit});
-    if (explicit) sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
+    if (explicit) {
+      sessionStorage.removeItem(`allchat-media-resume:${session.roomID}`);
+      const csrf=decodeURIComponent(document.cookie.split("; ").find(item=>item.startsWith("allchat_csrf="))?.split("=").slice(1).join("=")||"");
+      fetch(`/api/v1/media/rooms/${encodeURIComponent(session.roomID)}/session`,{method:"DELETE",headers:{"X-CSRF-Token":csrf},keepalive:true}).catch(()=>{});
+    }
     session.stream?.getTracks().forEach(track => track.stop());
     session.screenStream?.getTracks().forEach(track => track.stop());
     session.remoteVideos?.forEach(video => video.remove());
@@ -137,6 +141,10 @@
 	prepareEarcons();
 	setPending(session, "Connecting");
     leave.addEventListener("click", () => disconnect());
+    retry.onclick = () => {
+      if (active === session) disconnect({explicit: false, changeView: false});
+      connect(roomID, name, voiceLink);
+    };
     screen.addEventListener("click", () => toggleScreen(session).catch(error => { status.textContent=error?.message||"Screen sharing is unavailable.";panel.classList.add("error") }));
     soundboard.addEventListener("click",()=>openSoundboard(session,soundboard));
     mute.addEventListener("click", () => {
@@ -195,7 +203,12 @@
           mute.disabled = screen.disabled = soundboard.disabled = false;
           window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
         }
-        if (state === "failed") { status.textContent = error?.message || "Voice connection failed"; setPending(session, "Connection failed"); }
+        if (state === "failed") {
+          status.textContent = error?.message || "Voice connection failed";
+          mute.disabled = screen.disabled = soundboard.disabled = true;
+          if(window.allchatActiveVoiceRoom===roomID)window.allchatActiveVoiceRoom="";
+          setPending(session, "Connection failed");
+        }
       };
       const recordDiagnostics = sample => {
 		const audio=[...session.remoteAudios.entries()].map(([track,element])=>({track_id:track.id,track_state:track.readyState,track_muted:track.muted,element_paused:element.paused,element_ready_state:element.readyState,element_current_time:element.currentTime}));
@@ -205,10 +218,10 @@
 	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};
 	  window.allchatClearVoiceDiagnostics=()=>localStorage.removeItem("allchat:voice-diagnostics");
       session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
-      retry.onclick = () => session.connection.start();
       await session.connection.start();
     } catch (error) {
       if (active === session) {
+        session.stream?.getTracks().forEach(track => track.stop());
         status.textContent = error?.message || "Could not join voice";
         panel.classList.add("error");
 		setPending(session, "Connection failed");

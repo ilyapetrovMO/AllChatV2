@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 17 {
-		t.Fatalf("health = %+v, want status ok at schema version 17", health)
+	if health.Status != "ok" || health.SchemaVersion != 18 {
+		t.Fatalf("health = %+v, want status ok at schema version 18", health)
 	}
 
 	client := newClient(t)
@@ -307,7 +307,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(17) {
+	if health["status"] != "ok" || health["schema_version"] != float64(18) {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }
@@ -1181,7 +1181,10 @@ func TestPresenceReadPositionsAndTypingSynchronize(t *testing.T) {
 	page := getWithClient(t, ownerClient, app.url("/channels/"+channel.ID))
 	pageBody := readAll(t, page.Body)
 	page.Body.Close()
-	if !strings.Contains(pageBody, "Enable notifications") || !strings.Contains(pageBody, "Notification.requestPermission") {
+	notificationAsset := getWithClient(t, ownerClient, app.url("/assets/notification-service.js"))
+	notificationSource := readAll(t, notificationAsset.Body)
+	notificationAsset.Body.Close()
+	if !strings.Contains(pageBody, `aria-label="Notifications"`) || !strings.Contains(notificationSource, "Notification?.requestPermission") {
 		t.Fatal("embedded client lacks deliberate browser-notification control")
 	}
 }

@@ -56,6 +56,8 @@
 (() => {
   "use strict";
 
+  const notificationCenterReady = import("/assets/notification-service.js").then(() => window.installAllChatNotificationCenter?.()).catch(() => null);
+
   // Keep user-facing strings and instant formatting behind one small seam so
   // later locale packs do not need to rewrite feature code.
   window.allchatText ||= Object.freeze({screenUnavailable: "Screen sharing is unavailable on this browser.", microphoneUnavailable: "Microphone access is unavailable on this browser."});
@@ -310,7 +312,7 @@
       }
       return button;
     };
-    let directMessages = new Map(), unread = 0;
+    let directMessages = new Map(), channels = new Map(), unread = 0;
     const renderUnread = () => {
       const dot = ensureButton()?.querySelector("[data-dm-unread]");
       if (!dot) return;
@@ -318,11 +320,12 @@
       dot.setAttribute("aria-label", unread === 1 ? "1 unread Direct Message" : `${unread} unread Direct Messages`);
     };
     const refresh = async () => {
-      const response = await fetch("/api/v1/dms");
+      const [response, channelResponse] = await Promise.all([fetch("/api/v1/dms"), fetch("/api/v1/channels")]);
       if (!response.ok) return;
-      const value = await response.json();
+      const value = await response.json(), overview = channelResponse.ok ? await channelResponse.json() : {channels: []};
       const items = value.direct_messages || [];
       directMessages = new Map(items.map(item => [item.id, item]));
+      channels = new Map((overview.channels || []).map(item => [item.id, item]));
       window.allchatDirectMessageIDs = new Set(directMessages.keys());
       unread = [...directMessages.values()].reduce((total, item) => total + Number(item.unread || 0), 0);
       renderShortlist(items);
@@ -331,11 +334,10 @@
     cleanCommunityNavigation();
     ensureButton();
     refresh().catch(() => {});
-    fetch("/api/v1/notification-settings").then(response => response.ok ? response.json() : null).then(settings => settings?.muted_channel_ids?.forEach(id => window.allchatMutedChannels.add(id))).catch(() => {});
     document.addEventListener("allchat:view-swapped", () => { cleanCommunityNavigation(); ensureButton(); refresh().catch(() => {}); });
     setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 2000);
 
-    let cursor = null, retry = 250, notificationsAllowed = true;
+    let cursor = null, retry = 250;
     const connect = () => {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const query = cursor === null ? "" : `?cursor=${cursor}`;
@@ -345,29 +347,38 @@
       socket.onmessage = async event => {
         const frame = JSON.parse(event.data);
         if (Number.isFinite(frame.cursor)) cursor = frame.cursor;
-        if (frame.type === "state.ephemeral") notificationsAllowed = frame.payload?.presence?.[document.body.dataset.memberId] !== "dnd";
-        if (frame.type !== "message.created" || !frame.payload || frame.payload.author_id === document.body.dataset.memberId) return;
-        if (!directMessages.has(frame.payload.channel_id)) await refresh().catch(() => {});
-        if (!directMessages.has(frame.payload.channel_id)) return;
-        const viewing = document.body.dataset.channelId === frame.payload.channel_id;
-        if (viewing) {
+        if (frame.type === "state.ephemeral") updateMemberPresence(frame.payload?.presence);
+        if (frame.type !== "message.created" || !frame.payload) return;
+        const center = window.allchatNotifications;
+        const currentMemberID = document.body.dataset.memberId || center?.settings?.current_member_id;
+        if (currentMemberID && frame.payload.author_id === currentMemberID) return;
+        if (!directMessages.has(frame.payload.channel_id) && !channels.has(frame.payload.channel_id)) await refresh().catch(() => {});
+        const direct = directMessages.has(frame.payload.channel_id), channel = channels.get(frame.payload.channel_id);
+        if (!direct && !channel) return;
+        const viewing = document.body.dataset.channelId === frame.payload.channel_id, focused = !document.hidden && document.hasFocus();
+        if (direct && viewing && focused) {
           const csrf = document.querySelector('[name="csrf_token"]')?.value;
           if (csrf && frame.payload.sequence) fetch(`/api/v1/dms/${frame.payload.channel_id}/read-position`, {method: "PUT", headers: {"Content-Type": "application/json", "X-CSRF-Token": csrf}, body: JSON.stringify({sequence: frame.payload.sequence})}).then(refresh).catch(() => {});
-          return;
         }
-        unread++;
-        renderUnread();
-        if (notificationsAllowed && !window.allchatMutedChannels.has(frame.payload.channel_id) && Notification.permission === "granted") {
-          const preview = frame.payload.body || (frame.payload.attachments?.length ? "Sent an attachment" : "New message");
-          const notice = new Notification(`${frame.payload.author_name} sent you a Direct Message`, {body: preview.slice(0, 180), tag: `allchat-dm-${frame.payload.channel_id}`});
-          notice.onclick = () => { window.focus(); location.href = `/channels/${frame.payload.channel_id}`; };
-        }
+        window.AllChatNotificationPolicy.handleIncomingMessage(frame.payload, {
+          updateUnread: () => {
+            if (viewing && focused) return;
+            if (direct) { unread++; renderUnread(); }
+            document.querySelector(`a[href="/channels/${CSS.escape(frame.payload.channel_id)}"]`)?.classList.add("unread");
+          },
+          notify: message => {
+            if (center) return center.handleMessage(message, {directMessage: direct, channelName: direct ? "" : channel.name});
+            notificationCenterReady.then(ready => {
+              if (message.author_id !== ready?.settings?.current_member_id) ready?.handleMessage(message, {directMessage: direct, channelName: direct ? "" : channel.name});
+            });
+          },
+        });
       };
       socket.onclose = () => { clearInterval(heartbeat); setTimeout(connect, retry = Math.min(retry * 2, 5000)); };
     };
     connect();
   };
-  if (document.body.dataset.memberId || document.querySelector(".member-panel")) installDirectMessageInbox();
+  if (document.querySelector(".app-shell")) installDirectMessageInbox();
 
 	const installVoiceChannelPresence=async()=>{
 	  window.allchatVoicePending ||= new Map();

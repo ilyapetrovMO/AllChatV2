@@ -1,5 +1,137 @@
 const { test, expect } = require('@playwright/test');
 
+test('terminal Voice Room failure releases the microphone', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/voice-connection.js'});
+  const result = await page.evaluate(async () => {
+    let stops = 0;
+    const track = {stop: () => stops++};
+    const stream = {getTracks: () => [track]};
+    const createPeer = () => ({
+      addTrack() {},
+      addTransceiver() {},
+      close() {},
+      createOffer: async () => ({type: 'offer', sdp: 'test'}),
+      setLocalDescription: async function(description) { this.localDescription = description; },
+      iceGatheringState: 'complete',
+    });
+    const createSocket = () => {
+      const socket = {
+        readyState: 0,
+        close() { this.readyState = 3; queueMicrotask(() => this.onclose?.()); },
+        send() {},
+      };
+      queueMicrotask(() => { socket.onerror?.(); });
+      return socket;
+    };
+    const states = [];
+    const connection = new window.AllChatVoiceConnection({
+      roomID: 'voice-room-example', stream, createPeer, createSocket,
+      fetchCredentials: async () => [], recoveryDelays: [1], recoveryTimeout: 10,
+      onState: state => states.push(state),
+    });
+    await connection.start();
+    return {stops, state: connection.state, states};
+  });
+  expect(result.state).toBe('failed');
+  expect(result.states).toContain('recovering');
+  expect(result.stops).toBe(1);
+});
+
+test('desktop Message notification policy respects focus, settings, mutes, mentions, and cooldowns', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/notification-service.js'});
+  const result = await page.evaluate(() => {
+    let now = 10_000;
+    const toasts = [], sounds = [];
+    const service = new window.AllChatNotificationService({
+      now: () => now,
+      notifier: {notify: notification => toasts.push(notification)},
+      playSound: () => sounds.push(now),
+    });
+    const message = (overrides = {}) => ({
+      id: `message-${now}`,
+      channel_id: 'channel-other',
+      author_id: 'member-other',
+      author_name: 'Other Member',
+      body: 'hello **there**',
+      mentions: [],
+      ...overrides,
+    });
+    const state = (overrides = {}) => ({
+      currentUserID: 'member-current',
+      activeChannelID: 'channel-active',
+      appFocused: true,
+      serverSetting: {level: 'all_messages', muted: false, soundEnabled: true},
+      channelSetting: {level: 'default', muted: false},
+      ...overrides,
+    });
+    const check = (name, candidate, clientState) => {
+      const before = toasts.length;
+      service.handleMessage(candidate, clientState);
+      return [name, toasts.length > before];
+    };
+    const decisions = [
+      check('own', message({author_id: 'member-current'}), state()),
+      check('focused-active', message({channel_id: 'channel-active'}), state()),
+      check('focused-other', message(), state()),
+    ];
+    now += 2_000;
+    decisions.push(check('unfocused-active', message({channel_id: 'channel-active'}), state({appFocused: false})));
+    now += 2_000;
+    decisions.push(check('muted', message(), state({channelSetting: {level: 'all_messages', muted: true}})));
+    decisions.push(check('mentions-normal', message(), state({channelSetting: {level: 'mentions_only', muted: false}})));
+    decisions.push(check('mentions-direct', message({mentions: [{id: 'member-current'}]}), state({channelSetting: {level: 'mentions_only', muted: false}})));
+    now += 2_000;
+    decisions.push(check('nothing', message(), state({channelSetting: {level: 'nothing', muted: false}})));
+    decisions.push(check('override', message(), state({serverSetting: {level: 'nothing', muted: false, soundEnabled: true}, channelSetting: {level: 'all_messages', muted: false}})));
+    now += 2_000;
+    decisions.push(check('default-inherits', message(), state({serverSetting: {level: 'nothing', muted: false, soundEnabled: true}})));
+    now += 2_000;
+    const firstSame = check('cooldown-first', message(), state());
+    now += 500;
+    const secondSame = check('cooldown-same', message(), state());
+    const otherConversation = check('cooldown-other', message({channel_id: 'channel-third'}), state());
+    return {decisions: Object.fromEntries([...decisions, firstSame, secondSame, otherConversation]), toastCount: toasts.length, soundCount: sounds.length};
+  });
+  expect(result.decisions).toEqual({
+    own: false,
+    'focused-active': false,
+    'focused-other': true,
+    'unfocused-active': true,
+    muted: false,
+    'mentions-normal': false,
+    'mentions-direct': true,
+    nothing: false,
+    override: true,
+    'default-inherits': false,
+    'cooldown-first': true,
+    'cooldown-same': false,
+    'cooldown-other': true,
+  });
+  expect(result.soundCount).toBe(5);
+});
+
+test('suppressed desktop notification still updates Unread State', async ({ page }) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/notification-service.js'});
+  const result = await page.evaluate(() => {
+    let unread = 0, notifications = 0;
+    const message = {channel_id: 'channel-active', author_id: 'member-other'};
+    window.AllChatNotificationPolicy.handleIncomingMessage(message, {
+      updateUnread: () => unread++,
+      notify: candidate => {
+        if (window.AllChatNotificationPolicy.shouldNotify(candidate, {
+          currentUserID: 'member-current', activeChannelID: 'channel-active', appFocused: true,
+          serverSetting: {level: 'all_messages'}, channelSetting: {level: 'default'},
+        })) notifications++;
+      },
+    });
+    return {unread, notifications};
+  });
+  expect(result).toEqual({unread: 1, notifications: 0});
+});
+
 test('authentication uses the embedded AllChat design system', async ({ page }) => {
   const externalRequests = [];
   page.on('request', request => {
@@ -167,7 +299,7 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
   await page.goto('/login');
   await page.addScriptTag({url: '/assets/voice-connection.js'});
   const result = await page.evaluate(async () => {
-    const states = [], sockets = [], peers = [], joinTokens = [];
+    const states = [], sockets = [], peers = [], joinTokens = [], joinTakeovers = [];
     let heartbeats = 0;
     let credentialFetches = 0;
     class FakePeer {
@@ -187,6 +319,7 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
         const frame = JSON.parse(raw);
         if (frame.type === 'join') {
           joinTokens.push(frame.resume_token);
+          joinTakeovers.push(frame.takeover === true);
           const response = sockets.length === 2 && frame.resume_token
             ? {version: 1, type: 'error', code: 'invalid_resume', error: 'resume expired'}
             : {version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-token'};
@@ -214,13 +347,13 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
     await new Promise(resolve => setTimeout(resolve, 20));
     sockets.at(-1).close();
     await new Promise(resolve => setTimeout(resolve, 20));
-    const snapshot = {states: [...states], sockets: sockets.length, peers: peers.length, credentialFetches, heartbeats, joinTokens};
+    const snapshot = {states: [...states], sockets: sockets.length, peers: peers.length, credentialFetches, heartbeats, joinTokens, joinTakeovers};
     connection.stop();
     return snapshot;
   });
   expect(result.states).toContain('recovering');
   expect(result.states.at(-1)).toBe('connected');
-  expect(result).toMatchObject({sockets: 4, peers: 4, credentialFetches: 4, joinTokens: ['', 'resume-token', '', 'resume-token']});
+  expect(result).toMatchObject({sockets: 4, peers: 4, credentialFetches: 4, joinTokens: ['', 'resume-token', '', 'resume-token'], joinTakeovers: [false, false, true, false]});
   expect(result.heartbeats).toBeGreaterThan(0);
 });
 

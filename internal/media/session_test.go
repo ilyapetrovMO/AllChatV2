@@ -51,6 +51,70 @@ func TestResumeTokenCanTakeOverBeforeStaleConnectionCleanup(t *testing.T) {
 	}
 }
 
+func TestAuthenticatedTakeoverReplacesStaleSession(t *testing.T) {
+	manager := NewManager(30 * time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("member-a", "voice-old"); err != nil {
+		t.Fatal(err)
+	}
+	replacement, err := manager.Takeover("member-a", "voice-new")
+	if err != nil {
+		t.Fatalf("take over stale session: %v", err)
+	}
+	if replacement.Participant.RoomID != "voice-new" || !replacement.Participant.Connected {
+		t.Fatalf("replacement session = %+v", replacement)
+	}
+	if participants := manager.Participants("voice-old"); len(participants) != 0 {
+		t.Fatalf("old Voice Room still has participant: %+v", participants)
+	}
+	if participants := manager.Participants("voice-new"); len(participants) != 1 || participants[0].MemberID != "member-a" {
+		t.Fatalf("new Voice Room participants = %+v", participants)
+	}
+}
+
+func TestEndIsScopedToCurrentRoom(t *testing.T) {
+	manager := NewManager(30 * time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("member-a", "voice-new"); err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.End("member-a", "voice-old"); !errors.Is(err, ErrNotPresent) {
+		t.Fatalf("delayed old-room hangup error = %v", err)
+	}
+	if participants := manager.Participants("voice-new"); len(participants) != 1 {
+		t.Fatalf("delayed hangup removed replacement: %+v", participants)
+	}
+	if err := manager.End("member-a", "voice-new"); err != nil {
+		t.Fatal(err)
+	}
+	if participants := manager.Participants("voice-new"); len(participants) != 0 {
+		t.Fatalf("current session survived hangup: %+v", participants)
+	}
+}
+
+func TestRejectedTakeoverPreservesCurrentSession(t *testing.T) {
+	manager, err := NewManagerWithLimits(30*time.Second, 50000, 50031, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer manager.Close()
+	if _, err = manager.Join("member-a", "voice-current"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = manager.Join("member-b", "voice-full"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = manager.Join("member-c", "voice-full"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = manager.Takeover("member-a", "voice-full"); !errors.Is(err, ErrRoomFull) {
+		t.Fatalf("takeover into full room error = %v", err)
+	}
+	if participants := manager.Participants("voice-current"); len(participants) != 1 || participants[0].MemberID != "member-a" {
+		t.Fatalf("rejected takeover removed current session: %+v", participants)
+	}
+}
+
 func TestStalePeerLeaseCannotDisconnectReplacement(t *testing.T) {
 	manager := NewManager(30 * time.Second)
 	defer manager.Close()

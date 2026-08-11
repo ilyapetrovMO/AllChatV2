@@ -58,6 +58,10 @@ func (m *Manager) ResumeOffer(memberID, roomID, resumeToken string, offer webrtc
 	return m.acceptOffer(memberID, roomID, resumeToken, offer, signal)
 }
 
+func (m *Manager) TakeoverOffer(memberID, roomID string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
+	return m.acceptOfferWithTakeover(memberID, roomID, offer, signal)
+}
+
 func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
 	var joined JoinResult
 	var err error
@@ -69,6 +73,10 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 	if err != nil {
 		return webrtc.SessionDescription{}, "", 0, err
 	}
+	return m.acceptJoinedOffer(memberID, roomID, joined, offer, signal)
+}
+
+func (m *Manager) acceptJoinedOffer(memberID, roomID string, joined JoinResult, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
 	connection, err := m.api.NewPeerConnection(webrtc.Configuration{})
 	if err != nil {
 		_ = m.Leave(memberID, roomID)
@@ -165,6 +173,14 @@ func (m *Manager) acceptOffer(memberID, roomID, resumeToken string, offer webrtc
 	}
 	<-gathered
 	return *connection.LocalDescription(), joined.ResumeToken, lease, nil
+}
+
+func (m *Manager) acceptOfferWithTakeover(memberID, roomID string, offer webrtc.SessionDescription, signal func(Signal)) (webrtc.SessionDescription, string, uint64, error) {
+	joined, err := m.Takeover(memberID, roomID)
+	if err != nil {
+		return webrtc.SessionDescription{}, "", 0, err
+	}
+	return m.acceptJoinedOffer(memberID, roomID, joined, offer, signal)
 }
 
 // AddICECandidate applies a trickled browser candidate to an active peer.

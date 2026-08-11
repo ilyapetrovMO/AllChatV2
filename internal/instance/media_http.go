@@ -24,6 +24,7 @@ type mediaCommand struct {
 	RoomID      string                    `json:"room_id,omitempty"`
 	SDP         webrtc.SessionDescription `json:"sdp,omitempty"`
 	ResumeToken string                    `json:"resume_token,omitempty"`
+	Takeover    bool                      `json:"takeover,omitempty"`
 	Visible     bool                      `json:"visible,omitempty"`
 	Muted       bool                      `json:"muted,omitempty"`
 	SoundID     string                    `json:"sound_id,omitempty"`
@@ -95,6 +96,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	if command.ResumeToken != "" {
 		answer, token, peerLease, err = i.media.ResumeOffer(member.ID, mediaRoomID, command.ResumeToken, command.SDP, forward)
+	} else if command.Takeover {
+		answer, token, peerLease, err = i.media.TakeoverOffer(member.ID, mediaRoomID, command.SDP, forward)
 	} else {
 		answer, token, peerLease, err = i.media.AcceptOffer(member.ID, mediaRoomID, command.SDP, forward)
 	}
@@ -102,6 +105,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		code := "join_failed"
 		if errors.Is(err, media.ErrInvalidResume) {
 			code = "invalid_resume"
+		} else if errors.Is(err, media.ErrAlreadyActive) {
+			code = "already_active"
 		} else if errors.Is(err, media.ErrModerated) {
 			code = "moderated"
 		}
@@ -157,6 +162,18 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (i *Instance) endOwnMediaSessionAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticated(w, r)
+	if !ok {
+		return
+	}
+	if err := i.media.End(member.ID, r.PathValue("roomID")); err != nil && !errors.Is(err, media.ErrNotPresent) {
+		http.Error(w, "could not end Media Session", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (i *Instance) voiceParticipantsAPI(w http.ResponseWriter, r *http.Request) {

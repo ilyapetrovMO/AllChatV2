@@ -75,6 +75,7 @@ async function shot(page, name) {
 async function openCommunity(page, mobile) {
   await page.goto(`/channels/${fixture.textChannel.id}`);
   await page.locator('.channel-content').waitFor();
+  await page.locator('[data-notification-bell]').waitFor();
   await expect(page.locator('.channel-sidebar .dm-link')).toHaveCount(1);
   expect(await page.locator('.channel-sidebar .dm-link').count()).toBeLessThan(6);
   await expect(page.locator('.channel-sidebar .dm-category-link')).toHaveAttribute('href', '/dms');
@@ -115,6 +116,7 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
 
     await page.goto(`/channels/${fixture.voiceChannel.id}`);
     await page.locator('[data-media-stage-grid]').waitFor();
+    await page.locator('[data-notification-bell]').waitFor();
     await page.evaluate(() => {
       const grid = document.querySelector('[data-media-stage-grid]');
 	  grid.dataset.tileCount = '2';
@@ -134,6 +136,7 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
     await page.locator('#member-menu-toggle').click();
 
     await page.goto(`/channels/${fixture.dm.id}`);
+    await page.locator('[data-notification-bell]').waitFor();
     await expect.poll(() => page.evaluate(async () => (await (await fetch('/api/v1/dms')).json()).direct_messages.reduce((total, item) => total + item.unread, 0))).toBe(0);
     await expect(page.locator('[data-dm-unread]')).toBeHidden();
     await stabilize(page);
@@ -186,6 +189,75 @@ test('SPA-opened channel receives remote messages before local input and starts 
   await expect(page.locator('#messages')).toContainText('Scroll fixture 01');
   await owner.dispose();
   await second.dispose();
+});
+
+test('Community Member rail appears outside DMs, settings, and Voice Room grids', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/');
+  const homeRail = page.locator('.content-shell > .participant-sidebar');
+  await expect(homeRail).toBeVisible();
+  await expect(homeRail.locator('[data-participant-id]')).toHaveCount(2);
+
+  await page.locator(`a[href="/channels/${fixture.textChannel.id}"]`).click();
+  await expect(page.locator('.channel-content .participant-sidebar')).toBeVisible();
+
+  await page.goto(`/channels/${fixture.dm.id}`);
+  await expect(page.locator('.participant-sidebar .dm-profile-card')).toBeVisible();
+  await expect(page.locator('.participant-sidebar .participant-list')).toHaveCount(0);
+
+  await page.goto(`/channels/${fixture.voiceChannel.id}`);
+  await expect(page.locator('[data-media-stage-grid]')).toBeVisible();
+  await expect(page.locator('.content-shell > .participant-sidebar')).toHaveCount(0);
+
+  await page.goto('/profile');
+  await expect(page.locator('.content-shell > .participant-sidebar')).toHaveCount(0);
+});
+
+test('notification bell persists Community and conversation overrides', async ({page}) => {
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  const token = await csrf(owner);
+  let response = await owner.put('/api/v1/notification-settings', {data: {level: 'mentions_only', muted: false, sound_enabled: false}, headers: {'X-CSRF-Token': token}});
+  expect(response.status()).toBe(204);
+  response = await owner.put(`/api/v1/channels/${fixture.textChannel.id}/notification-settings`, {data: {level: 'all_messages', muted: true}, headers: {'X-CSRF-Token': token}});
+  expect(response.status()).toBe(204);
+  const settings = await (await owner.get('/api/v1/notification-settings')).json();
+  expect(settings.community).toEqual({level: 'mentions_only', muted: false, sound_enabled: false});
+  expect(settings.channels[fixture.textChannel.id]).toEqual({level: 'all_messages', muted: true});
+
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-notification-bell]').click();
+  const popover = page.locator('.notification-popover');
+  await expect(popover).toBeVisible();
+  await expect(popover.locator('label').filter({hasText: 'Community'}).locator('select')).toHaveValue('mentions_only');
+  await expect(popover.locator('label').filter({hasText: 'This conversation'}).locator('select')).toHaveValue('all_messages');
+  await expect(popover.getByText('Mute conversation').locator('input')).toBeChecked();
+  await owner.put('/api/v1/notification-settings', {data: {level: 'all_messages', muted: false, sound_enabled: true}, headers: {'X-CSRF-Token': token}});
+  await owner.put(`/api/v1/channels/${fixture.textChannel.id}/notification-settings`, {data: {level: 'default', muted: false}, headers: {'X-CSRF-Token': token}});
+  await owner.dispose();
+});
+
+test('realtime Messages notify for another conversation but not the focused conversation', async ({page}) => {
+  await page.addInitScript(() => {
+    window.desktopNotices = [];
+    window.Notification = class {
+      static permission = 'granted';
+      static requestPermission = async () => 'granted';
+      constructor(title, options) { window.desktopNotices.push({title, body: options.body}); }
+      close() {}
+    };
+  });
+  const sender = await request.newContext({baseURL, storageState: fixture.secondState});
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(() => window.allchatNotifications && window.allchatSocket?.readyState === WebSocket.OPEN)).toBeTruthy();
+  await post(sender, `/api/v1/dms/${fixture.dm.id}/messages`, {body: 'A notification from another conversation'});
+  await expect.poll(() => page.evaluate(() => window.desktopNotices.length)).toBe(1);
+  await post(sender, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: 'Visible without a desktop toast'});
+  await expect(page.locator('#messages')).toContainText('Visible without a desktop toast');
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => window.desktopNotices.length)).toBe(1);
+  await sender.dispose();
 });
 
 test('soundboard upload works when administration is opened in the settings overlay', async ({page}) => {

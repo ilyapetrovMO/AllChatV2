@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 17
+const schemaVersion = 18
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -678,6 +678,22 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Moderation Record schema: %w", err)
 		}
 	}
+	if currentVersion < 18 {
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE member_notification_settings (
+				member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+				level TEXT NOT NULL DEFAULT 'all_messages' CHECK(level IN ('all_messages', 'mentions_only', 'nothing')),
+				muted INTEGER NOT NULL DEFAULT 0 CHECK(muted IN (0, 1)),
+				sound_enabled INTEGER NOT NULL DEFAULT 1 CHECK(sound_enabled IN (0, 1))
+			);
+			ALTER TABLE channel_notification_settings ADD COLUMN level TEXT NOT NULL DEFAULT 'default' CHECK(level IN ('default', 'all_messages', 'mentions_only', 'nothing'));
+		`); err != nil {
+			return fmt.Errorf("extend notification settings schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 18, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record notification settings schema: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -755,6 +771,8 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("PUT /api/v1/presence-mode", i.updatePresenceModeAPI)
 	mux.HandleFunc("GET /api/v1/presence", i.presenceAPI)
 	mux.HandleFunc("GET /api/v1/notification-settings", i.notificationSettingsAPI)
+	mux.HandleFunc("PUT /api/v1/notification-settings", i.updateNotificationSettingsAPI)
+	mux.HandleFunc("PUT /api/v1/channels/{channelID}/notification-settings", i.updateChannelNotificationSettingsAPI)
 	mux.HandleFunc("PUT /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("DELETE /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("GET /api/v1/reports", i.reportsAPI)
@@ -767,6 +785,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /api/v1/account/delete", i.deleteAccountAPI)
 	mux.HandleFunc("GET /api/v1/media", i.mediaWebSocket)
 	mux.HandleFunc("GET /api/v1/media/config", i.mediaConfigAPI)
+	mux.HandleFunc("DELETE /api/v1/media/rooms/{roomID}/session", i.endOwnMediaSessionAPI)
 	mux.HandleFunc("GET /api/v1/soundboard", i.soundboardAPI)
 	mux.HandleFunc("POST /api/v1/soundboard", i.uploadSoundAPI)
 	mux.HandleFunc("PATCH /api/v1/soundboard/{soundID}", i.updateSoundAPI)

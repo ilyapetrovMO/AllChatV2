@@ -2,6 +2,7 @@
 package music
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -16,27 +18,35 @@ import (
 type OpusWriter interface{ WriteOpus([]byte) error }
 
 type PlayerStatus struct {
-	Current  *Track        `json:"current,omitempty"`
-	Position time.Duration `json:"position"`
-	Paused   bool          `json:"paused"`
-	Volume   int           `json:"volume"`
-	Loop     LoopMode      `json:"loop"`
-	Queue    []Track       `json:"queue"`
+	Current          *Track        `json:"current,omitempty"`
+	Position         time.Duration `json:"position"`
+	Paused           bool          `json:"paused"`
+	Volume           int           `json:"volume"`
+	Loop             LoopMode      `json:"loop"`
+	Queue            []Track       `json:"queue"`
+	ProducedPackets  uint64        `json:"produced_packets"`
+	LastProducedAt   time.Time     `json:"last_produced_at,omitempty"`
+	EncoderStarts    uint64        `json:"encoder_starts"`
+	LastEncoderError string        `json:"last_encoder_error,omitempty"`
 }
 
 type Player struct {
-	ctx      context.Context
-	resolver *Resolver
-	sink     OpusWriter
-	queue    *Queue
-	mu       sync.Mutex
-	current  *Track
-	position time.Duration
-	paused   bool
-	volume   int
-	cancel   context.CancelFunc
-	action   string
-	wake     chan struct{}
+	ctx              context.Context
+	resolver         *Resolver
+	sink             OpusWriter
+	queue            *Queue
+	mu               sync.Mutex
+	current          *Track
+	position         time.Duration
+	paused           bool
+	volume           int
+	cancel           context.CancelFunc
+	action           string
+	wake             chan struct{}
+	produced         uint64
+	lastProduced     time.Time
+	encoderStarts    uint64
+	lastEncoderError string
 }
 
 func NewPlayer(ctx context.Context, resolver *Resolver, sink OpusWriter, maximum int) *Player {
@@ -64,7 +74,7 @@ func (p *Player) Status() PlayerStatus {
 		copy := *p.current
 		current = &copy
 	}
-	return PlayerStatus{Current: current, Position: p.position, Paused: p.paused, Volume: p.volume, Loop: p.queue.Loop(), Queue: p.queue.Items()}
+	return PlayerStatus{Current: current, Position: p.position, Paused: p.paused, Volume: p.volume, Loop: p.queue.Loop(), Queue: p.queue.Items(), ProducedPackets: p.produced, LastProducedAt: p.lastProduced, EncoderStarts: p.encoderStarts, LastEncoderError: p.lastEncoderError}
 }
 func (p *Player) Pause() error {
 	p.mu.Lock()
@@ -228,6 +238,8 @@ func (p *Player) playCurrent() bool {
 	ctx, cancel := context.WithCancel(p.ctx)
 	p.cancel = cancel
 	p.action = ""
+	p.encoderStarts++
+	p.lastEncoderError = ""
 	p.mu.Unlock()
 	defer cancel()
 	args := []string{"-loglevel", "error"}
@@ -241,11 +253,15 @@ func (p *Player) playCurrent() bool {
 	}
 	args = append(args, "-vn", "-ac", "2", "-ar", "48000", "-af", "volume="+strconv.FormatFloat(float64(volume)/100, 'f', 2, 64), "-c:a", "libopus", "-b:a", "128k", "-frame_duration", "20", "-f", "ogg", "pipe:1")
 	command := exec.CommandContext(ctx, "ffmpeg", args...)
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
 	stdout, err := command.StdoutPipe()
 	if err != nil {
+		p.setEncoderError(err.Error())
 		return false
 	}
 	if err = command.Start(); err != nil {
+		p.setEncoderError(err.Error())
 		return false
 	}
 	packets := newOggPacketReader(stdout)
@@ -255,8 +271,11 @@ func (p *Player) playCurrent() bool {
 	for {
 		packet, readErr := packets.Next()
 		if readErr != nil {
-			_ = command.Wait()
-			return readErr == io.EOF && ctx.Err() == nil
+			waitErr := command.Wait()
+			if ctx.Err() == nil && (readErr != io.EOF || waitErr != nil) {
+				p.setEncoderError(processOutputError(readErr, waitErr, stderr.String()))
+			}
+			return readErr == io.EOF && waitErr == nil && ctx.Err() == nil
 		}
 		if headers < 2 {
 			headers++
@@ -268,7 +287,12 @@ func (p *Player) playCurrent() bool {
 			return false
 		case <-ticker.C:
 		}
+		p.mu.Lock()
+		p.produced++
+		p.lastProduced = time.Now().UTC()
+		p.mu.Unlock()
 		if err = p.sink.WriteOpus(packet); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			p.setEncoderError("write Opus: " + err.Error())
 			cancel()
 			_ = command.Wait()
 			return false
@@ -277,6 +301,28 @@ func (p *Player) playCurrent() bool {
 		p.position += 20 * time.Millisecond
 		p.mu.Unlock()
 	}
+}
+
+func (p *Player) setEncoderError(value string) {
+	p.mu.Lock()
+	p.lastEncoderError = strings.Join(strings.Fields(value), " ")
+	if len(p.lastEncoderError) > 500 {
+		p.lastEncoderError = p.lastEncoderError[:500] + "…"
+	}
+	p.mu.Unlock()
+}
+func processOutputError(readErr, waitErr error, stderr string) string {
+	parts := []string{}
+	if readErr != nil && readErr != io.EOF {
+		parts = append(parts, readErr.Error())
+	}
+	if waitErr != nil {
+		parts = append(parts, waitErr.Error())
+	}
+	if text := strings.Join(strings.Fields(stderr), " "); text != "" {
+		parts = append(parts, text)
+	}
+	return strings.Join(parts, ": ")
 }
 
 type oggPacketReader struct {

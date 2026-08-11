@@ -10,6 +10,7 @@
       this.onTrack = options.onTrack || (() => {});
       this.onFrame = options.onFrame || (() => {});
       this.onResumeToken = options.onResumeToken || (() => {});
+	  this.onDiagnostics = options.onDiagnostics || (() => {});
       this.fetchCredentials = options.fetchCredentials || (async () => {
         const response = await fetch("/api/v1/turn-credentials");
         if (!response.ok) throw new Error("TURN credentials unavailable");
@@ -22,6 +23,7 @@
       this.heartbeatInterval = options.heartbeatInterval || 10000;
       this.heartbeatTimeout = options.heartbeatTimeout || 25000;
       this.iceGracePeriod = options.iceGracePeriod || 5000;
+	  this.diagnosticsInterval = options.diagnosticsInterval || 1000;
       this.resumeToken = options.resumeToken || "";
       this.generation = 0;
       this.state = "idle";
@@ -30,6 +32,7 @@
       this.heartbeat = null;
       this.iceTimer = null;
       this.lastHeartbeatAck = 0;
+	  this.diagnosticsTimer = null;
     }
 
     async start() {
@@ -49,6 +52,7 @@
       this.generation++;
       clearInterval(this.heartbeat);
       clearTimeout(this.iceTimer);
+	  clearInterval(this.diagnosticsTimer);
       if (explicit && this.socket?.readyState === 1) this._send({type: "leave"});
       this.socket?.close();
       this.peer?.close();
@@ -75,6 +79,7 @@
       const generation = ++this.generation;
       clearInterval(this.heartbeat);
       clearTimeout(this.iceTimer);
+	  clearInterval(this.diagnosticsTimer);
       this.socket?.close();
       this.peer?.close();
       const iceServers = await this.fetchCredentials();
@@ -128,6 +133,7 @@
 			if (!connected) {
 			  connected = true;
 			  this._state("connected");
+			  this._startDiagnostics(peer, generation);
 			  this.recovering = false;
 			  if (!settled) { settled = true; resolve(); }
 			}
@@ -228,6 +234,24 @@
       if (Date.now() - this.lastHeartbeatAck > this.heartbeatTimeout) { socket.close(); return; }
       this._send({type: "heartbeat", sent_at: Date.now()});
     }
+
+	_startDiagnostics(peer, generation) {
+	  clearInterval(this.diagnosticsTimer);
+	  const collect = async () => {
+		if (this.stopped || peer !== this.peer || generation !== this.generation || !peer.getStats) return;
+		try {
+		  const report = await peer.getStats(), inbound={packets:0,bytes:0,lost:0,jitter:0}, outbound={packets:0,bytes:0,discarded:0};
+		  report.forEach(item=>{
+			if ((item.kind||item.mediaType)!=="audio") return;
+			if (item.type==="inbound-rtp") { inbound.packets+=item.packetsReceived||0;inbound.bytes+=item.bytesReceived||0;inbound.lost+=item.packetsLost||0;inbound.jitter=Math.max(inbound.jitter,item.jitter||0); }
+			if (item.type==="outbound-rtp") { outbound.packets+=item.packetsSent||0;outbound.bytes+=item.bytesSent||0;outbound.discarded+=item.packetsDiscardedOnSend||0; }
+		  });
+		  this.onDiagnostics({at:new Date().toISOString(),roomID:this.roomID,state:this.state,peerState:peer.connectionState||"",iceState:peer.iceConnectionState||"",inbound,outbound});
+		} catch (_) {}
+	  };
+	  collect();
+	  this.diagnosticsTimer=setInterval(collect,this.diagnosticsInterval);
+	}
 
     _send(frame) {
       if (this.socket?.readyState !== 1) return false;

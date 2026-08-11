@@ -42,6 +42,16 @@ type Status struct {
 	LastError     string        `json:"last_error,omitempty"`
 }
 
+type FlowStats struct {
+	RTPPacketsSent        uint64  `json:"rtp_packets_sent"`
+	RTPBytesSent          uint64  `json:"rtp_bytes_sent"`
+	PacketsDiscarded      uint64  `json:"packets_discarded_on_send"`
+	RemoteReportAvailable bool    `json:"remote_report_available"`
+	RemotePacketsReceived uint64  `json:"remote_packets_received"`
+	RemotePacketsLost     int64   `json:"remote_packets_lost"`
+	RemoteJitter          float64 `json:"remote_jitter_seconds"`
+}
+
 type Session struct {
 	base     *url.URL
 	client   *http.Client
@@ -52,6 +62,7 @@ type Session struct {
 	socket   *websocket.Conn
 	peer     *webrtc.PeerConnection
 	explicit bool
+	events   func(Event)
 }
 
 func NewSession(base *url.URL, client *http.Client) *Session {
@@ -59,12 +70,47 @@ func NewSession(base *url.URL, client *http.Client) *Session {
 }
 func (s *Session) Sink() *OpusSink { return s.sink }
 func (s *Session) RoomID() string  { return s.Status().RoomID }
+func (s *Session) SetEventHandler(handler func(Event)) {
+	s.mu.Lock()
+	s.events = handler
+	s.mu.Unlock()
+}
 func (s *Session) Status() Status {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	result := s.status
 	sent, dropped, last := s.sink.Stats()
 	result.PacketsSent, result.DroppedFrames, result.LastPacketAt = sent, dropped, last
+	return result
+}
+
+func (s *Session) FlowStats() FlowStats {
+	s.mu.Lock()
+	peer := s.peer
+	s.mu.Unlock()
+	if peer == nil {
+		return FlowStats{}
+	}
+	result := FlowStats{}
+	for _, raw := range peer.GetStats() {
+		switch value := raw.(type) {
+		case webrtc.OutboundRTPStreamStats:
+			if value.Kind == "audio" {
+				result.RTPPacketsSent += uint64(value.PacketsSent)
+				result.RTPBytesSent += value.BytesSent
+				result.PacketsDiscarded += uint64(value.PacketsDiscardedOnSend)
+			}
+		case webrtc.RemoteInboundRTPStreamStats:
+			if value.Kind == "audio" {
+				result.RemoteReportAvailable = true
+				result.RemotePacketsReceived += uint64(value.PacketsReceived)
+				result.RemotePacketsLost += int64(value.PacketsLost)
+				if value.Jitter > result.RemoteJitter {
+					result.RemoteJitter = value.Jitter
+				}
+			}
+		}
+	}
 	return result
 }
 
@@ -79,6 +125,7 @@ func (s *Session) Connect(parent context.Context, roomID string) error {
 	s.explicit = false
 	s.status = Status{State: StateConnecting, RoomID: roomID}
 	s.mu.Unlock()
+	s.emit(Event{Kind: "connect_requested", State: StateConnecting, RoomID: roomID})
 	go s.run(ctx, roomID)
 	return nil
 }
@@ -87,6 +134,7 @@ func (s *Session) Leave() {
 	s.explicit = true
 	socket, cancel := s.socket, s.cancel
 	s.mu.Unlock()
+	s.emit(Event{Kind: "leave_requested", RoomID: s.RoomID()})
 	if socket != nil {
 		ctx, c := context.WithTimeout(context.Background(), time.Second)
 		_ = write(ctx, socket, map[string]any{"version": 1, "type": "leave"})
@@ -100,6 +148,7 @@ func (s *Session) DropSignaling() {
 	s.mu.Lock()
 	socket := s.socket
 	s.mu.Unlock()
+	s.emit(Event{Kind: "fault_injected", RoomID: s.RoomID(), Error: "drop signaling"})
 	if socket != nil {
 		socket.CloseNow()
 	}
@@ -108,6 +157,7 @@ func (s *Session) DropPeer() {
 	s.mu.Lock()
 	peer := s.peer
 	s.mu.Unlock()
+	s.emit(Event{Kind: "fault_injected", RoomID: s.RoomID(), Error: "drop peer"})
 	if peer != nil {
 		_ = peer.Close()
 	}
@@ -116,7 +166,11 @@ func (s *Session) DropPeer() {
 func (s *Session) run(ctx context.Context, roomID string) {
 	resume, attempt := "", 0
 	for ctx.Err() == nil {
+		s.emit(Event{Kind: "connect_attempt", State: StateConnecting, RoomID: roomID, Attempt: attempt + 1, ResumeAttempt: resume != ""})
 		err, token := s.connectOnce(ctx, roomID, resume)
+		if s.Status().State == StateConnected {
+			attempt = 0
+		}
 		if token != "" {
 			resume = token
 		}
@@ -140,6 +194,8 @@ func (s *Session) run(ctx context.Context, roomID string) {
 		delays := []time.Duration{500 * time.Millisecond, time.Second, 2 * time.Second, 4 * time.Second, 10 * time.Second}
 		delay := delays[min(attempt, len(delays)-1)]
 		attempt++
+		status := s.Status()
+		s.emit(Event{Kind: "recovery_started", State: StateRecovering, RoomID: roomID, Attempt: attempt, Error: status.LastError, Delay: delay, ResumeAttempt: resume != "", PacketsSent: status.PacketsSent, DroppedFrames: status.DroppedFrames})
 		select {
 		case <-ctx.Done():
 			break
@@ -154,6 +210,7 @@ func (s *Session) run(ctx context.Context, roomID string) {
 	s.socket = nil
 	s.peer = nil
 	s.mu.Unlock()
+	s.emit(Event{Kind: "session_idle", State: StateIdle})
 }
 
 func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error, string) {
@@ -239,6 +296,7 @@ func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error
 	defer ticker.Stop()
 	stateChange := make(chan error, 1)
 	peer.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
+		s.emit(Event{Kind: "peer_state_changed", RoomID: roomID, PeerState: state.String()})
 		if state == webrtc.PeerConnectionStateFailed || state == webrtc.PeerConnectionStateClosed {
 			select {
 			case stateChange <- fmt.Errorf("peer connection %s", state):
@@ -280,6 +338,7 @@ func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error
 			return err, resume
 		case <-ticker.C:
 			if time.Since(lastAck) > 25*time.Second {
+				s.emit(Event{Kind: "heartbeat_timeout", RoomID: roomID, HeartbeatAge: time.Since(lastAck)})
 				return fmt.Errorf("media heartbeat timed out"), resume
 			}
 			if err = write(ctx, socket, map[string]any{"version": 1, "type": "heartbeat"}); err != nil {
@@ -287,6 +346,7 @@ func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error
 			}
 		case result := <-reads:
 			if result.err != nil {
+				s.emit(Event{Kind: "signaling_read_failed", RoomID: roomID, Error: result.err.Error()})
 				return result.err, resume
 			}
 			var frame struct {
@@ -307,6 +367,7 @@ func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error
 				if frame.Code == "invalid_resume" {
 					resume = ""
 				}
+				s.emit(Event{Kind: "protocol_error", RoomID: roomID, Error: frame.Code + ": " + frame.Error, ResumeAttempt: resume != ""})
 				return fmt.Errorf("media: %s", frame.Error), resume
 			case "answer":
 				if frame.SDP != nil {
@@ -354,6 +415,7 @@ func (s *Session) connectOnce(ctx context.Context, roomID, resume string) (error
 func (s *Session) connected() {
 	s.mu.Lock()
 	now := time.Now()
+	recovered := !s.status.OutageStarted.IsZero()
 	if !s.status.OutageStarted.IsZero() {
 		s.status.LastOutage = now.Sub(s.status.OutageStarted)
 		s.status.OutageStarted = time.Time{}
@@ -362,7 +424,26 @@ func (s *Session) connected() {
 	s.status.State = StateConnected
 	s.status.ConnectedAt = now
 	s.status.LastError = ""
+	status := s.status
 	s.mu.Unlock()
+	kind := "connected"
+	if recovered {
+		kind = "recovery_completed"
+	}
+	sent, dropped, _ := s.sink.Stats()
+	s.emit(Event{Kind: kind, State: StateConnected, RoomID: status.RoomID, Outage: status.LastOutage, PacketsSent: sent, DroppedFrames: dropped})
+}
+
+func (s *Session) emit(event Event) {
+	s.mu.Lock()
+	handler := s.events
+	if event.At.IsZero() {
+		event.At = time.Now().UTC()
+	}
+	s.mu.Unlock()
+	if handler != nil {
+		handler(event)
+	}
 }
 func (s *Session) setState(state State, errText string) {
 	s.mu.Lock()

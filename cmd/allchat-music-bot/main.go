@@ -75,8 +75,11 @@ func main() {
 		log.Fatal(err)
 	}
 	session := media.NewSession(client.Base, client.HTTP)
+	diagnosticsPath := filepath.Join(*dataDir, "reconnections.jsonl")
+	recordDiagnostic := installMediaDiagnostics(ctx, session, diagnosticsPath)
 	resolver := music.NewResolver(*dataDir, nil)
 	player := music.NewPlayer(ctx, resolver, session.Sink(), *maxQueue)
+	go monitorAudioFlow(ctx, player, session, recordDiagnostic)
 	controller := music.NewController(*prefix, client.Member.ID, chatAdapter{client}, session, player, resolver)
 	channels, err := client.Channels(ctx)
 	if err != nil {
@@ -96,13 +99,82 @@ func main() {
 		}
 	})
 	go idleLoop(ctx, *idleTimeout, session, player)
-	log.Printf("music bot signed in as %s; prefix %q; library %s", client.Member.Username, *prefix, filepath.Join(*dataDir, "library"))
+	log.Printf("music bot signed in as %s; prefix %q; library %s; media diagnostics %s", client.Member.Username, *prefix, filepath.Join(*dataDir, "library"), diagnosticsPath)
 	err = client.StreamMessages(ctx, func(message botclient.Message) {
 		controller.Handle(ctx, music.IncomingMessage{ID: message.ID, ChannelID: message.ChannelID, ChannelType: types[message.ChannelID], AuthorID: message.AuthorID, Body: message.Body})
 	})
 	session.Leave()
 	if err != nil && ctx.Err() == nil {
 		log.Fatal(err)
+	}
+}
+
+func installMediaDiagnostics(ctx context.Context, session *media.Session, path string) func(media.Event) {
+	recorder := media.NewJSONLRecorder(path, 2<<20)
+	events := make(chan media.Event, 128)
+	record := func(event media.Event) {
+		select {
+		case events <- event:
+		default:
+			log.Printf("media diagnostics buffer full; dropped %s event", event.Kind)
+		}
+	}
+	session.SetEventHandler(record)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-events:
+				if err := recorder.Record(event); err != nil {
+					log.Printf("record media diagnostics: %v", err)
+				}
+			}
+		}
+	}()
+	return record
+}
+
+func monitorAudioFlow(ctx context.Context, player *music.Player, session *media.Session, record func(media.Event)) {
+	monitor := media.NewFlowMonitor(3 * time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	lastSample := time.Time{}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-ticker.C:
+			playback, transport, state := player.Status(), session.FlowStats(), session.Status()
+			playing := playback.Current != nil
+			snapshot := media.FlowSnapshot{At: now.UTC(), Playing: playing, Paused: playback.Paused, MediaState: state.State, ProducedPackets: playback.ProducedPackets, RTPPacketsSent: transport.RTPPacketsSent, RemotePacketsReceived: transport.RemotePacketsReceived, RemoteReportAvailable: transport.RemoteReportAvailable}
+			for _, event := range monitor.Observe(snapshot) {
+				enrichFlowEvent(&event, playback, transport)
+				record(event)
+			}
+			if playing && (lastSample.IsZero() || now.Sub(lastSample) >= 5*time.Second) {
+				event := media.Event{At: now.UTC(), Kind: "audio_flow_sample", State: state.State, RoomID: state.RoomID, ProducedPackets: playback.ProducedPackets, RTPPacketsSent: transport.RTPPacketsSent, RemotePacketsReceived: transport.RemotePacketsReceived}
+				enrichFlowEvent(&event, playback, transport)
+				record(event)
+				lastSample = now
+			}
+		}
+	}
+}
+
+func enrichFlowEvent(event *media.Event, playback music.PlayerStatus, transport media.FlowStats) {
+	if playback.Current != nil {
+		event.TrackID = playback.Current.ID
+	}
+	event.PlaybackPosition = playback.Position
+	event.EncoderStarts = playback.EncoderStarts
+	event.RTPBytesSent = transport.RTPBytesSent
+	event.PacketsDiscarded = transport.PacketsDiscarded
+	event.RemoteReportAvailable = transport.RemoteReportAvailable
+	event.RemotePacketsLost = transport.RemotePacketsLost
+	event.RemoteJitter = transport.RemoteJitter
+	if playback.LastEncoderError != "" {
+		event.EncoderError = playback.LastEncoderError
 	}
 }
 

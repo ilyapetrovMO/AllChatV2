@@ -197,7 +197,14 @@
         }
         if (state === "failed") { status.textContent = error?.message || "Voice connection failed"; setPending(session, "Connection failed"); }
       };
-      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onTrack:receiveTrack,onFrame:receiveFrame,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
+      const recordDiagnostics = sample => {
+		const audio=[...session.remoteAudios.entries()].map(([track,element])=>({track_id:track.id,track_state:track.readyState,track_muted:track.muted,element_paused:element.paused,element_ready_state:element.readyState,element_current_time:element.currentTime}));
+		const value={...sample,audio};let history=[];try{history=JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){history=[]}
+		history.push(value);if(history.length>600)history=history.slice(-600);try{localStorage.setItem("allchat:voice-diagnostics",JSON.stringify(history))}catch(_){}
+	  };
+	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};
+	  window.allchatClearVoiceDiagnostics=()=>localStorage.removeItem("allchat:voice-diagnostics");
+      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
       retry.onclick = () => session.connection.start();
       await session.connection.start();
     } catch (error) {

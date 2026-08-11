@@ -224,6 +224,20 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
   expect(result.heartbeats).toBeGreaterThan(0);
 });
 
+test('voice connection exposes receiver-side audio flow diagnostics', async ({page})=>{
+  await page.goto('/login');
+  await page.addScriptTag({url:'/assets/voice-connection.js'});
+  const samples=await page.evaluate(async()=>{
+    const captured=[];
+    class Peer{constructor(){this.localDescription=null;this.connectionState='new';this.iceConnectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}getStats(){return Promise.resolve(new Map([['in',{type:'inbound-rtp',kind:'audio',packetsReceived:321,bytesReceived:6543,packetsLost:2,jitter:.015}],['out',{type:'outbound-rtp',kind:'audio',packetsSent:123,bytesSent:4567}]]))}}
+    class Socket{static OPEN=1;constructor(){this.readyState=1;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({type:'answer',sdp:{type:'answer',sdp:'answer'}})}))}close(){this.readyState=3}}
+    const connection=new window.AllChatVoiceConnection({roomID:'voice-example',stream:{getTracks:()=>[]},fetchCredentials:async()=>[],createPeer:()=>new Peer(),createSocket:()=>new Socket(),diagnosticsInterval:5,onDiagnostics:value=>captured.push(value)});
+    await connection.start();await new Promise(resolve=>setTimeout(resolve,16));connection.stop();return captured;
+  });
+  expect(samples.length).toBeGreaterThan(0);
+  expect(samples.at(-1)).toMatchObject({state:'connected',inbound:{packets:321,bytes:6543,lost:2},outbound:{packets:123,bytes:4567}});
+});
+
 test('voice connection restarts failed ICE before replacing the signaling socket', async ({ page }) => {
   await page.goto('/login');
   await page.addScriptTag({url: '/assets/voice-connection.js'});

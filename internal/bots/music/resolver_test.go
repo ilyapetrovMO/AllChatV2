@@ -2,8 +2,11 @@ package music
 
 import (
 	"context"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -36,4 +39,17 @@ type fakeRunner struct {
 
 func (r fakeRunner) Output(context.Context, string, ...string) ([]byte, error) {
 	return r.output, r.err
+}
+
+func TestResolverReportsYTDLPFailureDetails(t *testing.T) {
+	failure := &exec.ExitError{Stderr: []byte("ERROR: media source is unavailable")}
+	resolver := NewResolver(t.TempDir(), fakeRunner{err: failure})
+	_, err := resolver.Resolve(context.Background(), "https://media.example/watch?v=sample", "member-one")
+	if err == nil || !strings.Contains(err.Error(), "media source is unavailable") {
+		t.Fatalf("error = %v; want actionable yt-dlp stderr", err)
+	}
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) {
+		t.Fatalf("error should retain exit status: %v", err)
+	}
 }

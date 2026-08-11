@@ -20,3 +20,5 @@ Add a separately packaged music bot with Discord-style playback and queue comman
 - Preserve the existing echo bot as a deterministic receive/echo peer while sharing the media recovery implementation where its track model permits.
 - Added a resumable media session with heartbeat and peer-state recovery, stable Opus sink, recovery metrics, and local fault injection.
 - Added queue/playback policy tests, source confinement tests, and the separate CLI/GUI launch paths. Full `go test ./...` passes.
+- Added bounded JSONL Media Session diagnostics under the music data directory so brief successful recoveries retain their signaling error, peer transitions, attempt count, outage duration, and dropped-frame evidence.
+- Extended diagnostics across FFmpeg production, local RTP, remote RTCP reports, and browser inbound/playback state, with stage-specific stall detection and UTC-correlated bounded histories.

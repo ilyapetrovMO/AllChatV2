@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -60,7 +61,7 @@ func (r *Resolver) Resolve(ctx context.Context, source, requester string) (Track
 	}
 	encoded, err := r.runner.Output(ctx, "yt-dlp", "--cache-dir", filepath.Join(r.dataDir, "cache"), "--no-playlist", "--no-warnings", "--dump-single-json", "-f", "bestaudio", query)
 	if err != nil {
-		return Track{}, fmt.Errorf("resolve music source with yt-dlp: %w", err)
+		return Track{}, processError("resolve music source with yt-dlp", err)
 	}
 	var value struct {
 		ID         string  `json:"id"`
@@ -133,7 +134,7 @@ func (r *Resolver) Search(ctx context.Context, query string) ([]Track, error) {
 	}
 	encoded, err := r.runner.Output(ctx, "yt-dlp", "--cache-dir", filepath.Join(r.dataDir, "cache"), "--flat-playlist", "--no-warnings", "--dump-single-json", "ytsearch5:"+query)
 	if err != nil {
-		return nil, err
+		return nil, processError("search with yt-dlp", err)
 	}
 	var value struct {
 		Entries []struct {
@@ -156,6 +157,22 @@ func (r *Resolver) Search(ctx context.Context, query string) ([]Track, error) {
 		result = append(result, Track{ID: entry.ID, Title: entry.Title, Source: source, Duration: time.Duration(entry.Duration * float64(time.Second))})
 	}
 	return result, nil
+}
+
+func processError(operation string, err error) error {
+	var exitError *exec.ExitError
+	if !errors.As(err, &exitError) {
+		return fmt.Errorf("%s: %w", operation, err)
+	}
+	detail := strings.Join(strings.Fields(string(exitError.Stderr)), " ")
+	if detail == "" {
+		return fmt.Errorf("%s: %w", operation, err)
+	}
+	const maximum = 500
+	if len(detail) > maximum {
+		detail = detail[:maximum] + "…"
+	}
+	return fmt.Errorf("%s: %w: %s", operation, err, detail)
 }
 func trackID(value string) string {
 	sum := sha256.Sum256([]byte(value))

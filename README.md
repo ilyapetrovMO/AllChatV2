@@ -66,6 +66,10 @@ Runtime files live under `.dev/music` by default. Place local tracks in `.dev/mu
 
 The local bot GUI (`make dev-bot-gui`) can launch the music bot and displays its media state, current track, recovery count, and last error. Its controls can drop signaling, drop the peer connection, or enqueue a test tone. These fault controls use local files and are not exposed by the production Instance.
 
+Media Session transitions and recoveries are recorded as credential-free JSON Lines in `.dev/music/reconnections.jsonl` (or beneath `ALLCHAT_MUSIC_BOT_DATA_DIR`). The file records signaling failures, peer states, heartbeat timeouts, reconnect attempts, outage duration, FFmpeg failures, Opus production, local RTP transmission, remote RTCP receipt, and dropped audio frames without recording cookies, SDP, ICE candidates, or requested media URLs. Five-second `audio_flow_sample` entries provide a continuous timeline; explicit stall and recovery entries identify which stage stopped advancing. It rotates to `reconnections.jsonl.1` at 2 MiB.
+
+While a browser is in a Voice Room, it retains up to ten minutes of receiver-side WebRTC and audio-element samples in local storage. In the browser developer console, use `allchatVoiceDiagnostics()` to inspect or copy the samples and `allchatClearVoiceDiagnostics()` before a clean reproduction. Correlate their UTC `at` timestamps with `reconnections.jsonl` to distinguish bot encoding, bot-to-Instance transport, SFU forwarding, browser receipt, and browser playback failures.
+
 If the Owner credentials are lost, stop the Instance and pipe a replacement password to the offline recovery command:
 
 ```sh

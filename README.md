@@ -32,7 +32,7 @@ npm --prefix mobile start
 make android
 ```
 
-From the Android emulator, enter `http://10.0.2.2:8080` to reach the default development Instance. Production builds require HTTPS with an Android-trusted certificate. Use `make test-mobile`, `make lint-mobile`, and `make build-mobile` for local verification. The native client currently contains the Instance and Session foundation; messaging, encrypted push, and native media are being implemented in subsequent milestones.
+From the Android emulator, enter `http://10.0.2.2:8080` to reach the default development Instance. Production builds require HTTPS with an Android-trusted certificate. Use `make test-mobile`, `make lint-mobile`, and `make build-mobile` for local verification. The native client currently contains secure multiple-Instance and Session management; synchronization, messaging, encrypted push, and native media are being implemented in subsequent milestones.
 
 Attachment uploads default to 10 MiB per file and 1 GiB total. Operators may lower or raise these within the built-in hard ceilings using `ALLCHAT_MAX_ATTACHMENT_BYTES` and `ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES`.
 

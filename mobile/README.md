@@ -35,4 +35,4 @@ Build a debug APK with `make build-mobile`. Release signing is intentionally not
 
 ## Current milestone
 
-The initial foundation provides Instance URL validation, native Session login, and a typed HTTP client. Instance persistence, secure Keystore storage, synchronization, messaging, push, and media are tracked as subsequent tasks under `.scratch/android-mobile/`.
+The initial foundation provides Instance URL validation, native Session login, encrypted Android Keystore persistence, multiple-Instance switching, and a typed HTTP client. Synchronization, the encrypted conversation cache, messaging, push, and media are tracked as subsequent tasks under `.scratch/android-mobile/`.

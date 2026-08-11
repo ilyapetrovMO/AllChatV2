@@ -34,6 +34,17 @@ export class AllChatClient {
     return this.decode<Member>(response, 'Session is no longer valid.');
   }
 
+  async logout(token: string): Promise<void> {
+    const response = await this.request(`${this.instanceURL}/api/v1/auth/logout`, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({})) as {error?: string};
+      throw new Error(body.error || 'Could not revoke Session.');
+    }
+  }
+
   private async decode<T>(response: Response, fallback: string): Promise<T> {
     const body = await response.json().catch(() => ({})) as {error?: string};
     if (!response.ok) {

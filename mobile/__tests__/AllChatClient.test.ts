@@ -29,4 +29,16 @@ describe('AllChatClient', () => {
       headers: {Authorization: 'Bearer session-token'},
     });
   });
+
+  it('revokes a native Session with its bearer token', async () => {
+    const request = jest.fn(async () => new Response(null, {status: 204}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.logout('session-token');
+
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/auth/logout', {
+      method: 'POST',
+      headers: {Authorization: 'Bearer session-token'},
+    });
+  });
 });

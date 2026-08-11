@@ -46,7 +46,7 @@ func (c Config) Validate() error {
 	if ip := net.ParseIP(strings.TrimSpace(c.PublicIP)); ip == nil || ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
 		return fmt.Errorf("a public routable Instance IP is required")
 	}
-	if !releaseTag.MatchString(c.Release) {
+	if c.Release != "" && !releaseTag.MatchString(c.Release) {
 		return fmt.Errorf("release must be a semantic tag such as v1.2.3")
 	}
 	if c.ACMEEmail != "" {
@@ -72,6 +72,15 @@ func (c Config) Validate() error {
 		return fmt.Errorf("TLS mode is invalid")
 	}
 	return nil
+}
+
+// ReleaseRef returns the GitHub release selector used for downloads. An empty
+// release intentionally follows GitHub's latest-release redirect.
+func (c Config) ReleaseRef() string {
+	if strings.TrimSpace(c.Release) == "" {
+		return "latest"
+	}
+	return strings.TrimSpace(c.Release)
 }
 
 func validateHostname(value string) error {

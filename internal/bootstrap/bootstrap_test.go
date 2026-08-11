@@ -34,6 +34,16 @@ func TestConfigModesAndPublicURL(t *testing.T) {
 	}
 }
 
+func TestConfigDefaultsToLatestRelease(t *testing.T) {
+	cfg := Config{SSHHost: "host.example.test", SSHPort: 22, SSHUser: "operator", PublicIP: "192.0.2.20", TLSMode: TLSDirectIP}
+	if err := cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.ReleaseRef() != "latest" {
+		t.Fatalf("release ref=%q", cfg.ReleaseRef())
+	}
+}
+
 func TestParseSupportedPlatform(t *testing.T) {
 	p, err := ParsePlatform("ID=ubuntu\nVERSION_ID=24.04\n", "aarch64\n")
 	if err != nil {
@@ -63,6 +73,22 @@ func TestDownloadVerifiedChecksArtifactDigest(t *testing.T) {
 	got, err := DownloadVerified(context.Background(), client, "v1.2.3", "allchat_1.2.3_linux_amd64")
 	if err != nil || string(got) != string(content) {
 		t.Fatalf("content=%q err=%v", got, err)
+	}
+}
+
+func TestDownloadInstanceVerifiedDiscoversLatestVersionedAsset(t *testing.T) {
+	content := []byte("latest server binary")
+	digest := sha256.Sum256(content)
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		body := content
+		if strings.HasSuffix(request.URL.Path, "/SHA256SUMS") {
+			body = []byte(fmt.Sprintf("%x  allchat_2.4.6_linux_amd64\n", digest))
+		}
+		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(strings.NewReader(string(body))), Header: make(http.Header)}, nil
+	})}
+	asset, got, err := DownloadInstanceVerified(context.Background(), client, "", "amd64")
+	if err != nil || asset != "allchat_2.4.6_linux_amd64" || string(got) != string(content) {
+		t.Fatalf("asset=%q content=%q err=%v", asset, got, err)
 	}
 }
 

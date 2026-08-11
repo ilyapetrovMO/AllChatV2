@@ -1,8 +1,9 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text,
-  TextInput, TouchableOpacity, View,
+  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, type NativeScrollEvent,
+  type NativeSyntheticEvent, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
 import type {DirectMessage, Message} from '../client/bootstrap';
@@ -116,13 +117,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         <TouchableOpacity accessibilityLabel="Back to conversations" onPress={() => setActiveID('')} style={styles.back}><Text style={[styles.backText, {color: palette.accent}]}>‹</Text></TouchableOpacity>
         <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
       </View>
-      <FlatList
-        contentContainerStyle={styles.messageList}
-        data={messages}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => <MessageRow message={item} mine={item.author_id === community.member.id} palette={palette} />}
-        ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
-      />
+      <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
       {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
       <View style={[styles.composer, {borderTopColor: palette.border}]}>
@@ -133,11 +128,49 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   );
 }
 
-function MessageRow({message, mine, palette}: {message: Message; mine: boolean; palette: Palette}) {
-  return <View style={[styles.message, mine && styles.mine]}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text><Text style={[styles.messageBody, {color: message.deleted ? palette.muted : palette.text}]}>{message.deleted ? 'Message deleted' : message.body || attachmentSummary(message)}</Text><Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</Text></View>;
+export function ConversationTimeline({account, currentMemberID, messages, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; palette: Palette}) {
+  const list = useRef<FlatList<Message> | null>(null);
+  const stickToLatest = useRef(true);
+  const laidOut = useRef(false);
+  const scrollToLatest = useCallback((animated: boolean) => {
+    requestAnimationFrame(() => list.current?.scrollToEnd({animated}));
+  }, []);
+  return <FlatList
+    ref={list}
+    contentContainerStyle={styles.messageList}
+    data={messages}
+    keyExtractor={item => item.id}
+    renderItem={({item}) => <MessageRow instanceURL={account.instance_url} message={item} mine={item.author_id === currentMemberID} palette={palette} token={account.session_token} />}
+    ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
+    onContentSizeChange={() => { if (stickToLatest.current) scrollToLatest(laidOut.current); }}
+    onLayout={() => { laidOut.current = true; scrollToLatest(false); }}
+    onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => { stickToLatest.current = isNearLatest(event.nativeEvent); }}
+    scrollEventThrottle={100}
+  />;
 }
 
-function attachmentSummary(message: Message) { return message.attachments?.length ? `📎 ${message.attachments.map(item => item.name).join(', ')}` : ''; }
+export function MessageRow({instanceURL, message, mine, palette, token}: {instanceURL: string; message: Message; mine: boolean; palette: Palette; token: string}) {
+  return <View style={styles.message}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><Text style={[styles.messageBody, {color: palette.text}]}>{message.body}</Text>{message.attachments?.map(attachment => <AttachmentView attachment={attachment} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}</>}<Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</Text></View>;
+}
+
+function AttachmentView({attachment, instanceURL, palette, token}: {attachment: NonNullable<Message['attachments']>[number]; instanceURL: string; palette: Palette; token: string}) {
+  const source = {uri: attachmentURL(instanceURL, attachment.url || `/api/v1/attachments/${attachment.id}`), headers: {Authorization: `Bearer ${token}`}};
+  if (attachment.content_type.startsWith('image/')) return <Image accessibilityLabel={attachment.name} resizeMode="contain" source={source} style={[styles.image, {backgroundColor: palette.field}]} />;
+  if (attachment.content_type.startsWith('audio/') || attachment.content_type.startsWith('video/')) return <InlineMedia attachment={attachment} palette={palette} source={source} />;
+  const icon = attachment.content_type.startsWith('audio/') ? '🎵' : attachment.content_type.startsWith('video/') ? '🎬' : '📄';
+  return <View style={[styles.attachment, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>{icon}</Text><View style={styles.grow}><Text numberOfLines={1} style={[styles.attachmentName, {color: palette.text}]}>{attachment.name}</Text><Text style={{color: palette.muted}}>{fileSize(attachment.size)} · {attachment.content_type || 'File'}</Text></View></View>;
+}
+
+function InlineMedia({attachment, palette, source}: {attachment: NonNullable<Message['attachments']>[number]; palette: Palette; source: {uri: string; headers: {Authorization: string}}}) {
+  const [started, setStarted] = useState(false);
+  const video = attachment.content_type.startsWith('video/');
+  if (started) return <Video controls paused={false} resizeMode="contain" source={source} style={[video ? styles.video : styles.audio, {backgroundColor: palette.field}]} />;
+  return <TouchableOpacity accessibilityLabel={`Play ${attachment.name}`} onPress={() => setStarted(true)} style={[styles.attachment, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>{video ? '▶️' : '🎵'}</Text><View style={styles.grow}><Text numberOfLines={1} style={[styles.attachmentName, {color: palette.text}]}>{attachment.name}</Text><Text style={{color: palette.muted}}>Tap to play · {fileSize(attachment.size)}</Text></View></TouchableOpacity>;
+}
+
+export function isNearLatest(event: NativeScrollEvent): boolean { return event.contentSize.height - event.layoutMeasurement.height - event.contentOffset.y <= 80; }
+function attachmentURL(instanceURL: string, value: string) { return new URL(value, `${instanceURL}/`).toString(); }
+function fileSize(bytes: number) { return bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 function displayName(dm: DirectMessage) { return dm.other.display_name || dm.other.username; }
 function unreadFor(state: CommunityState, id: string) { return state.channel_states.find(item => item.channel_id === id)?.unread || 0; }
 function typingText(names: string[]) { if (names.length > 3) return 'Several people are typing…'; if (names.length === 1) return `${names[0]} is typing…`; return `${names.join(', ')} are typing…`; }
@@ -146,6 +179,6 @@ const styles = StyleSheet.create({
   fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {color: '#ed4245', fontSize: 15, textAlign: 'center'}, errorColor: {color: '#ed4245'}, connected: {color: '#3ba55d'},
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
-  back: {marginRight: 10, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {flexGrow: 1, gap: 14, justifyContent: 'flex-end', padding: 16}, message: {alignSelf: 'flex-start', maxWidth: '88%'}, mine: {alignSelf: 'flex-end'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 3}, messageBody: {fontSize: 16, lineHeight: 22}, time: {fontSize: 11, marginTop: 3}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 16}, composerError: {fontSize: 12, paddingHorizontal: 16, paddingBottom: 4},
+  back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {flexGrow: 1, justifyContent: 'flex-end', paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
   composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, padding: 10}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, disabled: {opacity: 0.5},
 });

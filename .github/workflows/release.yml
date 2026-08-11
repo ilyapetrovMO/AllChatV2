@@ -59,12 +59,10 @@ jobs:
             goarch: amd64
             platform: linux
             cc: gcc
-            build_shell: bash
           - os: ubuntu-24.04-arm
             goarch: arm64
             platform: linux
             cc: gcc
-            build_shell: bash
           - os: windows-2025
             goarch: amd64
             platform: windows
@@ -72,7 +70,6 @@ jobs:
             msys_package: mingw-w64-x86_64-toolchain
             msystem: MINGW64
             cc: gcc
-            build_shell: msys2 {0}
           - os: windows-11-arm
             goarch: arm64
             platform: windows
@@ -80,17 +77,14 @@ jobs:
             msys_package: mingw-w64-clang-aarch64-toolchain
             msystem: CLANGARM64
             cc: clang
-            build_shell: msys2 {0}
           - os: macos-15-intel
             goarch: amd64
             platform: darwin
             cc: clang
-            build_shell: bash
           - os: macos-15
             goarch: arm64
             platform: darwin
             cc: clang
-            build_shell: bash
     runs-on: ${{ matrix.os }}
     env:
       WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
@@ -114,8 +108,23 @@ jobs:
           msystem: ${{ matrix.msystem }}
           update: true
           install: ${{ matrix.msys_package }}
-      - name: Build native bootstrapper
-        shell: ${{ matrix.build_shell }}
+      - name: Build native bootstrapper on Linux or macOS
+        if: matrix.platform != 'windows'
+        shell: bash
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          SUFFIX: ${{ matrix.suffix }}
+          PLATFORM: ${{ matrix.platform }}
+          CC: ${{ matrix.cc }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          mkdir -p dist
+          CGO_ENABLED=1 go build -trimpath -buildvcs=false -tags bootstrap_gui -ldflags="$ldflags" -o "dist/allchat-bootstrap_${version}_${PLATFORM}_${GOARCH}${SUFFIX}" ./cmd/allchat-bootstrap
+      - name: Build native bootstrapper on Windows
+        if: matrix.platform == 'windows'
+        shell: msys2 {0}
         env:
           GOARCH: ${{ matrix.goarch }}
           SUFFIX: ${{ matrix.suffix }}

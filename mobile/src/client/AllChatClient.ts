@@ -1,4 +1,4 @@
-import type {Attachment, ChannelState, Message, MobileBootstrap} from './bootstrap';
+import type {Attachment, ChannelState, Message, MobileBootstrap, SearchPage} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -65,13 +65,54 @@ export class AllChatClient {
     return bootstrap;
   }
 
-  async publishMessage(token: string, conversationID: string, body: string, direct = false, attachmentIDs: string[] = []): Promise<Message> {
+  async publishMessage(token: string, conversationID: string, body: string, direct = false, attachmentIDs: string[] = [], replyTo = ''): Promise<Message> {
     const response = await this.request(`${this.instanceURL}/api/v1/${direct ? 'dms' : 'channels'}/${encodeURIComponent(conversationID)}/messages`, {
       method: 'POST',
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
-      body: JSON.stringify({body, ...(attachmentIDs.length ? {attachment_ids: attachmentIDs} : {})}),
+      body: JSON.stringify({body, ...(attachmentIDs.length ? {attachment_ids: attachmentIDs} : {}), ...(replyTo ? {reply_to: replyTo} : {})}),
     });
     return this.decode<Message>(response, 'Could not send the Message.');
+  }
+
+  async editMessage(token: string, messageID: string, body: string): Promise<Message> {
+    const response = await this.request(`${this.instanceURL}/api/v1/messages/${encodeURIComponent(messageID)}`, {
+      method: 'PATCH', headers: this.jsonHeaders(token), body: JSON.stringify({body}),
+    });
+    return this.decode<Message>(response, 'Could not edit the Message.');
+  }
+
+  async deleteMessage(token: string, messageID: string): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/messages/${encodeURIComponent(messageID)}`, {
+      method: 'DELETE', headers: {Authorization: `Bearer ${token}`},
+    }), 'Could not delete the Message.');
+  }
+
+  async setReaction(token: string, messageID: string, emoji: string, active: boolean): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/messages/${encodeURIComponent(messageID)}/reactions`, {
+      method: active ? 'PUT' : 'DELETE', headers: this.jsonHeaders(token), body: JSON.stringify({emoji}),
+    }), 'Could not update the reaction.');
+  }
+
+  async setPinned(token: string, messageID: string, pinned: boolean): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/messages/${encodeURIComponent(messageID)}/pin`, {
+      method: pinned ? 'PUT' : 'DELETE', headers: {Authorization: `Bearer ${token}`},
+    }), 'Could not update the pin.');
+  }
+
+  async pinnedMessages(token: string, channelID: string): Promise<Message[]> {
+    const response = await this.request(`${this.instanceURL}/api/v1/channels/${encodeURIComponent(channelID)}/pins`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    return (await this.decode<{messages: Message[]}>(response, 'Could not load pinned Messages.')).messages;
+  }
+
+  async searchMessages(token: string, query: string, cursor = '', limit = 25): Promise<SearchPage> {
+    const parameters = new URLSearchParams({q: query, limit: String(limit)});
+    if (cursor) parameters.set('cursor', cursor);
+    const response = await this.request(`${this.instanceURL}/api/v1/search?${parameters.toString()}`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    return this.decode<SearchPage>(response, 'Could not search Messages.');
   }
 
   async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {
@@ -118,6 +159,18 @@ export class AllChatClient {
       throw new Error(`${fallback} (HTTP ${response.status}: the Instance returned an invalid response.)`);
     }
     return body as T;
+  }
+
+  private jsonHeaders(token: string) {
+    return {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'};
+  }
+
+  private async ensureOK(response: Response, fallback: string): Promise<void> {
+    if (response.ok) return;
+    const raw = await response.text().catch(() => '');
+    let error = '';
+    try { error = (JSON.parse(raw) as {error?: string}).error || ''; } catch {}
+    throw new Error(error || `${fallback} (HTTP ${response.status}${readableResponse(raw) ? `: ${readableResponse(raw)}` : ''})`);
   }
 }
 

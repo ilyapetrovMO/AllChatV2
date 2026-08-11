@@ -1,13 +1,13 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet,
+  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Linking, Modal, Platform, StyleSheet,
   ScrollView, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import {errorCodes, isErrorWithCode, pick, type DocumentPickerResponse} from '@react-native-documents/picker';
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
-import type {DirectMessage, Message} from '../client/bootstrap';
+import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import type {InstanceAccount} from '../session/SessionVault';
 import {communityStateFromBootstrap, reduceRealtimeFrame, type CommunityState} from '../state/CommunityState';
@@ -23,6 +23,14 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [sending, setSending] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<DocumentPickerResponse[]>([]);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [replying, setReplying] = useState<Message>();
+  const [editing, setEditing] = useState<Message>();
+  const [actionMessage, setActionMessage] = useState<Message>();
+  const [panel, setPanel] = useState<'pins' | 'search' | ''>('');
+  const [panelMessages, setPanelMessages] = useState<Message[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [panelBusy, setPanelBusy] = useState(false);
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
 
@@ -82,16 +90,57 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         const attachment = await client.uploadAttachment(account.session_token, {uri: file.uri, name: file.name || `attachment-${index + 1}`, type: file.type || 'application/octet-stream', size: file.size});
         attachmentIDs.push(attachment.id);
       }
-      const message = await client.publishMessage(account.session_token, activeID, body, Boolean(direct), attachmentIDs);
-      setCommunity(value => value ? reduceRealtimeFrame(value, {type: 'message.created', cursor: value.cursor, channel_id: activeID, payload: message}) : value);
+      const message = editing
+        ? await client.editMessage(account.session_token, editing.id, body)
+        : await client.publishMessage(account.session_token, activeID, body, Boolean(direct), attachmentIDs, replying?.id);
+      setCommunity(value => value ? reduceRealtimeFrame(value, {type: editing ? 'message.edited' : 'message.created', cursor: value.cursor, channel_id: activeID, payload: message}) : value);
       setDraft('');
       setSelectedFiles([]);
+      setReplying(undefined);
+      setEditing(undefined);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not send the Message.');
     } finally {
       setSending(false);
       setUploadStatus('');
     }
+  }
+
+  async function performMessageAction(action: 'reply' | 'edit' | 'delete' | 'pin', message: Message) {
+    setActionMessage(undefined); setError('');
+    if (action === 'reply') { setReplying(message); setEditing(undefined); return; }
+    if (action === 'edit') { setEditing(message); setReplying(undefined); setDraft(message.body || ''); return; }
+    try {
+      if (action === 'delete') {
+        await client.deleteMessage(account.session_token, message.id);
+        setCommunity(value => value ? reduceRealtimeFrame(value, {type: 'message.deleted', cursor: value.cursor, channel_id: activeID, payload: {...message, deleted: true}}) : value);
+      } else {
+        await client.setPinned(account.session_token, message.id, !message.pinned);
+        setCommunity(value => value ? reduceRealtimeFrame(value, {type: 'pin.updated', cursor: value.cursor, channel_id: activeID, payload: {message_id: message.id, pinned: !message.pinned}}) : value);
+      }
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Message action failed.'); }
+  }
+
+  async function toggleReaction(message: Message, emoji: string) {
+    const active = !message.reactions?.find(item => item.emoji === emoji)?.me;
+    try {
+      await client.setReaction(account.session_token, message.id, emoji, active);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not update the reaction.'); }
+  }
+
+  async function openPins() {
+    setPanel('pins'); setPanelBusy(true); setPanelMessages([]); setError('');
+    try { setPanelMessages(await client.pinnedMessages(account.session_token, activeID)); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not load pinned Messages.'); }
+    finally { setPanelBusy(false); }
+  }
+
+  async function search() {
+    if (!searchQuery.trim()) return;
+    setPanelBusy(true); setError('');
+    try { setSearchResults((await client.searchMessages(account.session_token, searchQuery.trim())).results); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not search Messages.'); }
+    finally { setPanelBusy(false); }
   }
 
   async function chooseAttachments() {
@@ -138,17 +187,22 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       <View style={[styles.header, {borderBottomColor: palette.border}]}>
         <TouchableOpacity accessibilityLabel="Back to conversations" onPress={() => setActiveID('')} style={styles.back}><Text style={[styles.backText, {color: palette.accent}]}>‹</Text></TouchableOpacity>
         <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
+        {!direct ? <TouchableOpacity accessibilityLabel="Pinned Messages" onPress={openPins} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>◆</Text></TouchableOpacity> : null}
+        <TouchableOpacity accessibilityLabel="Search Messages" onPress={() => setPanel('search')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>⌕</Text></TouchableOpacity>
       </View>
-      <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} palette={palette} />
+      <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} onMessageAction={setActionMessage} onReaction={toggleReaction} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
       {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
       {selectedFiles.length ? <ScrollView contentContainerStyle={styles.selectedFiles} horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false}>{selectedFiles.map(file => <SelectedFile file={file} key={file.uri} onRemove={() => setSelectedFiles(current => current.filter(item => item.uri !== file.uri))} palette={palette} />)}</ScrollView> : null}
+      {replying || editing ? <View style={[styles.contextBanner, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.grow, {color: palette.text}]}>{editing ? 'Editing your Message' : `Replying to ${replying?.author_name}`}</Text><TouchableOpacity accessibilityLabel="Cancel Message action" onPress={() => { setReplying(undefined); setEditing(undefined); if (editing) setDraft(''); }}><Text style={styles.contextClose}>×</Text></TouchableOpacity></View> : null}
       <View style={[styles.composer, {borderTopColor: palette.border}]}>
         <TouchableOpacity accessibilityLabel="Add Attachments" disabled={sending} onPress={chooseAttachments} style={[styles.attach, {backgroundColor: palette.field}]}><Text style={[styles.attachText, {color: palette.text}]}>+</Text></TouchableOpacity>
         <TextInput accessibilityLabel="Message" multiline onChangeText={value => { setDraft(value); if (value) realtime.current?.sendTyping(activeID); }} placeholder={`Message ${title}`} placeholderTextColor={palette.placeholder} style={[styles.composerInput, {backgroundColor: palette.field, color: palette.text}]} value={draft} />
         <TouchableOpacity accessibilityLabel="Send Message" disabled={(!draft.trim() && !selectedFiles.length) || sending} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, ((!draft.trim() && !selectedFiles.length) || sending) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
       </View>
       {uploadStatus ? <Text style={[styles.uploadStatus, {color: palette.muted}]}>{uploadStatus}</Text> : null}
+      <MessageActions message={actionMessage} mine={Boolean(actionMessage && actionMessage.author_id === community.member.id)} onAction={performMessageAction} onClose={() => setActionMessage(undefined)} onReaction={toggleReaction} palette={palette} />
+      <ConversationPanel busy={panelBusy} messages={panelMessages} mode={panel} onClose={() => setPanel('')} onSearch={search} palette={palette} query={searchQuery} results={searchResults} setQuery={setSearchQuery} />
     </KeyboardAvoidingView>
   );
 }
@@ -159,20 +213,25 @@ function SelectedFile({file, onRemove, palette}: {file: DocumentPickerResponse; 
   return <View style={[styles.selectedFile, {backgroundColor: palette.field, borderColor: palette.border}]}>{image ? <Image resizeMode="cover" source={{uri: file.uri}} style={styles.selectedThumbnail} /> : <Text style={styles.selectedIcon}>{icon}</Text>}<Text numberOfLines={1} style={[styles.selectedName, {color: palette.text}]}>{file.name || 'Attachment'}</Text><TouchableOpacity accessibilityLabel={`Remove ${file.name || 'Attachment'}`} onPress={onRemove} style={styles.selectedRemove}><Text style={styles.selectedRemoveText}>×</Text></TouchableOpacity></View>;
 }
 
-export function ConversationTimeline({account, currentMemberID, messages, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; palette: Palette}) {
+export function ConversationTimeline({account, currentMemberID, messages, onMessageAction, onReaction, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; onMessageAction?(message: Message): void; onReaction?(message: Message, emoji: string): void; palette: Palette}) {
   return <FlatList
     contentContainerStyle={styles.messageList}
     data={[...messages].reverse()}
     inverted
     keyExtractor={item => item.id}
-    renderItem={({item}) => <MessageRow instanceURL={account.instance_url} message={item} mine={item.author_id === currentMemberID} palette={palette} token={account.session_token} />}
+    renderItem={({item}) => <MessageRow instanceURL={account.instance_url} message={item} mine={item.author_id === currentMemberID} onLongPress={onMessageAction} onReaction={onReaction} palette={palette} token={account.session_token} />}
     ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
     maintainVisibleContentPosition={{minIndexForVisible: 0, autoscrollToTopThreshold: 80}}
   />;
 }
 
-export function MessageRow({imageLoader, instanceURL, message, mine, palette, token}: {imageLoader?: ImageLoader; instanceURL: string; message: Message; mine: boolean; palette: Palette; token: string}) {
-  return <View style={styles.message}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}</>}<Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</Text></View>;
+export function MessageRow({imageLoader, instanceURL, message, mine, onLongPress, onReaction, palette, token}: {imageLoader?: ImageLoader; instanceURL: string; message: Message; mine: boolean; onLongPress?(message: Message): void; onReaction?(message: Message, emoji: string): void; palette: Palette; token: string}) {
+  return <TouchableOpacity activeOpacity={onLongPress ? 0.72 : 1} delayLongPress={350} disabled={!onLongPress} onLongPress={() => onLongPress?.(message)} style={styles.message}>
+    {message.reply ? <View style={[styles.replyPreview, {borderLeftColor: palette.border}]}><Text numberOfLines={1} style={{color: palette.muted}}>↳ {message.reply.author_name}: {message.reply.deleted ? 'deleted Message' : message.reply.body}</Text></View> : null}
+    <View style={styles.authorLine}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.pinned ? <Text style={{color: palette.muted}}> ◆ Pinned</Text> : null}</View>
+    {message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}{message.reactions?.length ? <View style={styles.reactions}>{message.reactions.map(reaction => <TouchableOpacity accessibilityLabel={`${reaction.emoji} reaction, ${reaction.count}`} disabled={!onReaction} key={reaction.emoji} onPress={() => onReaction?.(message, reaction.emoji)} style={[styles.reaction, {backgroundColor: reaction.me ? palette.accent : palette.field, borderColor: reaction.me ? palette.accent : palette.border}]}><Text style={reaction.me ? styles.whiteText : {color: palette.text}}>{reaction.emoji} {reaction.count}</Text></TouchableOpacity>)}</View> : null}</>}
+    <Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}{message.edited_at ? ' · edited' : ''}</Text>
+  </TouchableOpacity>;
 }
 
 type ImageLoader = (url: string, token: string) => Promise<string>;
@@ -202,13 +261,31 @@ function AuthenticatedImage({accessibilityLabel, loader = loadAuthenticatedImage
 }
 
 function FormattedBody({body, color}: {body: string; color: string}) {
-  const pieces = body.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).filter(Boolean);
+  const pieces = body.split(/(https?:\/\/[^\s]+|`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).filter(Boolean);
   return <Text style={[styles.messageBody, {color}]}>{pieces.map((piece, index) => {
+    if (/^https?:\/\//.test(piece)) return <Text accessibilityRole="link" key={index} onPress={() => Linking.openURL(piece)} style={styles.link}>{piece}</Text>;
     if (piece.startsWith('**') && piece.endsWith('**')) return <Text key={index} style={styles.bold}>{piece.slice(2, -2)}</Text>;
     if (piece.startsWith('`') && piece.endsWith('`')) return <Text key={index} style={styles.code}>{piece.slice(1, -1)}</Text>;
     if (piece.startsWith('*') && piece.endsWith('*')) return <Text key={index} style={styles.italic}>{piece.slice(1, -1)}</Text>;
     return piece;
   })}</Text>;
+}
+
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '😮'];
+
+function MessageActions({message, mine, onAction, onClose, onReaction, palette}: {message?: Message; mine: boolean; onAction(action: 'reply' | 'edit' | 'delete' | 'pin', message: Message): void; onClose(): void; onReaction(message: Message, emoji: string): void; palette: Palette}) {
+  if (!message) return null;
+  return <Modal animationType="fade" onRequestClose={onClose} transparent visible><TouchableOpacity activeOpacity={1} onPress={onClose} style={styles.sheetBackdrop}><View style={[styles.sheet, {backgroundColor: palette.background}]}><Text style={[styles.sheetTitle, {color: palette.text}]}>Message actions</Text><View style={styles.quickReactions}>{QUICK_REACTIONS.map(emoji => <TouchableOpacity accessibilityLabel={`React with ${emoji}`} key={emoji} onPress={() => { onReaction(message, emoji); onClose(); }} style={[styles.quickReaction, {backgroundColor: palette.field}]}><Text style={styles.quickReactionText}>{emoji}</Text></TouchableOpacity>)}</View><ActionButton label="Reply" onPress={() => onAction('reply', message)} palette={palette} /><ActionButton label={message.pinned ? 'Unpin Message' : 'Pin Message'} onPress={() => onAction('pin', message)} palette={palette} />{mine && !message.deleted ? <ActionButton label="Edit Message" onPress={() => onAction('edit', message)} palette={palette} /> : null}{mine && !message.deleted ? <ActionButton danger label="Delete Message" onPress={() => onAction('delete', message)} palette={palette} /> : null}</View></TouchableOpacity></Modal>;
+}
+
+function ActionButton({danger, label, onPress, palette}: {danger?: boolean; label: string; onPress(): void; palette: Palette}) {
+  return <TouchableOpacity onPress={onPress} style={[styles.actionButton, {borderTopColor: palette.border}]}><Text style={[styles.actionText, danger ? styles.dangerText : {color: palette.text}]}>{label}</Text></TouchableOpacity>;
+}
+
+function ConversationPanel({busy, messages, mode, onClose, onSearch, palette, query, results, setQuery}: {busy: boolean; messages: Message[]; mode: 'pins' | 'search' | ''; onClose(): void; onSearch(): void; palette: Palette; query: string; results: SearchResult[]; setQuery(value: string): void}) {
+  if (!mode) return null;
+  const items = mode === 'pins' ? messages.map(message => ({id: message.id, author: message.author_name, body: message.body || 'Attachment'})) : results.map(result => ({id: result.message.id, author: `${result.message.author_name} in #${result.channel_name}`, body: result.snippet}));
+  return <Modal animationType="slide" onRequestClose={onClose} visible><View style={[styles.panel, {backgroundColor: palette.background}]}><View style={[styles.header, {borderBottomColor: palette.border}]}><Text style={[styles.title, {color: palette.text}]}>{mode === 'pins' ? 'Pinned Messages' : 'Search'}</Text><View style={styles.grow} /><TouchableOpacity accessibilityLabel="Close" onPress={onClose} style={styles.iconButton}><Text style={[styles.contextClose, {color: palette.text}]}>×</Text></TouchableOpacity></View>{mode === 'search' ? <View style={styles.searchBar}><TextInput autoFocus onChangeText={setQuery} onSubmitEditing={onSearch} placeholder="Search Messages" placeholderTextColor={palette.placeholder} returnKeyType="search" style={[styles.searchInput, {backgroundColor: palette.field, color: palette.text}]} value={query} /><TouchableOpacity onPress={onSearch} style={[styles.searchButton, {backgroundColor: palette.accent}]}><Text style={styles.searchButtonText}>Search</Text></TouchableOpacity></View> : null}{busy ? <ActivityIndicator color={palette.accent} style={styles.panelBusy} /> : <FlatList contentContainerStyle={styles.panelList} data={items} keyExtractor={item => item.id} ListEmptyComponent={<Text style={{color: palette.muted}}>{mode === 'pins' ? 'No pinned Messages.' : query ? 'No results.' : 'Enter a search query.'}</Text>} renderItem={({item}) => <View style={[styles.panelItem, {backgroundColor: palette.field}]}><Text style={[styles.author, {color: palette.text}]}>{item.author}</Text><Text numberOfLines={4} style={{color: palette.text}}>{item.body}</Text></View>} />}</View></Modal>;
 }
 
 export async function loadAuthenticatedImage(url: string, token: string, request: typeof fetch = fetch): Promise<string> {
@@ -249,8 +326,11 @@ function typingText(names: string[]) { if (names.length > 3) return 'Several peo
 const styles = StyleSheet.create({
   fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {color: '#ed4245', fontSize: 15, textAlign: 'center'}, errorColor: {color: '#ed4245'}, connected: {color: '#3ba55d'},
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
+  iconButton: {alignItems: 'center', height: 44, justifyContent: 'center', width: 44}, headerIcon: {fontSize: 25},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
-  back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, bold: {fontWeight: '800'}, italic: {fontStyle: 'italic'}, code: {fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier', fontSize: 15}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, imagePlaceholder: {alignItems: 'center', borderRadius: 8, height: 160, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, imageFallback: {alignItems: 'center', borderRadius: 8, borderWidth: 1, gap: 6, height: 120, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, viewer: {backgroundColor: 'rgba(0,0,0,0.96)', flex: 1, justifyContent: 'center'}, viewerImage: {height: '100%', width: '100%'}, viewerClose: {alignItems: 'center', backgroundColor: 'rgba(32,32,36,0.85)', borderRadius: 24, height: 48, justifyContent: 'center', position: 'absolute', right: 16, top: 42, width: 48, zIndex: 1}, viewerCloseText: {color: '#ffffff', fontSize: 34, lineHeight: 38}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
+  back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, authorLine: {alignItems: 'center', flexDirection: 'row'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, bold: {fontWeight: '800'}, italic: {fontStyle: 'italic'}, code: {fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier', fontSize: 15}, link: {color: '#00a8fc', textDecorationLine: 'underline'}, replyPreview: {borderLeftWidth: 2, marginBottom: 4, paddingLeft: 8}, reactions: {flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7}, reaction: {borderRadius: 12, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, imagePlaceholder: {alignItems: 'center', borderRadius: 8, height: 160, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, imageFallback: {alignItems: 'center', borderRadius: 8, borderWidth: 1, gap: 6, height: 120, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, viewer: {backgroundColor: 'rgba(0,0,0,0.96)', flex: 1, justifyContent: 'center'}, viewerImage: {height: '100%', width: '100%'}, viewerClose: {alignItems: 'center', backgroundColor: 'rgba(32,32,36,0.85)', borderRadius: 24, height: 48, justifyContent: 'center', position: 'absolute', right: 16, top: 42, width: 48, zIndex: 1}, viewerCloseText: {color: '#ffffff', fontSize: 34, lineHeight: 38}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
   selectedFiles: {gap: 8, paddingHorizontal: 10, paddingVertical: 8}, selectedFile: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', height: 54, maxWidth: 230, minWidth: 150, overflow: 'hidden', paddingRight: 4}, selectedThumbnail: {height: 52, marginRight: 8, width: 52}, selectedIcon: {fontSize: 24, marginHorizontal: 10}, selectedName: {flex: 1, fontSize: 13, fontWeight: '600'}, selectedRemove: {alignItems: 'center', height: 40, justifyContent: 'center', width: 36}, selectedRemoveText: {color: '#ed4245', fontSize: 24},
   composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, padding: 10}, attach: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, attachText: {fontSize: 27, lineHeight: 30}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, uploadStatus: {fontSize: 12, paddingBottom: 6, paddingHorizontal: 14}, disabled: {opacity: 0.5},
+  contextBanner: {alignItems: 'center', flexDirection: 'row', marginHorizontal: 10, paddingHorizontal: 12, paddingVertical: 8}, contextClose: {fontSize: 28, paddingHorizontal: 8}, sheetBackdrop: {backgroundColor: 'rgba(0,0,0,0.55)', flex: 1, justifyContent: 'flex-end'}, sheet: {borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24, paddingHorizontal: 16, paddingTop: 18}, sheetTitle: {fontSize: 18, fontWeight: '800', marginBottom: 12}, quickReactions: {flexDirection: 'row', gap: 8, marginBottom: 12}, quickReaction: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, quickReactionText: {fontSize: 22}, actionButton: {borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 15}, panel: {flex: 1}, searchBar: {flexDirection: 'row', gap: 8, padding: 12}, searchInput: {borderRadius: 10, flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 10}, searchButton: {borderRadius: 10, justifyContent: 'center', paddingHorizontal: 16}, panelBusy: {marginTop: 40}, panelList: {gap: 8, padding: 12}, panelItem: {borderRadius: 10, padding: 12},
+  actionText: {fontSize: 16}, dangerText: {color: '#ed4245'}, whiteText: {color: '#fff'}, searchButtonText: {color: '#fff', fontWeight: '800'},
 });

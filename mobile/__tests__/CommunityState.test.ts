@@ -50,4 +50,14 @@ describe('CommunityState', () => {
     expect(state.needs_refresh).toBe(true);
     expect(state.cursor).toBe(20);
   });
+
+  it('applies realtime reaction and pin updates without refreshing', () => {
+    let state = communityStateFromBootstrap(bootstrap);
+
+    state = reduceRealtimeFrame(state, {type: 'reaction.updated', cursor: 7, channel_id: 'channel-1', payload: {message_id: firstMessage.id, member_id: 'member-1', emoji: '👍', active: true}});
+    state = reduceRealtimeFrame(state, {type: 'pin.updated', cursor: 8, channel_id: 'channel-1', payload: {message_id: firstMessage.id, pinned: true}});
+
+    expect(state.messages['channel-1'][0].reactions).toEqual([{emoji: '👍', count: 1, me: true}]);
+    expect(state.messages['channel-1'][0].pinned).toBe(true);
+  });
 });

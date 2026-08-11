@@ -135,4 +135,40 @@ describe('AllChatClient', () => {
       body: JSON.stringify({body: '', attachment_ids: ['attachment-1']}),
     }));
   });
+
+  it('publishes replies and supports Message actions', async () => {
+    const message = {id: 'message-2', channel_id: 'channel-1', author_id: 'member-1', author_name: 'Member', sequence: 2, body: 'Reply', created_at: '2030-01-01T00:00:00Z', deleted: false};
+    const request = jest.fn(async (_url: string, options?: RequestInit) => options?.method === 'PATCH'
+      ? new Response(JSON.stringify({...message, body: 'Edited'}), {status: 200})
+      : options?.method === 'POST'
+        ? new Response(JSON.stringify(message), {status: 201})
+        : new Response(null, {status: 204}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.publishMessage('session-token', 'channel-1', 'Reply', false, [], 'message-1');
+    await client.editMessage('session-token', 'message-2', 'Edited');
+    await client.setReaction('session-token', 'message-2', '👍', true);
+    await client.setPinned('session-token', 'message-2', true);
+    await client.deleteMessage('session-token', 'message-2');
+
+    expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/channels/channel-1/messages', expect.objectContaining({body: JSON.stringify({body: 'Reply', reply_to: 'message-1'})}));
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/messages/message-2', expect.objectContaining({method: 'PATCH'}));
+    expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/messages/message-2/reactions', expect.objectContaining({method: 'PUT', body: JSON.stringify({emoji: '👍'})}));
+    expect(request).toHaveBeenNthCalledWith(4, 'https://chat.example.test/api/v1/messages/message-2/pin', expect.objectContaining({method: 'PUT'}));
+    expect(request).toHaveBeenNthCalledWith(5, 'https://chat.example.test/api/v1/messages/message-2', expect.objectContaining({method: 'DELETE'}));
+  });
+
+  it('loads pins and searches authorized Messages', async () => {
+    const request = jest.fn(async (url: string) => new Response(JSON.stringify(url.includes('/pins')
+      ? {messages: []}
+      : {results: [], next_cursor: 'next'}), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.pinnedMessages('session-token', 'channel/1');
+    const page = await client.searchMessages('session-token', 'hello world');
+
+    expect(page.next_cursor).toBe('next');
+    expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/channels/channel%2F1/pins', expect.anything());
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/search?q=hello+world&limit=25', expect.anything());
+  });
 });

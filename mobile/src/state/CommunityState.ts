@@ -37,6 +37,25 @@ function reduceEvent(state: CommunityState, event: RealtimeEvent): CommunityStat
       channel_states: state.channel_states.filter(channel => channel.channel_id !== event.channel_id),
     };
   }
+  if ((event.type === 'reaction.updated' || event.type === 'pin.updated') && event.payload && event.channel_id) {
+    const current = state.messages[event.channel_id] || [];
+    const payload = event.payload as {message_id: string; member_id?: string; emoji?: string; active?: boolean; pinned?: boolean};
+    const messagesForChannel = current.map(message => {
+      if (message.id !== payload.message_id) return message;
+      if (event.type === 'pin.updated') return {...message, pinned: Boolean(payload.pinned)};
+      const reactions = [...(message.reactions || [])];
+      const index = reactions.findIndex(reaction => reaction.emoji === payload.emoji);
+      if (index < 0 && payload.active) reactions.push({emoji: payload.emoji || '', count: 1, me: payload.member_id === state.member.id});
+      else if (index >= 0) {
+        const reaction = reactions[index];
+        const count = Math.max(0, reaction.count + (payload.active ? 1 : -1));
+        if (!count) reactions.splice(index, 1);
+        else reactions[index] = {...reaction, count, ...(payload.member_id === state.member.id ? {me: Boolean(payload.active)} : {})};
+      }
+      return {...message, reactions};
+    });
+    return {...state, cursor, messages: {...state.messages, [event.channel_id]: messagesForChannel}};
+  }
   if (!event.type.startsWith('message.') || !event.payload || !event.channel_id) {
     return cursor === state.cursor ? state : {...state, cursor};
   }

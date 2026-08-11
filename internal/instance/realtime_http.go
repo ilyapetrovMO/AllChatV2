@@ -79,6 +79,16 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 	i.live.connect(connectionID, member.ID, sessionToken)
 	defer i.live.disconnect(connectionID)
 
+	// Capture the authorization baseline before announcing readiness. Once the
+	// client observes ready it may immediately trigger a Permission change; if
+	// the baseline were captured afterward, a visible-to-hidden transition in
+	// that gap would never produce channel.removed.
+	visible, err := i.visibleChannelIDs(request.Context(), member)
+	if err != nil {
+		_ = connection.Close(websocket.StatusInternalError, "authorization unavailable")
+		return
+	}
+
 	if cursor > latest || (cursor > 0 && oldest > 0 && cursor < oldest-1) {
 		snapshot, snapshotErr := i.community.RealtimeSnapshot(request.Context(), member)
 		if snapshotErr != nil {
@@ -93,11 +103,6 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 		return
 	}
 
-	visible, err := i.visibleChannelIDs(request.Context(), member)
-	if err != nil {
-		_ = connection.Close(websocket.StatusInternalError, "authorization unavailable")
-		return
-	}
 	readFailed := make(chan struct{}, 1)
 	commands := make(chan realtimeCommand, 8)
 	go func() {

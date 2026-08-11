@@ -133,7 +133,7 @@
         });
       }
     };
-    let popover, recentList;
+    let popover, recentList, removeBellDismiss = () => {};
     const save = async (url, value) => {
       const result = await fetch(url, {method: "PUT", headers: {"Content-Type": "application/json", "X-CSRF-Token": csrfToken()}, body: JSON.stringify(value)});
       if (!result.ok) throw new Error("Could not save notification settings");
@@ -151,11 +151,12 @@
       if (!actions) { actions = document.createElement("div"); actions.className = "header-actions"; header.append(actions); }
       actions.querySelector("#notifications")?.remove();
       if (actions.querySelector("[data-notification-bell]")) return;
+      removeBellDismiss();
       const wrap = document.createElement("div"), bell = document.createElement("button");
       wrap.className = "notification-center";
       bell.type = "button"; bell.className = "notification-bell button-ghost"; bell.dataset.notificationBell = "";
       bell.setAttribute("aria-label", "Notifications"); bell.setAttribute("aria-expanded", "false"); bell.textContent = "🔔";
-      popover = document.createElement("section"); popover.className = "notification-popover"; popover.hidden = true;
+      const installedPopover = popover = document.createElement("section"); installedPopover.className = "notification-popover"; installedPopover.hidden = true;
       const heading = document.createElement("h2"); heading.textContent = "Notifications";
       const settingsStatus = document.createElement("p"); settingsStatus.className = "muted notification-settings-status"; settingsStatus.textContent = "Saved notification settings are temporarily unavailable; defaults are shown."; settingsStatus.hidden = settingsAvailable;
       const permission = document.createElement("button"); permission.type = "button"; permission.className = "button-secondary notification-permission";
@@ -179,9 +180,11 @@
         popover.append(channelLabel, channelMute);
       }
       const recentHeading = document.createElement("h3"); recentHeading.textContent = "Recent"; recentList = document.createElement("ul"); recentList.className = "notification-recent"; popover.append(recentHeading, recentList); renderRecent();
-      bell.onclick = () => { popover.hidden = !popover.hidden; bell.setAttribute("aria-expanded", String(!popover.hidden)); };
-      document.addEventListener("click", event => { if (!wrap.contains(event.target)) { popover.hidden = true; bell.setAttribute("aria-expanded", "false"); } });
-      wrap.append(bell, popover); actions.prepend(wrap);
+      bell.onclick = () => { installedPopover.hidden = !installedPopover.hidden; bell.setAttribute("aria-expanded", String(!installedPopover.hidden)); };
+      const dismiss = event => { if (!wrap.contains(event.target)) { installedPopover.hidden = true; bell.setAttribute("aria-expanded", "false"); } };
+      document.addEventListener("click", dismiss);
+      removeBellDismiss = () => document.removeEventListener("click", dismiss);
+      wrap.append(bell, installedPopover); actions.prepend(wrap);
     };
     installBell(); document.addEventListener("allchat:view-swapped", installBell);
     return center;

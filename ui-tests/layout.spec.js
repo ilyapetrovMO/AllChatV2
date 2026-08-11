@@ -260,6 +260,17 @@ test('mobile Direct Messages always provide a route back to the Community', asyn
   await expect(drawerReturn).toHaveAttribute('href', '/');
 });
 
+test('notification bell remains interactive after in-app Direct Message navigation', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-dm-button]').click();
+  await expect(page).toHaveURL(/\/dms$/);
+  const bell = page.locator('[data-notification-bell]');
+  await expect(bell).toBeVisible();
+  await bell.click();
+  await expect(page.locator('.notification-popover')).toBeVisible();
+});
+
 test('realtime Messages notify for another conversation but not the focused conversation', async ({page}) => {
   await page.addInitScript(() => {
     window.desktopNotices = [];

@@ -401,6 +401,27 @@ test('incoming audio and video attachments render as players and survive reload'
   await sender.dispose();
 });
 
+test('messages asynchronously render link preview cards', async ({page}) => {
+  await page.route('**/api/v1/link-preview?**', async route => {
+    await route.fulfill({json: {
+      url: 'https://news.example.test/articles/example',
+      site_name: 'Example News',
+      title: 'A useful example article',
+      description: 'A short preview description for the linked page.',
+    }});
+  });
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('#message-body').fill('Read https://news.example.test/articles/example');
+  await page.locator('#composer-submit').click();
+  const message = page.locator('.message').filter({hasText: 'A useful example article'});
+  const preview = message.locator('[data-link-preview]');
+  await expect(preview).toBeVisible();
+  await expect(preview.locator('.link-preview-site')).toHaveText('Example News');
+  await expect(preview.locator('.link-preview-description')).toContainText('short preview description');
+  await expect(preview).toHaveAttribute('href', 'https://news.example.test/articles/example');
+});
+
 test('message authors open the member popover and replies retain their target', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

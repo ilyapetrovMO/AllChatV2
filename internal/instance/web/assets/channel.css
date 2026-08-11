@@ -57,6 +57,13 @@
 .community-menu a { padding: 8px 10px; border-radius: 4px; color: var(--text); font-size: .85rem; font-weight: 600; }
 .community-menu a:hover { background: var(--brand); text-decoration: none; }
 .message-attachment { display: block; width: max-content; max-width: 100%; margin-top: 6px; }
+.link-preview-card { display: flex; width: min(100%, 520px); min-height: 92px; margin-top: 8px; overflow: hidden; border: 1px solid var(--border); border-left: 4px solid var(--brand); border-radius: 5px; background: var(--bg-sidebar); color: var(--text); text-decoration: none; }
+.link-preview-card:hover { border-color: var(--brand); text-decoration: none; }
+.link-preview-content { display: grid; align-content: center; flex: 1 1 auto; min-width: 0; gap: 5px; padding: 10px 12px; }
+.link-preview-site { overflow: hidden; color: var(--muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.link-preview-title { overflow: hidden; color: var(--brand-light, #8ea1e1); font-size: .95rem; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.link-preview-description { display: -webkit-box; overflow: hidden; color: var(--text); font-size: .82rem; line-height: 1.35; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.link-preview-image { width: 112px; min-height: 92px; flex: 0 0 112px; object-fit: cover; background: var(--bg-rail); }
 .composer-wrap { position: relative; z-index: 1; grid-row: 3; grid-column: 1; width: auto; max-width: 100%; min-width: 0; bottom: auto; margin-right: 240px; padding: 0 16px 8px; overflow: hidden; background: linear-gradient(transparent, var(--bg-main) 18%); }
 .channel-content:has(> .call-banner:not([hidden])) .composer-wrap { grid-row: 4; }
 .conversation-layout.search-open + .composer-wrap { margin-right: min(360px, 32vw); }

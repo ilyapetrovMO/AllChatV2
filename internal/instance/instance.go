@@ -756,6 +756,8 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /api/v1/attachments", i.uploadAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentID}", i.downloadAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/search", i.searchMessagesAPI)
+	mux.HandleFunc("GET /api/v1/link-preview", i.linkPreviewAPI)
+	mux.HandleFunc("GET /api/v1/link-preview/image", i.linkPreviewImageAPI)
 	mux.HandleFunc("GET /api/v1/dms", i.directMessagesAPI)
 	mux.HandleFunc("POST /api/v1/dms", i.openDirectMessageAPI)
 	mux.HandleFunc("GET /api/v1/dms/{dmID}", i.directMessageAPI)

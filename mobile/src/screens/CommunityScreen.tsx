@@ -7,7 +7,7 @@ import {errorCodes, isErrorWithCode, pick, types, type DocumentPickerResponse} f
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
-import type {LinkPreview, Member} from '../client/AllChatClient';
+import type {LinkPreview, Member, ModerationAction, Report} from '../client/AllChatClient';
 import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
 import {KeychainConversationCache} from '../cache/ConversationCache';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
@@ -35,6 +35,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [panelBusy, setPanelBusy] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [profileMember, setProfileMember] = useState<Member>();
+  const [moderationOpen, setModerationOpen] = useState(false);
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
   const cache = useMemo(() => new KeychainConversationCache(), []);
@@ -204,6 +205,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         <View style={[styles.header, {borderBottomColor: palette.border}]}>
           <View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>{community.community.name}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Connected' : 'Reconnecting…'}</Text></View>
           <TouchableOpacity accessibilityLabel="Community Members" onPress={() => setMembersOpen(true)} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>♟</Text></TouchableOpacity>
+          {community.member.owner ? <TouchableOpacity accessibilityLabel="Moderation Reports" onPress={() => setModerationOpen(true)} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>♜</Text></TouchableOpacity> : null}
           <TouchableOpacity accessibilityLabel="Toggle Do Not Disturb" onPress={() => changePresence(community.presence[community.member.id] === 'dnd' ? 'available' : 'dnd')} style={styles.iconButton}><Text style={[styles.presenceButton, community.presence[community.member.id] === 'dnd' ? styles.presenceDND : styles.presenceOnline]}>●</Text></TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" onPress={onManage} style={[styles.headerButton, {borderColor: palette.border}]}><Text style={{color: palette.text}}>Instances</Text></TouchableOpacity>
         </View>
@@ -219,7 +221,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
           renderItem={({item}) => <TouchableOpacity onPress={() => openConversation(item.id, item.direct)} style={[styles.conversation, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.conversationName, {color: palette.text}]}>{item.name}</Text>{item.unread > 0 ? <Text style={styles.badge}>{item.unread}</Text> : null}</TouchableOpacity>}
         />
         <MembersPanel busy={panelBusy} currentMemberID={community.member.id} members={community.members} onClose={() => setMembersOpen(false)} onOpenProfile={member => { setMembersOpen(false); setProfileMember(member); }} open={membersOpen} palette={palette} presence={community.presence} />
-        <MemberProfile client={client} instanceURL={account.instance_url} member={profileMember} onClose={() => setProfileMember(undefined)} onProfileUpdated={updated => { setProfileMember(updated); setCommunity(value => value ? {...value, member: value.member.id === updated.id ? updated : value.member, members: value.members.map(item => item.id === updated.id ? updated : item)} : value); }} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
+        <MemberProfile client={client} instanceURL={account.instance_url} member={profileMember} moderator={community.member.owner} onClose={() => setProfileMember(undefined)} onProfileUpdated={updated => { setProfileMember(updated); setCommunity(value => value ? {...value, member: value.member.id === updated.id ? updated : value.member, members: value.members.map(item => item.id === updated.id ? updated : item)} : value); }} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
+        <ModerationPanel client={client} onClose={() => setModerationOpen(false)} open={moderationOpen} palette={palette} token={account.session_token} />
       </View>
     );
   }
@@ -377,9 +380,10 @@ function MembersPanel({busy, currentMemberID, members, onClose, onOpenProfile, o
   </Modal>;
 }
 
-function MemberProfile({client, instanceURL, member, onClose, onProfileUpdated, onStartDM, palette, self, token}: {client: AllChatClient; instanceURL: string; member?: Member; onClose(): void; onProfileUpdated(member: Member): void; onStartDM(member: Member): void; palette: Palette; self: boolean; token: string}) {
+function MemberProfile({client, instanceURL, member, moderator, onClose, onProfileUpdated, onStartDM, palette, self, token}: {client: AllChatClient; instanceURL: string; member?: Member; moderator: boolean; onClose(): void; onProfileUpdated(member: Member): void; onStartDM(member: Member): void; palette: Palette; self: boolean; token: string}) {
   const [reporting, setReporting] = useState(false); const [reason, setReason] = useState(''); const [status, setStatus] = useState('');
   const [username, setUsername] = useState(''); const [profileDisplayName, setProfileDisplayName] = useState(''); const [saving, setSaving] = useState(false); const [avatarVersion, setAvatarVersion] = useState(0);
+  const [moderating, setModerating] = useState(false);
   useEffect(() => { setUsername(member?.username || ''); setProfileDisplayName(member?.display_name || ''); setStatus(''); setReporting(false); }, [member?.display_name, member?.id, member?.username]);
   if (!member) return null;
   async function report() {
@@ -409,12 +413,18 @@ function MemberProfile({client, instanceURL, member, onClose, onProfileUpdated, 
     catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not remove your avatar.'); }
     finally { setSaving(false); }
   }
+  async function moderate(action: ModerationAction) {
+    if (reason.trim().length < 3) { setStatus('Provide a reason of at least three characters.'); return; }
+    try { setSaving(true); await client.moderateMember(token, member!.id, action, reason.trim(), action === 'timeout' || action === 'suspend' ? 60 : 0); setStatus(`${action} applied.`); setModerating(false); setReason(''); }
+    catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not apply moderation.'); }
+    finally { setSaving(false); }
+  }
   return <Modal animationType="fade" onRequestClose={onClose} transparent visible>
     <View style={styles.profileBackdrop}><ScrollView contentContainerStyle={[styles.profileCard, {backgroundColor: palette.background}]} keyboardShouldPersistTaps="handled">
       <ProfileAvatar instanceURL={instanceURL} member={member} palette={palette} token={token} version={avatarVersion} />
       <Text style={[styles.profileName, {color: palette.text}]}>{memberName(member)}</Text><Text style={{color: palette.muted}}>@{member.username}{member.owner ? ' · Owner' : ''}</Text>
       {status ? <Text style={[styles.profileStatus, {color: palette.muted}]}>{status}</Text> : null}
-      {self ? <><TextInput accessibilityLabel="Username" autoCapitalize="none" onChangeText={setUsername} placeholder="Username" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={username} /><TextInput accessibilityLabel="Display Name" onChangeText={setProfileDisplayName} placeholder="Display Name (optional)" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={profileDisplayName} /><TouchableOpacity disabled={saving || !username.trim()} onPress={saveProfile} style={[styles.profilePrimary, {backgroundColor: palette.accent}, saving && styles.disabled]}><Text style={styles.whiteText}>{saving ? 'Saving…' : 'Save profile'}</Text></TouchableOpacity><TouchableOpacity disabled={saving} onPress={chooseAvatar} style={styles.profileAction}><Text style={{color: palette.text}}>Choose avatar</Text></TouchableOpacity>{member.avatar_url ? <TouchableOpacity disabled={saving} onPress={removeAvatar} style={styles.profileAction}><Text style={styles.dangerText}>Remove avatar</Text></TouchableOpacity> : null}</> : reporting ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="What happened?" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><TouchableOpacity disabled={!reason.trim()} onPress={report} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Submit report</Text></TouchableOpacity></> : <><TouchableOpacity onPress={() => onStartDM(member)} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Message</Text></TouchableOpacity><TouchableOpacity onPress={() => setReporting(true)} style={styles.profileAction}><Text style={styles.dangerText}>Report Member</Text></TouchableOpacity></>}
+      {self ? <><TextInput accessibilityLabel="Username" autoCapitalize="none" onChangeText={setUsername} placeholder="Username" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={username} /><TextInput accessibilityLabel="Display Name" onChangeText={setProfileDisplayName} placeholder="Display Name (optional)" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={profileDisplayName} /><TouchableOpacity disabled={saving || !username.trim()} onPress={saveProfile} style={[styles.profilePrimary, {backgroundColor: palette.accent}, saving && styles.disabled]}><Text style={styles.whiteText}>{saving ? 'Saving…' : 'Save profile'}</Text></TouchableOpacity><TouchableOpacity disabled={saving} onPress={chooseAvatar} style={styles.profileAction}><Text style={{color: palette.text}}>Choose avatar</Text></TouchableOpacity>{member.avatar_url ? <TouchableOpacity disabled={saving} onPress={removeAvatar} style={styles.profileAction}><Text style={styles.dangerText}>Remove avatar</Text></TouchableOpacity> : null}</> : moderating ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="Moderation reason" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><View style={styles.moderationActions}>{(['warn', 'timeout', 'kick', 'suspend'] as ModerationAction[]).map(action => <TouchableOpacity disabled={saving} key={action} onPress={() => moderate(action)} style={[styles.moderationAction, {backgroundColor: palette.field}]}><Text style={action === 'suspend' ? styles.dangerText : {color: palette.text}}>{action === 'timeout' ? 'Timeout 1h' : action === 'suspend' ? 'Suspend 1h' : action[0].toUpperCase() + action.slice(1)}</Text></TouchableOpacity>)}</View><TouchableOpacity onPress={() => setModerating(false)} style={styles.profileAction}><Text style={{color: palette.text}}>Cancel moderation</Text></TouchableOpacity></> : reporting ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="What happened?" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><TouchableOpacity disabled={!reason.trim()} onPress={report} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Submit report</Text></TouchableOpacity></> : <><TouchableOpacity onPress={() => onStartDM(member)} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Message</Text></TouchableOpacity><TouchableOpacity onPress={() => setReporting(true)} style={styles.profileAction}><Text style={styles.dangerText}>Report Member</Text></TouchableOpacity>{moderator && !member.owner ? <TouchableOpacity onPress={() => { setModerating(true); setReason(''); }} style={styles.profileAction}><Text style={styles.dangerText}>Moderate Member</Text></TouchableOpacity> : null}</>}
       <TouchableOpacity onPress={onClose} style={styles.profileAction}><Text style={{color: palette.text}}>Close</Text></TouchableOpacity>
     </ScrollView></View>
   </Modal>;
@@ -428,6 +438,21 @@ function ProfileAvatar({instanceURL, member, palette, token, version}: {instance
     return () => { mounted = false; };
   }, [instanceURL, member.avatar_url, token, version]);
   return source ? <Image source={{uri: source}} style={styles.profileAvatarImage} /> : <Text style={[styles.profileAvatar, {backgroundColor: palette.field, color: palette.text}]}>{memberName(member).slice(0, 1).toUpperCase()}</Text>;
+}
+
+function ModerationPanel({client, onClose, open, palette, token}: {client: AllChatClient; onClose(): void; open: boolean; palette: Palette; token: string}) {
+  const [reports, setReports] = useState<Report[]>([]); const [busy, setBusy] = useState(false); const [status, setStatus] = useState('');
+  useEffect(() => {
+    if (!open) return;
+    setBusy(true); setStatus('');
+    client.reports(token).then(setReports).catch(caught => setStatus(caught instanceof Error ? caught.message : 'Could not load reports.')).finally(() => setBusy(false));
+  }, [client, open, token]);
+  async function resolve(item: Report) {
+    try { setBusy(true); const updated = await client.resolveReport(token, item.id, 'Reviewed and resolved from the mobile moderation panel.'); setReports(current => current.map(report => report.id === updated.id ? updated : report)); }
+    catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not resolve the report.'); }
+    finally { setBusy(false); }
+  }
+  return <Modal animationType="slide" onRequestClose={onClose} visible={open}><View style={[styles.panel, {backgroundColor: palette.background}]}><View style={[styles.header, {borderBottomColor: palette.border}]}><Text style={[styles.title, {color: palette.text}]}>Moderation Reports</Text><View style={styles.grow} /><TouchableOpacity accessibilityLabel="Close Moderation" onPress={onClose} style={styles.iconButton}><Text style={[styles.contextClose, {color: palette.text}]}>×</Text></TouchableOpacity></View>{status ? <Text style={[styles.panelStatus, {color: palette.muted}]}>{status}</Text> : null}{busy && !reports.length ? <ActivityIndicator color={palette.accent} style={styles.panelBusy} /> : <FlatList contentContainerStyle={styles.panelList} data={reports} keyExtractor={item => item.id} ListEmptyComponent={<Text style={{color: palette.muted}}>No reports.</Text>} renderItem={({item}) => <View style={[styles.panelItem, {backgroundColor: palette.field}]}><Text style={[styles.author, {color: palette.text}]}>{item.status === 'open' ? 'Open report' : 'Resolved report'}</Text><Text style={{color: palette.text}}>{item.reason}</Text><Text style={{color: palette.muted}}>{new Date(item.created_at).toLocaleString()}</Text>{item.status === 'open' ? <TouchableOpacity disabled={busy} onPress={() => resolve(item)} style={[styles.resolveButton, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Mark resolved</Text></TouchableOpacity> : item.outcome ? <Text style={{color: palette.muted}}>{item.outcome}</Text> : null}</View>} />}</View></Modal>;
 }
 
 function memberName(member: Member) { return member.display_name || member.username; }
@@ -484,4 +509,5 @@ const styles = StyleSheet.create({
   actionText: {fontSize: 16}, dangerText: {color: '#ed4245'}, whiteText: {color: '#fff'}, searchButtonText: {color: '#fff', fontWeight: '800'},
   memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileAvatarImage: {borderRadius: 38, height: 76, marginBottom: 12, width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profileInput: {borderRadius: 10, fontSize: 16, marginTop: 12, paddingHorizontal: 12, paddingVertical: 11}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
   linkCard: {borderLeftWidth: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', marginTop: 8, maxWidth: 420, overflow: 'hidden', width: '100%'}, linkContent: {flex: 1, gap: 4, justifyContent: 'center', padding: 10}, linkTitle: {fontSize: 15, fontWeight: '800'}, linkImage: {height: 112, width: 112},
+  moderationActions: {gap: 8, marginTop: 12}, moderationAction: {alignItems: 'center', borderRadius: 8, padding: 12}, panelStatus: {paddingHorizontal: 12, paddingTop: 12}, resolveButton: {alignItems: 'center', borderRadius: 8, marginTop: 10, padding: 10},
 });

@@ -224,4 +224,17 @@ describe('AllChatClient', () => {
     expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/profile/avatar', expect.objectContaining({method: 'PUT', body: localBlob}));
     expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/profile/avatar', expect.objectContaining({method: 'DELETE'}));
   });
+
+  it('loads and resolves reports and submits typed moderation actions', async () => {
+    const report = {id: 'report-1', reporter_id: 'member-2', target_member_id: 'member-3', reason: 'Spam', status: 'open', created_at: '2030-01-01T00:00:00Z'};
+    const request = jest.fn(async (url: string) => new Response(JSON.stringify(url.endsWith('/api/v1/reports') ? {reports: [report]} : url.includes('/resolve') ? {...report, status: 'resolved'} : {id: 1}), {status: url.endsWith('/moderation-actions') ? 201 : 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.reports('session-token');
+    await client.resolveReport('session-token', report.id, 'Reviewed');
+    await client.moderateMember('session-token', 'member-3', 'timeout', 'Repeated spam', 60);
+
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/reports/report-1/resolve', expect.objectContaining({method: 'POST', body: JSON.stringify({outcome: 'Reviewed'})}));
+    expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/moderation-actions', expect.objectContaining({method: 'POST', body: JSON.stringify({action: 'timeout', target_member_id: 'member-3', reason: 'Repeated spam', duration_minutes: 60})}));
+  });
 });

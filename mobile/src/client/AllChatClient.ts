@@ -17,6 +17,8 @@ export type NativeSession = {
 
 export type LocalAttachment = {uri: string; name: string; type: string; size?: number | null};
 export type LinkPreview = {url: string; site_name?: string; title?: string; description?: string; image_url?: string};
+export type Report = {id: string; reporter_id: string; target_member_id?: string; target_message_id?: string; reason: string; status: string; created_at: string; outcome?: string};
+export type ModerationAction = 'warn' | 'timeout' | 'suspend' | 'kick';
 
 type Fetch = typeof fetch;
 
@@ -161,6 +163,26 @@ export class AllChatClient {
       method: 'POST', headers: this.jsonHeaders(token), body: JSON.stringify({target_member_id: memberID, reason}),
     });
     await this.decode<unknown>(response, 'Could not submit the report.');
+  }
+
+  async reports(token: string): Promise<Report[]> {
+    const response = await this.request(`${this.instanceURL}/api/v1/reports`, {headers: {Authorization: `Bearer ${token}`}});
+    return (await this.decode<{reports: Report[]}>(response, 'Could not load reports.')).reports;
+  }
+
+  async resolveReport(token: string, reportID: string, outcome: string): Promise<Report> {
+    const response = await this.request(`${this.instanceURL}/api/v1/reports/${encodeURIComponent(reportID)}/resolve`, {
+      method: 'POST', headers: this.jsonHeaders(token), body: JSON.stringify({outcome}),
+    });
+    return this.decode<Report>(response, 'Could not resolve the report.');
+  }
+
+  async moderateMember(token: string, memberID: string, action: ModerationAction, reason: string, durationMinutes = 0): Promise<void> {
+    const response = await this.request(`${this.instanceURL}/api/v1/moderation-actions`, {
+      method: 'POST', headers: this.jsonHeaders(token),
+      body: JSON.stringify({action, target_member_id: memberID, reason, ...(durationMinutes ? {duration_minutes: durationMinutes} : {})}),
+    });
+    await this.decode<unknown>(response, 'Could not apply the moderation action.');
   }
 
   async setPresenceMode(token: string, mode: 'available' | 'dnd'): Promise<void> {

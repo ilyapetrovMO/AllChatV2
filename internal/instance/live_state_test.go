@@ -36,3 +36,14 @@ func TestPresenceAggregatesDevicesAndAppliesFinalDisconnectGrace(t *testing.T) {
 		t.Fatalf("Presence remained connected after final-disconnect grace: %v", presence)
 	}
 }
+
+func TestTypingStateCarriesTheMemberDisplayName(t *testing.T) {
+	state := newLiveState()
+	if !state.setTyping("member-example", "Example Member", "channel-example") {
+		t.Fatal("first typing update was rate limited")
+	}
+	_, typing := state.snapshot()
+	if len(typing) != 1 || typing[0].MemberName != "Example Member" {
+		t.Fatalf("typing=%+v", typing)
+	}
+}

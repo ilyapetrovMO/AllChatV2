@@ -146,7 +146,11 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 			switch command.Type {
 			case "typing":
 				if visible, _ := i.community.CanUseChannel(request.Context(), member.ID, command.ChannelID, community.PermissionSendMessages, false); visible {
-					i.live.setTyping(member.ID, command.ChannelID)
+					name := member.DisplayName
+					if name == "" {
+						name = member.Username
+					}
+					i.live.setTyping(member.ID, name, command.ChannelID)
 				}
 			}
 		case <-ticker.C:

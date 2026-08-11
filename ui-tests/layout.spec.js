@@ -106,6 +106,24 @@ test('browser interaction reports presence activity over realtime', async ({page
   await expect.poll(() => page.evaluate(() => window.realtimeFrames.filter(frame => frame.type === 'activity' && frame.active).length)).toBeGreaterThan(0);
 });
 
+test('typing indicator names up to three members and summarizes larger groups', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const summaries = await page.evaluate(channelID => {
+    const typing = names => names.map((member_name, index) => ({member_id: `member-${index}`, member_name, channel_id: channelID}));
+    return [
+      window.allchatTypingSummary(typing(['Member One'])),
+      window.allchatTypingSummary(typing(['Member One', 'Member Two', 'Member Three'])),
+      window.allchatTypingSummary(typing(['Member One', 'Member Two', 'Member Three', 'Member Four'])),
+    ];
+  }, fixture.textChannel.id);
+  expect(summaries).toEqual([
+    'Member One is typing…',
+    'Member One, Member Two, Member Three are typing…',
+    'Several people are typing…',
+  ]);
+});
+
 async function addVoiceState(page) {
   await page.evaluate(({voiceID, ownerID, memberID}) => {
     const link = document.querySelector(`a[href="/channels/${voiceID}"]`);

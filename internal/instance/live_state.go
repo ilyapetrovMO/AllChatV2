@@ -23,10 +23,11 @@ type liveConnection struct {
 }
 
 type typingState struct {
-	MemberID  string    `json:"member_id"`
-	ChannelID string    `json:"channel_id"`
-	ExpiresAt time.Time `json:"expires_at"`
-	LastSent  time.Time `json:"-"`
+	MemberID   string    `json:"member_id"`
+	MemberName string    `json:"member_name"`
+	ChannelID  string    `json:"channel_id"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	LastSent   time.Time `json:"-"`
 }
 
 type liveState struct {
@@ -97,7 +98,7 @@ func (s *liveState) disconnectSession(sessionToken string) {
 	}
 }
 
-func (s *liveState) setTyping(memberID, channelID string) bool {
+func (s *liveState) setTyping(memberID, memberName, channelID string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	now := time.Now()
@@ -106,7 +107,7 @@ func (s *liveState) setTyping(memberID, channelID string) bool {
 	if now.Sub(current.LastSent) < typingRateLimit {
 		return false
 	}
-	s.typing[key] = typingState{MemberID: memberID, ChannelID: channelID, ExpiresAt: now.Add(typingLifetime), LastSent: now}
+	s.typing[key] = typingState{MemberID: memberID, MemberName: memberName, ChannelID: channelID, ExpiresAt: now.Add(typingLifetime), LastSent: now}
 	return true
 }
 

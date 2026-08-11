@@ -31,7 +31,7 @@ make test-mobile
 make lint-mobile
 ```
 
-Build a debug APK with `make build-mobile`. Release signing is intentionally not configured with the template debug key; CI will supply the release keystore through secrets.
+Build a Metro-dependent debug APK with `make build-mobile`. Build a self-contained, development-signed APK for direct sideloading with `make build-mobile-standalone`; its output is `mobile/android/app/build/outputs/apk/standalone/app-standalone.apk`. Release signing is intentionally not configured with the template debug key; CI will supply the release keystore through secrets.
 
 ## Current milestone
 

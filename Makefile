@@ -61,6 +61,9 @@ build-bootstrap:
 build-mobile:
 	cd mobile/android && ./gradlew assembleDebug
 
+build-mobile-standalone:
+	cd mobile/android && ./gradlew assembleStandalone
+
 clean:
 	go clean
 	$(RM) allchat

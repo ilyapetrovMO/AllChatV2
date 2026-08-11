@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Linking, Modal, PermissionsAndroid, Platform, StyleSheet,
+  ActivityIndicator, AppState, FlatList, Image, KeyboardAvoidingView, Linking, Modal, PermissionsAndroid, Platform, StyleSheet,
   ScrollView, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import {errorCodes, isErrorWithCode, pick, types, type DocumentPickerResponse} from '@react-native-documents/picker';
@@ -9,10 +9,11 @@ import {RTCView, type MediaStream} from 'react-native-webrtc';
 
 import {AllChatClient} from '../client/AllChatClient';
 import type {DirectCall, LinkPreview, Member, ModerationAction, Report} from '../client/AllChatClient';
-import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
+import type {DirectMessage, Message, NotificationSetting, SearchResult} from '../client/bootstrap';
 import {KeychainConversationCache} from '../cache/ConversationCache';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import {MediaSession, type MediaStatus, type RemoteMedia} from '../media/MediaSession';
+import {NotificationService} from '../notifications/NotificationService';
 import type {InstanceAccount} from '../session/SessionVault';
 import {communityStateFromBootstrap, reduceRealtimeFrame, type CommunityState} from '../state/CommunityState';
 
@@ -40,9 +41,15 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [moderationOpen, setModerationOpen] = useState(false);
   const [mediaRoom, setMediaRoom] = useState<{id: string; name: string}>();
   const [currentCall, setCurrentCall] = useState<DirectCall>();
+  const [notificationPanel, setNotificationPanel] = useState<'global' | 'channel' | ''>('');
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
   const cache = useMemo(() => new KeychainConversationCache(), []);
+  const notifications = useMemo(() => new NotificationService(), []);
+  const communityRef = useRef<CommunityState | undefined>(undefined); const activeIDRef = useRef(''); const appFocused = useRef(AppState.currentState === 'active');
+  communityRef.current = community; activeIDRef.current = activeID;
+
+  useEffect(() => { const subscription = AppState.addEventListener('change', state => { appFocused.current = state === 'active'; }); return () => subscription.remove(); }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +69,14 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
               return;
             }
             setCommunity(current => current ? reduceRealtimeFrame(current, frame) : current);
+            const events = frame.type === 'events' ? frame.events || [] : [{type: frame.type, channel_id: frame.channel_id || '', payload: frame.payload}];
+            for (const event of events) {
+              if (event.type !== 'message.created' || !event.payload) continue;
+              const state = communityRef.current; const message = event.payload as Message;
+              if (!state) continue;
+              const directMessage = state.direct_messages.find(item => item.id === message.channel_id); const channelItem = state.channels.find(item => item.id === message.channel_id);
+              notifications.handleMessage(message, {currentMemberID: state.member.id, activeConversationID: activeIDRef.current, appFocused: appFocused.current, community: state.notifications.community, channels: state.notifications.channels, mutedChannelIDs: state.notifications.muted_channel_ids, channelName: channelItem?.name, direct: Boolean(directMessage)}).catch(() => {});
+            }
           },
         });
         realtime.current?.stop();
@@ -77,7 +92,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     }
     synchronize().catch(() => {});
     return () => { mounted = false; if (retry) clearTimeout(retry); realtime.current?.stop(); realtime.current = null; };
-  }, [account.instance_url, account.member.id, account.session_token, cache, client]);
+  }, [account.instance_url, account.member.id, account.session_token, cache, client, notifications]);
 
   useEffect(() => {
     if (!community) return;
@@ -222,6 +237,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
           <View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>{community.community.name}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Connected' : 'Reconnecting…'}</Text></View>
           <TouchableOpacity accessibilityLabel="Community Members" onPress={() => setMembersOpen(true)} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>♟</Text></TouchableOpacity>
           {community.member.owner ? <TouchableOpacity accessibilityLabel="Moderation Reports" onPress={() => setModerationOpen(true)} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>♜</Text></TouchableOpacity> : null}
+          <TouchableOpacity accessibilityLabel="Notification Settings" onPress={() => setNotificationPanel('global')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>🔔</Text></TouchableOpacity>
           <TouchableOpacity accessibilityLabel="Toggle Do Not Disturb" onPress={() => changePresence(community.presence[community.member.id] === 'dnd' ? 'available' : 'dnd')} style={styles.iconButton}><Text style={[styles.presenceButton, community.presence[community.member.id] === 'dnd' ? styles.presenceDND : styles.presenceOnline]}>●</Text></TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" onPress={onManage} style={[styles.headerButton, {borderColor: palette.border}]}><Text style={{color: palette.text}}>Instances</Text></TouchableOpacity>
         </View>
@@ -239,6 +255,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         <MembersPanel busy={panelBusy} currentMemberID={community.member.id} members={community.members} onClose={() => setMembersOpen(false)} onOpenProfile={member => { setMembersOpen(false); setProfileMember(member); }} open={membersOpen} palette={palette} presence={community.presence} />
         <MemberProfile client={client} instanceURL={account.instance_url} member={profileMember} moderator={community.member.owner} onClose={() => setProfileMember(undefined)} onProfileUpdated={updated => { setProfileMember(updated); setCommunity(value => value ? {...value, member: value.member.id === updated.id ? updated : value.member, members: value.members.map(item => item.id === updated.id ? updated : item)} : value); }} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
         <ModerationPanel client={client} onClose={() => setModerationOpen(false)} open={moderationOpen} palette={palette} token={account.session_token} />
+        <NotificationSettingsPanel initial={community.notifications.community} mode={notificationPanel} onClose={() => setNotificationPanel('')} onSave={async setting => { await client.updateNotificationSettings(account.session_token, setting); setCommunity(value => value ? {...value, notifications: {...value.notifications, community: setting}} : value); }} palette={palette} />
       </View>
     );
   }
@@ -254,6 +271,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         {direct && !currentCall ? <TouchableOpacity accessibilityLabel="Start Direct Call" onPress={startDirectCall} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>☎</Text></TouchableOpacity> : null}
         {!direct ? <TouchableOpacity accessibilityLabel="Pinned Messages" onPress={openPins} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>◆</Text></TouchableOpacity> : null}
         <TouchableOpacity accessibilityLabel="Search Messages" onPress={() => setPanel('search')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>⌕</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityLabel="Conversation Notifications" onPress={() => setNotificationPanel('channel')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>🔔</Text></TouchableOpacity>
       </View>
       {currentCall?.direct_message_id === activeID ? <CallBanner call={currentCall} currentMemberID={community.member.id} onAction={callAction} palette={palette} /> : null}
       {currentCall?.direct_message_id === activeID && currentCall.state === 'accepted' ? <View style={styles.directCallStage}><MediaRoomScreen account={account} compact name={`Call with ${displayName(direct!)}`} onLeave={() => callAction('end')} palette={palette} roomID={currentCall.id} /></View> : null}
@@ -271,6 +289,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       {uploadStatus ? <Text style={[styles.uploadStatus, {color: palette.muted}]}>{uploadStatus}</Text> : null}
       <MessageActions message={actionMessage} mine={Boolean(actionMessage && actionMessage.author_id === community.member.id)} onAction={performMessageAction} onClose={() => setActionMessage(undefined)} onReaction={toggleReaction} palette={palette} />
       <ConversationPanel busy={panelBusy} messages={panelMessages} mode={panel} onClose={() => setPanel('')} onSearch={search} palette={palette} query={searchQuery} results={searchResults} setQuery={setSearchQuery} />
+      <NotificationSettingsPanel initial={community.notifications.channels[activeID] || {level: 'default', muted: false}} mode={notificationPanel} onClose={() => setNotificationPanel('')} onSave={async setting => { await client.updateChannelNotificationSettings(account.session_token, activeID, setting); setCommunity(value => value ? {...value, notifications: {...value.notifications, channels: {...value.notifications.channels, [activeID]: setting}}} : value); }} palette={palette} />
     </KeyboardAvoidingView>
   );
 }
@@ -502,6 +521,17 @@ function ModerationPanel({client, onClose, open, palette, token}: {client: AllCh
   return <Modal animationType="slide" onRequestClose={onClose} visible={open}><View style={[styles.panel, {backgroundColor: palette.background}]}><View style={[styles.header, {borderBottomColor: palette.border}]}><Text style={[styles.title, {color: palette.text}]}>Moderation Reports</Text><View style={styles.grow} /><TouchableOpacity accessibilityLabel="Close Moderation" onPress={onClose} style={styles.iconButton}><Text style={[styles.contextClose, {color: palette.text}]}>×</Text></TouchableOpacity></View>{status ? <Text style={[styles.panelStatus, {color: palette.muted}]}>{status}</Text> : null}{busy && !reports.length ? <ActivityIndicator color={palette.accent} style={styles.panelBusy} /> : <FlatList contentContainerStyle={styles.panelList} data={reports} keyExtractor={item => item.id} ListEmptyComponent={<Text style={{color: palette.muted}}>No reports.</Text>} renderItem={({item}) => <View style={[styles.panelItem, {backgroundColor: palette.field}]}><Text style={[styles.author, {color: palette.text}]}>{item.status === 'open' ? 'Open report' : 'Resolved report'}</Text><Text style={{color: palette.text}}>{item.reason}</Text><Text style={{color: palette.muted}}>{new Date(item.created_at).toLocaleString()}</Text>{item.status === 'open' ? <TouchableOpacity disabled={busy} onPress={() => resolve(item)} style={[styles.resolveButton, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Mark resolved</Text></TouchableOpacity> : item.outcome ? <Text style={{color: palette.muted}}>{item.outcome}</Text> : null}</View>} />}</View></Modal>;
 }
 
+function NotificationSettingsPanel({initial, mode, onClose, onSave, palette}: {initial: NotificationSetting; mode: 'global' | 'channel' | ''; onClose(): void; onSave(setting: NotificationSetting): Promise<void>; palette: Palette}) {
+  const [setting, setSetting] = useState(initial); const [saving, setSaving] = useState(false); const [status, setStatus] = useState('');
+  useEffect(() => { if (mode) { setSetting(initial); setStatus(''); } }, [initial, mode]);
+  if (!mode) return null;
+  const levels: NotificationSetting['level'][] = mode === 'channel' ? ['default', 'all_messages', 'mentions_only', 'nothing'] : ['all_messages', 'mentions_only', 'nothing'];
+  async function save() { try { setSaving(true); await onSave(setting); setStatus('Notification settings saved.'); } catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not save notification settings.'); } finally { setSaving(false); } }
+  return <Modal animationType="fade" onRequestClose={onClose} transparent visible><View style={styles.profileBackdrop}><View style={[styles.profileCard, {backgroundColor: palette.background}]}><Text style={[styles.profileName, {color: palette.text}]}>{mode === 'channel' ? 'Conversation Notifications' : 'Notifications'}</Text><Text style={[styles.settingLabel, {color: palette.muted}]}>Notification level</Text><View style={styles.settingOptions}>{levels.map(level => <TouchableOpacity key={level} onPress={() => setSetting(value => ({...value, level}))} style={[styles.settingOption, {backgroundColor: setting.level === level ? palette.accent : palette.field}]}><Text style={setting.level === level ? styles.whiteText : {color: palette.text}}>{notificationLevelName(level)}</Text></TouchableOpacity>)}</View><TouchableOpacity onPress={() => setSetting(value => ({...value, muted: !value.muted}))} style={[styles.settingToggle, {backgroundColor: palette.field}]}><Text style={{color: palette.text}}>{setting.muted ? 'Muted' : 'Not muted'}</Text></TouchableOpacity>{mode === 'global' ? <TouchableOpacity onPress={() => setSetting(value => ({...value, sound_enabled: value.sound_enabled === false}))} style={[styles.settingToggle, {backgroundColor: palette.field}]}><Text style={{color: palette.text}}>{setting.sound_enabled === false ? 'Sound off' : 'Sound on'}</Text></TouchableOpacity> : null}{status ? <Text style={[styles.profileStatus, {color: palette.muted}]}>{status}</Text> : null}<TouchableOpacity disabled={saving} onPress={save} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>{saving ? 'Saving…' : 'Save'}</Text></TouchableOpacity><TouchableOpacity onPress={onClose} style={styles.profileAction}><Text style={{color: palette.text}}>Close</Text></TouchableOpacity></View></View></Modal>;
+}
+
+function notificationLevelName(level: NotificationSetting['level']) { return level === 'default' ? 'Default' : level === 'all_messages' ? 'All Messages' : level === 'mentions_only' ? 'Mentions Only' : 'Nothing'; }
+
 function memberName(member: Member) { return member.display_name || member.username; }
 function presenceRank(value?: string) { return value === 'online' || value === 'mobile' ? 0 : value === 'dnd' ? 1 : value === 'idle' ? 2 : 3; }
 function presenceStyle(value?: string) { return value === 'dnd' ? styles.presenceDND : value === 'idle' ? styles.presenceIdle : value === 'online' || value === 'mobile' ? styles.presenceOnline : styles.presenceOffline; }
@@ -560,4 +590,5 @@ const styles = StyleSheet.create({
   mediaRoom: {flex: 1}, leaveButton: {borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10}, mediaGrid: {alignItems: 'center', flexGrow: 1, gap: 12, justifyContent: 'center', padding: 12}, mediaVideo: {backgroundColor: '#000', borderRadius: 10, height: 260, maxWidth: 720, width: '100%'}, mediaEmpty: {alignItems: 'center', borderRadius: 12, gap: 10, maxWidth: 420, padding: 30, width: '100%'}, mediaEmptyIcon: {fontSize: 48}, mediaControls: {borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, justifyContent: 'center', padding: 12}, mediaControl: {alignItems: 'center', borderRadius: 22, minWidth: 92, paddingHorizontal: 14, paddingVertical: 12}, mediaError: {color: '#ed4245', paddingHorizontal: 14, textAlign: 'center'},
   callBanner: {alignItems: 'center', borderRadius: 8, flexDirection: 'row', gap: 8, margin: 8, padding: 10}, callAction: {borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9}, directCallStage: {height: 330}, compactMediaRoom: {minHeight: 0}, compactMediaStatus: {fontSize: 12, paddingHorizontal: 12, paddingTop: 6}, compactMediaGrid: {flexGrow: 0, height: 190, justifyContent: 'flex-start'}, compactMediaVideo: {height: 170, width: 260}, compactMediaEmpty: {height: 170, padding: 16, width: 260},
   successBackground: {backgroundColor: '#3ba55d'}, dangerBackground: {backgroundColor: '#ed4245'},
+  settingLabel: {fontSize: 12, fontWeight: '800', marginTop: 18, textTransform: 'uppercase'}, settingOptions: {gap: 8, marginTop: 8}, settingOption: {borderRadius: 8, padding: 11}, settingToggle: {borderRadius: 8, marginTop: 8, padding: 12},
 });

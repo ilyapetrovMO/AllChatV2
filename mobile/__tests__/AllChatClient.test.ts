@@ -255,4 +255,13 @@ describe('AllChatClient', () => {
     const client = new AllChatClient('https://chat.example.test', jest.fn(async () => new Response(null, {status: 204})) as typeof fetch);
     await expect(client.currentCall('session-token')).resolves.toBeUndefined();
   });
+
+  it('updates inherited global and Channel notification settings', async () => {
+    const request = jest.fn(async () => new Response(null, {status: 204}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+    await client.updateNotificationSettings('session-token', {level: 'mentions_only', muted: false, sound_enabled: true});
+    await client.updateChannelNotificationSettings('session-token', 'channel/1', {level: 'default', muted: true});
+    expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/notification-settings', expect.objectContaining({method: 'PUT', body: JSON.stringify({level: 'mentions_only', muted: false, sound_enabled: true})}));
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/channels/channel%2F1/notification-settings', expect.objectContaining({method: 'PUT', body: JSON.stringify({level: 'default', muted: true})}));
+  });
 });

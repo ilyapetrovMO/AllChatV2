@@ -10,3 +10,8 @@ jest.mock('react-native-webrtc', () => {
     RTCView: props => React.createElement(View, props),
   };
 });
+jest.mock('@notifee/react-native', () => ({
+  __esModule: true,
+  default: {requestPermission: jest.fn(), createChannel: jest.fn(), displayNotification: jest.fn()},
+  AndroidImportance: {HIGH: 4}, AuthorizationStatus: {DENIED: 0},
+}));

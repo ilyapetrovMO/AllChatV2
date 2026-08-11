@@ -1,4 +1,4 @@
-import type {Attachment, ChannelState, DirectMessage, Message, MobileBootstrap, SearchPage} from './bootstrap';
+import type {Attachment, ChannelState, DirectMessage, Message, MobileBootstrap, NotificationSetting, SearchPage} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -191,6 +191,14 @@ export class AllChatClient {
       method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify({mode}),
     });
     await this.decode<{mode: string}>(response, 'Could not update your presence.');
+  }
+
+  async updateNotificationSettings(token: string, setting: NotificationSetting): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/notification-settings`, {method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify(setting)}), 'Could not update notification settings.');
+  }
+
+  async updateChannelNotificationSettings(token: string, channelID: string, setting: NotificationSetting): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/channels/${encodeURIComponent(channelID)}/notification-settings`, {method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify(setting)}), 'Could not update Channel notification settings.');
   }
 
   async linkPreview(token: string, url: string): Promise<LinkPreview> {

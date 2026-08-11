@@ -19,6 +19,7 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 
 import {AllChatClient} from './src/client/AllChatClient';
 import {normalizeInstanceURL} from './src/domain/instance';
+import {CommunityScreen} from './src/screens/CommunityScreen';
 import {InstanceAccount, KeychainSessionVault, SessionVault} from './src/session/SessionVault';
 
 const defaultVault = new KeychainSessionVault();
@@ -39,6 +40,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
   const [accounts, setAccounts] = useState<InstanceAccount[]>();
   const [active, setActive] = useState<InstanceAccount>();
   const [adding, setAdding] = useState(false);
+  const [managing, setManaging] = useState(false);
   const [instanceInput, setInstanceInput] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -71,6 +73,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
       setAccounts(next);
       setActive(next[0]);
       setAdding(false);
+      setManaging(false);
       setPassword('');
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not sign in.');
@@ -106,7 +109,11 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
     return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><View style={styles.centered}><ActivityIndicator color={palette.accent} /></View></SafeAreaView>;
   }
 
-  if (active && !adding) {
+  if (active && !adding && !managing) {
+    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><CommunityScreen account={active} onManage={() => setManaging(true)} palette={palette} /></SafeAreaView>;
+  }
+
+  if (active && managing && !adding) {
     const name = active.member.display_name || active.member.username;
     return (
       <SafeAreaView style={shellStyle}>
@@ -130,6 +137,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
             </TouchableOpacity>
           ))}
           {status ? <Text style={[styles.notice, {color: palette.muted}]}>{status}</Text> : null}
+          <TouchableOpacity accessibilityRole="button" onPress={() => setManaging(false)} style={[styles.button, {backgroundColor: palette.accent}]}><Text style={styles.buttonText}>Open Community</Text></TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={() => signOut(active)} style={styles.dangerButton}>
             <Text style={styles.dangerText}>{submitting ? 'Signing out…' : 'Sign out of this Instance'}</Text>
           </TouchableOpacity>
@@ -152,7 +160,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
         <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={signIn} style={[styles.button, {backgroundColor: palette.accent}, submitting && styles.disabled]}>
           {submitting ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>Sign in</Text>}
         </TouchableOpacity>
-        {accounts.length > 0 ? <TouchableOpacity accessibilityRole="button" onPress={() => setAdding(false)} style={styles.cancelButton}><Text style={{color: palette.muted}}>Cancel</Text></TouchableOpacity> : null}
+        {accounts.length > 0 ? <TouchableOpacity accessibilityRole="button" onPress={() => { setAdding(false); setManaging(Boolean(active)); }} style={styles.cancelButton}><Text style={{color: palette.muted}}>Cancel</Text></TouchableOpacity> : null}
       </View>
     </SafeAreaView>
   );

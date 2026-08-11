@@ -1,5 +1,5 @@
-import type {MobileBootstrap, Message, RealtimeEvent} from '../client/bootstrap';
-import type {RealtimeFrame} from '../realtime/RealtimeClient';
+import type {MobileBootstrap, Message} from '../client/bootstrap';
+import type {RealtimeEvent, RealtimeFrame} from '../realtime/RealtimeClient';
 
 export type CommunityState = MobileBootstrap & {needs_refresh: boolean};
 

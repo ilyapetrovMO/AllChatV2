@@ -1,4 +1,4 @@
-import type {MobileBootstrap} from './bootstrap';
+import type {ChannelState, Message, MobileBootstrap} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -61,6 +61,24 @@ export class AllChatClient {
       throw new Error(`Unsupported mobile protocol version: ${bootstrap.version}`);
     }
     return bootstrap;
+  }
+
+  async publishMessage(token: string, conversationID: string, body: string, direct = false): Promise<Message> {
+    const response = await this.request(`${this.instanceURL}/api/v1/${direct ? 'dms' : 'channels'}/${encodeURIComponent(conversationID)}/messages`, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({body}),
+    });
+    return this.decode<Message>(response, 'Could not send the Message.');
+  }
+
+  async updateReadPosition(token: string, conversationID: string, sequence: number, direct = false): Promise<ChannelState> {
+    const response = await this.request(`${this.instanceURL}/api/v1/${direct ? 'dms' : 'channels'}/${encodeURIComponent(conversationID)}/read-position`, {
+      method: 'PUT',
+      headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({sequence}),
+    });
+    return this.decode<ChannelState>(response, 'Could not update the read position.');
   }
 
   private async decode<T>(response: Response, fallback: string): Promise<T> {

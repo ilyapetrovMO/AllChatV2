@@ -81,4 +81,32 @@ describe('AllChatClient', () => {
 
     await expect(client.bootstrap('session-token')).rejects.toThrow('Unsupported mobile protocol version: 2');
   });
+
+  it('publishes Channel and Direct Messages with bearer authentication', async () => {
+    const message = {id: 'message-1', channel_id: 'conversation/1', author_id: 'member-1', author_name: 'Member', sequence: 1, body: 'Hello', created_at: '2030-01-01T00:00:00Z', deleted: false};
+    const request = jest.fn(async () => new Response(JSON.stringify(message), {status: 201}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.publishMessage('session-token', 'conversation/1', 'Hello', true);
+
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/dms/conversation%2F1/messages', {
+      method: 'POST',
+      headers: {Authorization: 'Bearer session-token', 'Content-Type': 'application/json'},
+      body: JSON.stringify({body: 'Hello'}),
+    });
+  });
+
+  it('updates a conversation read position', async () => {
+    const channelState = {channel_id: 'channel-1', read_sequence: 8, last_sequence: 8, unread: 0};
+    const request = jest.fn(async () => new Response(JSON.stringify(channelState), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.updateReadPosition('session-token', 'channel-1', 8);
+
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/channels/channel-1/read-position', {
+      method: 'PUT',
+      headers: {Authorization: 'Bearer session-token', 'Content-Type': 'application/json'},
+      body: JSON.stringify({sequence: 8}),
+    });
+  });
 });

@@ -107,6 +107,7 @@ jobs:
         with:
           msystem: ${{ matrix.msystem }}
           update: true
+          path-type: inherit
           install: ${{ matrix.msys_package }}
       - name: Build native bootstrapper on Linux or macOS
         if: matrix.platform != 'windows'
@@ -131,6 +132,8 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           CC: ${{ matrix.cc }}
         run: |
+          go version
+          "$CC" --version
           version="${GITHUB_REF_NAME#v}"
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"

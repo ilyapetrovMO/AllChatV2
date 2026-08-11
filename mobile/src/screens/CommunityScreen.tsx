@@ -82,7 +82,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   }
 
   if (!community) {
-    return <View style={styles.center}>{error ? <><Text style={[styles.error, {color: '#ed4245'}]}>{error}</Text><TouchableOpacity onPress={onManage}><Text style={{color: palette.accent}}>Manage Instances</Text></TouchableOpacity></> : <ActivityIndicator color={palette.accent} />}</View>;
+    return <View style={styles.center}>{error ? <><Text style={styles.error}>{error}</Text><TouchableOpacity onPress={onManage}><Text style={{color: palette.accent}}>Manage Instances</Text></TouchableOpacity></> : <ActivityIndicator color={palette.accent} />}</View>;
   }
 
   if (!activeID || (!channel && !direct)) {
@@ -90,7 +90,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     return (
       <View style={styles.fill}>
         <View style={[styles.header, {borderBottomColor: palette.border}]}>
-          <View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>{community.community.name}</Text><Text style={{color: status === 'connected' ? '#3ba55d' : palette.muted}}>{status === 'connected' ? 'Connected' : 'Reconnecting…'}</Text></View>
+          <View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>{community.community.name}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Connected' : 'Reconnecting…'}</Text></View>
           <TouchableOpacity accessibilityRole="button" onPress={onManage} style={[styles.headerButton, {borderColor: palette.border}]}><Text style={{color: palette.text}}>Instances</Text></TouchableOpacity>
         </View>
         <FlatList
@@ -114,7 +114,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.fill}>
       <View style={[styles.header, {borderBottomColor: palette.border}]}>
         <TouchableOpacity accessibilityLabel="Back to conversations" onPress={() => setActiveID('')} style={styles.back}><Text style={[styles.backText, {color: palette.accent}]}>‹</Text></TouchableOpacity>
-        <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={{color: status === 'connected' ? '#3ba55d' : palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
+        <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
       </View>
       <FlatList
         contentContainerStyle={styles.messageList}
@@ -124,7 +124,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
       />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
-      {error ? <Text style={[styles.composerError, {color: '#ed4245'}]}>{error}</Text> : null}
+      {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
       <View style={[styles.composer, {borderTopColor: palette.border}]}>
         <TextInput accessibilityLabel="Message" multiline onChangeText={value => { setDraft(value); if (value) realtime.current?.sendTyping(activeID); }} placeholder={`Message ${title}`} placeholderTextColor={palette.placeholder} style={[styles.composerInput, {backgroundColor: palette.field, color: palette.text}]} value={draft} />
         <TouchableOpacity accessibilityLabel="Send Message" disabled={!draft.trim() || sending} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, (!draft.trim() || sending) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
@@ -143,7 +143,7 @@ function unreadFor(state: CommunityState, id: string) { return state.channel_sta
 function typingText(names: string[]) { if (names.length > 3) return 'Several people are typing…'; if (names.length === 1) return `${names[0]} is typing…`; return `${names.join(', ')} are typing…`; }
 
 const styles = StyleSheet.create({
-  fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {fontSize: 15, textAlign: 'center'},
+  fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {color: '#ed4245', fontSize: 15, textAlign: 'center'}, errorColor: {color: '#ed4245'}, connected: {color: '#3ba55d'},
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
   back: {marginRight: 10, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {flexGrow: 1, gap: 14, justifyContent: 'flex-end', padding: 16}, message: {alignSelf: 'flex-start', maxWidth: '88%'}, mine: {alignSelf: 'flex-end'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 3}, messageBody: {fontSize: 16, lineHeight: 22}, time: {fontSize: 11, marginTop: 3}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 16}, composerError: {fontSize: 12, paddingHorizontal: 16, paddingBottom: 4},

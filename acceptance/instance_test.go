@@ -1298,6 +1298,9 @@ func TestAttachmentsPublishSafelyAndRequireMessageAuthorization(t *testing.T) {
 	channelPage := getWithClient(t, client, app.url("/channels/"+channel.ID))
 	channelHTML := readAll(t, channelPage.Body)
 	channelPage.Body.Close()
+	if !strings.Contains(channelHTML, `"/api/v1/attachments?filename="+encodeURIComponent(file.name)`) || strings.Contains(channelHTML, `"X-AllChat-Filename":file.name`) {
+		t.Fatal("web attachment uploader did not URL-encode Unicode filenames")
+	}
 	if channelPage.StatusCode != http.StatusOK || !strings.Contains(channelHTML, `class="message-image"`) || !strings.Contains(channelHTML, `alt="preview.png"`) {
 		t.Fatalf("image Attachment was not rendered inline: status=%d", channelPage.StatusCode)
 	}

@@ -235,9 +235,16 @@ test('Community Member rail appears outside DMs, settings, and Voice Room grids'
   const homeRail = page.locator('.content-shell > .participant-sidebar');
   await expect(homeRail).toBeVisible();
   await expect(homeRail.locator('[data-participant-id]')).toHaveCount(2);
+  await expect(homeRail.locator('[data-member-group]')).toHaveCount(3);
+  await expect(homeRail.locator('[data-member-group="owner"]')).toContainText('visual-owner');
+  await expect(homeRail.locator('[data-member-group="offline"]')).toContainText('visual-member');
+  await page.evaluate(({ownerID, memberID}) => window.updateAllChatMemberPresence({[ownerID]: 'online', [memberID]: 'dnd'}), {ownerID: fixture.ownerMember.id, memberID: fixture.secondMember.id});
+  await expect(homeRail.locator('[data-member-group="online"]')).toContainText('visual-member');
+  await expect(homeRail.locator('[data-member-group="online"] .participant-presence')).toHaveClass(/dnd/);
 
   await page.locator(`a[href="/channels/${fixture.textChannel.id}"]`).click();
   await expect(page.locator('.channel-content .participant-sidebar')).toBeVisible();
+  await expect(page.locator('.channel-content .participant-sidebar [data-member-group]')).toHaveCount(3);
 
   await page.goto(`/channels/${fixture.dm.id}`);
   await expect(page.locator('.participant-sidebar .dm-profile-card')).toBeVisible();

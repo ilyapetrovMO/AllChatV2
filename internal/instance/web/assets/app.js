@@ -77,13 +77,33 @@
   localizeInstants(document);
   new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => { if(node.nodeType !== 1)return;localizeInstants(node); }))).observe(document.documentElement, {subtree:true, childList:true});
   const nameInteractiveMembers = root => root.querySelectorAll?.(".participant-list li, .voice-channel-members li").forEach(item => { item.tabIndex = 0; item.setAttribute("role", "button"); });
-  const updateMemberPresence = presence => document.querySelectorAll("[data-participant-id]").forEach(item => {
-    const state = presence?.[item.dataset.participantId] || "offline", dot = item.querySelector(".participant-presence");
-    if (!dot) return;
-    dot.classList.toggle("online", state === "online");
-    dot.classList.toggle("dnd", state === "dnd");
-    dot.classList.toggle("offline", state !== "online" && state !== "dnd");
-  });
+  const groupMemberSidebar = sidebar => {
+    if (!sidebar || sidebar.querySelector(".dm-profile-card")) return;
+    const initialList = sidebar.querySelector(":scope > .participant-list"), existing = sidebar.querySelector("[data-member-groups]"), source = initialList || existing;
+    const items = [...(source?.querySelectorAll("[data-participant-id]") || [])];
+    let groups = existing;
+    if (!groups) {
+      groups = document.createElement("div"); groups.dataset.memberGroups = ""; groups.className = "member-groups";
+      ["owner", "online", "offline"].forEach(key => { const section=document.createElement("section"),heading=document.createElement("h2"),list=document.createElement("ul");section.className="member-group";section.dataset.memberGroup=key;heading.className="participant-heading";list.className="participant-list";section.append(heading,list);groups.append(section); });
+      sidebar.querySelector(":scope > .participant-heading")?.remove(); initialList?.remove(); sidebar.append(groups);
+    }
+    const buckets = {owner: [], online: [], offline: []};
+    items.forEach(item => { const owner=item.querySelector("small")?.textContent.trim()==="Owner",dot=item.querySelector(".participant-presence"),key=owner?"owner":dot?.classList.contains("online")||dot?.classList.contains("dnd")?"online":"offline";buckets[key].push(item); });
+    const labels = {owner: "OWNER", online: "ONLINE + DND", offline: "OFFLINE"};
+    Object.entries(buckets).forEach(([key,members]) => { const section=groups.querySelector(`[data-member-group="${key}"]`),list=section.querySelector(".participant-list");section.querySelector(".participant-heading").textContent=`${labels[key]} — ${members.length}`;list.append(...members); });
+  };
+  const groupAllMemberSidebars = () => document.querySelectorAll(".participant-sidebar").forEach(groupMemberSidebar);
+  const updateMemberPresence = presence => {
+    document.querySelectorAll("[data-participant-id]").forEach(item => {
+      const state = presence?.[item.dataset.participantId] || "offline", dot = item.querySelector(".participant-presence");
+      if (!dot) return;
+      dot.classList.toggle("online", state === "online");
+      dot.classList.toggle("dnd", state === "dnd");
+      dot.classList.toggle("offline", state !== "online" && state !== "dnd");
+    });
+    groupAllMemberSidebars();
+  };
+  window.updateAllChatMemberPresence = updateMemberPresence;
 	let drawerReturnFocus = null;
 	const mobileBackdrop = () => {
 	  let backdrop=document.querySelector("[data-mobile-drawer-backdrop]");
@@ -140,13 +160,14 @@
         if (member.owner) { const owner = document.createElement("small"); owner.textContent = " Owner"; name.append(owner); }
         avatarWrap.append(avatar, dot); item.append(avatarWrap, name); list.append(item);
       });
-      aside.append(heading, list); main.append(aside); main.classList.add("community-home"); main.dataset.communityMembersInstalled = "true"; nameInteractiveMembers(aside); installMobileDrawers();
+      aside.append(heading, list); main.append(aside); groupMemberSidebar(aside); main.classList.add("community-home"); main.dataset.communityMembersInstalled = "true"; nameInteractiveMembers(aside); installMobileDrawers();
     } catch (_) { delete main.dataset.communityMembersInstalled; }
   };
+  groupAllMemberSidebars();
   nameInteractiveMembers(document);
   installCommunityHomeMembers();
   installMobileDrawers();
-  document.addEventListener("allchat:view-swapped", () => { closeMobileDrawers(); nameInteractiveMembers(document); installCommunityHomeMembers(); installMobileDrawers(); });
+  document.addEventListener("allchat:view-swapped", () => { closeMobileDrawers(); groupAllMemberSidebars(); nameInteractiveMembers(document); installCommunityHomeMembers(); installMobileDrawers(); });
   document.addEventListener("keydown", event => { if ((event.key === "Enter" || event.key === " ") && event.target.matches?.(".participant-list li, .voice-channel-members li")) { event.preventDefault(); event.target.click(); } });
 
   // Channel runtimes are installed by the SPA router without reloading head

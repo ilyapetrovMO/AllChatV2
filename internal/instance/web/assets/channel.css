@@ -105,6 +105,9 @@
 .community-home > .content { min-width: 0; overflow-y: auto; }
 .community-home > .participant-sidebar { grid-column: 2; grid-row: 2; }
 .participant-heading { margin: 6px 10px 10px; color: var(--faint); font-size: .72rem; text-transform: uppercase; }
+.member-groups { display: grid; align-content: start; gap: 14px; }
+.member-group { min-width: 0; }
+.member-group .participant-heading { margin-bottom: 4px; }
 .participant-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .participant-list li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 8px; border-radius: 4px; color: var(--muted); cursor: pointer; }
 .participant-list li:hover { background: var(--bg-hover); color: var(--text); }

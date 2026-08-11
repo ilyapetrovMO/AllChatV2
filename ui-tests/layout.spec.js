@@ -354,6 +354,33 @@ test('composer aligns controls, fills the member rail, and previews removable at
   expect(attachmentUploads).toBe(1);
 });
 
+test('composer accepts pasted files without intercepting ordinary text paste', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const input = page.locator('#message-body');
+  const textPastePrevented = await input.evaluate(element => {
+    const clipboard = new DataTransfer();
+    clipboard.setData('text/plain', 'Pasted message text');
+    const event = new ClipboardEvent('paste', {bubbles: true, cancelable: true, clipboardData: clipboard});
+    element.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(textPastePrevented).toBe(false);
+  const filePastePrevented = await input.evaluate(element => {
+    const clipboard = new DataTransfer();
+    clipboard.items.add(new File([new Uint8Array([137, 80, 78, 71])], 'clipboard-image.png', {type: 'image/png'}));
+    clipboard.items.add(new File([new Uint8Array([79, 103, 103, 83])], 'clipboard-song.ogg', {type: 'audio/ogg'}));
+    const event = new ClipboardEvent('paste', {bubbles: true, cancelable: true, clipboardData: clipboard});
+    element.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(filePastePrevented).toBe(true);
+  const previews = page.locator('[data-attachment-preview]');
+  await expect(previews).toHaveCount(2);
+  await expect(previews.filter({hasText: 'clipboard-image.png'}).locator('img')).toBeVisible();
+  await expect(previews.filter({hasText: 'clipboard-song.ogg'}).locator('.attachment-file-icon')).toHaveText('🎵');
+});
+
 test('incoming audio and video attachments render as players and survive reload', async ({page}) => {
   const sender = await request.newContext({baseURL, storageState: fixture.secondState});
   await authenticate(page);

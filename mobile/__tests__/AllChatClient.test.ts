@@ -19,6 +19,20 @@ describe('AllChatClient', () => {
     }));
   });
 
+  it('reports the HTTP status and plain-text response when native login is unavailable', async () => {
+    const request = jest.fn(async () => new Response('404 page not found', {status: 404}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await expect(client.login('member', 'password', 'Test phone')).rejects.toThrow('Could not sign in. (HTTP 404: 404 page not found)');
+  });
+
+  it('explains transport failures during native login', async () => {
+    const request = jest.fn(async () => { throw new TypeError('Network request failed'); });
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await expect(client.login('member', 'password', 'Test phone')).rejects.toThrow('Could not reach the Instance. Check its address, HTTPS certificate, and your connection.');
+  });
+
   it('uses an explicit bearer token for authenticated requests', async () => {
     const request = jest.fn(async () => new Response(JSON.stringify({id: 'member-1', username: 'member', owner: false}), {status: 200}));
     const client = new AllChatClient('https://chat.example.test', request as typeof fetch);

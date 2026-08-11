@@ -21,11 +21,16 @@ export class AllChatClient {
   constructor(private readonly instanceURL: string, private readonly request: Fetch = fetch) {}
 
   async login(username: string, password: string, deviceName: string): Promise<NativeSession> {
-    const response = await this.request(`${this.instanceURL}/api/v1/auth/native/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-AllChat-Device': deviceName},
-      body: JSON.stringify({username, password}),
-    });
+    let response: Response;
+    try {
+      response = await this.request(`${this.instanceURL}/api/v1/auth/native/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-AllChat-Device': deviceName},
+        body: JSON.stringify({username, password}),
+      });
+    } catch {
+      throw new Error('Could not reach the Instance. Check its address, HTTPS certificate, and your connection.');
+    }
     return this.decode<NativeSession>(response, 'Could not sign in.');
   }
 
@@ -59,10 +64,27 @@ export class AllChatClient {
   }
 
   private async decode<T>(response: Response, fallback: string): Promise<T> {
-    const body = await response.json().catch(() => ({})) as {error?: string};
+    const raw = await response.text().catch(() => '');
+    let body: {error?: string} | undefined;
+    try {
+      body = JSON.parse(raw) as {error?: string};
+    } catch {
+      body = undefined;
+    }
     if (!response.ok) {
-      throw new Error(body.error || fallback);
+      if (body?.error) {
+        throw new Error(body.error);
+      }
+      const detail = readableResponse(raw);
+      throw new Error(`${fallback} (HTTP ${response.status}${detail ? `: ${detail}` : ''})`);
+    }
+    if (!body) {
+      throw new Error(`${fallback} (HTTP ${response.status}: the Instance returned an invalid response.)`);
     }
     return body as T;
   }
+}
+
+function readableResponse(raw: string): string {
+  return raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 180);
 }

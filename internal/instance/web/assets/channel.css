@@ -1,15 +1,19 @@
 .channel-content {
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
   height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-rows: 48px minmax(0, 1fr) auto;
   overflow: hidden;
 }
 .channel-content:has(> .call-banner:not([hidden])) { grid-template-rows: 48px auto minmax(0, 1fr) auto; }
-.conversation-layout { grid-row: 2 / 4; grid-column: 1; display: grid; grid-template-columns: minmax(0, 1fr) 240px; min-height: 0; }
+.conversation-layout { grid-row: 2 / 4; grid-column: 1; display: grid; grid-template-columns: minmax(0, 1fr) 240px; width: 100%; max-width: 100%; min-width: 0; min-height: 0; overflow: hidden; }
 .channel-content:has(> .call-banner:not([hidden])) .conversation-layout { grid-row: 3 / 5; }
 .conversation-layout.search-open { grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
 .conversation-layout.search-open .participant-sidebar { display: none; }
-.conversation-layout > .messages { min-height: 0; overflow-y: auto; padding-bottom: 132px; }
+.conversation-layout > .messages { width: 100%; max-width: 100%; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: 132px; }
 .header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .dm-header-button { position: relative; flex: 0 0 auto; min-width: 34px; min-height: 34px; display: grid; place-items: center; margin-left: auto; padding: 4px 8px; font-size: 1rem; }
 .header-actions .dm-header-button { margin-left: 0; }
@@ -53,10 +57,10 @@
 .community-menu a { padding: 8px 10px; border-radius: 4px; color: var(--text); font-size: .85rem; font-weight: 600; }
 .community-menu a:hover { background: var(--brand); text-decoration: none; }
 .message-attachment { display: block; width: max-content; max-width: 100%; margin-top: 6px; }
-.composer-wrap { position: relative; z-index: 1; grid-row: 3; grid-column: 1; bottom: auto; margin-right: 240px; padding: 0 16px 8px; background: linear-gradient(transparent, var(--bg-main) 18%); }
+.composer-wrap { position: relative; z-index: 1; grid-row: 3; grid-column: 1; width: auto; max-width: 100%; min-width: 0; bottom: auto; margin-right: 240px; padding: 0 16px 8px; overflow: hidden; background: linear-gradient(transparent, var(--bg-main) 18%); }
 .channel-content:has(> .call-banner:not([hidden])) .composer-wrap { grid-row: 4; }
 .conversation-layout.search-open + .composer-wrap { margin-right: min(360px, 32vw); }
-.composer { min-width: 0; min-height: 44px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 10px; background: #383a40; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+.composer { width: 100%; max-width: 100%; min-width: 0; min-height: 44px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 10px; background: #383a40; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
 .composer #message-body { min-width: 0; height: 34px; flex: 1 1 auto; border: 0; padding: 6px 4px; }
 .composer #attachment { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .attachment-button { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; background: var(--muted); color: var(--bg-main); cursor: pointer; font-size: 0; font-weight: 800; line-height: 1; }
@@ -175,12 +179,18 @@
 .presence-choice { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; }
 .member-menu-status { min-height: 0; margin: 0; padding: 0 8px; color: var(--muted); font-size: .72rem; }
 @media (max-width: 760px) {
+  body:has(.channel-content), .app-shell:has(> .channel-content) { height: 100dvh; min-height: 0; overflow: hidden; }
+  .channel-content > .content-header { position: relative; width: 100%; min-width: 0; }
+  .channel-content > .content-header h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .channel-content > .content-header .header-actions { min-width: 0; }
+  .channel-content > .content-header .header-search { display: none; }
   .channel-topic { display: none; }
   .header-search input { width: min(36vw, 180px); }
   .conversation-layout, .conversation-layout.search-open { grid-template-columns: 1fr; }
   .participant-sidebar { display: none; }
   .community-home { grid-template-columns: 1fr; }
   .composer-wrap, .conversation-layout.search-open + .composer-wrap { margin-right: 0; }
+  .message, .message .body, .message-attachment { max-width: 100%; min-width: 0; }
   .member-action-menu { left: auto; right: 0; top: 44px; }
   .search-pane { position: fixed; z-index: 5; inset: 48px 0 0; }
   .message-actions { right: 8px; }

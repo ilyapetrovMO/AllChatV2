@@ -156,6 +156,37 @@ test('narrow layouts do not overflow horizontally', async ({ page }) => {
   expect((await card.boundingBox()).width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
 });
 
+test('mobile conversation header, Messages, and composer stay inside the viewport', async ({ page }) => {
+  await page.setViewportSize({width: 390, height: 720});
+  await page.goto('/login');
+  await page.evaluate(() => {
+    document.body.className = '';
+    document.body.innerHTML = `<div class="app-shell"><main class="content-shell channel-content">
+      <header class="content-header"><button class="mobile-menu">☰</button><span class="hash">#</span><h1>A very long conversation name</h1><div class="header-actions"><button class="notification-bell">🔔</button><form class="header-search"><input value="search"></form><button class="mobile-members">👥</button></div></header>
+      <div class="conversation-layout"><section class="messages"><article class="message"><span class="message-avatar">A</span><strong>Member</strong><span class="body">${'unbroken-message-content'.repeat(30)}</span></article></section><aside class="participant-sidebar"></aside></div>
+      <div class="composer-wrap"><form class="composer"><button class="attachment-button"></button><input id="message-body" value="draft"><button id="composer-submit">Send</button></form></div>
+    </main></div>`;
+  });
+  await page.addStyleTag({url: '/assets/app.css'});
+  await page.addStyleTag({url: '/assets/channel.css'});
+  const geometry = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const right = selector => document.querySelector(selector).getBoundingClientRect().right;
+    return {
+      viewport,
+      documentWidth: document.documentElement.scrollWidth,
+      channel: right('.channel-content'),
+      message: right('.message'),
+      body: right('.message .body'),
+      composer: right('.composer'),
+      headerTop: document.querySelector('.content-header').getBoundingClientRect().top,
+    };
+  });
+  expect(geometry.documentWidth).toBe(geometry.viewport);
+  for (const key of ['channel', 'message', 'body', 'composer']) expect(geometry[key]).toBeLessThanOrEqual(geometry.viewport);
+  expect(geometry.headerTop).toBe(0);
+});
+
 test('reduced motion disables interface transitions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/login');

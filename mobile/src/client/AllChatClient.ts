@@ -20,6 +20,7 @@ export type LinkPreview = {url: string; site_name?: string; title?: string; desc
 export type Report = {id: string; reporter_id: string; target_member_id?: string; target_message_id?: string; reason: string; status: string; created_at: string; outcome?: string};
 export type ModerationAction = 'warn' | 'timeout' | 'suspend' | 'kick';
 export type DirectCall = {id: string; direct_message_id: string; caller_id: string; recipient_id: string; state: 'ringing' | 'accepted' | 'declined' | 'ended' | string; created_at: string; expires_at?: string; finished_at?: string};
+export type SoundboardSound = {id: string; name: string; emoji?: string; content_type: string; size: number; duration_ms: number; position: number; audio_url: string};
 
 type Fetch = typeof fetch;
 
@@ -222,6 +223,11 @@ export class AllChatClient {
   async callAction(token: string, callID: string, action: 'accept' | 'decline' | 'end'): Promise<DirectCall> {
     const response = await this.request(`${this.instanceURL}/api/v1/calls/${encodeURIComponent(callID)}/${action}`, {method: 'POST', headers: {Authorization: `Bearer ${token}`}});
     return this.decode<DirectCall>(response, `Could not ${action} the Call.`);
+  }
+
+  async soundboard(token: string): Promise<SoundboardSound[]> {
+    const response = await this.request(`${this.instanceURL}/api/v1/soundboard`, {headers: {Authorization: `Bearer ${token}`}});
+    return (await this.decode<{sounds: SoundboardSound[]}>(response, 'Could not load the soundboard.')).sounds;
   }
 
   async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {

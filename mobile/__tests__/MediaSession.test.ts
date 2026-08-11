@@ -52,4 +52,12 @@ describe('MediaSession', () => {
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({type: 'mute-state', muted: true});
     session.stop();
   });
+
+  it('sends soundboard playback through media signaling', async () => {
+    const {session, socket} = harness();
+    await session.start(); socket.onopen?.(); socket.send.mockClear();
+    session.playSound('sound-1');
+    expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({type: 'soundboard-play', sound_id: 'sound-1'});
+    session.stop();
+  });
 });

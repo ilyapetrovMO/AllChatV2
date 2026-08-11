@@ -3,7 +3,7 @@ import {mediaDevices, MediaStream, RTCPeerConnection, RTCSessionDescription} fro
 export type MediaStatus = 'idle' | 'connecting' | 'connected' | 'recovering' | 'failed';
 export type RemoteMedia = {id: string; stream: MediaStream; kind: 'audio' | 'video'};
 type SocketLike = {readyState: number; onopen: null | (() => void); onmessage: null | ((event: {data: string}) => void); onerror: null | (() => void); onclose: null | (() => void); send(value: string): void; close(): void};
-type MediaFrame = {type: string; code?: string; error?: string; sdp?: object; candidate?: object; resume_token?: string};
+type MediaFrame = {type: string; code?: string; error?: string; sdp?: object; candidate?: object; resume_token?: string; sound?: {id: string; name: string; emoji?: string; audio_url: string}};
 type IceServer = {urls: string | string[]; username?: string; credential?: string};
 type PeerConfiguration = {iceServers: IceServer[]};
 
@@ -11,6 +11,7 @@ export type MediaSessionOptions = {
   instanceURL: string; token: string; roomID: string;
   onStatus?(status: MediaStatus, error?: Error): void;
   onRemote?(media: RemoteMedia[]): void;
+  onFrame?(frame: MediaFrame): void;
   fetchICE?(): Promise<IceServer[]>;
   createPeer?(configuration: PeerConfiguration): RTCPeerConnection;
   createSocket?(url: string, token: string): SocketLike;
@@ -38,6 +39,7 @@ export class MediaSession {
   }
 
   setMuted(muted: boolean): void { this.local?.getAudioTracks().forEach(track => { track.enabled = !muted; }); this.send({type: 'mute-state', muted}); }
+  playSound(soundID: string): void { this.send({type: 'soundboard-play', sound_id: soundID}); }
 
   async setCamera(enabled: boolean): Promise<void> {
     if (!this.peer || !this.local) throw new Error('Media Session is not connected.');
@@ -81,6 +83,7 @@ export class MediaSession {
     if (frame.type === 'answer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); if (frame.resume_token) this.resumeToken = frame.resume_token; this.retry = 0; this.options.onStatus?.('connected'); return; }
     if (frame.type === 'candidate' && frame.candidate) { await peer.addIceCandidate(frame.candidate as never); return; }
     if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
+    else this.options.onFrame?.(frame);
   }
 
   private async renegotiate() { if (!this.peer) return; const offer = await this.peer.createOffer(); await this.peer.setLocalDescription(offer); this.send({type: 'offer', sdp: this.peer.localDescription}); }

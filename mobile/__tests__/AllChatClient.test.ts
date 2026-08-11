@@ -264,4 +264,10 @@ describe('AllChatClient', () => {
     expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/notification-settings', expect.objectContaining({method: 'PUT', body: JSON.stringify({level: 'mentions_only', muted: false, sound_enabled: true})}));
     expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/channels/channel%2F1/notification-settings', expect.objectContaining({method: 'PUT', body: JSON.stringify({level: 'default', muted: true})}));
   });
+
+  it('loads the permitted soundboard', async () => {
+    const request = jest.fn(async () => new Response(JSON.stringify({sounds: [{id: 'sound-1', name: 'Alert', content_type: 'audio/mpeg', size: 100, duration_ms: 500, position: 0, audio_url: '/api/v1/soundboard/sound-1/audio'}]}), {status: 200}));
+    const sounds = await new AllChatClient('https://chat.example.test', request as typeof fetch).soundboard('session-token');
+    expect(sounds[0].name).toBe('Alert');
+  });
 });

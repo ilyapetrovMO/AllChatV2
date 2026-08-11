@@ -9,6 +9,7 @@ import Video from 'react-native-video';
 import {AllChatClient} from '../client/AllChatClient';
 import type {LinkPreview, Member} from '../client/AllChatClient';
 import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
+import {KeychainConversationCache} from '../cache/ConversationCache';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import type {InstanceAccount} from '../session/SessionVault';
 import {communityStateFromBootstrap, reduceRealtimeFrame, type CommunityState} from '../state/CommunityState';
@@ -36,15 +37,18 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [profileMember, setProfileMember] = useState<Member>();
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
+  const cache = useMemo(() => new KeychainConversationCache(), []);
 
   useEffect(() => {
     let mounted = true;
+    let retry: ReturnType<typeof setTimeout> | undefined;
     async function synchronize() {
       try {
         const bootstrap = await client.bootstrap(account.session_token);
         if (!mounted) return;
         setCommunity(communityStateFromBootstrap(bootstrap));
         setError('');
+        if (retry) clearTimeout(retry);
         const stream = new RealtimeClient(account.instance_url, account.session_token, {
           onStatus: setStatus,
           onFrame: frame => {
@@ -59,12 +63,22 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         realtime.current = stream;
         stream.start(bootstrap.cursor);
       } catch (caught) {
-        if (mounted) setError(caught instanceof Error ? caught.message : 'Could not synchronize the Instance.');
+        if (!mounted) return;
+        const cached = await cache.load(account.instance_url, account.member.id).catch(() => undefined);
+        if (cached) setCommunity(current => current || communityStateFromBootstrap(cached));
+        setError(cached ? 'Showing cached Messages while reconnecting…' : caught instanceof Error ? caught.message : 'Could not synchronize the Instance.');
+        retry = setTimeout(() => synchronize().catch(() => {}), 5000);
       }
     }
     synchronize().catch(() => {});
-    return () => { mounted = false; realtime.current?.stop(); realtime.current = null; };
-  }, [account.instance_url, account.session_token, client]);
+    return () => { mounted = false; if (retry) clearTimeout(retry); realtime.current?.stop(); realtime.current = null; };
+  }, [account.instance_url, account.member.id, account.session_token, cache, client]);
+
+  useEffect(() => {
+    if (!community) return;
+    const timer = setTimeout(() => cache.save(account.instance_url, account.member.id, community).catch(() => {}), 1000);
+    return () => clearTimeout(timer);
+  }, [account.instance_url, account.member.id, cache, community]);
 
   const direct = community?.direct_messages.find(item => item.id === activeID);
   const channel = community?.channels.find(item => item.id === activeID);

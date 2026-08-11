@@ -117,6 +117,11 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+    // React Native leaves animated WebP decoding optional. Keep this version in
+    // sync with node_modules/react-native/gradle/libs.versions.toml.
+    implementation("com.facebook.fresco:animated-webp:3.6.0")
+    implementation("com.facebook.fresco:webpsupport:3.6.0")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

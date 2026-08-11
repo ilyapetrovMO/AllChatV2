@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -41,6 +42,32 @@ func TestConfigDefaultsToLatestRelease(t *testing.T) {
 	}
 	if cfg.ReleaseRef() != "latest" {
 		t.Fatalf("release ref=%q", cfg.ReleaseRef())
+	}
+}
+
+func TestResolvePublicIPUsesLiteralAddress(t *testing.T) {
+	got, err := ResolvePublicIP(context.Background(), "192.0.2.20")
+	if err != nil || got != "192.0.2.20" {
+		t.Fatalf("IP=%q err=%v", got, err)
+	}
+}
+
+func TestResolvePublicIPPrefersPublicIPv4FromHostname(t *testing.T) {
+	lookup := func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("10.0.0.2")}, {IP: net.ParseIP("2001:db8::20")}, {IP: net.ParseIP("192.0.2.20")}}, nil
+	}
+	got, err := resolvePublicIP(context.Background(), "host.example.test", lookup)
+	if err != nil || got != "192.0.2.20" {
+		t.Fatalf("IP=%q err=%v", got, err)
+	}
+}
+
+func TestResolvePublicIPRejectsPrivateDNSResults(t *testing.T) {
+	lookup := func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("10.0.0.2")}, {IP: net.ParseIP("127.0.0.1")}}, nil
+	}
+	if _, err := resolvePublicIP(context.Background(), "host.example.test", lookup); err == nil {
+		t.Fatal("accepted a hostname with no public address")
 	}
 }
 

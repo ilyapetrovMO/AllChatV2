@@ -26,9 +26,6 @@ import (
 const (
 	authPassword  = "Password"
 	authKey       = "SSH private key"
-	accessIP      = "Use the server IP"
-	accessDomain  = "Use my domain name"
-	accessDuck    = "Create a free DuckDNS address"
 	releaseLatest = "Latest stable release (recommended)"
 	releaseExact  = "Choose a specific version"
 )
@@ -82,48 +79,8 @@ func main() {
 	host.SetPlaceHolder("203.0.113.10 or vps.example.com")
 	port := widget.NewEntry()
 	port.SetText("22")
-	publicIP := widget.NewEntry()
-	publicIP.SetPlaceHolder("Public IPv4 or IPv6 address")
-	host.OnChanged = func(value string) {
-		if publicIP.Text == "" && net.ParseIP(strings.TrimSpace(value)) != nil {
-			publicIP.SetText(strings.TrimSpace(value))
-		}
-	}
-
-	accessMode := widget.NewRadioGroup([]string{accessIP, accessDomain, accessDuck}, nil)
-	hostname := widget.NewEntry()
-	hostname.SetPlaceHolder("chat.example.com")
 	email := widget.NewEntry()
 	email.SetPlaceHolder("Optional certificate expiry contact")
-	duckSubdomain := widget.NewEntry()
-	duckSubdomain.SetPlaceHolder("Choose a unique subdomain")
-	duckToken := widget.NewPasswordEntry()
-	domainFields := container.NewVBox(widget.NewForm(
-		widget.NewFormItem("Domain name", hostname),
-	))
-	duckFields := container.NewVBox(
-		widget.NewLabel("Create an account and token at duckdns.org, then enter them below."),
-		widget.NewForm(
-			widget.NewFormItem("Subdomain", duckSubdomain),
-			widget.NewFormItem("DuckDNS token", duckToken),
-		),
-	)
-	directIPHint := widget.NewLabel("AllChat will request a certificate for the server's public IP. No domain is required.")
-	directIPHint.Wrapping = fyne.TextWrapWord
-	accessMode.OnChanged = func(value string) {
-		directIPHint.Hide()
-		domainFields.Hide()
-		duckFields.Hide()
-		switch value {
-		case accessDomain:
-			domainFields.Show()
-		case accessDuck:
-			duckFields.Show()
-		default:
-			directIPHint.Show()
-		}
-	}
-	accessMode.SetSelected(accessIP)
 
 	releaseMode := widget.NewRadioGroup([]string{releaseLatest, releaseExact}, nil)
 	release := widget.NewEntry()
@@ -142,10 +99,15 @@ func main() {
 	stepProgress := widget.NewLabel("")
 	errorLabel := widget.NewLabel("")
 	errorLabel.Wrapping = fyne.TextWrapWord
-	status := widget.NewMultiLineEntry()
-	status.Disable()
-	status.SetMinRowsVisible(7)
-	status.Hide()
+	status := widget.NewLabel("")
+	status.Wrapping = fyne.TextWrapWord
+	statusScroll := container.NewVScroll(status)
+	statusScroll.SetMinSize(fyne.NewSize(0, 160))
+	statusScroll.Hide()
+	successMessage := widget.NewLabel("The server is healthy and ready. Community Owner setup has been opened in your browser.")
+	successMessage.Wrapping = fyne.TextWrapWord
+	successCard := widget.NewCard("✓ Installation complete", "AllChat is ready to use", successMessage)
+	successCard.Hide()
 	review := widget.NewLabel("")
 	review.Wrapping = fyne.TextWrapWord
 
@@ -159,15 +121,12 @@ func main() {
 		page("How do you sign in to the VPS?", "Use the same account and authentication method you use when connecting to the server with SSH.",
 			widget.NewForm(widget.NewFormItem("Username", user)), authMode, passwordFields, keyFields,
 			widget.NewSeparator(), widget.NewLabel("Privilege escalation"), widget.NewForm(widget.NewFormItem("Sudo password", sudoPassword))),
-		page("Which server should AllChat use?", "Enter the VPS address supplied by your hosting provider. The public IP is used for voice traffic and firewall configuration.",
-			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Public IP", publicIP)),
+		page("Which server should AllChat use?", "Enter the VPS address supplied by your hosting provider. AllChat will automatically resolve its public IP for voice traffic and firewall configuration.",
+			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Certificate email", email)),
 			widget.NewLabel("Supported servers: Debian 12+ and Ubuntu 22.04+. SSH, HTTP, HTTPS, and media ports must be reachable.")),
-		page("How should people open AllChat?", "Choose a public address. You can use the server IP, your own domain, or a free DuckDNS subdomain.",
-			accessMode, directIPHint, domainFields, duckFields,
-			widget.NewForm(widget.NewFormItem("Certificate email", email))),
 		page("Which AllChat version should be installed?", "The latest stable release is the best choice for most installations. Choose a tag only when you need a particular version.",
 			releaseMode, releaseFields),
-		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", review, status),
+		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", review, successCard, statusScroll),
 	}
 	stack := container.NewStack(pages...)
 	for index := 1; index < len(pages); index++ {
@@ -179,26 +138,22 @@ func main() {
 		if err != nil {
 			return bootstrap.Config{}, fmt.Errorf("SSH port must be a number")
 		}
-		tlsMode := bootstrap.TLSDirectIP
-		if accessMode.Selected == accessDomain {
-			tlsMode = bootstrap.TLSHostname
-		} else if accessMode.Selected == accessDuck {
-			tlsMode = bootstrap.TLSDuckDNS
+		serverAddress := strings.Trim(strings.TrimSpace(host.Text), "[]")
+		tlsMode := bootstrap.TLSHostname
+		if net.ParseIP(serverAddress) != nil {
+			tlsMode = bootstrap.TLSDirectIP
 		}
 		releaseTag := ""
 		if releaseMode.Selected == releaseExact {
 			releaseTag = strings.TrimSpace(release.Text)
 		}
 		cfg := bootstrap.Config{
-			SSHHost: strings.TrimSpace(host.Text), SSHPort: sshPort, SSHUser: strings.TrimSpace(user.Text),
-			SudoPassword: sudoPassword.Text, PublicIP: strings.TrimSpace(publicIP.Text), TLSMode: tlsMode,
+			SSHHost: serverAddress, SSHPort: sshPort, SSHUser: strings.TrimSpace(user.Text),
+			SudoPassword: sudoPassword.Text, TLSMode: tlsMode,
 			ACMEEmail: strings.TrimSpace(email.Text), Release: releaseTag,
 		}
 		if tlsMode == bootstrap.TLSHostname {
-			cfg.Hostname = strings.TrimSpace(hostname.Text)
-		} else if tlsMode == bootstrap.TLSDuckDNS {
-			cfg.DuckSubdomain = strings.TrimSpace(duckSubdomain.Text)
-			cfg.DuckToken = duckToken.Text
+			cfg.Hostname = serverAddress
 		}
 		return cfg, nil
 	}
@@ -233,7 +188,7 @@ func main() {
 		current = index
 		pages[current].Show()
 		stepProgress.SetText(fmt.Sprintf("Step %d of %d", current+1, len(pages)))
-		stepHeading.SetText([]string{"VPS login", "Server", "Public address", "Version", "Review"}[current])
+		stepHeading.SetText([]string{"VPS login", "Server", "Version", "Review"}[current])
 		errorLabel.SetText("")
 		if current == len(pages)-1 {
 			cfg, _ := config()
@@ -241,7 +196,11 @@ func main() {
 			if version == "" {
 				version = "Latest stable release"
 			}
-			review.SetText(fmt.Sprintf("Server: %s@%s:%d\nPublic URL: %s\nVersion: %s", cfg.SSHUser, cfg.SSHHost, cfg.SSHPort, cfg.BaseURL(), version))
+			publicURL := cfg.BaseURL()
+			if cfg.TLSMode == bootstrap.TLSDirectIP {
+				publicURL = "Derived from the server IP during installation"
+			}
+			review.SetText(fmt.Sprintf("Server: %s@%s:%d\nPublic URL: %s\nVersion: %s", cfg.SSHUser, cfg.SSHHost, cfg.SSHPort, publicURL, version))
 			next.Hide()
 			install.Show()
 		} else {
@@ -270,16 +229,12 @@ func main() {
 			if err != nil || sshPort < 1 || sshPort > 65535 {
 				return fmt.Errorf("SSH port must be between 1 and 65535")
 			}
-			ip := net.ParseIP(strings.TrimSpace(publicIP.Text))
-			if ip == nil || ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-				return fmt.Errorf("enter the VPS's public routable IP")
-			}
-		case 2, 3:
+		case 2:
 			cfg, err := config()
 			if err != nil {
 				return err
 			}
-			return cfg.Validate()
+			return cfg.ValidateBeforePublicIP()
 		}
 		return nil
 	}
@@ -296,12 +251,16 @@ func main() {
 		showStep(current + 1)
 	}
 
-	appendStatus := func(line string) { fyne.Do(func() { status.SetText(strings.TrimSpace(status.Text + "\n" + line)) }) }
+	statusText := ""
+	appendStatus := func(line string) {
+		fyne.Do(func() {
+			statusText = strings.TrimSpace(statusText + "\n" + line)
+			status.SetText(statusText)
+			statusScroll.ScrollToBottom()
+		})
+	}
 	install.OnTapped = func() {
 		cfg, err := config()
-		if err == nil {
-			err = cfg.Validate()
-		}
 		var creds bootstrap.SSHCredentials
 		if err == nil {
 			creds, err = credentials()
@@ -312,10 +271,28 @@ func main() {
 		}
 		install.Disable()
 		back.Disable()
+		successCard.Hide()
+		statusText = ""
 		status.SetText("")
-		status.Show()
+		statusScroll.Show()
 		go func() {
-			defer fyne.Do(func() { install.Enable(); back.Enable() })
+			completed := false
+			defer fyne.Do(func() {
+				back.Enable()
+				if !completed {
+					install.Enable()
+				}
+			})
+			appendStatus("Resolving the VPS public IP…")
+			cfg.PublicIP, err = bootstrap.ResolvePublicIP(context.Background(), cfg.SSHHost)
+			if err == nil {
+				err = cfg.Validate()
+			}
+			if err != nil {
+				appendStatus("Error: " + err.Error())
+				return
+			}
+			appendStatus("Using public IP " + cfg.PublicIP)
 			configDir, err := os.UserConfigDir()
 			if err != nil {
 				appendStatus("Error locating configuration directory: " + err.Error())
@@ -354,9 +331,18 @@ func main() {
 			}
 			appendStatus("Instance is ready. Opening Community Owner setup…")
 			location, err := url.Parse(link)
-			if err == nil {
-				fyne.Do(func() { _ = a.OpenURL(location) })
+			if err != nil {
+				appendStatus("Error opening Community Owner setup: " + err.Error())
+				return
 			}
+			completed = true
+			fyne.Do(func() {
+				successMessage.SetText("The server passed its health checks and is ready. Community Owner setup has been opened in your browser.\n\n" + link)
+				successCard.Show()
+				install.SetText("Installation complete")
+				install.Disable()
+				_ = a.OpenURL(location)
+			})
 		}()
 	}
 

@@ -2,6 +2,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/mail"
@@ -37,14 +38,23 @@ var releaseTag = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
 var duckToken = regexp.MustCompile(`^[A-Za-z0-9-]{16,128}$`)
 
 func (c Config) Validate() error {
+	if err := c.ValidateBeforePublicIP(); err != nil {
+		return err
+	}
+	if !isPublicRoutableIP(net.ParseIP(strings.TrimSpace(c.PublicIP))) {
+		return fmt.Errorf("a public routable Instance IP is required")
+	}
+	return nil
+}
+
+// ValidateBeforePublicIP checks user-supplied configuration before the VPS
+// address has been resolved to the public IP used by media services.
+func (c Config) ValidateBeforePublicIP() error {
 	if strings.TrimSpace(c.SSHHost) == "" || strings.TrimSpace(c.SSHUser) == "" {
 		return fmt.Errorf("SSH host and user are required")
 	}
 	if c.SSHPort < 1 || c.SSHPort > 65535 {
 		return fmt.Errorf("SSH port must be between 1 and 65535")
-	}
-	if ip := net.ParseIP(strings.TrimSpace(c.PublicIP)); ip == nil || ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-		return fmt.Errorf("a public routable Instance IP is required")
 	}
 	if c.Release != "" && !releaseTag.MatchString(c.Release) {
 		return fmt.Errorf("release must be a semantic tag such as v1.2.3")
@@ -72,6 +82,41 @@ func (c Config) Validate() error {
 		return fmt.Errorf("TLS mode is invalid")
 	}
 	return nil
+}
+
+// ResolvePublicIP derives the media-facing address from the SSH server address.
+func ResolvePublicIP(ctx context.Context, host string) (string, error) {
+	return resolvePublicIP(ctx, strings.Trim(strings.TrimSpace(host), "[]"), net.DefaultResolver.LookupIPAddr)
+}
+
+func resolvePublicIP(ctx context.Context, host string, lookup func(context.Context, string) ([]net.IPAddr, error)) (string, error) {
+	if ip := net.ParseIP(host); isPublicRoutableIP(ip) {
+		return ip.String(), nil
+	}
+	addresses, err := lookup(ctx, host)
+	if err != nil {
+		return "", fmt.Errorf("resolve VPS address %q: %w", host, err)
+	}
+	var ipv6 net.IP
+	for _, address := range addresses {
+		if !isPublicRoutableIP(address.IP) {
+			continue
+		}
+		if address.IP.To4() != nil {
+			return address.IP.String(), nil
+		}
+		if ipv6 == nil {
+			ipv6 = address.IP
+		}
+	}
+	if ipv6 != nil {
+		return ipv6.String(), nil
+	}
+	return "", fmt.Errorf("VPS address %q does not resolve to a public IP", host)
+}
+
+func isPublicRoutableIP(ip net.IP) bool {
+	return ip != nil && ip.IsGlobalUnicast() && !ip.IsPrivate()
 }
 
 // ReleaseRef returns the GitHub release selector used for downloads. An empty

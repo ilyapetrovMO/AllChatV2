@@ -56,6 +56,17 @@
 (() => {
   "use strict";
 
+  const viewportMeta = document.querySelector('meta[name="viewport"]');
+  if (viewportMeta && !viewportMeta.content.includes("interactive-widget=")) viewportMeta.content += ",interactive-widget=resizes-content";
+  const syncVisualViewport = height => {
+    const value = Number(height ?? window.visualViewport?.height ?? window.innerHeight);
+    if (Number.isFinite(value) && value > 0) document.documentElement.style.setProperty("--allchat-visual-height", `${Math.round(value)}px`);
+  };
+  window.syncAllChatVisualViewport = syncVisualViewport;
+  syncVisualViewport();
+  window.visualViewport?.addEventListener("resize", () => syncVisualViewport(), {passive: true});
+  window.addEventListener("orientationchange", () => syncVisualViewport(), {passive: true});
+
   const notificationCenterReady = import("/assets/notification-service.js").then(() => window.installAllChatNotificationCenter?.()).catch(() => null);
 
   // Keep user-facing strings and instant formatting behind one small seam so

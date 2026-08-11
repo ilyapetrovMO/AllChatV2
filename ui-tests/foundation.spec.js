@@ -187,6 +187,29 @@ test('mobile conversation header, Messages, and composer stay inside the viewpor
   expect(geometry.headerTop).toBe(0);
 });
 
+test('mobile composer follows the visual viewport when the keyboard resizes it', async ({ page }) => {
+  await page.setViewportSize({width: 390, height: 720});
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/app.js'});
+  await page.waitForFunction(() => typeof window.syncAllChatVisualViewport === 'function');
+  await page.evaluate(() => {
+    document.body.className = '';
+    document.body.innerHTML = '<div class="app-shell"><main class="channel-content"><header class="content-header">Conversation</header><div class="conversation-layout"><section class="messages"></section></div><div class="composer-wrap"><form class="composer"><input id="message-body"></form></div></main></div>';
+  });
+  await page.addStyleTag({url: '/assets/channel.css'});
+  const result = await page.evaluate(() => {
+    window.syncAllChatVisualViewport(418);
+    return {
+      height: document.documentElement.style.getPropertyValue('--allchat-visual-height'),
+      channelHeight: document.querySelector('.channel-content').getBoundingClientRect().height,
+      viewport: document.querySelector('meta[name="viewport"]')?.content || '',
+    };
+  });
+  expect(result.height).toBe('418px');
+  expect(result.channelHeight).toBe(418);
+  expect(result.viewport).toContain('interactive-widget=resizes-content');
+});
+
 test('reduced motion disables interface transitions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/login');

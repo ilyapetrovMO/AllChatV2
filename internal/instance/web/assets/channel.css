@@ -71,10 +71,10 @@
 .composer #message-body { min-width: 0; height: 34px; flex: 1 1 auto; border: 0; padding: 6px 4px; }
 .composer #attachment { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .attachment-button { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; background: var(--muted); color: var(--bg-main); cursor: pointer; font-size: 0; font-weight: 800; line-height: 1; }
-.attachment-button::before { content: "+"; font-size: 1.35rem; line-height: 1; transform: translateY(-1px); }
+.attachment-button::before { content: ""; width: 14px; height: 14px; background: linear-gradient(currentColor,currentColor) center/14px 2px no-repeat,linear-gradient(currentColor,currentColor) center/2px 14px no-repeat; }
 .attachment-button:hover { background: var(--text); }
 .composer #composer-submit { display: grid; place-items: center; width: 34px; height: 34px; min-height: 34px; flex: 0 0 auto; padding: 0; border-radius: 50%; font-size: 0; }
-.composer #composer-submit::before { content: "➤"; font-size: .9rem; line-height: 1; transform: translateX(1px); }
+.composer #composer-submit::before { content: ""; width: 15px; height: 15px; background: currentColor; clip-path: polygon(4% 5%,96% 50%,4% 95%,22% 58%,62% 50%,22% 42%); }
 .attachment-preview-list { display: flex; gap: 8px; min-width: 0; overflow-x: auto; padding: 8px 8px 6px; background: var(--bg-main); }
 .attachment-preview-list[hidden] { display: none; }
 .attachment-preview { position: relative; display: grid; grid-template-columns: 42px minmax(80px, 150px) 24px; align-items: center; gap: 8px; min-width: 190px; height: 58px; padding: 7px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-sidebar); box-shadow: 0 1px 2px rgba(0,0,0,.15); }

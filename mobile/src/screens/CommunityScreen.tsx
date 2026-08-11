@@ -3,7 +3,7 @@ import {
   ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Linking, Modal, Platform, StyleSheet,
   ScrollView, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import {errorCodes, isErrorWithCode, pick, type DocumentPickerResponse} from '@react-native-documents/picker';
+import {errorCodes, isErrorWithCode, pick, types, type DocumentPickerResponse} from '@react-native-documents/picker';
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
@@ -219,7 +219,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
           renderItem={({item}) => <TouchableOpacity onPress={() => openConversation(item.id, item.direct)} style={[styles.conversation, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.conversationName, {color: palette.text}]}>{item.name}</Text>{item.unread > 0 ? <Text style={styles.badge}>{item.unread}</Text> : null}</TouchableOpacity>}
         />
         <MembersPanel busy={panelBusy} currentMemberID={community.member.id} members={community.members} onClose={() => setMembersOpen(false)} onOpenProfile={member => { setMembersOpen(false); setProfileMember(member); }} open={membersOpen} palette={palette} presence={community.presence} />
-        <MemberProfile client={client} member={profileMember} onClose={() => setProfileMember(undefined)} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
+        <MemberProfile client={client} instanceURL={account.instance_url} member={profileMember} onClose={() => setProfileMember(undefined)} onProfileUpdated={updated => { setProfileMember(updated); setCommunity(value => value ? {...value, member: value.member.id === updated.id ? updated : value.member, members: value.members.map(item => item.id === updated.id ? updated : item)} : value); }} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
       </View>
     );
   }
@@ -377,15 +377,57 @@ function MembersPanel({busy, currentMemberID, members, onClose, onOpenProfile, o
   </Modal>;
 }
 
-function MemberProfile({client, member, onClose, onStartDM, palette, self, token}: {client: AllChatClient; member?: Member; onClose(): void; onStartDM(member: Member): void; palette: Palette; self: boolean; token: string}) {
+function MemberProfile({client, instanceURL, member, onClose, onProfileUpdated, onStartDM, palette, self, token}: {client: AllChatClient; instanceURL: string; member?: Member; onClose(): void; onProfileUpdated(member: Member): void; onStartDM(member: Member): void; palette: Palette; self: boolean; token: string}) {
   const [reporting, setReporting] = useState(false); const [reason, setReason] = useState(''); const [status, setStatus] = useState('');
+  const [username, setUsername] = useState(''); const [profileDisplayName, setProfileDisplayName] = useState(''); const [saving, setSaving] = useState(false); const [avatarVersion, setAvatarVersion] = useState(0);
+  useEffect(() => { setUsername(member?.username || ''); setProfileDisplayName(member?.display_name || ''); setStatus(''); setReporting(false); }, [member?.display_name, member?.id, member?.username]);
   if (!member) return null;
   async function report() {
     if (!reason.trim()) return;
     try { await client.reportMember(token, member!.id, reason.trim()); setStatus('Report submitted.'); setReporting(false); setReason(''); }
     catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not submit the report.'); }
   }
-  return <Modal animationType="fade" onRequestClose={onClose} transparent visible><View style={styles.profileBackdrop}><View style={[styles.profileCard, {backgroundColor: palette.background}]}><Text style={[styles.profileAvatar, {backgroundColor: palette.field, color: palette.text}]}>{memberName(member).slice(0, 1).toUpperCase()}</Text><Text style={[styles.profileName, {color: palette.text}]}>{memberName(member)}</Text><Text style={{color: palette.muted}}>@{member.username}{member.owner ? ' · Owner' : ''}</Text>{status ? <Text style={[styles.profileStatus, {color: palette.muted}]}>{status}</Text> : null}{!self && reporting ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="What happened?" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><TouchableOpacity disabled={!reason.trim()} onPress={report} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Submit report</Text></TouchableOpacity></> : !self ? <><TouchableOpacity onPress={() => onStartDM(member)} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Message</Text></TouchableOpacity><TouchableOpacity onPress={() => setReporting(true)} style={styles.profileAction}><Text style={styles.dangerText}>Report Member</Text></TouchableOpacity></> : null}<TouchableOpacity onPress={onClose} style={styles.profileAction}><Text style={{color: palette.text}}>Close</Text></TouchableOpacity></View></View></Modal>;
+  async function saveProfile() {
+    if (!username.trim() || saving) return;
+    setSaving(true); setStatus('');
+    try { const updated = await client.updateProfile(token, username.trim(), profileDisplayName.trim()); onProfileUpdated(updated); setStatus('Profile updated.'); }
+    catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not update your profile.'); }
+    finally { setSaving(false); }
+  }
+  async function chooseAvatar() {
+    try {
+      const [file] = await pick({mode: 'import', type: [types.images]});
+      if (!file) return;
+      setSaving(true); await client.updateAvatar(token, {uri: file.uri, name: file.name || 'avatar', type: file.type || 'application/octet-stream', size: file.size});
+      onProfileUpdated({...member!, avatar_url: `/api/v1/members/${member!.id}/avatar`}); setAvatarVersion(value => value + 1); setStatus('Avatar updated.');
+    } catch (caught) {
+      if (!isErrorWithCode(caught) || caught.code !== errorCodes.OPERATION_CANCELED) setStatus(caught instanceof Error ? caught.message : 'Could not update your avatar.');
+    } finally { setSaving(false); }
+  }
+  async function removeAvatar() {
+    try { setSaving(true); await client.removeAvatar(token); onProfileUpdated({...member!, avatar_url: undefined}); setAvatarVersion(value => value + 1); setStatus('Avatar removed.'); }
+    catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not remove your avatar.'); }
+    finally { setSaving(false); }
+  }
+  return <Modal animationType="fade" onRequestClose={onClose} transparent visible>
+    <View style={styles.profileBackdrop}><ScrollView contentContainerStyle={[styles.profileCard, {backgroundColor: palette.background}]} keyboardShouldPersistTaps="handled">
+      <ProfileAvatar instanceURL={instanceURL} member={member} palette={palette} token={token} version={avatarVersion} />
+      <Text style={[styles.profileName, {color: palette.text}]}>{memberName(member)}</Text><Text style={{color: palette.muted}}>@{member.username}{member.owner ? ' · Owner' : ''}</Text>
+      {status ? <Text style={[styles.profileStatus, {color: palette.muted}]}>{status}</Text> : null}
+      {self ? <><TextInput accessibilityLabel="Username" autoCapitalize="none" onChangeText={setUsername} placeholder="Username" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={username} /><TextInput accessibilityLabel="Display Name" onChangeText={setProfileDisplayName} placeholder="Display Name (optional)" placeholderTextColor={palette.placeholder} style={[styles.profileInput, {backgroundColor: palette.field, color: palette.text}]} value={profileDisplayName} /><TouchableOpacity disabled={saving || !username.trim()} onPress={saveProfile} style={[styles.profilePrimary, {backgroundColor: palette.accent}, saving && styles.disabled]}><Text style={styles.whiteText}>{saving ? 'Saving…' : 'Save profile'}</Text></TouchableOpacity><TouchableOpacity disabled={saving} onPress={chooseAvatar} style={styles.profileAction}><Text style={{color: palette.text}}>Choose avatar</Text></TouchableOpacity>{member.avatar_url ? <TouchableOpacity disabled={saving} onPress={removeAvatar} style={styles.profileAction}><Text style={styles.dangerText}>Remove avatar</Text></TouchableOpacity> : null}</> : reporting ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="What happened?" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><TouchableOpacity disabled={!reason.trim()} onPress={report} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Submit report</Text></TouchableOpacity></> : <><TouchableOpacity onPress={() => onStartDM(member)} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Message</Text></TouchableOpacity><TouchableOpacity onPress={() => setReporting(true)} style={styles.profileAction}><Text style={styles.dangerText}>Report Member</Text></TouchableOpacity></>}
+      <TouchableOpacity onPress={onClose} style={styles.profileAction}><Text style={{color: palette.text}}>Close</Text></TouchableOpacity>
+    </ScrollView></View>
+  </Modal>;
+}
+
+function ProfileAvatar({instanceURL, member, palette, token, version}: {instanceURL: string; member: Member; palette: Palette; token: string; version: number}) {
+  const [source, setSource] = useState('');
+  useEffect(() => {
+    let mounted = true; setSource('');
+    if (member.avatar_url) loadAuthenticatedImage(`${attachmentURL(instanceURL, member.avatar_url)}?v=${version}`, token).then(value => { if (mounted) setSource(value); }).catch(() => {});
+    return () => { mounted = false; };
+  }, [instanceURL, member.avatar_url, token, version]);
+  return source ? <Image source={{uri: source}} style={styles.profileAvatarImage} /> : <Text style={[styles.profileAvatar, {backgroundColor: palette.field, color: palette.text}]}>{memberName(member).slice(0, 1).toUpperCase()}</Text>;
 }
 
 function memberName(member: Member) { return member.display_name || member.username; }
@@ -440,6 +482,6 @@ const styles = StyleSheet.create({
   blockedNotice: {fontSize: 12, paddingHorizontal: 14, paddingVertical: 6},
   contextBanner: {alignItems: 'center', flexDirection: 'row', marginHorizontal: 10, paddingHorizontal: 12, paddingVertical: 8}, contextClose: {fontSize: 28, paddingHorizontal: 8}, sheetBackdrop: {backgroundColor: 'rgba(0,0,0,0.55)', flex: 1, justifyContent: 'flex-end'}, sheet: {borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24, paddingHorizontal: 16, paddingTop: 18}, sheetTitle: {fontSize: 18, fontWeight: '800', marginBottom: 12}, quickReactions: {flexDirection: 'row', gap: 8, marginBottom: 12}, quickReaction: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, quickReactionText: {fontSize: 22}, actionButton: {borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 15}, panel: {flex: 1}, searchBar: {flexDirection: 'row', gap: 8, padding: 12}, searchInput: {borderRadius: 10, flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 10}, searchButton: {borderRadius: 10, justifyContent: 'center', paddingHorizontal: 16}, panelBusy: {marginTop: 40}, panelList: {gap: 8, padding: 12}, panelItem: {borderRadius: 10, padding: 12},
   actionText: {fontSize: 16}, dangerText: {color: '#ed4245'}, whiteText: {color: '#fff'}, searchButtonText: {color: '#fff', fontWeight: '800'},
-  memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
+  memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileAvatarImage: {borderRadius: 38, height: 76, marginBottom: 12, width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profileInput: {borderRadius: 10, fontSize: 16, marginTop: 12, paddingHorizontal: 12, paddingVertical: 11}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
   linkCard: {borderLeftWidth: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', marginTop: 8, maxWidth: 420, overflow: 'hidden', width: '100%'}, linkContent: {flex: 1, gap: 4, justifyContent: 'center', padding: 10}, linkTitle: {fontSize: 15, fontWeight: '800'}, linkImage: {height: 112, width: 112},
 });

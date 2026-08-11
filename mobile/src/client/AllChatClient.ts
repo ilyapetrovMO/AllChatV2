@@ -128,6 +128,21 @@ export class AllChatClient {
     return this.decode<Member>(response, 'Could not update your profile.');
   }
 
+  async updateAvatar(token: string, file: LocalAttachment): Promise<void> {
+    let content: Blob;
+    try { content = await (await this.readLocalFile(file.uri)).blob(); }
+    catch { throw new Error(`Could not read ${file.name} from this device.`); }
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/profile/avatar`, {
+      method: 'PUT', headers: {Authorization: `Bearer ${token}`, 'Content-Type': file.type || 'application/octet-stream'}, body: content,
+    }), 'Could not update your avatar.');
+  }
+
+  async removeAvatar(token: string): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/profile/avatar`, {
+      method: 'DELETE', headers: {Authorization: `Bearer ${token}`},
+    }), 'Could not remove your avatar.');
+  }
+
   async openDirectMessage(token: string, memberID: string): Promise<DirectMessage> {
     const response = await this.request(`${this.instanceURL}/api/v1/dms`, {
       method: 'POST', headers: this.jsonHeaders(token), body: JSON.stringify({member_id: memberID}),

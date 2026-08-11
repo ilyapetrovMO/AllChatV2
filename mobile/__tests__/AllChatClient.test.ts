@@ -207,4 +207,21 @@ describe('AllChatClient', () => {
       headers: {Authorization: 'Bearer session-token'},
     });
   });
+
+  it('updates profile fields and avatar content', async () => {
+    const localBlob = new Blob(['avatar'], {type: 'image/png', lastModified: 0});
+    const readFile = jest.fn(async () => new Response(localBlob));
+    const request = jest.fn(async (_url: string, options?: RequestInit) => options?.method === 'PATCH'
+      ? new Response(JSON.stringify({id: 'member-1', username: 'renamed', display_name: 'Display', owner: false}), {status: 200})
+      : new Response(null, {status: 204}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch, readFile as typeof fetch);
+
+    await client.updateProfile('session-token', 'renamed', 'Display');
+    await client.updateAvatar('session-token', {uri: 'content://avatar', name: 'avatar.png', type: 'image/png'});
+    await client.removeAvatar('session-token');
+
+    expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/profile', expect.objectContaining({method: 'PATCH', body: JSON.stringify({username: 'renamed', display_name: 'Display'})}));
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/profile/avatar', expect.objectContaining({method: 'PUT', body: localBlob}));
+    expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/profile/avatar', expect.objectContaining({method: 'DELETE'}));
+  });
 });

@@ -65,10 +65,16 @@ jobs:
             goarch: amd64
             platform: windows
             suffix: .exe
+            msys_package: mingw-w64-x86_64-toolchain
+            msys_bin: C:\msys64\mingw64\bin
+            cc: gcc
           - os: windows-11-arm
             goarch: arm64
             platform: windows
             suffix: .exe
+            msys_package: mingw-w64-clang-aarch64-toolchain
+            msys_bin: C:\msys64\clangarm64\bin
+            cc: clang
           - os: macos-15-intel
             goarch: amd64
             platform: darwin
@@ -91,6 +97,18 @@ jobs:
       - name: Install Linux GUI headers
         if: matrix.platform == 'linux'
         run: sudo apt-get update && sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+      - name: Install Windows MinGW toolchain
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        env:
+          MSYS_PACKAGE: ${{ matrix.msys_package }}
+          MSYS_BIN: ${{ matrix.msys_bin }}
+          WINDOWS_CC: ${{ matrix.cc }}
+        run: |
+          & C:\msys64\usr\bin\bash.exe -lc "pacman -Syu --noconfirm"
+          & C:\msys64\usr\bin\bash.exe -lc "pacman -S --needed --noconfirm $env:MSYS_PACKAGE"
+          $env:MSYS_BIN | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "CC=$env:WINDOWS_CC" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Build native bootstrapper
         shell: bash
         env:
@@ -102,7 +120,6 @@ jobs:
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
           mkdir -p dist
-          if [ "$PLATFORM" = windows ]; then export CC=clang; fi
           CGO_ENABLED=1 go build -trimpath -buildvcs=false -tags bootstrap_gui -ldflags="$ldflags" -o "dist/allchat-bootstrap_${version}_${PLATFORM}_${GOARCH}${SUFFIX}" ./cmd/allchat-bootstrap
       - name: Sign Windows executable
         if: matrix.platform == 'windows' && env.WINDOWS_CERTIFICATE != ''

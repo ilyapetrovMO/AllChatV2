@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, type NativeScrollEvent,
-  type NativeSyntheticEvent, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View,
+  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, StyleSheet,
+  Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import Video from 'react-native-video';
 
@@ -129,36 +129,75 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
 }
 
 export function ConversationTimeline({account, currentMemberID, messages, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; palette: Palette}) {
-  const list = useRef<FlatList<Message> | null>(null);
-  const stickToLatest = useRef(true);
-  const laidOut = useRef(false);
-  const scrollToLatest = useCallback((animated: boolean) => {
-    requestAnimationFrame(() => list.current?.scrollToEnd({animated}));
-  }, []);
   return <FlatList
-    ref={list}
     contentContainerStyle={styles.messageList}
-    data={messages}
+    data={[...messages].reverse()}
+    inverted
     keyExtractor={item => item.id}
     renderItem={({item}) => <MessageRow instanceURL={account.instance_url} message={item} mine={item.author_id === currentMemberID} palette={palette} token={account.session_token} />}
     ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
-    onContentSizeChange={() => { if (stickToLatest.current) scrollToLatest(laidOut.current); }}
-    onLayout={() => { laidOut.current = true; scrollToLatest(false); }}
-    onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => { stickToLatest.current = isNearLatest(event.nativeEvent); }}
-    scrollEventThrottle={100}
+    maintainVisibleContentPosition={{minIndexForVisible: 0, autoscrollToTopThreshold: 80}}
   />;
 }
 
-export function MessageRow({instanceURL, message, mine, palette, token}: {instanceURL: string; message: Message; mine: boolean; palette: Palette; token: string}) {
-  return <View style={styles.message}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><Text style={[styles.messageBody, {color: palette.text}]}>{message.body}</Text>{message.attachments?.map(attachment => <AttachmentView attachment={attachment} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}</>}<Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</Text></View>;
+export function MessageRow({imageLoader, instanceURL, message, mine, palette, token}: {imageLoader?: ImageLoader; instanceURL: string; message: Message; mine: boolean; palette: Palette; token: string}) {
+  return <View style={styles.message}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}</>}<Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</Text></View>;
 }
 
-function AttachmentView({attachment, instanceURL, palette, token}: {attachment: NonNullable<Message['attachments']>[number]; instanceURL: string; palette: Palette; token: string}) {
+type ImageLoader = (url: string, token: string) => Promise<string>;
+
+function AttachmentView({attachment, imageLoader, instanceURL, palette, token}: {attachment: NonNullable<Message['attachments']>[number]; imageLoader?: ImageLoader; instanceURL: string; palette: Palette; token: string}) {
   const source = {uri: attachmentURL(instanceURL, attachment.url || `/api/v1/attachments/${attachment.id}`), headers: {Authorization: `Bearer ${token}`}};
-  if (attachment.content_type.startsWith('image/')) return <Image accessibilityLabel={attachment.name} resizeMode="contain" source={source} style={[styles.image, {backgroundColor: palette.field}]} />;
+  if (attachment.content_type.startsWith('image/')) return <AuthenticatedImage accessibilityLabel={attachment.name} loader={imageLoader} palette={palette} token={token} url={source.uri} />;
   if (attachment.content_type.startsWith('audio/') || attachment.content_type.startsWith('video/')) return <InlineMedia attachment={attachment} palette={palette} source={source} />;
   const icon = attachment.content_type.startsWith('audio/') ? '🎵' : attachment.content_type.startsWith('video/') ? '🎬' : '📄';
   return <View style={[styles.attachment, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>{icon}</Text><View style={styles.grow}><Text numberOfLines={1} style={[styles.attachmentName, {color: palette.text}]}>{attachment.name}</Text><Text style={{color: palette.muted}}>{fileSize(attachment.size)} · {attachment.content_type || 'File'}</Text></View></View>;
+}
+
+function AuthenticatedImage({accessibilityLabel, loader = loadAuthenticatedImage, palette, token, url}: {accessibilityLabel: string; loader?: ImageLoader; palette: Palette; token: string; url: string}) {
+  const [dataURL, setDataURL] = useState('');
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    setDataURL(''); setFailed(false);
+    loader(url, token).then(value => { if (mounted) setDataURL(value); }).catch(() => { if (mounted) setFailed(true); });
+    return () => { mounted = false; };
+  }, [loader, token, url]);
+  if (failed) return <View style={[styles.imageFallback, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>🖼️</Text><Text style={{color: palette.muted}}>Image could not be loaded</Text></View>;
+  if (!dataURL) return <View accessibilityLabel={`Loading ${accessibilityLabel}`} style={[styles.imagePlaceholder, {backgroundColor: palette.field}]}><ActivityIndicator color={palette.accent} /></View>;
+  return <Image accessibilityLabel={accessibilityLabel} resizeMode="contain" source={{uri: dataURL}} style={[styles.image, {backgroundColor: palette.field}]} />;
+}
+
+function FormattedBody({body, color}: {body: string; color: string}) {
+  const pieces = body.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).filter(Boolean);
+  return <Text style={[styles.messageBody, {color}]}>{pieces.map((piece, index) => {
+    if (piece.startsWith('**') && piece.endsWith('**')) return <Text key={index} style={styles.bold}>{piece.slice(2, -2)}</Text>;
+    if (piece.startsWith('`') && piece.endsWith('`')) return <Text key={index} style={styles.code}>{piece.slice(1, -1)}</Text>;
+    if (piece.startsWith('*') && piece.endsWith('*')) return <Text key={index} style={styles.italic}>{piece.slice(1, -1)}</Text>;
+    return piece;
+  })}</Text>;
+}
+
+export async function loadAuthenticatedImage(url: string, token: string, request: typeof fetch = fetch): Promise<string> {
+  const response = await request(url, {headers: {Authorization: `Bearer ${token}`}});
+  if (!response.ok) throw new Error(`Image request failed with HTTP ${response.status}`);
+  const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
+  return `data:${contentType};base64,${bytesToBase64(new Uint8Array(await response.arrayBuffer()))}`;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  /* eslint-disable no-bitwise -- Base64 packs three binary bytes into four six-bit indexes. */
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let encoded = '';
+  for (let index = 0; index < bytes.length; index += 3) {
+    const first = bytes[index]; const second = bytes[index + 1]; const third = bytes[index + 2];
+    encoded += alphabet[first >> 2];
+    encoded += alphabet[((first & 3) << 4) | ((second || 0) >> 4)];
+    encoded += index + 1 < bytes.length ? alphabet[((second & 15) << 2) | ((third || 0) >> 6)] : '=';
+    encoded += index + 2 < bytes.length ? alphabet[third & 63] : '=';
+  }
+  /* eslint-enable no-bitwise */
+  return encoded;
 }
 
 function InlineMedia({attachment, palette, source}: {attachment: NonNullable<Message['attachments']>[number]; palette: Palette; source: {uri: string; headers: {Authorization: string}}}) {
@@ -168,7 +207,6 @@ function InlineMedia({attachment, palette, source}: {attachment: NonNullable<Mes
   return <TouchableOpacity accessibilityLabel={`Play ${attachment.name}`} onPress={() => setStarted(true)} style={[styles.attachment, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>{video ? '▶️' : '🎵'}</Text><View style={styles.grow}><Text numberOfLines={1} style={[styles.attachmentName, {color: palette.text}]}>{attachment.name}</Text><Text style={{color: palette.muted}}>Tap to play · {fileSize(attachment.size)}</Text></View></TouchableOpacity>;
 }
 
-export function isNearLatest(event: NativeScrollEvent): boolean { return event.contentSize.height - event.layoutMeasurement.height - event.contentOffset.y <= 80; }
 function attachmentURL(instanceURL: string, value: string) { return new URL(value, `${instanceURL}/`).toString(); }
 function fileSize(bytes: number) { return bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 function displayName(dm: DirectMessage) { return dm.other.display_name || dm.other.username; }
@@ -179,6 +217,6 @@ const styles = StyleSheet.create({
   fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {color: '#ed4245', fontSize: 15, textAlign: 'center'}, errorColor: {color: '#ed4245'}, connected: {color: '#3ba55d'},
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
-  back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {flexGrow: 1, justifyContent: 'flex-end', paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
+  back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, bold: {fontWeight: '800'}, italic: {fontStyle: 'italic'}, code: {fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier', fontSize: 15}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, imagePlaceholder: {alignItems: 'center', borderRadius: 8, height: 160, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, imageFallback: {alignItems: 'center', borderRadius: 8, borderWidth: 1, gap: 6, height: 120, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
   composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, padding: 10}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, disabled: {opacity: 0.5},
 });

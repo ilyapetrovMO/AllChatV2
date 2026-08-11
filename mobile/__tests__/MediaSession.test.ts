@@ -7,8 +7,9 @@ function harness() {
     addTrack: jest.fn(), addTransceiver: jest.fn(), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
     setLocalDescription: jest.fn(async () => {}), setRemoteDescription: jest.fn(async () => {}), addIceCandidate: jest.fn(async () => {}),
     createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => [], removeTrack: jest.fn(), close: jest.fn(),
-    localDescription: {type: 'offer', sdp: 'offer'}, connectionState: 'new', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
+    localDescription: {type: 'offer', sdp: 'offer'}, remoteDescription: null, connectionState: 'new', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
   };
+  peer.setRemoteDescription.mockImplementation(async (description: object) => { peer.remoteDescription = description; });
   const socket: any = {readyState: 1, onopen: null, onmessage: null, onerror: null, onclose: null, send: jest.fn(), close: jest.fn()};
   const statuses: string[] = [];
   const session = new MediaSession({
@@ -58,6 +59,19 @@ describe('MediaSession', () => {
     await session.start(); socket.onopen?.(); socket.send.mockClear();
     session.playSound('sound-1');
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({type: 'soundboard-play', sound_id: 'sound-1'});
+    session.stop();
+  });
+
+  it('queues remote ICE candidates until the remote description is set', async () => {
+    const {session, socket, peer} = harness();
+    await session.start(); socket.onopen?.();
+    const candidate = {candidate: 'candidate:1'};
+
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'candidate', candidate})});
+    expect(peer.addIceCandidate).not.toHaveBeenCalled();
+
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+    expect(peer.addIceCandidate).toHaveBeenCalledWith(candidate);
     session.stop();
   });
 });

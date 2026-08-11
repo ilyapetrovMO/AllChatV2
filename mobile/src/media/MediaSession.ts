@@ -65,6 +65,7 @@ export class MediaSession {
     const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close();
     const iceServers = this.options.fetchICE ? await this.options.fetchICE() : await this.fetchICE();
     if (this.stopped || generation !== this.generation) return;
+    const pendingRemote: object[] = [];
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
     this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'});
     peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; this.remote.set(id, {id, stream, kind: event.track.kind as 'audio' | 'video'}); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
@@ -73,18 +74,20 @@ export class MediaSession {
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
     const socket = (this.options.createSocket || nativeSocket)(this.mediaURL(), this.options.token); this.socket = socket;
     socket.onopen = () => { this.send({type: 'join', room_id: this.options.roomID, resume_token: this.resumeToken, takeover, sdp: peer.localDescription}); this.heartbeat = setInterval(() => this.send({type: 'heartbeat'}), 10000); };
-    socket.onmessage = event => this.handleFrame(JSON.parse(event.data) as MediaFrame, peer, generation).catch(caught => this.recover(asError(caught)));
+    socket.onmessage = event => this.handleFrame(JSON.parse(event.data) as MediaFrame, peer, generation, pendingRemote).catch(caught => this.recover(asError(caught)));
     socket.onerror = () => socket.close(); socket.onclose = () => { if (!this.stopped && generation === this.generation) this.recover(new Error('Media signaling closed')); };
   }
 
-  private async handleFrame(frame: MediaFrame, peer: RTCPeerConnection, generation: number) {
+  private async handleFrame(frame: MediaFrame, peer: RTCPeerConnection, generation: number, pendingRemote: object[]) {
     if (this.stopped || generation !== this.generation || frame.type === 'heartbeat-ack') return;
     if (frame.type === 'error') { const error = new Error(frame.error || 'Media signaling failed') as Error & {code?: string}; error.code = frame.code; throw error; }
-    if (frame.type === 'answer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); if (frame.resume_token) this.resumeToken = frame.resume_token; this.retry = 0; this.options.onStatus?.('connected'); return; }
-    if (frame.type === 'candidate' && frame.candidate) { await peer.addIceCandidate(frame.candidate as never); return; }
-    if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
+    if (frame.type === 'answer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; this.retry = 0; this.options.onStatus?.('connected'); return; }
+    if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) await peer.addIceCandidate(frame.candidate as never); else pendingRemote.push(frame.candidate); return; }
+    if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
     else this.options.onFrame?.(frame);
   }
+
+  private async flushRemoteCandidates(peer: RTCPeerConnection, pending: object[]) { for (const candidate of pending.splice(0)) await peer.addIceCandidate(candidate as never); }
 
   private async renegotiate() { if (!this.peer) return; const offer = await this.peer.createOffer(); await this.peer.setLocalDescription(offer); this.send({type: 'offer', sdp: this.peer.localDescription}); }
   private recover(error: Error) { if (this.stopped || this.reconnect) return; this.options.onStatus?.('recovering', error); const delay = Math.min(4000, 500 * 2 ** Math.min(this.retry++, 3)); this.reconnect = (this.options.schedule || setTimeout)(() => { this.reconnect = undefined; this.connect(this.retry > 2).catch(caught => this.fail(caught)); }, delay); }
@@ -93,7 +96,14 @@ export class MediaSession {
   private clearTimers() { if (this.heartbeat) clearInterval(this.heartbeat); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.reconnect = undefined; }
   private release(stream?: MediaStream) { stream?.getTracks().forEach(track => track.stop()); }
   private mediaURL() { const url = new URL(this.options.instanceURL); return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/api/v1/media`; }
-  private async fetchICE(): Promise<IceServer[]> { const response = await fetch(`${this.options.instanceURL}/api/v1/turn-credentials`, {headers: {Authorization: `Bearer ${this.options.token}`}}); if (!response.ok) throw new Error('TURN credentials unavailable.'); return ((await response.json()) as {ice_servers: IceServer[]}).ice_servers; }
+  private async fetchICE(): Promise<IceServer[]> {
+    const response = await fetch(`${this.options.instanceURL}/api/v1/turn-credentials`, {headers: {Authorization: `Bearer ${this.options.token}`}});
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({})) as {error?: string};
+      throw new Error(`TURN credentials unavailable${body.error ? `: ${body.error}` : ''} (HTTP ${response.status}).`);
+    }
+    return ((await response.json()) as {ice_servers: IceServer[]}).ice_servers;
+  }
 }
 
 function nativeSocket(url: string, token: string) { return new WebSocket(url, null, {headers: {Authorization: `Bearer ${token}`}}) as unknown as SocketLike; }

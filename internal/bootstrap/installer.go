@@ -102,6 +102,7 @@ mv /var/lib/allchat "/var/lib/allchat.failed-$stamp_failed"
 install -d -o allchat -g allchat -m 0700 /var/lib/allchat
 cp -p /usr/local/bin/allchat.previous /usr/local/bin/allchat
 sudo -u allchat /usr/local/bin/allchat restore --data-dir /var/lib/allchat --input "$backup"
+chown -R allchat:allchat /var/lib/allchat
 systemctl restart allchat.service
 rm -f "$state"
 `
@@ -109,6 +110,10 @@ rm -f "$state"
 func installScript(cfg Config) string {
 	identifier := cfg.ACMEIdentifier()
 	sshRule := fmt.Sprintf("%d/tcp", cfg.SSHPort)
+	acmeEmailOption := ""
+	if cfg.ACMEEmail != "" {
+		acmeEmailOption = " --acme-email " + cfg.ACMEEmail
+	}
 	duck := ""
 	if cfg.TLSMode == TLSDuckDNS {
 		duck = fmt.Sprintf(`install -d -m 0700 /etc/allchat
@@ -189,6 +194,7 @@ install -o root -g root -m 0755 "$stage" /usr/local/bin/allchat
 rm -f "$stage"
 touch "$marker"
 %s
+chown -R allchat:allchat /var/lib/allchat
 cat > /etc/systemd/system/allchat.service <<'EOF'
 [Unit]
 Description=AllChat Instance
@@ -200,7 +206,7 @@ User=allchat
 Group=allchat
 WorkingDirectory=/var/lib/allchat
 EnvironmentFile=-/etc/allchat/public-ip.env
-ExecStart=/usr/local/bin/allchat --data-dir /var/lib/allchat --acme %s --acme-email %s --turn-public-ip ${ALLCHAT_PUBLIC_IP}
+ExecStart=/usr/local/bin/allchat --data-dir /var/lib/allchat --acme %s%s --turn-public-ip ${ALLCHAT_PUBLIC_IP}
 Restart=on-failure
 RestartSec=5s
 NoNewPrivileges=true
@@ -234,13 +240,14 @@ if ! systemctl restart allchat.service; then
     install -d -o allchat -g allchat -m 0700 /var/lib/allchat
     cp -p /usr/local/bin/allchat.previous /usr/local/bin/allchat
     sudo -u allchat /usr/local/bin/allchat restore --data-dir /var/lib/allchat --input "$backup"
+    chown -R allchat:allchat /var/lib/allchat
     rm -f /etc/allchat/bootstrap-rollback
   fi
   systemctl restart allchat.service || true
   exit 21
 fi
 %s
-`, shellQuote(remoteStage), cfg.PublicIP, duck, identifier, cfg.ACMEEmail, func() string {
+`, shellQuote(remoteStage), cfg.PublicIP, duck, identifier, acmeEmailOption, func() string {
 		if cfg.TLSMode == TLSDuckDNS {
 			return "/usr/local/sbin/allchat-duckdns-update"
 		}

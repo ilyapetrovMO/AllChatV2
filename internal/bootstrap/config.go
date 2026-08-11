@@ -51,7 +51,7 @@ func (c Config) Validate() error {
 	}
 	if c.ACMEEmail != "" {
 		address, err := mail.ParseAddress(c.ACMEEmail)
-		if err != nil || address.Address != c.ACMEEmail {
+		if err != nil || address.Address != c.ACMEEmail || strings.ContainsAny(c.ACMEEmail, "% \t\r\n") {
 			return fmt.Errorf("ACME email is invalid")
 		}
 	}

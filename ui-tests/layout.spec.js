@@ -86,6 +86,26 @@ async function openCommunity(page, mobile) {
   if (mobile) await page.locator('[data-sidebar-toggle]').click();
 }
 
+test('browser interaction reports presence activity over realtime', async ({page}) => {
+  await page.addInitScript(() => {
+    window.realtimeFrames = [];
+    class RecordingWebSocket {
+      static OPEN = 1;
+      constructor() {
+        this.readyState = 0;
+        queueMicrotask(() => { this.readyState = RecordingWebSocket.OPEN; this.onopen?.(); });
+      }
+      send(raw) { window.realtimeFrames.push(JSON.parse(raw)); }
+      close() { this.readyState = 3; this.onclose?.(); }
+    }
+    window.WebSocket = RecordingWebSocket;
+  });
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('#message-body').click();
+  await expect.poll(() => page.evaluate(() => window.realtimeFrames.filter(frame => frame.type === 'activity' && frame.active).length)).toBeGreaterThan(0);
+});
+
 async function addVoiceState(page) {
   await page.evaluate(({voiceID, ownerID, memberID}) => {
     const link = document.querySelector(`a[href="/channels/${voiceID}"]`);

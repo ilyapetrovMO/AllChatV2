@@ -348,11 +348,21 @@
     document.addEventListener("allchat:view-swapped", () => { cleanCommunityNavigation(); ensureButton(); refresh().catch(() => {}); });
     setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 2000);
 
-    let cursor = null, retry = 250;
+    let cursor = null, retry = 250, activitySocket = null, lastActivitySent = 0;
+    const reportActivity = () => {
+      const now = Date.now();
+      if (document.hidden || now - lastActivitySent < 10000 || activitySocket?.readyState !== WebSocket.OPEN) return;
+      activitySocket.send(JSON.stringify({type: "activity", active: true}));
+      lastActivitySent = now;
+    };
+    ["pointerdown", "keydown", "touchstart"].forEach(type => document.addEventListener(type, reportActivity, {capture: true, passive: true}));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastActivitySent = 0; reportActivity(); } });
+    window.addEventListener("focus", () => { lastActivitySent = 0; reportActivity(); });
     const connect = () => {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const query = cursor === null ? "" : `?cursor=${cursor}`;
       const socket = new WebSocket(`${protocol}//${location.host}/api/v1/realtime${query}`);
+      activitySocket = socket;
       let heartbeat;
       socket.onopen = () => { retry = 250; socket.send(JSON.stringify({type: "heartbeat"})); heartbeat = setInterval(() => { if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({type: "heartbeat"})); }, 1000); };
       socket.onmessage = async event => {
@@ -385,7 +395,7 @@
           },
         });
       };
-      socket.onclose = () => { clearInterval(heartbeat); setTimeout(connect, retry = Math.min(retry * 2, 5000)); };
+      socket.onclose = () => { clearInterval(heartbeat); if (activitySocket === socket) activitySocket = null; setTimeout(connect, retry = Math.min(retry * 2, 5000)); };
     };
     connect();
   };

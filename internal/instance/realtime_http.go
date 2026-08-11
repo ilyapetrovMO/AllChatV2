@@ -76,7 +76,7 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 	defer connection.CloseNow()
 	connection.SetReadLimit(4 << 10)
 	connectionID := sessionToken + ":" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	i.live.connect(connectionID, member.ID, sessionToken)
+	i.live.connect(connectionID, member.ID, sessionToken, isMobileUserAgent(request.UserAgent()))
 	defer i.live.disconnect(connectionID)
 
 	// Capture the authorization baseline before announcing readiness. Once the

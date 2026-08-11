@@ -118,6 +118,10 @@
 .participant-avatar-fallback { display: grid; place-items: center; background: var(--brand); color: white; font-size: .75rem; font-weight: 800; }
 .participant-presence { position: absolute; right: -2px; bottom: -1px; width: 11px; height: 11px; border: 3px solid var(--bg-sidebar); border-radius: 50%; }
 .participant-presence.offline { background: var(--faint); }
+.participant-presence.idle, .member-presence.idle { background: var(--yellow); }
+.participant-presence.mobile { width: 9px; height: 14px; right: -1px; bottom: -2px; border-width: 2px; border-radius: 3px; background: var(--green); }
+.member-presence.mobile { left: 29px; bottom: 1px; width: 9px; height: 14px; border-width: 2px; border-radius: 3px; background: var(--green); }
+.participant-presence.mobile::after, .member-presence.mobile::after { content: ""; position: absolute; left: 50%; bottom: 1px; width: 3px; height: 1px; border-radius: 1px; background: var(--bg-sidebar); transform: translateX(-50%); }
 .dm-profile-card { overflow: hidden; padding: 18px 16px; border-radius: 8px; background: var(--bg-main); }
 .dm-profile-card img, .dm-profile-card .profile-avatar-fallback { width: 72px; height: 72px; margin-bottom: 12px; border-radius: 50%; object-fit: cover; }
 .dm-profile-card .profile-avatar-fallback { display: grid; place-items: center; background: var(--brand); color: white; font-size: 1.5rem; font-weight: 800; }

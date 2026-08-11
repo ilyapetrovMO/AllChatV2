@@ -88,19 +88,23 @@
       sidebar.querySelector(":scope > .participant-heading")?.remove(); initialList?.remove(); sidebar.append(groups);
     }
     const buckets = {owner: [], online: [], offline: []};
-    items.forEach(item => { const owner=item.querySelector("small")?.textContent.trim()==="Owner",dot=item.querySelector(".participant-presence"),key=owner?"owner":dot?.classList.contains("online")||dot?.classList.contains("dnd")?"online":"offline";buckets[key].push(item); });
+    items.forEach(item => { const owner=item.querySelector("small")?.textContent.trim()==="Owner",dot=item.querySelector(".participant-presence"),connected=["online","dnd","idle","mobile"].some(state=>dot?.classList.contains(state)),key=owner?"owner":connected?"online":"offline";buckets[key].push(item); });
     const labels = {owner: "OWNER", online: "ONLINE + DND", offline: "OFFLINE"};
     Object.entries(buckets).forEach(([key,members]) => { const section=groups.querySelector(`[data-member-group="${key}"]`),list=section.querySelector(".participant-list");section.querySelector(".participant-heading").textContent=`${labels[key]} — ${members.length}`;list.append(...members); });
   };
   const groupAllMemberSidebars = () => document.querySelectorAll(".participant-sidebar").forEach(groupMemberSidebar);
+  const applyPresenceClass = (dot, state) => {
+    if (!dot) return;
+    ["online", "dnd", "idle", "mobile", "offline"].forEach(value => dot.classList.toggle(value, value === state || value === "offline" && !["online", "dnd", "idle", "mobile"].includes(state)));
+    const label = state === "dnd" ? "Do Not Disturb" : state === "idle" ? "AFK" : state === "mobile" ? "Online on mobile" : state === "online" ? "Online" : "Offline";
+    dot.title = label; dot.setAttribute("aria-label", label);
+  };
   const updateMemberPresence = presence => {
-    document.querySelectorAll("[data-participant-id]").forEach(item => {
-      const state = presence?.[item.dataset.participantId] || "offline", dot = item.querySelector(".participant-presence");
-      if (!dot) return;
-      dot.classList.toggle("online", state === "online");
-      dot.classList.toggle("dnd", state === "dnd");
-      dot.classList.toggle("offline", state !== "online" && state !== "dnd");
-    });
+	    document.querySelectorAll("[data-participant-id]").forEach(item => {
+	      const state = presence?.[item.dataset.participantId] || "offline", dot = item.querySelector(".participant-presence");
+	      applyPresenceClass(dot, state);
+	    });
+	    const selfID=document.body.dataset.memberId,selfState=presence?.[selfID]||"offline";applyPresenceClass(document.getElementById("member-presence"),selfState);
     groupAllMemberSidebars();
   };
   window.updateAllChatMemberPresence = updateMemberPresence;
@@ -155,7 +159,7 @@
         item.dataset.participantId = member.id; avatarWrap.className = "participant-avatar-wrap";
         if (member.avatar_url) { avatar.src = member.avatar_url; avatar.alt = ""; }
         else { avatar.className = "participant-avatar-fallback"; avatar.textContent = Array.from(member.username || "?")[0].toUpperCase(); }
-        const state = presence?.[member.id] || "offline"; dot.className = `participant-presence ${state === "online" || state === "dnd" ? state : "offline"}`;
+	        const state = presence?.[member.id] || "offline"; dot.className = "participant-presence"; applyPresenceClass(dot, state);
         name.textContent = member.display_name || member.username;
         if (member.owner) { const owner = document.createElement("small"); owner.textContent = " Owner"; name.append(owner); }
         avatarWrap.append(avatar, dot); item.append(avatarWrap, name); list.append(item);

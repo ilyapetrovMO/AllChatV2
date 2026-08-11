@@ -219,6 +219,16 @@ func deviceLabel(userAgent string) string {
 	return userAgent
 }
 
+func isMobileUserAgent(userAgent string) bool {
+	value := strings.ToLower(userAgent)
+	for _, marker := range []string{"android", "iphone", "ipad", "ipod", "mobile"} {
+		if strings.Contains(value, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 func sourceIP(request *http.Request) string {
 	host, _, err := net.SplitHostPort(request.RemoteAddr)
 	if err != nil {

@@ -241,6 +241,12 @@ test('Community Member rail appears outside DMs, settings, and Voice Room grids'
   await page.evaluate(({ownerID, memberID}) => window.updateAllChatMemberPresence({[ownerID]: 'online', [memberID]: 'dnd'}), {ownerID: fixture.ownerMember.id, memberID: fixture.secondMember.id});
   await expect(homeRail.locator('[data-member-group="online"]')).toContainText('visual-member');
   await expect(homeRail.locator('[data-member-group="online"] .participant-presence')).toHaveClass(/dnd/);
+  await page.evaluate(({ownerID, memberID}) => window.updateAllChatMemberPresence({[ownerID]: 'online', [memberID]: 'idle'}), {ownerID: fixture.ownerMember.id, memberID: fixture.secondMember.id});
+  await expect(homeRail.locator(`[data-participant-id="${fixture.secondMember.id}"] .participant-presence`)).toHaveClass(/idle/);
+  await expect(homeRail.locator('[data-member-group="online"]')).toContainText('visual-member');
+  await page.evaluate(({ownerID, memberID}) => window.updateAllChatMemberPresence({[ownerID]: 'online', [memberID]: 'mobile'}), {ownerID: fixture.ownerMember.id, memberID: fixture.secondMember.id});
+  await expect(homeRail.locator(`[data-participant-id="${fixture.secondMember.id}"] .participant-presence`)).toHaveClass(/mobile/);
+  await expect(homeRail.locator(`[data-participant-id="${fixture.secondMember.id}"] .participant-presence`)).toHaveAttribute('aria-label', 'Online on mobile');
 
   await page.locator(`a[href="/channels/${fixture.textChannel.id}"]`).click();
   await expect(page.locator('.channel-content .participant-sidebar')).toBeVisible();

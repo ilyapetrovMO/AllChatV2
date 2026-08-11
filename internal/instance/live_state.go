@@ -20,6 +20,7 @@ type liveConnection struct {
 	ActiveAt     time.Time
 	SeenAt       time.Time
 	Disconnected time.Time
+	Mobile       bool
 }
 
 type typingState struct {
@@ -42,11 +43,11 @@ func newLiveState() *liveState {
 	return &liveState{connections: make(map[string]liveConnection), typing: make(map[string]typingState), departures: make(map[string]time.Time), lastStates: make(map[string]string)}
 }
 
-func (s *liveState) connect(connectionID, memberID, sessionToken string) {
+func (s *liveState) connect(connectionID, memberID, sessionToken string, mobile ...bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	now := time.Now()
-	s.connections[connectionID] = liveConnection{MemberID: memberID, SessionToken: sessionToken, ActiveAt: now, SeenAt: now}
+	s.connections[connectionID] = liveConnection{MemberID: memberID, SessionToken: sessionToken, ActiveAt: now, SeenAt: now, Mobile: len(mobile) > 0 && mobile[0]}
 	delete(s.departures, memberID)
 }
 
@@ -128,9 +129,13 @@ func (s *liveState) snapshot() (map[string]string, []typingState) {
 		}
 		state := "idle"
 		if now.Sub(connection.ActiveAt) < presenceIdleAfter {
-			state = "online"
+			if connection.Mobile {
+				state = "mobile"
+			} else {
+				state = "online"
+			}
 		}
-		if presence[connection.MemberID] != "online" {
+		if presencePriority(state) > presencePriority(presence[connection.MemberID]) {
 			presence[connection.MemberID] = state
 		}
 		s.lastStates[connection.MemberID] = presence[connection.MemberID]
@@ -156,4 +161,17 @@ func (s *liveState) snapshot() (map[string]string, []typingState) {
 		typing = append(typing, state)
 	}
 	return presence, typing
+}
+
+func presencePriority(state string) int {
+	switch state {
+	case "online":
+		return 3
+	case "mobile":
+		return 2
+	case "idle":
+		return 1
+	default:
+		return 0
+	}
 }

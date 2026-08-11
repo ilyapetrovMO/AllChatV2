@@ -47,3 +47,37 @@ func TestTypingStateCarriesTheMemberDisplayName(t *testing.T) {
 		t.Fatalf("typing=%+v", typing)
 	}
 }
+
+func TestPresenceDistinguishesMobileActiveIdleAndDesktopActive(t *testing.T) {
+	state := newLiveState()
+	state.connect("phone", "member", "phone-session", true)
+	presence, _ := state.snapshot()
+	if presence["member"] != "mobile" {
+		t.Fatalf("mobile Presence=%q", presence["member"])
+	}
+	state.mu.Lock()
+	phone := state.connections["phone"]
+	phone.ActiveAt = time.Now().Add(-presenceIdleAfter)
+	state.connections["phone"] = phone
+	state.mu.Unlock()
+	presence, _ = state.snapshot()
+	if presence["member"] != "idle" {
+		t.Fatalf("AFK Presence=%q", presence["member"])
+	}
+	state.connect("desktop", "member", "desktop-session")
+	presence, _ = state.snapshot()
+	if presence["member"] != "online" {
+		t.Fatalf("desktop should win aggregate Presence: %v", presence)
+	}
+}
+
+func TestMobileUserAgentDetection(t *testing.T) {
+	for _, userAgent := range []string{"ExampleBrowser/1.0 (Android 15; Mobile)", "ExampleBrowser/1.0 (iPhone; CPU iPhone OS 18_0)"} {
+		if !isMobileUserAgent(userAgent) {
+			t.Fatalf("mobile user agent was not detected: %q", userAgent)
+		}
+	}
+	if isMobileUserAgent("ExampleBrowser/1.0 (Desktop Linux)") {
+		t.Fatal("desktop user agent was detected as mobile")
+	}
+}

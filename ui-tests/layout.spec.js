@@ -237,6 +237,29 @@ test('notification bell persists Community and conversation overrides', async ({
   await owner.dispose();
 });
 
+test('notification bell opens with defaults when settings are temporarily unavailable', async ({page}) => {
+  await authenticate(page);
+  await page.route('**/api/v1/notification-settings', route => route.fulfill({status: 503, contentType: 'application/json', body: JSON.stringify({error: 'temporarily unavailable'})}));
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const bell = page.locator('[data-notification-bell]');
+  await expect(bell).toBeVisible();
+  await bell.click();
+  await expect(page.locator('.notification-popover')).toBeVisible();
+});
+
+test('mobile Direct Messages always provide a route back to the Community', async ({page}) => {
+  await page.setViewportSize({width: 412, height: 915});
+  await authenticate(page);
+  await page.goto('/dms');
+  const headerReturn = page.locator('.content-header [data-community-return]');
+  await expect(headerReturn).toBeVisible();
+  await expect(headerReturn).toHaveAttribute('href', '/');
+  await page.locator('[data-sidebar-toggle]').click();
+  const drawerReturn = page.locator('.channel-sidebar [data-community-return]');
+  await expect(drawerReturn).toBeVisible();
+  await expect(drawerReturn).toHaveAttribute('href', '/');
+});
+
 test('realtime Messages notify for another conversation but not the focused conversation', async ({page}) => {
   await page.addInitScript(() => {
     window.desktopNotices = [];

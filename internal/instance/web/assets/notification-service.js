@@ -108,9 +108,14 @@
   const installNotificationCenter = async () => {
     if (global.allchatNotifications) return global.allchatNotifications;
     let settings = {community: {level: "all_messages", muted: false, sound_enabled: true}, channels: {}};
-    const response = await fetch("/api/v1/notification-settings");
-    if (!response.ok) return null;
-    settings = {...settings, ...await response.json()};
+    let settingsAvailable = true;
+    try {
+      const response = await fetch("/api/v1/notification-settings");
+      if (!response.ok) throw new Error("Notification settings unavailable");
+      settings = {...settings, ...await response.json()};
+    } catch (_) {
+      settingsAvailable = false;
+    }
     settings.channels ||= {};
     const service = new AllChatNotificationService({notifier: browserNotifier, playSound: playBrowserSound, onRecent: () => renderRecent()});
     const center = global.allchatNotifications = {
@@ -152,6 +157,7 @@
       bell.setAttribute("aria-label", "Notifications"); bell.setAttribute("aria-expanded", "false"); bell.textContent = "🔔";
       popover = document.createElement("section"); popover.className = "notification-popover"; popover.hidden = true;
       const heading = document.createElement("h2"); heading.textContent = "Notifications";
+      const settingsStatus = document.createElement("p"); settingsStatus.className = "muted notification-settings-status"; settingsStatus.textContent = "Saved notification settings are temporarily unavailable; defaults are shown."; settingsStatus.hidden = settingsAvailable;
       const permission = document.createElement("button"); permission.type = "button"; permission.className = "button-secondary notification-permission";
       const updatePermission = () => { permission.textContent = !("Notification" in global) ? "Desktop notifications unavailable" : global.Notification.permission === "granted" ? "Desktop notifications enabled" : "Enable desktop notifications"; permission.disabled = !("Notification" in global) || global.Notification.permission === "granted"; };
       updatePermission(); permission.onclick = async () => { await global.Notification?.requestPermission(); updatePermission(); };
@@ -161,7 +167,7 @@
       const sound = document.createElement("label"), soundInput = document.createElement("input"); sound.className = "notification-check"; soundInput.type = "checkbox"; soundInput.checked = settings.community.sound_enabled; sound.append(soundInput, "Notification sound");
       const saveCommunity = async () => { settings.community = {level: communitySelect.value, muted: communityMuteInput.checked, sound_enabled: soundInput.checked}; await save("/api/v1/notification-settings", settings.community); };
       communitySelect.onchange = communityMuteInput.onchange = soundInput.onchange = () => saveCommunity().catch(error => global.alert(error.message));
-      popover.append(heading, permission, communityLabel, communityMute, sound);
+      popover.append(heading, settingsStatus, permission, communityLabel, communityMute, sound);
       const channelID = document.body.dataset.channelId;
       if (channelID) {
         const channelSetting = settings.channels[channelID] ||= {level: "default", muted: false};

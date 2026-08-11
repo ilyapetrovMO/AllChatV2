@@ -286,6 +286,22 @@ test('voice connection replaces a half-open socket after missed heartbeat acknow
   expect(result).toMatchObject({socketCount:2,credentialFetches:2});
 });
 
+test('mobile navigation and Community Member drawers have symmetric close controls', async ({page})=>{
+  await page.goto('/login');
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{document.body.innerHTML='<div class="app-shell"><aside class="channel-sidebar"><div class="community-header">Community</div></aside><main class="content-shell"><header class="content-header"><button data-sidebar-toggle aria-expanded="false">☰</button><h1>General</h1></header><aside class="participant-sidebar"><ul class="participant-list"><li>Member</li></ul></aside></main></div>'});
+  await page.addStyleTag({url:'/assets/app.css'});
+  await page.addStyleTag({url:'/assets/channel.css'});
+  await page.addScriptTag({url:'/assets/app.js'});
+  await page.locator('[data-sidebar-toggle]').click();
+  await page.locator('[data-sidebar-close]').click();
+  await expect(page.locator('.channel-sidebar')).toHaveAttribute('data-open','false');
+  await page.locator('[data-members-toggle]').click();
+  await expect(page.locator('.participant-sidebar')).toHaveAttribute('data-open','true');
+  await page.locator('[data-members-close]').click();
+  await expect(page.locator('.participant-sidebar')).toHaveAttribute('data-open','false');
+});
+
 test('websocket wrapper closes a half-open realtime connection after inbound silence', async ({ page }) => {
   await page.goto('/login');
   const result = await page.evaluate(async () => {

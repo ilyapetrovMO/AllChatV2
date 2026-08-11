@@ -64,8 +64,76 @@
   localizeInstants(document);
   new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => { if(node.nodeType !== 1)return;localizeInstants(node); }))).observe(document.documentElement, {subtree:true, childList:true});
   const nameInteractiveMembers = root => root.querySelectorAll?.(".participant-list li, .voice-channel-members li").forEach(item => { item.tabIndex = 0; item.setAttribute("role", "button"); });
+  const updateMemberPresence = presence => document.querySelectorAll("[data-participant-id]").forEach(item => {
+    const state = presence?.[item.dataset.participantId] || "offline", dot = item.querySelector(".participant-presence");
+    if (!dot) return;
+    dot.classList.toggle("online", state === "online");
+    dot.classList.toggle("dnd", state === "dnd");
+    dot.classList.toggle("offline", state !== "online" && state !== "dnd");
+  });
+	let drawerReturnFocus = null;
+	const mobileBackdrop = () => {
+	  let backdrop=document.querySelector("[data-mobile-drawer-backdrop]");
+	  if (!backdrop) { backdrop=document.createElement("button");backdrop.type="button";backdrop.className="mobile-drawer-backdrop";backdrop.dataset.mobileDrawerBackdrop="";backdrop.setAttribute("aria-label","Close navigation panels");backdrop.hidden=true;document.body.append(backdrop); }
+	  return backdrop;
+	};
+	const syncMobileBackdrop = () => { mobileBackdrop().hidden = !document.querySelector('.channel-sidebar[data-open="true"], .participant-sidebar[data-open="true"]'); };
+	const setMobileDrawer = (drawer, open, toggle) => {
+	  if (!drawer) return;
+	  if (open) { drawerReturnFocus=toggle||document.activeElement; document.querySelectorAll('.channel-sidebar[data-open="true"], .participant-sidebar[data-open="true"]').forEach(other=>{if(other!==drawer)other.dataset.open="false"}); }
+	  drawer.dataset.open=String(open);
+	  document.querySelectorAll(drawer.classList.contains("participant-sidebar")?'[data-members-toggle]':'[data-sidebar-toggle]').forEach(button=>button.setAttribute("aria-expanded",String(open)));
+	  syncMobileBackdrop();
+	  if (open) drawer.querySelector('[data-sidebar-close], [data-members-close]')?.focus();
+	  else if (drawerReturnFocus?.isConnected) { drawerReturnFocus.focus(); drawerReturnFocus=null; }
+	};
+	const closeMobileDrawers = () => {
+	  document.querySelectorAll('.channel-sidebar[data-open="true"], .participant-sidebar[data-open="true"]').forEach(drawer=>drawer.dataset.open="false");
+	  document.querySelectorAll('[data-sidebar-toggle], [data-members-toggle]').forEach(button=>button.setAttribute("aria-expanded","false"));
+	  syncMobileBackdrop();
+	  if (drawerReturnFocus?.isConnected) drawerReturnFocus.focus(); drawerReturnFocus=null;
+	};
+	const installMobileDrawers = () => {
+	  const sidebar=document.querySelector(".channel-sidebar");
+	  if (sidebar && !sidebar.querySelector("[data-sidebar-close]")) { const close=document.createElement("button");close.type="button";close.className="mobile-sidebar-close button-ghost";close.dataset.sidebarClose="";close.setAttribute("aria-label","Close conversation navigation");close.textContent="×";sidebar.prepend(close); }
+	  const participants=document.querySelector(".content-shell .participant-sidebar"), header=document.querySelector(".content-shell .content-header");
+	  let toggle=header?.querySelector("[data-members-toggle]");
+	  if (participants?.querySelector(".participant-list") && header) {
+		if (!participants.querySelector("[data-members-close]")) { const close=document.createElement("button");close.type="button";close.className="mobile-members-close button-ghost";close.dataset.membersClose="";close.setAttribute("aria-label","Close Community Members");close.textContent="×";participants.prepend(close); }
+		if (!toggle) { toggle=document.createElement("button");toggle.type="button";toggle.className="mobile-members button-ghost";toggle.dataset.membersToggle="";toggle.setAttribute("aria-label","Open Community Members");toggle.setAttribute("aria-expanded","false");toggle.textContent="👥";const actions=header.querySelector(".header-actions");actions?header.insertBefore(toggle,actions):header.append(toggle); }
+	  } else toggle?.remove();
+	  mobileBackdrop(); syncMobileBackdrop();
+	};
+  const installCommunityHomeMembers = async () => {
+    const main = document.querySelector(".content-shell");
+    if (!main || main.querySelector(".content-header h1")?.textContent.trim() !== "Home" || main.dataset.communityMembersInstalled) return;
+    main.dataset.communityMembersInstalled = "pending";
+    try {
+      const [membersResponse, presenceResponse] = await Promise.all([fetch("/api/v1/members"), fetch("/api/v1/presence")]);
+      if (!membersResponse.ok) throw new Error("Members unavailable");
+      const members = (await membersResponse.json()).members || [], presence = presenceResponse.ok ? (await presenceResponse.json()).presence : {};
+      if (!main.isConnected || main.querySelector(".content-header h1")?.textContent.trim() !== "Home") return;
+      const aside = document.createElement("aside"), heading = document.createElement("h2"), list = document.createElement("ul");
+      aside.className = "participant-sidebar"; aside.setAttribute("aria-label", "Community Members");
+      heading.className = "participant-heading"; heading.textContent = `Members — ${members.length}`;
+      list.className = "participant-list";
+      members.forEach(member => {
+        const item = document.createElement("li"), avatarWrap = document.createElement("span"), avatar = document.createElement(member.avatar_url ? "img" : "span"), dot = document.createElement("span"), name = document.createElement("span");
+        item.dataset.participantId = member.id; avatarWrap.className = "participant-avatar-wrap";
+        if (member.avatar_url) { avatar.src = member.avatar_url; avatar.alt = ""; }
+        else { avatar.className = "participant-avatar-fallback"; avatar.textContent = Array.from(member.username || "?")[0].toUpperCase(); }
+        const state = presence?.[member.id] || "offline"; dot.className = `participant-presence ${state === "online" || state === "dnd" ? state : "offline"}`;
+        name.textContent = member.display_name || member.username;
+        if (member.owner) { const owner = document.createElement("small"); owner.textContent = " Owner"; name.append(owner); }
+        avatarWrap.append(avatar, dot); item.append(avatarWrap, name); list.append(item);
+      });
+      aside.append(heading, list); main.append(aside); main.classList.add("community-home"); main.dataset.communityMembersInstalled = "true"; nameInteractiveMembers(aside); installMobileDrawers();
+    } catch (_) { delete main.dataset.communityMembersInstalled; }
+  };
   nameInteractiveMembers(document);
-  document.addEventListener("allchat:view-swapped", () => nameInteractiveMembers(document));
+  installCommunityHomeMembers();
+  installMobileDrawers();
+  document.addEventListener("allchat:view-swapped", () => { closeMobileDrawers(); nameInteractiveMembers(document); installCommunityHomeMembers(); installMobileDrawers(); });
   document.addEventListener("keydown", event => { if ((event.key === "Enter" || event.key === " ") && event.target.matches?.(".participant-list li, .voice-channel-members li")) { event.preventDefault(); event.target.click(); } });
 
   // Channel runtimes are installed by the SPA router without reloading head
@@ -86,21 +154,14 @@
   };
 
   document.addEventListener("click", event => {
-    const toggle = event.target.closest("[data-sidebar-toggle]");
-    const sidebar = document.querySelector(".channel-sidebar");
-    if (!toggle || !sidebar) return;
-    const open = sidebar.dataset.open !== "true";
-    sidebar.dataset.open = String(open);
-    toggle.setAttribute("aria-expanded", String(open));
+	const sidebarToggle=event.target.closest("[data-sidebar-toggle]"),membersToggle=event.target.closest("[data-members-toggle]");
+	if(sidebarToggle){const drawer=document.querySelector(".channel-sidebar");setMobileDrawer(drawer,drawer?.dataset.open!=="true",sidebarToggle);return}
+	if(membersToggle){const drawer=document.querySelector(".content-shell .participant-sidebar");setMobileDrawer(drawer,drawer?.dataset.open!=="true",membersToggle);return}
+	if(event.target.closest("[data-sidebar-close], [data-members-close], [data-mobile-drawer-backdrop]")){closeMobileDrawers();return}
+	if(event.target.closest('.channel-sidebar[data-open="true"] a'))closeMobileDrawers();
   });
   document.addEventListener("keydown", event => {
-    const sidebar = document.querySelector(".channel-sidebar");
-    const toggle = document.querySelector("[data-sidebar-toggle]");
-    if (event.key === "Escape" && sidebar?.dataset.open === "true") {
-      sidebar.dataset.open = "false";
-      toggle?.setAttribute("aria-expanded", "false");
-      toggle?.focus();
-    }
+	if (event.key === "Escape" && document.querySelector('.channel-sidebar[data-open="true"], .participant-sidebar[data-open="true"]')) closeMobileDrawers();
   });
 
   document.addEventListener("keydown", event => {

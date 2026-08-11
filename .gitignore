@@ -2,6 +2,7 @@
 /allchat-bot
 /data/
 /.dev/
+/.scratch/
 *.db
 *.db-shm
 *.db-wal

@@ -476,10 +476,17 @@ test('voice connection replaces a half-open socket after missed heartbeat acknow
 test('mobile navigation and Community Member drawers have symmetric close controls', async ({page})=>{
   await page.goto('/login');
   await page.setViewportSize({width:390,height:844});
-  await page.evaluate(()=>{document.body.innerHTML='<div class="app-shell"><aside class="channel-sidebar"><div class="community-switcher"><button class="community-header"><span>Community</span><span data-community-arrow>⌄</span></button></div></aside><main class="content-shell"><header class="content-header"><button data-sidebar-toggle aria-expanded="false">☰</button><h1>General</h1></header><aside class="participant-sidebar"><ul class="participant-list"><li>Member</li></ul></aside></main></div>'});
+  await page.evaluate(()=>{document.body.className='';document.body.innerHTML='<div class="app-shell"><aside class="channel-sidebar"><div class="community-switcher"><button class="community-header"><span>Community</span><span data-community-arrow>⌄</span></button></div></aside><main class="content-shell"><header class="content-header"><button data-sidebar-toggle aria-expanded="false">☰</button><h1>General</h1><div class="header-actions"><button data-dm-button>✦</button><button data-notification-bell>🔔</button></div></header><aside class="participant-sidebar"><ul class="participant-list"><li>Member</li></ul></aside></main></div>'});
   await page.addStyleTag({url:'/assets/app.css'});
   await page.addStyleTag({url:'/assets/channel.css'});
   await page.addScriptTag({url:'/assets/app.js'});
+  const headerControls = await page.evaluate(() => {
+    const members=document.querySelector('[data-members-toggle]'),actions=document.querySelector('.header-actions'),actionRight=actions.getBoundingClientRect().right,memberRect=members.getBoundingClientRect();
+    return {membersAfterActions:members.previousElementSibling===actions,actionRight,memberLeft:memberRect.left,memberRight:memberRect.right,viewport:innerWidth};
+  });
+  expect(headerControls.membersAfterActions).toBe(true);
+  expect(headerControls.memberLeft).toBeGreaterThanOrEqual(headerControls.actionRight);
+  expect(headerControls.viewport-headerControls.memberRight).toBeLessThanOrEqual(6);
   await page.locator('[data-sidebar-toggle]').click();
   const drawerControls = await page.evaluate(() => {
     const arrow=document.querySelector('[data-community-arrow]').getBoundingClientRect(), close=document.querySelector('[data-sidebar-close]').getBoundingClientRect();

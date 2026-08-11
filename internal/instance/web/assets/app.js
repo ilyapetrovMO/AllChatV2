@@ -113,7 +113,7 @@
 	  let toggle=header?.querySelector("[data-members-toggle]");
 	  if (participants?.querySelector(".participant-list") && header) {
 		if (!participants.querySelector("[data-members-close]")) { const close=document.createElement("button");close.type="button";close.className="mobile-members-close button-ghost";close.dataset.membersClose="";close.setAttribute("aria-label","Close Community Members");close.textContent="×";participants.prepend(close); }
-		if (!toggle) { toggle=document.createElement("button");toggle.type="button";toggle.className="mobile-members button-ghost";toggle.dataset.membersToggle="";toggle.setAttribute("aria-label","Open Community Members");toggle.setAttribute("aria-expanded","false");toggle.textContent="👥";const actions=header.querySelector(".header-actions");actions?header.insertBefore(toggle,actions):header.append(toggle); }
+		if (!toggle) { toggle=document.createElement("button");toggle.type="button";toggle.className="mobile-members button-ghost";toggle.dataset.membersToggle="";toggle.setAttribute("aria-label","Open Community Members");toggle.setAttribute("aria-expanded","false");toggle.textContent="👥";const actions=header.querySelector(".header-actions");actions?actions.after(toggle):header.append(toggle); }
 	  } else toggle?.remove();
 	  mobileBackdrop(); syncMobileBackdrop();
 	};

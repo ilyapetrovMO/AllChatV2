@@ -1,8 +1,9 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, StyleSheet,
-  Text, TextInput, TouchableOpacity, View,
+  ScrollView, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+import {errorCodes, isErrorWithCode, pick, type DocumentPickerResponse} from '@react-native-documents/picker';
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
@@ -20,6 +21,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [error, setError] = useState('');
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<DocumentPickerResponse[]>([]);
+  const [uploadStatus, setUploadStatus] = useState('');
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
 
@@ -68,17 +71,36 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
 
   async function send() {
     const body = draft.trim();
-    if (!body || !community || sending) return;
+    if ((!body && !selectedFiles.length) || !community || sending) return;
     setSending(true);
     setError('');
     try {
-      const message = await client.publishMessage(account.session_token, activeID, body, Boolean(direct));
+      const attachmentIDs: string[] = [];
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        const file = selectedFiles[index];
+        setUploadStatus(`Uploading ${index + 1} of ${selectedFiles.length}…`);
+        const attachment = await client.uploadAttachment(account.session_token, {uri: file.uri, name: file.name || `attachment-${index + 1}`, type: file.type || 'application/octet-stream', size: file.size});
+        attachmentIDs.push(attachment.id);
+      }
+      const message = await client.publishMessage(account.session_token, activeID, body, Boolean(direct), attachmentIDs);
       setCommunity(value => value ? reduceRealtimeFrame(value, {type: 'message.created', cursor: value.cursor, channel_id: activeID, payload: message}) : value);
       setDraft('');
+      setSelectedFiles([]);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not send the Message.');
     } finally {
       setSending(false);
+      setUploadStatus('');
+    }
+  }
+
+  async function chooseAttachments() {
+    setError('');
+    try {
+      const chosen = await pick({allowMultiSelection: true, mode: 'import'});
+      setSelectedFiles(current => [...current, ...chosen].filter((file, index, files) => files.findIndex(item => item.uri === file.uri) === index).slice(0, 10));
+    } catch (caught) {
+      if (!isErrorWithCode(caught) || caught.code !== errorCodes.OPERATION_CANCELED) setError(caught instanceof Error ? caught.message : 'Could not open the file picker.');
     }
   }
 
@@ -120,12 +142,21 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
       {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
+      {selectedFiles.length ? <ScrollView contentContainerStyle={styles.selectedFiles} horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false}>{selectedFiles.map(file => <SelectedFile file={file} key={file.uri} onRemove={() => setSelectedFiles(current => current.filter(item => item.uri !== file.uri))} palette={palette} />)}</ScrollView> : null}
       <View style={[styles.composer, {borderTopColor: palette.border}]}>
+        <TouchableOpacity accessibilityLabel="Add Attachments" disabled={sending} onPress={chooseAttachments} style={[styles.attach, {backgroundColor: palette.field}]}><Text style={[styles.attachText, {color: palette.text}]}>+</Text></TouchableOpacity>
         <TextInput accessibilityLabel="Message" multiline onChangeText={value => { setDraft(value); if (value) realtime.current?.sendTyping(activeID); }} placeholder={`Message ${title}`} placeholderTextColor={palette.placeholder} style={[styles.composerInput, {backgroundColor: palette.field, color: palette.text}]} value={draft} />
-        <TouchableOpacity accessibilityLabel="Send Message" disabled={!draft.trim() || sending} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, (!draft.trim() || sending) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityLabel="Send Message" disabled={(!draft.trim() && !selectedFiles.length) || sending} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, ((!draft.trim() && !selectedFiles.length) || sending) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
       </View>
+      {uploadStatus ? <Text style={[styles.uploadStatus, {color: palette.muted}]}>{uploadStatus}</Text> : null}
     </KeyboardAvoidingView>
   );
+}
+
+function SelectedFile({file, onRemove, palette}: {file: DocumentPickerResponse; onRemove(): void; palette: Palette}) {
+  const image = file.type?.startsWith('image/');
+  const icon = file.type?.startsWith('audio/') ? '🎵' : file.type?.startsWith('video/') ? '🎬' : '📄';
+  return <View style={[styles.selectedFile, {backgroundColor: palette.field, borderColor: palette.border}]}>{image ? <Image resizeMode="cover" source={{uri: file.uri}} style={styles.selectedThumbnail} /> : <Text style={styles.selectedIcon}>{icon}</Text>}<Text numberOfLines={1} style={[styles.selectedName, {color: palette.text}]}>{file.name || 'Attachment'}</Text><TouchableOpacity accessibilityLabel={`Remove ${file.name || 'Attachment'}`} onPress={onRemove} style={styles.selectedRemove}><Text style={styles.selectedRemoveText}>×</Text></TouchableOpacity></View>;
 }
 
 export function ConversationTimeline({account, currentMemberID, messages, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; palette: Palette}) {
@@ -220,5 +251,6 @@ const styles = StyleSheet.create({
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
   back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, bold: {fontWeight: '800'}, italic: {fontStyle: 'italic'}, code: {fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier', fontSize: 15}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, imagePlaceholder: {alignItems: 'center', borderRadius: 8, height: 160, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, imageFallback: {alignItems: 'center', borderRadius: 8, borderWidth: 1, gap: 6, height: 120, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, viewer: {backgroundColor: 'rgba(0,0,0,0.96)', flex: 1, justifyContent: 'center'}, viewerImage: {height: '100%', width: '100%'}, viewerClose: {alignItems: 'center', backgroundColor: 'rgba(32,32,36,0.85)', borderRadius: 24, height: 48, justifyContent: 'center', position: 'absolute', right: 16, top: 42, width: 48, zIndex: 1}, viewerCloseText: {color: '#ffffff', fontSize: 34, lineHeight: 38}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
-  composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 10, padding: 10}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, disabled: {opacity: 0.5},
+  selectedFiles: {gap: 8, paddingHorizontal: 10, paddingVertical: 8}, selectedFile: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', height: 54, maxWidth: 230, minWidth: 150, overflow: 'hidden', paddingRight: 4}, selectedThumbnail: {height: 52, marginRight: 8, width: 52}, selectedIcon: {fontSize: 24, marginHorizontal: 10}, selectedName: {flex: 1, fontSize: 13, fontWeight: '600'}, selectedRemove: {alignItems: 'center', height: 40, justifyContent: 'center', width: 36}, selectedRemoveText: {color: '#ed4245', fontSize: 24},
+  composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, padding: 10}, attach: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, attachText: {fontSize: 27, lineHeight: 30}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, uploadStatus: {fontSize: 12, paddingBottom: 6, paddingHorizontal: 14}, disabled: {opacity: 0.5},
 });

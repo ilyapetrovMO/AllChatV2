@@ -1,4 +1,4 @@
-import type {ChannelState, Message, MobileBootstrap} from './bootstrap';
+import type {Attachment, ChannelState, Message, MobileBootstrap} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -15,10 +15,12 @@ export type NativeSession = {
   expires_at: string;
 };
 
+export type LocalAttachment = {uri: string; name: string; type: string; size?: number | null};
+
 type Fetch = typeof fetch;
 
 export class AllChatClient {
-  constructor(private readonly instanceURL: string, private readonly request: Fetch = fetch) {}
+  constructor(private readonly instanceURL: string, private readonly request: Fetch = fetch, private readonly readLocalFile: Fetch = fetch) {}
 
   async login(username: string, password: string, deviceName: string): Promise<NativeSession> {
     let response: Response;
@@ -63,13 +65,29 @@ export class AllChatClient {
     return bootstrap;
   }
 
-  async publishMessage(token: string, conversationID: string, body: string, direct = false): Promise<Message> {
+  async publishMessage(token: string, conversationID: string, body: string, direct = false, attachmentIDs: string[] = []): Promise<Message> {
     const response = await this.request(`${this.instanceURL}/api/v1/${direct ? 'dms' : 'channels'}/${encodeURIComponent(conversationID)}/messages`, {
       method: 'POST',
       headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json'},
-      body: JSON.stringify({body}),
+      body: JSON.stringify({body, ...(attachmentIDs.length ? {attachment_ids: attachmentIDs} : {})}),
     });
     return this.decode<Message>(response, 'Could not send the Message.');
+  }
+
+  async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {
+    let content: Blob;
+    try {
+      const local = await this.readLocalFile(file.uri);
+      content = await local.blob();
+    } catch {
+      throw new Error(`Could not read ${file.name} from this device.`);
+    }
+    const response = await this.request(`${this.instanceURL}/api/v1/attachments?filename=${encodeURIComponent(file.name)}`, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${token}`, 'Content-Type': file.type || 'application/octet-stream'},
+      body: content,
+    });
+    return this.decode<Attachment>(response, `Could not upload ${file.name}.`);
   }
 
   async updateReadPosition(token: string, conversationID: string, sequence: number, direct = false): Promise<ChannelState> {

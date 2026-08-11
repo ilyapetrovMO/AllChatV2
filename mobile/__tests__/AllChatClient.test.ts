@@ -109,4 +109,30 @@ describe('AllChatClient', () => {
       body: JSON.stringify({sequence: 8}),
     });
   });
+
+  it('uploads a locally selected Attachment with an encoded filename', async () => {
+    const localBlob = new Blob(['audio bytes'], {type: 'audio/mpeg', lastModified: 0});
+    const readFile = jest.fn(async () => new Response(localBlob, {status: 200}));
+    const request = jest.fn(async () => new Response(JSON.stringify({id: 'attachment-1', name: 'Бит.mp3', content_type: 'audio/mpeg', size: 11}), {status: 201}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch, readFile as typeof fetch);
+
+    const attachment = await client.uploadAttachment('session-token', {uri: 'content://picked/audio', name: 'Бит.mp3', type: 'audio/mpeg', size: 11});
+
+    expect(attachment.id).toBe('attachment-1');
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/attachments?filename=%D0%91%D0%B8%D1%82.mp3', expect.objectContaining({
+      method: 'POST', headers: {Authorization: 'Bearer session-token', 'Content-Type': 'audio/mpeg'}, body: expect.any(Blob),
+    }));
+  });
+
+  it('publishes selected Attachment IDs with the Message', async () => {
+    const message = {id: 'message-1', channel_id: 'channel-1', author_id: 'member-1', author_name: 'Member', sequence: 1, created_at: '2030-01-01T00:00:00Z', deleted: false};
+    const request = jest.fn(async () => new Response(JSON.stringify(message), {status: 201}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.publishMessage('session-token', 'channel-1', '', false, ['attachment-1']);
+
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/channels/channel-1/messages', expect.objectContaining({
+      body: JSON.stringify({body: '', attachment_ids: ['attachment-1']}),
+    }));
+  });
 });

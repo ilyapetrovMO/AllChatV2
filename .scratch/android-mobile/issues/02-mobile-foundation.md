@@ -8,4 +8,4 @@ Create the standalone `mobile/` project, Instance registry, secure Session stora
 
 ## Comments
 
-- React Native 0.86.2 scaffold, Android API 26-36 configuration, Instance URL validation, typed native client, Keystore-backed Session vault, multiple-Instance switching, tests, and repository build commands are in place. Synchronization and the encrypted conversation cache remain open.
+- React Native 0.86.2 scaffold, Android API 26-36 configuration, Instance URL validation, typed native client, Keystore-backed Session vault, multiple-Instance switching, versioned bootstrap contract, tests, and repository build commands are in place. Realtime synchronization and the encrypted conversation cache remain open.

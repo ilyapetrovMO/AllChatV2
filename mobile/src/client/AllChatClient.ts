@@ -1,3 +1,5 @@
+import type {MobileBootstrap} from './bootstrap';
+
 export type Member = {
   id: string;
   username: string;
@@ -43,6 +45,17 @@ export class AllChatClient {
       const body = await response.json().catch(() => ({})) as {error?: string};
       throw new Error(body.error || 'Could not revoke Session.');
     }
+  }
+
+  async bootstrap(token: string): Promise<MobileBootstrap> {
+    const response = await this.request(`${this.instanceURL}/api/v1/mobile/bootstrap`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    const bootstrap = await this.decode<MobileBootstrap>(response, 'Could not synchronize the Instance.');
+    if (bootstrap.version !== 1) {
+      throw new Error(`Unsupported mobile protocol version: ${bootstrap.version}`);
+    }
+    return bootstrap;
   }
 
   private async decode<T>(response: Response, fallback: string): Promise<T> {

@@ -2,6 +2,7 @@
 package instance
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -19,6 +20,13 @@ type channelNotificationSetting struct {
 	Muted bool   `json:"muted"`
 }
 
+type notificationSettingsView struct {
+	CurrentMemberID string                                `json:"current_member_id"`
+	Community       notificationSetting                   `json:"community"`
+	Channels        map[string]channelNotificationSetting `json:"channels"`
+	MutedChannelIDs []string                              `json:"muted_channel_ids"`
+}
+
 func validNotificationLevel(level string, allowDefault bool) bool {
 	return level == "all_messages" || level == "mentions_only" || level == "nothing" || (allowDefault && level == "default")
 }
@@ -28,32 +36,40 @@ func (i *Instance) notificationSettingsAPI(response http.ResponseWriter, request
 	if !ok {
 		return
 	}
-	communitySetting := notificationSetting{Level: "all_messages", SoundEnabled: true}
-	err := i.db.QueryRowContext(request.Context(), "SELECT level, muted, sound_enabled FROM member_notification_settings WHERE member_id = ?", member.ID).Scan(&communitySetting.Level, &communitySetting.Muted, &communitySetting.SoundEnabled)
-	if err != nil && err != sql.ErrNoRows {
-		writeJSON(response, http.StatusInternalServerError, map[string]string{"error": "Notification settings unavailable"})
-		return
-	}
-	rows, err := i.db.QueryContext(request.Context(), "SELECT channel_id, level, muted FROM channel_notification_settings WHERE member_id = ?", member.ID)
+	settings, err := i.notificationSettings(request.Context(), member.ID)
 	if err != nil {
 		writeJSON(response, http.StatusInternalServerError, map[string]string{"error": "Notification settings unavailable"})
 		return
 	}
+	writeJSON(response, http.StatusOK, settings)
+}
+
+func (i *Instance) notificationSettings(ctx context.Context, memberID string) (notificationSettingsView, error) {
+	view := notificationSettingsView{CurrentMemberID: memberID, Community: notificationSetting{Level: "all_messages", SoundEnabled: true}, Channels: map[string]channelNotificationSetting{}, MutedChannelIDs: []string{}}
+	err := i.db.QueryRowContext(ctx, "SELECT level, muted, sound_enabled FROM member_notification_settings WHERE member_id = ?", memberID).Scan(&view.Community.Level, &view.Community.Muted, &view.Community.SoundEnabled)
+	if err != nil && err != sql.ErrNoRows {
+		return notificationSettingsView{}, err
+	}
+	rows, err := i.db.QueryContext(ctx, "SELECT channel_id, level, muted FROM channel_notification_settings WHERE member_id = ?", memberID)
+	if err != nil {
+		return notificationSettingsView{}, err
+	}
 	defer rows.Close()
-	channels, muted := map[string]channelNotificationSetting{}, make([]string, 0)
 	for rows.Next() {
 		var channelID string
 		var setting channelNotificationSetting
 		if err := rows.Scan(&channelID, &setting.Level, &setting.Muted); err != nil {
-			writeJSON(response, 500, map[string]string{"error": "Notification settings unavailable"})
-			return
+			return notificationSettingsView{}, err
 		}
-		channels[channelID] = setting
+		view.Channels[channelID] = setting
 		if setting.Muted {
-			muted = append(muted, channelID)
+			view.MutedChannelIDs = append(view.MutedChannelIDs, channelID)
 		}
 	}
-	writeJSON(response, http.StatusOK, map[string]any{"current_member_id": member.ID, "community": communitySetting, "channels": channels, "muted_channel_ids": muted})
+	if err := rows.Err(); err != nil {
+		return notificationSettingsView{}, err
+	}
+	return view, nil
 }
 
 func (i *Instance) updateNotificationSettingsAPI(response http.ResponseWriter, request *http.Request) {

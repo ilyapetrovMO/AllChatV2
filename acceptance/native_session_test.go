@@ -57,6 +57,28 @@ func TestNativeSessionAuthenticatesHTTPAndRealtimeWithoutCSRF(t *testing.T) {
 		t.Fatalf("bearer mutation status = %d", profileResponse.StatusCode)
 	}
 
+	bootstrapRequest, _ := http.NewRequest(http.MethodGet, app.url("/api/v1/mobile/bootstrap"), nil)
+	bootstrapRequest.Header.Set("Authorization", "Bearer "+session.SessionToken)
+	bootstrapResponse, err := (&http.Client{Timeout: 5 * time.Second}).Do(bootstrapRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer bootstrapResponse.Body.Close()
+	var bootstrap struct {
+		Version    int              `json:"version"`
+		Member     map[string]any   `json:"member"`
+		Categories []map[string]any `json:"categories"`
+		Channels   []map[string]any `json:"channels"`
+		Messages   map[string]any   `json:"messages"`
+		Cursor     int64            `json:"cursor"`
+	}
+	if bootstrapResponse.StatusCode != http.StatusOK || json.NewDecoder(bootstrapResponse.Body).Decode(&bootstrap) != nil {
+		t.Fatalf("native bootstrap status = %d", bootstrapResponse.StatusCode)
+	}
+	if bootstrap.Version != 1 || bootstrap.Member["display_name"] != "Native Owner" || bootstrap.Categories == nil || bootstrap.Channels == nil || bootstrap.Messages == nil || bootstrap.Cursor < 0 {
+		t.Fatalf("native bootstrap = %+v", bootstrap)
+	}
+
 	realtimeURL := app.url("/api/v1/realtime")
 	realtimeURL = "ws" + realtimeURL[len("http"):]
 	connection, response, err := websocket.Dial(context.Background(), realtimeURL, &websocket.DialOptions{HTTPHeader: http.Header{"Authorization": {"Bearer " + session.SessionToken}}})

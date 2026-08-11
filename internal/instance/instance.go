@@ -715,6 +715,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /api/v1/auth/register", i.registerAPI)
 	mux.HandleFunc("POST /api/v1/auth/native/register", i.nativeRegisterAPI)
 	mux.HandleFunc("GET /api/v1/session", i.sessionAPI)
+	mux.HandleFunc("GET /api/v1/mobile/bootstrap", i.mobileBootstrapAPI)
 	mux.HandleFunc("GET /api/v1/sessions", i.sessionsAPI)
 	mux.HandleFunc("DELETE /api/v1/sessions", i.revokeAllSessionsAPI)
 	mux.HandleFunc("DELETE /api/v1/sessions/{sessionID}", i.revokeSessionAPI)

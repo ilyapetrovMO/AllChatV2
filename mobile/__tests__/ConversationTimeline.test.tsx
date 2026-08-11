@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, Image} from 'react-native';
+import {FlatList, Image, Modal} from 'react-native';
 import renderer, {act} from 'react-test-renderer';
 
 import {ConversationTimeline, loadAuthenticatedImage, MessageRow} from '../src/screens/CommunityScreen';
@@ -34,6 +34,10 @@ describe('native conversation timeline', () => {
 
     expect(loadImage).toHaveBeenCalledWith('https://chat.example.test/api/v1/attachments/attachment-1', 'session-token');
     expect(tree.root.findByType(Image).props.source).toEqual({uri: 'data:image/png;base64,cGl4ZWxz'});
+
+    act(() => { tree.root.findByProps({accessibilityLabel: 'Open photo.png'}).props.onPress(); });
+    expect(tree.root.findByType(Modal).props.visible).toBe(true);
+    expect(tree.root.findAllByType(Image)).toHaveLength(2);
   });
 
   it('converts an authenticated image response into a decoder-local data URI', async () => {

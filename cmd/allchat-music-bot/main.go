@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 	botclient "allchat/internal/bots/client"
 	"allchat/internal/bots/media"
 	"allchat/internal/bots/music"
+	"allchat/internal/buildinfo"
 )
 
 type chatAdapter struct{ client *botclient.Client }
@@ -37,6 +39,10 @@ type runtimeStatus struct {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "version" {
+		fmt.Println(buildinfo.String())
+		return
+	}
 	baseURL := flag.String("url", env("ALLCHAT_MUSIC_BOT_URL", env("ALLCHAT_BOT_URL", "http://127.0.0.1:8080")), "AllChat Instance URL")
 	username := flag.String("username", env("ALLCHAT_MUSIC_BOT_USERNAME", "allchat-music-bot"), "Member username")
 	password := flag.String("password", env("ALLCHAT_MUSIC_BOT_PASSWORD", env("ALLCHAT_BOT_PASSWORD", "")), "Member password")

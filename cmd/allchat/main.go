@@ -10,11 +10,14 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
+	"allchat/internal/buildinfo"
 	"allchat/internal/instance"
 )
 
@@ -23,6 +26,13 @@ func main() {
 }
 
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "version" {
+		fmt.Fprintln(os.Stdout, buildinfo.String())
+		return 0
+	}
+	if len(args) > 0 && args[0] == "setup-link" {
+		return runSetupLink(args[1:])
+	}
 	if len(args) > 0 && args[0] == "recover-owner" {
 		return runRecoverOwner(args[1:], os.Stdin)
 	}
@@ -105,6 +115,42 @@ func run(args []string) int {
 		fmt.Fprintf(os.Stderr, "run Instance: %v\n", err)
 		return 1
 	}
+	return 0
+}
+
+func runSetupLink(args []string) int {
+	flags := flag.NewFlagSet("allchat setup-link", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	dataDir := flags.String("data-dir", "", "directory containing Instance data")
+	baseURL := flags.String("base-url", "", "public Instance URL")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if *dataDir == "" || *baseURL == "" || flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "setup-link requires --data-dir and --base-url")
+		return 2
+	}
+	parsed, err := url.Parse(*baseURL)
+	if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") || parsed.Host == "" || parsed.User != nil {
+		fmt.Fprintln(os.Stderr, "setup-link requires an absolute http or https --base-url")
+		return 2
+	}
+	token, err := os.ReadFile(filepath.Join(*dataDir, "setup.token"))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			if _, databaseErr := os.Stat(filepath.Join(*dataDir, "allchat.db")); databaseErr == nil {
+				parsed.Path, parsed.RawQuery, parsed.Fragment = "/", "", ""
+				fmt.Fprintln(os.Stdout, parsed.String())
+				return 0
+			}
+		}
+		fmt.Fprintf(os.Stderr, "read setup token: %v\n", err)
+		return 1
+	}
+	parsed.Path = "/setup"
+	parsed.RawQuery = url.Values{"token": []string{strings.TrimSpace(string(token))}}.Encode()
+	parsed.Fragment = ""
+	fmt.Fprintln(os.Stdout, parsed.String())
 	return 0
 }
 

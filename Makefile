@@ -2,7 +2,7 @@ DEV_DATA_DIR ?= .dev/data
 DEV_LISTEN ?= 127.0.0.1:8080
 GOFLAGS ?= -buildvcs=false
 
-.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-music-bot dev-bot-gui drop-db test test-ui test-ui-update vet build clean
+.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-music-bot dev-bot-gui drop-db test test-ui test-ui-update vet build build-music-bot build-bootstrap clean
 
 dev:
 	go run $(GOFLAGS) ./cmd/allchat --data-dir "$(DEV_DATA_DIR)" --listen "$(DEV_LISTEN)"
@@ -40,6 +40,13 @@ vet:
 build:
 	go build $(GOFLAGS) -o allchat ./cmd/allchat
 
+build-music-bot:
+	go build $(GOFLAGS) -o allchat-music-bot ./cmd/allchat-music-bot
+
+build-bootstrap:
+	go build $(GOFLAGS) -tags bootstrap_gui -o allchat-bootstrap ./cmd/allchat-bootstrap
+
 clean:
 	go clean
 	$(RM) allchat
+	$(RM) allchat-music-bot allchat-bootstrap

@@ -104,6 +104,55 @@ Members can download a portable JSON export from `GET /api/v1/account/export`. I
 
 ## Public deployment and live media
 
+### Download a release or use the bootstrapper
+
+Each tagged GitHub release contains an explicit source ZIP, `SHA256SUMS`, static
+Linux Instance and music-bot binaries for `amd64`, `arm64`, and `armv7`, and the
+native AllChat bootstrapper for Windows, macOS, and Linux on `amd64` and
+`arm64`. Verify a downloaded artifact before running it:
+
+```sh
+sha256sum --check SHA256SUMS --ignore-missing
+chmod +x allchat_1.2.3_linux_amd64
+./allchat_1.2.3_linux_amd64 version
+```
+
+The bootstrapper configures an **existing** Debian 12+ or Ubuntu 22.04+ VPS over
+SSH. Supply the VPS address, SSH username and either a password or private key,
+the public IP, and a release tag. The first SSH connection shows the host-key
+fingerprint; compare it with the fingerprint in the VPS provider console before
+accepting it. The application installs the Instance under an unprivileged
+`allchat` account, configures systemd and UFW without losing the selected SSH
+port, waits for HTTPS, and opens the one-time Community Owner setup page.
+
+For an existing bootstrap-managed Instance, the same action performs an
+upgrade. It creates a coherent backup and retains the prior binary first. If
+the new service cannot start, it preserves the failed upgraded data directory,
+restores the matching backup with the previous binary, and restarts that
+version. The bootstrapper deliberately refuses to overwrite installations it
+did not create.
+
+You do not need a domain name. A stable, publicly routable VPS IP can receive a
+short-lived Let's Encrypt IP certificate when TCP ports 80 and 443 reach the
+Instance. For a dynamic public IP, the bootstrapper can configure a hostname
+the operator has already created at DuckDNS; the DuckDNS token is stored in a
+root-only file on the VPS. An address change updates DNS and the Relay's
+advertised IP, then restarts the Instance, which interrupts active media
+sessions. Neither a domain nor DuckDNS can make a VPS reachable through CGNAT,
+a provider firewall, or missing router port forwarding.
+
+The music bot binary remains optional and is not installed by the bootstrapper.
+It still requires `ffmpeg`, `ffprobe`, and `yt-dlp` on the machine where it is
+run.
+
+Maintainers publish a release by pushing a semantic tag such as `v1.2.3`.
+Version, commit, and UTC build date are embedded in every binary. Windows
+Authenticode signing is enabled when `WINDOWS_CERTIFICATE` (base64 PKCS#12) and
+`WINDOWS_CERTIFICATE_PASSWORD` secrets are configured. macOS signing and
+notarization use `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID`, and
+`APPLE_APP_PASSWORD`; without signing secrets, checksum-verified unsigned
+artifacts are still published.
+
 The following example installs one Instance on a Linux VPS. Commands assume a checkout containing the desired release and a host with systemd. Replace every `example.com`, email address, and documentation IP with values belonging to the deployment.
 
 ### Build and install

@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test -buildvcs=false ./...
+
+  linux-binaries:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+          - goarch: arm64
+          - goarch: arm
+            goarm: '7'
+            artifact_arch: armv7
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build static release binaries
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+          ARTIFACT_ARCH: ${{ matrix.artifact_arch || matrix.goarch }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat-music-bot_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat-music-bot
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.artifact_arch || matrix.goarch }}
+          path: dist/*
+
+  bootstrapper:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            goarch: amd64
+            platform: linux
+          - os: ubuntu-24.04-arm
+            goarch: arm64
+            platform: linux
+          - os: windows-2025
+            goarch: amd64
+            platform: windows
+            suffix: .exe
+          - os: windows-11-arm
+            goarch: arm64
+            platform: windows
+            suffix: .exe
+          - os: macos-15-intel
+            goarch: amd64
+            platform: darwin
+          - os: macos-15
+            goarch: arm64
+            platform: darwin
+    runs-on: ${{ matrix.os }}
+    env:
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install Linux GUI headers
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+      - name: Build native bootstrapper
+        shell: bash
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          SUFFIX: ${{ matrix.suffix }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          mkdir -p dist
+          if [ "$PLATFORM" = windows ]; then export CC=clang; fi
+          CGO_ENABLED=1 go build -trimpath -buildvcs=false -tags bootstrap_gui -ldflags="$ldflags" -o "dist/allchat-bootstrap_${version}_${PLATFORM}_${GOARCH}${SUFFIX}" ./cmd/allchat-bootstrap
+      - name: Sign Windows executable
+        if: matrix.platform == 'windows' && env.WINDOWS_CERTIFICATE != ''
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("certificate.pfx", [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f certificate.pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD (Get-ChildItem dist\*.exe).FullName
+      - name: Package and optionally notarize macOS application
+        if: matrix.platform == 'darwin'
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          executable="allchat-bootstrap_${version}_darwin_${{ matrix.goarch }}"
+          bundle="dist/AllChat Bootstrapper.app"
+          mkdir -p "$bundle/Contents/MacOS"
+          mv "dist/$executable" "$bundle/Contents/MacOS/allchat-bootstrap"
+          cat > "$bundle/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>CFBundleExecutable</key><string>allchat-bootstrap</string>
+          <key>CFBundleIdentifier</key><string>org.allchat.bootstrap</string>
+          <key>CFBundleName</key><string>AllChat Bootstrapper</string>
+          <key>CFBundlePackageType</key><string>APPL</string>
+          <key>CFBundleShortVersionString</key><string>1.0</string>
+          </dict></plist>
+          PLIST
+          if [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            codesign --force --deep --options runtime --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$bundle"
+          else
+            codesign --force --deep --sign - "$bundle"
+          fi
+          ditto -c -k --keepParent "$bundle" "dist/${executable}.app.zip"
+          rm -rf "$bundle"
+          if [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
+            xcrun notarytool submit "dist/${executable}.app.zip" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-${{ matrix.platform }}-${{ matrix.goarch }}
+          path: dist/*
+
+  publish:
+    needs: [linux-binaries, bootstrapper]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Add source and checksums
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          git archive --format=zip --prefix="AllChatV2-${version}/" -o "dist/allchat_${version}_source.zip" "$GITHUB_SHA"
+          cd dist
+          sha256sum allchat* > SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*

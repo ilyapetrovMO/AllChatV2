@@ -7,6 +7,7 @@ import {errorCodes, isErrorWithCode, pick, type DocumentPickerResponse} from '@r
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
+import type {Member} from '../client/AllChatClient';
 import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import type {InstanceAccount} from '../session/SessionVault';
@@ -31,6 +32,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [panelBusy, setPanelBusy] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [profileMember, setProfileMember] = useState<Member>();
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
 
@@ -79,7 +82,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
 
   async function send() {
     const body = draft.trim();
-    if ((!body && !selectedFiles.length) || !community || sending) return;
+    if ((!body && !selectedFiles.length) || !community || sending || direct?.blocked_by_me || direct?.blocked_me) return;
     setSending(true);
     setError('');
     try {
@@ -143,6 +146,29 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     finally { setPanelBusy(false); }
   }
 
+  async function startDM(member: Member) {
+    setPanelBusy(true); setError('');
+    try {
+      const item = await client.openDirectMessage(account.session_token, member.id);
+      setCommunity(value => value ? {...value, direct_messages: [item, ...value.direct_messages.filter(dm => dm.id !== item.id)]} : value);
+      setMembersOpen(false); setProfileMember(undefined); await openConversation(item.id, true);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not open the Direct Message.'); }
+    finally { setPanelBusy(false); }
+  }
+
+  async function changePresence(mode: 'available' | 'dnd') {
+    try { await client.setPresenceMode(account.session_token, mode); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not update your presence.'); }
+  }
+
+  async function toggleBlock() {
+    if (!direct) return;
+    try {
+      await client.setBlock(account.session_token, direct.other.id, !direct.blocked_by_me);
+      setCommunity(value => value ? {...value, direct_messages: value.direct_messages.map(item => item.id === direct.id ? {...item, blocked_by_me: !item.blocked_by_me} : item)} : value);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not update the block.'); }
+  }
+
   async function chooseAttachments() {
     setError('');
     try {
@@ -163,6 +189,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       <View style={styles.fill}>
         <View style={[styles.header, {borderBottomColor: palette.border}]}>
           <View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>{community.community.name}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Connected' : 'Reconnecting…'}</Text></View>
+          <TouchableOpacity accessibilityLabel="Community Members" onPress={() => setMembersOpen(true)} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>♟</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityLabel="Toggle Do Not Disturb" onPress={() => changePresence(community.presence[community.member.id] === 'dnd' ? 'available' : 'dnd')} style={styles.iconButton}><Text style={[styles.presenceButton, community.presence[community.member.id] === 'dnd' ? styles.presenceDND : styles.presenceOnline]}>●</Text></TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" onPress={onManage} style={[styles.headerButton, {borderColor: palette.border}]}><Text style={{color: palette.text}}>Instances</Text></TouchableOpacity>
         </View>
         <FlatList
@@ -176,6 +204,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
           ListEmptyComponent={<Text style={{color: palette.muted}}>No text conversations are available.</Text>}
           renderItem={({item}) => <TouchableOpacity onPress={() => openConversation(item.id, item.direct)} style={[styles.conversation, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.conversationName, {color: palette.text}]}>{item.name}</Text>{item.unread > 0 ? <Text style={styles.badge}>{item.unread}</Text> : null}</TouchableOpacity>}
         />
+        <MembersPanel busy={panelBusy} currentMemberID={community.member.id} members={community.members} onClose={() => setMembersOpen(false)} onOpenProfile={member => { setMembersOpen(false); setProfileMember(member); }} open={membersOpen} palette={palette} presence={community.presence} />
+        <MemberProfile client={client} member={profileMember} onClose={() => setProfileMember(undefined)} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
       </View>
     );
   }
@@ -187,18 +217,20 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       <View style={[styles.header, {borderBottomColor: palette.border}]}>
         <TouchableOpacity accessibilityLabel="Back to conversations" onPress={() => setActiveID('')} style={styles.back}><Text style={[styles.backText, {color: palette.accent}]}>‹</Text></TouchableOpacity>
         <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
+        {direct ? <TouchableOpacity accessibilityLabel={direct.blocked_by_me ? 'Unblock Member' : 'Block Member'} onPress={toggleBlock} style={styles.iconButton}><Text style={[styles.headerIcon, direct.blocked_by_me ? styles.dangerText : {color: palette.text}]}>⊘</Text></TouchableOpacity> : null}
         {!direct ? <TouchableOpacity accessibilityLabel="Pinned Messages" onPress={openPins} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>◆</Text></TouchableOpacity> : null}
         <TouchableOpacity accessibilityLabel="Search Messages" onPress={() => setPanel('search')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>⌕</Text></TouchableOpacity>
       </View>
       <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} onMessageAction={setActionMessage} onReaction={toggleReaction} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
+      {direct && (direct.blocked_by_me || direct.blocked_me) ? <Text style={[styles.blockedNotice, {color: palette.muted}]}>Messages are disabled while either Member has blocked the other.</Text> : null}
       {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
       {selectedFiles.length ? <ScrollView contentContainerStyle={styles.selectedFiles} horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false}>{selectedFiles.map(file => <SelectedFile file={file} key={file.uri} onRemove={() => setSelectedFiles(current => current.filter(item => item.uri !== file.uri))} palette={palette} />)}</ScrollView> : null}
       {replying || editing ? <View style={[styles.contextBanner, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.grow, {color: palette.text}]}>{editing ? 'Editing your Message' : `Replying to ${replying?.author_name}`}</Text><TouchableOpacity accessibilityLabel="Cancel Message action" onPress={() => { setReplying(undefined); setEditing(undefined); if (editing) setDraft(''); }}><Text style={styles.contextClose}>×</Text></TouchableOpacity></View> : null}
       <View style={[styles.composer, {borderTopColor: palette.border}]}>
-        <TouchableOpacity accessibilityLabel="Add Attachments" disabled={sending} onPress={chooseAttachments} style={[styles.attach, {backgroundColor: palette.field}]}><Text style={[styles.attachText, {color: palette.text}]}>+</Text></TouchableOpacity>
-        <TextInput accessibilityLabel="Message" multiline onChangeText={value => { setDraft(value); if (value) realtime.current?.sendTyping(activeID); }} placeholder={`Message ${title}`} placeholderTextColor={palette.placeholder} style={[styles.composerInput, {backgroundColor: palette.field, color: palette.text}]} value={draft} />
-        <TouchableOpacity accessibilityLabel="Send Message" disabled={(!draft.trim() && !selectedFiles.length) || sending} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, ((!draft.trim() && !selectedFiles.length) || sending) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
+        <TouchableOpacity accessibilityLabel="Add Attachments" disabled={sending || direct?.blocked_by_me || direct?.blocked_me} onPress={chooseAttachments} style={[styles.attach, {backgroundColor: palette.field}, (direct?.blocked_by_me || direct?.blocked_me) && styles.disabled]}><Text style={[styles.attachText, {color: palette.text}]}>+</Text></TouchableOpacity>
+        <TextInput accessibilityLabel="Message" editable={!direct?.blocked_by_me && !direct?.blocked_me} multiline onChangeText={value => { setDraft(value); if (value) realtime.current?.sendTyping(activeID); }} placeholder={`Message ${title}`} placeholderTextColor={palette.placeholder} style={[styles.composerInput, {backgroundColor: palette.field, color: palette.text}]} value={draft} />
+        <TouchableOpacity accessibilityLabel="Send Message" disabled={(!draft.trim() && !selectedFiles.length) || sending || direct?.blocked_by_me || direct?.blocked_me} onPress={send} style={[styles.send, {backgroundColor: palette.accent}, ((!draft.trim() && !selectedFiles.length) || sending || direct?.blocked_by_me || direct?.blocked_me) && styles.disabled]}><Text style={styles.sendText}>{sending ? '…' : '➤'}</Text></TouchableOpacity>
       </View>
       {uploadStatus ? <Text style={[styles.uploadStatus, {color: palette.muted}]}>{uploadStatus}</Text> : null}
       <MessageActions message={actionMessage} mine={Boolean(actionMessage && actionMessage.author_id === community.member.id)} onAction={performMessageAction} onClose={() => setActionMessage(undefined)} onReaction={toggleReaction} palette={palette} />
@@ -288,6 +320,41 @@ function ConversationPanel({busy, messages, mode, onClose, onSearch, palette, qu
   return <Modal animationType="slide" onRequestClose={onClose} visible><View style={[styles.panel, {backgroundColor: palette.background}]}><View style={[styles.header, {borderBottomColor: palette.border}]}><Text style={[styles.title, {color: palette.text}]}>{mode === 'pins' ? 'Pinned Messages' : 'Search'}</Text><View style={styles.grow} /><TouchableOpacity accessibilityLabel="Close" onPress={onClose} style={styles.iconButton}><Text style={[styles.contextClose, {color: palette.text}]}>×</Text></TouchableOpacity></View>{mode === 'search' ? <View style={styles.searchBar}><TextInput autoFocus onChangeText={setQuery} onSubmitEditing={onSearch} placeholder="Search Messages" placeholderTextColor={palette.placeholder} returnKeyType="search" style={[styles.searchInput, {backgroundColor: palette.field, color: palette.text}]} value={query} /><TouchableOpacity onPress={onSearch} style={[styles.searchButton, {backgroundColor: palette.accent}]}><Text style={styles.searchButtonText}>Search</Text></TouchableOpacity></View> : null}{busy ? <ActivityIndicator color={palette.accent} style={styles.panelBusy} /> : <FlatList contentContainerStyle={styles.panelList} data={items} keyExtractor={item => item.id} ListEmptyComponent={<Text style={{color: palette.muted}}>{mode === 'pins' ? 'No pinned Messages.' : query ? 'No results.' : 'Enter a search query.'}</Text>} renderItem={({item}) => <View style={[styles.panelItem, {backgroundColor: palette.field}]}><Text style={[styles.author, {color: palette.text}]}>{item.author}</Text><Text numberOfLines={4} style={{color: palette.text}}>{item.body}</Text></View>} />}</View></Modal>;
 }
 
+function MembersPanel({busy, currentMemberID, members, onClose, onOpenProfile, open, palette, presence}: {busy: boolean; currentMemberID: string; members: Member[]; onClose(): void; onOpenProfile(member: Member): void; open: boolean; palette: Palette; presence: CommunityState['presence']}) {
+  const sorted = [...members].sort((left, right) => presenceRank(presence[left.id]) - presenceRank(presence[right.id]) || memberName(left).localeCompare(memberName(right)));
+  return <Modal animationType="slide" onRequestClose={onClose} visible={open}>
+    <View style={[styles.panel, {backgroundColor: palette.background}]}>
+      <View style={[styles.header, {borderBottomColor: palette.border}]}>
+        <Text style={[styles.title, {color: palette.text}]}>Members</Text><View style={styles.grow} />
+        <TouchableOpacity accessibilityLabel="Close Members" onPress={onClose} style={styles.iconButton}><Text style={[styles.contextClose, {color: palette.text}]}>×</Text></TouchableOpacity>
+      </View>
+      {busy ? <ActivityIndicator color={palette.accent} /> : <FlatList
+        contentContainerStyle={styles.panelList} data={sorted} keyExtractor={member => member.id}
+        renderItem={({item}) => <TouchableOpacity onPress={() => onOpenProfile(item)} style={[styles.memberRow, {backgroundColor: palette.field}]}>
+          <Text style={[styles.memberAvatar, {backgroundColor: palette.border, color: palette.text}]}>{memberName(item).slice(0, 1).toUpperCase()}</Text>
+          <View style={styles.grow}><Text style={[styles.memberName, {color: palette.text}]}>{memberName(item)}{item.id === currentMemberID ? ' (You)' : ''}</Text><Text style={{color: palette.muted}}>@{item.username}{item.owner ? ' · Owner' : ''}</Text></View>
+          <Text accessibilityLabel={presence[item.id] || 'offline'} style={[styles.presenceDot, presenceStyle(presence[item.id])]}>●</Text>
+        </TouchableOpacity>}
+      />}
+    </View>
+  </Modal>;
+}
+
+function MemberProfile({client, member, onClose, onStartDM, palette, self, token}: {client: AllChatClient; member?: Member; onClose(): void; onStartDM(member: Member): void; palette: Palette; self: boolean; token: string}) {
+  const [reporting, setReporting] = useState(false); const [reason, setReason] = useState(''); const [status, setStatus] = useState('');
+  if (!member) return null;
+  async function report() {
+    if (!reason.trim()) return;
+    try { await client.reportMember(token, member!.id, reason.trim()); setStatus('Report submitted.'); setReporting(false); setReason(''); }
+    catch (caught) { setStatus(caught instanceof Error ? caught.message : 'Could not submit the report.'); }
+  }
+  return <Modal animationType="fade" onRequestClose={onClose} transparent visible><View style={styles.profileBackdrop}><View style={[styles.profileCard, {backgroundColor: palette.background}]}><Text style={[styles.profileAvatar, {backgroundColor: palette.field, color: palette.text}]}>{memberName(member).slice(0, 1).toUpperCase()}</Text><Text style={[styles.profileName, {color: palette.text}]}>{memberName(member)}</Text><Text style={{color: palette.muted}}>@{member.username}{member.owner ? ' · Owner' : ''}</Text>{status ? <Text style={[styles.profileStatus, {color: palette.muted}]}>{status}</Text> : null}{!self && reporting ? <><TextInput autoFocus multiline onChangeText={setReason} placeholder="What happened?" placeholderTextColor={palette.placeholder} style={[styles.reportInput, {backgroundColor: palette.field, color: palette.text}]} value={reason} /><TouchableOpacity disabled={!reason.trim()} onPress={report} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Submit report</Text></TouchableOpacity></> : !self ? <><TouchableOpacity onPress={() => onStartDM(member)} style={[styles.profilePrimary, {backgroundColor: palette.accent}]}><Text style={styles.whiteText}>Message</Text></TouchableOpacity><TouchableOpacity onPress={() => setReporting(true)} style={styles.profileAction}><Text style={styles.dangerText}>Report Member</Text></TouchableOpacity></> : null}<TouchableOpacity onPress={onClose} style={styles.profileAction}><Text style={{color: palette.text}}>Close</Text></TouchableOpacity></View></View></Modal>;
+}
+
+function memberName(member: Member) { return member.display_name || member.username; }
+function presenceRank(value?: string) { return value === 'online' || value === 'mobile' ? 0 : value === 'dnd' ? 1 : value === 'idle' ? 2 : 3; }
+function presenceStyle(value?: string) { return value === 'dnd' ? styles.presenceDND : value === 'idle' ? styles.presenceIdle : value === 'online' || value === 'mobile' ? styles.presenceOnline : styles.presenceOffline; }
+
 export async function loadAuthenticatedImage(url: string, token: string, request: typeof fetch = fetch): Promise<string> {
   const response = await request(url, {headers: {Authorization: `Bearer ${token}`}});
   if (!response.ok) throw new Error(`Image request failed with HTTP ${response.status}`);
@@ -327,10 +394,13 @@ const styles = StyleSheet.create({
   fill: {flex: 1}, grow: {flex: 1}, center: {alignItems: 'center', flex: 1, gap: 16, justifyContent: 'center', padding: 24}, error: {color: '#ed4245', fontSize: 15, textAlign: 'center'}, errorColor: {color: '#ed4245'}, connected: {color: '#3ba55d'},
   header: {alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 66, paddingHorizontal: 16}, title: {fontSize: 20, fontWeight: '800'}, headerButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8},
   iconButton: {alignItems: 'center', height: 44, justifyContent: 'center', width: 44}, headerIcon: {fontSize: 25},
+  presenceButton: {fontSize: 20}, presenceDot: {fontSize: 18}, presenceOnline: {color: '#3ba55d'}, presenceDND: {color: '#ed4245'}, presenceIdle: {color: '#faa61a'}, presenceOffline: {color: '#747f8d'},
   conversationList: {gap: 8, padding: 16}, section: {fontSize: 12, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4}, conversation: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', minHeight: 54, paddingHorizontal: 16}, conversationName: {flex: 1, fontSize: 16, fontWeight: '600'}, badge: {backgroundColor: '#ed4245', borderRadius: 12, color: '#fff', fontSize: 12, fontWeight: '800', minWidth: 24, overflow: 'hidden', paddingHorizontal: 7, paddingVertical: 3, textAlign: 'center'},
   back: {marginRight: 6, padding: 6}, backText: {fontSize: 38, lineHeight: 38}, messageList: {paddingHorizontal: 14, paddingVertical: 10}, message: {paddingVertical: 7, width: '100%'}, authorLine: {alignItems: 'center', flexDirection: 'row'}, author: {fontSize: 13, fontWeight: '800', marginBottom: 2}, messageBody: {fontSize: 16, lineHeight: 22}, bold: {fontWeight: '800'}, italic: {fontStyle: 'italic'}, code: {fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier', fontSize: 15}, link: {color: '#00a8fc', textDecorationLine: 'underline'}, replyPreview: {borderLeftWidth: 2, marginBottom: 4, paddingLeft: 8}, reactions: {flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7}, reaction: {borderRadius: 12, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4}, time: {fontSize: 11, marginTop: 2}, image: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, imagePlaceholder: {alignItems: 'center', borderRadius: 8, height: 160, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, imageFallback: {alignItems: 'center', borderRadius: 8, borderWidth: 1, gap: 6, height: 120, justifyContent: 'center', marginTop: 8, maxWidth: 420, width: '100%'}, viewer: {backgroundColor: 'rgba(0,0,0,0.96)', flex: 1, justifyContent: 'center'}, viewerImage: {height: '100%', width: '100%'}, viewerClose: {alignItems: 'center', backgroundColor: 'rgba(32,32,36,0.85)', borderRadius: 24, height: 48, justifyContent: 'center', position: 'absolute', right: 16, top: 42, width: 48, zIndex: 1}, viewerCloseText: {color: '#ffffff', fontSize: 34, lineHeight: 38}, video: {borderRadius: 8, height: 240, marginTop: 8, maxWidth: 420, width: '100%'}, audio: {borderRadius: 8, height: 64, marginTop: 8, maxWidth: 420, width: '100%'}, attachment: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', gap: 10, marginTop: 8, maxWidth: 420, padding: 10, width: '100%'}, attachmentIcon: {fontSize: 26}, attachmentName: {fontSize: 14, fontWeight: '700'}, typing: {fontSize: 12, minHeight: 20, paddingHorizontal: 14}, composerError: {fontSize: 12, paddingHorizontal: 14, paddingBottom: 4},
   selectedFiles: {gap: 8, paddingHorizontal: 10, paddingVertical: 8}, selectedFile: {alignItems: 'center', borderRadius: 8, borderWidth: 1, flexDirection: 'row', height: 54, maxWidth: 230, minWidth: 150, overflow: 'hidden', paddingRight: 4}, selectedThumbnail: {height: 52, marginRight: 8, width: 52}, selectedIcon: {fontSize: 24, marginHorizontal: 10}, selectedName: {flex: 1, fontSize: 13, fontWeight: '600'}, selectedRemove: {alignItems: 'center', height: 40, justifyContent: 'center', width: 36}, selectedRemoveText: {color: '#ed4245', fontSize: 24},
   composer: {alignItems: 'flex-end', borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, padding: 10}, attach: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, attachText: {fontSize: 27, lineHeight: 30}, composerInput: {borderRadius: 20, flex: 1, fontSize: 16, maxHeight: 120, minHeight: 44, paddingHorizontal: 16, paddingVertical: 11}, send: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, sendText: {color: '#fff', fontSize: 20, fontWeight: '800'}, uploadStatus: {fontSize: 12, paddingBottom: 6, paddingHorizontal: 14}, disabled: {opacity: 0.5},
+  blockedNotice: {fontSize: 12, paddingHorizontal: 14, paddingVertical: 6},
   contextBanner: {alignItems: 'center', flexDirection: 'row', marginHorizontal: 10, paddingHorizontal: 12, paddingVertical: 8}, contextClose: {fontSize: 28, paddingHorizontal: 8}, sheetBackdrop: {backgroundColor: 'rgba(0,0,0,0.55)', flex: 1, justifyContent: 'flex-end'}, sheet: {borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24, paddingHorizontal: 16, paddingTop: 18}, sheetTitle: {fontSize: 18, fontWeight: '800', marginBottom: 12}, quickReactions: {flexDirection: 'row', gap: 8, marginBottom: 12}, quickReaction: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, quickReactionText: {fontSize: 22}, actionButton: {borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 15}, panel: {flex: 1}, searchBar: {flexDirection: 'row', gap: 8, padding: 12}, searchInput: {borderRadius: 10, flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 10}, searchButton: {borderRadius: 10, justifyContent: 'center', paddingHorizontal: 16}, panelBusy: {marginTop: 40}, panelList: {gap: 8, padding: 12}, panelItem: {borderRadius: 10, padding: 12},
   actionText: {fontSize: 16}, dangerText: {color: '#ed4245'}, whiteText: {color: '#fff'}, searchButtonText: {color: '#fff', fontWeight: '800'},
+  memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
 });

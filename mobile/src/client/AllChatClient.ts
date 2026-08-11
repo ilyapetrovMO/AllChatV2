@@ -1,4 +1,4 @@
-import type {Attachment, ChannelState, Message, MobileBootstrap, SearchPage} from './bootstrap';
+import type {Attachment, ChannelState, DirectMessage, Message, MobileBootstrap, SearchPage} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -113,6 +113,45 @@ export class AllChatClient {
       headers: {Authorization: `Bearer ${token}`},
     });
     return this.decode<SearchPage>(response, 'Could not search Messages.');
+  }
+
+  async memberProfile(token: string, memberID: string): Promise<Member> {
+    const response = await this.request(`${this.instanceURL}/api/v1/members/${encodeURIComponent(memberID)}`, {headers: {Authorization: `Bearer ${token}`}});
+    return this.decode<Member>(response, 'Could not load the Member profile.');
+  }
+
+  async updateProfile(token: string, username: string, displayName: string): Promise<Member> {
+    const response = await this.request(`${this.instanceURL}/api/v1/profile`, {
+      method: 'PATCH', headers: this.jsonHeaders(token), body: JSON.stringify({username, display_name: displayName}),
+    });
+    return this.decode<Member>(response, 'Could not update your profile.');
+  }
+
+  async openDirectMessage(token: string, memberID: string): Promise<DirectMessage> {
+    const response = await this.request(`${this.instanceURL}/api/v1/dms`, {
+      method: 'POST', headers: this.jsonHeaders(token), body: JSON.stringify({member_id: memberID}),
+    });
+    return this.decode<DirectMessage>(response, 'Could not open the Direct Message.');
+  }
+
+  async setBlock(token: string, memberID: string, blocked: boolean): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/blocks/${encodeURIComponent(memberID)}`, {
+      method: blocked ? 'PUT' : 'DELETE', headers: {Authorization: `Bearer ${token}`},
+    }), blocked ? 'Could not block the Member.' : 'Could not unblock the Member.');
+  }
+
+  async reportMember(token: string, memberID: string, reason: string): Promise<void> {
+    const response = await this.request(`${this.instanceURL}/api/v1/reports`, {
+      method: 'POST', headers: this.jsonHeaders(token), body: JSON.stringify({target_member_id: memberID, reason}),
+    });
+    await this.decode<unknown>(response, 'Could not submit the report.');
+  }
+
+  async setPresenceMode(token: string, mode: 'available' | 'dnd'): Promise<void> {
+    const response = await this.request(`${this.instanceURL}/api/v1/presence-mode`, {
+      method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify({mode}),
+    });
+    await this.decode<{mode: string}>(response, 'Could not update your presence.');
   }
 
   async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {

@@ -171,4 +171,28 @@ describe('AllChatClient', () => {
     expect(request).toHaveBeenNthCalledWith(1, 'https://chat.example.test/api/v1/channels/channel%2F1/pins', expect.anything());
     expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/search?q=hello+world&limit=25', expect.anything());
   });
+
+  it('supports Member social and Presence actions', async () => {
+    const member = {id: 'member-2', username: 'friend', owner: false};
+    const dm = {id: 'dm-1', other: member, blocked_by_me: false, blocked_me: false, unread: 0, created_at: '2030-01-01T00:00:00Z'};
+    const request = jest.fn(async (url: string, options?: RequestInit) => {
+      if (url.endsWith('/api/v1/dms')) return new Response(JSON.stringify(dm), {status: 201});
+      if (url.endsWith('/api/v1/reports')) return new Response(JSON.stringify({id: 'report-1'}), {status: 201});
+      if (url.endsWith('/presence-mode')) return new Response(JSON.stringify({mode: 'dnd'}), {status: 200});
+      if (options?.method === 'PUT') return new Response(null, {status: 204});
+      return new Response(JSON.stringify(member), {status: 200});
+    });
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.memberProfile('session-token', member.id);
+    await client.openDirectMessage('session-token', member.id);
+    await client.setBlock('session-token', member.id, true);
+    await client.reportMember('session-token', member.id, 'Repeated spam');
+    await client.setPresenceMode('session-token', 'dnd');
+
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/dms', expect.objectContaining({body: JSON.stringify({member_id: member.id})}));
+    expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/blocks/member-2', expect.objectContaining({method: 'PUT'}));
+    expect(request).toHaveBeenNthCalledWith(4, 'https://chat.example.test/api/v1/reports', expect.objectContaining({body: JSON.stringify({target_member_id: member.id, reason: 'Repeated spam'})}));
+    expect(request).toHaveBeenNthCalledWith(5, 'https://chat.example.test/api/v1/presence-mode', expect.objectContaining({body: JSON.stringify({mode: 'dnd'})}));
+  });
 });

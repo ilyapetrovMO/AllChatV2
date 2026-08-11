@@ -7,7 +7,7 @@ import {errorCodes, isErrorWithCode, pick, type DocumentPickerResponse} from '@r
 import Video from 'react-native-video';
 
 import {AllChatClient} from '../client/AllChatClient';
-import type {Member} from '../client/AllChatClient';
+import type {LinkPreview, Member} from '../client/AllChatClient';
 import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import type {InstanceAccount} from '../session/SessionVault';
@@ -261,7 +261,7 @@ export function MessageRow({imageLoader, instanceURL, message, mine, onLongPress
   return <TouchableOpacity activeOpacity={onLongPress ? 0.72 : 1} delayLongPress={350} disabled={!onLongPress} onLongPress={() => onLongPress?.(message)} style={styles.message}>
     {message.reply ? <View style={[styles.replyPreview, {borderLeftColor: palette.border}]}><Text numberOfLines={1} style={{color: palette.muted}}>↳ {message.reply.author_name}: {message.reply.deleted ? 'deleted Message' : message.reply.body}</Text></View> : null}
     <View style={styles.authorLine}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.pinned ? <Text style={{color: palette.muted}}> ◆ Pinned</Text> : null}</View>
-    {message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}{message.reactions?.length ? <View style={styles.reactions}>{message.reactions.map(reaction => <TouchableOpacity accessibilityLabel={`${reaction.emoji} reaction, ${reaction.count}`} disabled={!onReaction} key={reaction.emoji} onPress={() => onReaction?.(message, reaction.emoji)} style={[styles.reaction, {backgroundColor: reaction.me ? palette.accent : palette.field, borderColor: reaction.me ? palette.accent : palette.border}]}><Text style={reaction.me ? styles.whiteText : {color: palette.text}}>{reaction.emoji} {reaction.count}</Text></TouchableOpacity>)}</View> : null}</>}
+    {message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} /><MessageLinkPreview body={message.body || ''} instanceURL={instanceURL} palette={palette} token={token} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}{message.reactions?.length ? <View style={styles.reactions}>{message.reactions.map(reaction => <TouchableOpacity accessibilityLabel={`${reaction.emoji} reaction, ${reaction.count}`} disabled={!onReaction} key={reaction.emoji} onPress={() => onReaction?.(message, reaction.emoji)} style={[styles.reaction, {backgroundColor: reaction.me ? palette.accent : palette.field, borderColor: reaction.me ? palette.accent : palette.border}]}><Text style={reaction.me ? styles.whiteText : {color: palette.text}}>{reaction.emoji} {reaction.count}</Text></TouchableOpacity>)}</View> : null}</>}
     <Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}{message.edited_at ? ' · edited' : ''}</Text>
   </TouchableOpacity>;
 }
@@ -301,6 +301,29 @@ function FormattedBody({body, color}: {body: string; color: string}) {
     if (piece.startsWith('*') && piece.endsWith('*')) return <Text key={index} style={styles.italic}>{piece.slice(1, -1)}</Text>;
     return piece;
   })}</Text>;
+}
+
+function MessageLinkPreview({body, instanceURL, palette, token}: {body: string; instanceURL: string; palette: Palette; token: string}) {
+  const target = body.match(/https?:\/\/[^\s]+/)?.[0] || '';
+  const [preview, setPreview] = useState<LinkPreview>();
+  useEffect(() => {
+    let mounted = true; setPreview(undefined);
+    if (target) new AllChatClient(instanceURL).linkPreview(token, target).then(value => { if (mounted) setPreview(value); }).catch(() => {});
+    return () => { mounted = false; };
+  }, [instanceURL, target, token]);
+  if (!preview) return null;
+  return <TouchableOpacity accessibilityRole="link" onPress={() => Linking.openURL(preview.url)} style={[styles.linkCard, {backgroundColor: palette.field, borderColor: palette.border}]}><View style={styles.linkContent}><Text numberOfLines={1} style={{color: palette.muted}}>{preview.site_name || hostname(preview.url)}</Text><Text numberOfLines={2} style={[styles.linkTitle, {color: palette.accent}]}>{preview.title || preview.url}</Text>{preview.description ? <Text numberOfLines={3} style={{color: palette.text}}>{preview.description}</Text> : null}</View>{preview.image_url ? <PreviewImage imageURL={preview.image_url} instanceURL={instanceURL} token={token} /> : null}</TouchableOpacity>;
+}
+
+function PreviewImage({imageURL, instanceURL, token}: {imageURL: string; instanceURL: string; token: string}) {
+  const [source, setSource] = useState('');
+  useEffect(() => {
+    let mounted = true;
+    const proxy = `${instanceURL}/api/v1/link-preview/image?url=${encodeURIComponent(imageURL)}`;
+    loadAuthenticatedImage(proxy, token).then(value => { if (mounted) setSource(value); }).catch(() => {});
+    return () => { mounted = false; };
+  }, [imageURL, instanceURL, token]);
+  return source ? <Image source={{uri: source}} style={styles.linkImage} /> : null;
 }
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '😮'];
@@ -385,6 +408,7 @@ function InlineMedia({attachment, palette, source}: {attachment: NonNullable<Mes
 }
 
 function attachmentURL(instanceURL: string, value: string) { return new URL(value, `${instanceURL}/`).toString(); }
+function hostname(value: string) { try { return new URL(value).hostname; } catch { return value; } }
 function fileSize(bytes: number) { return bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 function displayName(dm: DirectMessage) { return dm.other.display_name || dm.other.username; }
 function unreadFor(state: CommunityState, id: string) { return state.channel_states.find(item => item.channel_id === id)?.unread || 0; }
@@ -403,4 +427,5 @@ const styles = StyleSheet.create({
   contextBanner: {alignItems: 'center', flexDirection: 'row', marginHorizontal: 10, paddingHorizontal: 12, paddingVertical: 8}, contextClose: {fontSize: 28, paddingHorizontal: 8}, sheetBackdrop: {backgroundColor: 'rgba(0,0,0,0.55)', flex: 1, justifyContent: 'flex-end'}, sheet: {borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 24, paddingHorizontal: 16, paddingTop: 18}, sheetTitle: {fontSize: 18, fontWeight: '800', marginBottom: 12}, quickReactions: {flexDirection: 'row', gap: 8, marginBottom: 12}, quickReaction: {alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', width: 44}, quickReactionText: {fontSize: 22}, actionButton: {borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 15}, panel: {flex: 1}, searchBar: {flexDirection: 'row', gap: 8, padding: 12}, searchInput: {borderRadius: 10, flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 10}, searchButton: {borderRadius: 10, justifyContent: 'center', paddingHorizontal: 16}, panelBusy: {marginTop: 40}, panelList: {gap: 8, padding: 12}, panelItem: {borderRadius: 10, padding: 12},
   actionText: {fontSize: 16}, dangerText: {color: '#ed4245'}, whiteText: {color: '#fff'}, searchButtonText: {color: '#fff', fontWeight: '800'},
   memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
+  linkCard: {borderLeftWidth: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', marginTop: 8, maxWidth: 420, overflow: 'hidden', width: '100%'}, linkContent: {flex: 1, gap: 4, justifyContent: 'center', padding: 10}, linkTitle: {fontSize: 15, fontWeight: '800'}, linkImage: {height: 112, width: 112},
 });

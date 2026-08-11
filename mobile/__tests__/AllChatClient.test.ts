@@ -195,4 +195,16 @@ describe('AllChatClient', () => {
     expect(request).toHaveBeenNthCalledWith(4, 'https://chat.example.test/api/v1/reports', expect.objectContaining({body: JSON.stringify({target_member_id: member.id, reason: 'Repeated spam'})}));
     expect(request).toHaveBeenNthCalledWith(5, 'https://chat.example.test/api/v1/presence-mode', expect.objectContaining({body: JSON.stringify({mode: 'dnd'})}));
   });
+
+  it('loads link previews through the authenticated Instance proxy', async () => {
+    const request = jest.fn(async () => new Response(JSON.stringify({url: 'https://news.example.test/story', title: 'A story'}), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    const preview = await client.linkPreview('session-token', 'https://news.example.test/story?a=1&b=2');
+
+    expect(preview.title).toBe('A story');
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/link-preview?url=https%3A%2F%2Fnews.example.test%2Fstory%3Fa%3D1%26b%3D2', {
+      headers: {Authorization: 'Bearer session-token'},
+    });
+  });
 });

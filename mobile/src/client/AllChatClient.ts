@@ -16,6 +16,7 @@ export type NativeSession = {
 };
 
 export type LocalAttachment = {uri: string; name: string; type: string; size?: number | null};
+export type LinkPreview = {url: string; site_name?: string; title?: string; description?: string; image_url?: string};
 
 type Fetch = typeof fetch;
 
@@ -152,6 +153,13 @@ export class AllChatClient {
       method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify({mode}),
     });
     await this.decode<{mode: string}>(response, 'Could not update your presence.');
+  }
+
+  async linkPreview(token: string, url: string): Promise<LinkPreview> {
+    const response = await this.request(`${this.instanceURL}/api/v1/link-preview?url=${encodeURIComponent(url)}`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    return this.decode<LinkPreview>(response, 'Link preview unavailable.');
   }
 
   async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {

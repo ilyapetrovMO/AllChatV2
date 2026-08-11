@@ -237,4 +237,22 @@ describe('AllChatClient', () => {
     expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/reports/report-1/resolve', expect.objectContaining({method: 'POST', body: JSON.stringify({outcome: 'Reviewed'})}));
     expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/moderation-actions', expect.objectContaining({method: 'POST', body: JSON.stringify({action: 'timeout', target_member_id: 'member-3', reason: 'Repeated spam', duration_minutes: 60})}));
   });
+
+  it('starts and controls Direct Calls', async () => {
+    const call = {id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-1', recipient_id: 'member-2', state: 'ringing', created_at: '2030-01-01T00:00:00Z'};
+    const request = jest.fn(async () => new Response(JSON.stringify(call), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+
+    await client.currentCall('session-token');
+    await client.startCall('session-token', 'dm/1');
+    await client.callAction('session-token', call.id, 'accept');
+
+    expect(request).toHaveBeenNthCalledWith(2, 'https://chat.example.test/api/v1/dms/dm%2F1/calls', expect.objectContaining({method: 'POST'}));
+    expect(request).toHaveBeenNthCalledWith(3, 'https://chat.example.test/api/v1/calls/call-1/accept', expect.objectContaining({method: 'POST'}));
+  });
+
+  it('treats a 204 current Call response as no active Call', async () => {
+    const client = new AllChatClient('https://chat.example.test', jest.fn(async () => new Response(null, {status: 204})) as typeof fetch);
+    await expect(client.currentCall('session-token')).resolves.toBeUndefined();
+  });
 });

@@ -1,16 +1,18 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Linking, Modal, Platform, StyleSheet,
+  ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Linking, Modal, PermissionsAndroid, Platform, StyleSheet,
   ScrollView, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import {errorCodes, isErrorWithCode, pick, types, type DocumentPickerResponse} from '@react-native-documents/picker';
 import Video from 'react-native-video';
+import {RTCView, type MediaStream} from 'react-native-webrtc';
 
 import {AllChatClient} from '../client/AllChatClient';
-import type {LinkPreview, Member, ModerationAction, Report} from '../client/AllChatClient';
+import type {DirectCall, LinkPreview, Member, ModerationAction, Report} from '../client/AllChatClient';
 import type {DirectMessage, Message, SearchResult} from '../client/bootstrap';
 import {KeychainConversationCache} from '../cache/ConversationCache';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
+import {MediaSession, type MediaStatus, type RemoteMedia} from '../media/MediaSession';
 import type {InstanceAccount} from '../session/SessionVault';
 import {communityStateFromBootstrap, reduceRealtimeFrame, type CommunityState} from '../state/CommunityState';
 
@@ -36,6 +38,8 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [membersOpen, setMembersOpen] = useState(false);
   const [profileMember, setProfileMember] = useState<Member>();
   const [moderationOpen, setModerationOpen] = useState(false);
+  const [mediaRoom, setMediaRoom] = useState<{id: string; name: string}>();
+  const [currentCall, setCurrentCall] = useState<DirectCall>();
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
   const cache = useMemo(() => new KeychainConversationCache(), []);
@@ -80,6 +84,13 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     const timer = setTimeout(() => cache.save(account.instance_url, account.member.id, community).catch(() => {}), 1000);
     return () => clearTimeout(timer);
   }, [account.instance_url, account.member.id, cache, community]);
+
+  useEffect(() => {
+    let mounted = true; let busy = false;
+    const poll = async () => { if (busy) return; busy = true; try { const call = await client.currentCall(account.session_token); if (mounted) setCurrentCall(call); } catch {} finally { busy = false; } };
+    poll().catch(() => {}); const timer = setInterval(() => poll().catch(() => {}), 1500);
+    return () => { mounted = false; clearInterval(timer); };
+  }, [account.session_token, client]);
 
   const direct = community?.direct_messages.find(item => item.id === activeID);
   const channel = community?.channels.find(item => item.id === activeID);
@@ -184,6 +195,9 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not update the block.'); }
   }
 
+  async function startDirectCall() { if (!direct) return; try { setCurrentCall(await client.startCall(account.session_token, direct.id)); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not start the Call.'); } }
+  async function callAction(action: 'accept' | 'decline' | 'end') { if (!currentCall) return; try { const next = await client.callAction(account.session_token, currentCall.id, action); setCurrentCall(next.state === 'ringing' || next.state === 'accepted' ? next : undefined); } catch (caught) { setError(caught instanceof Error ? caught.message : `Could not ${action} the Call.`); } }
+
   async function chooseAttachments() {
     setError('');
     try {
@@ -198,8 +212,10 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     return <View style={styles.center}>{error ? <><Text style={styles.error}>{error}</Text><TouchableOpacity onPress={onManage}><Text style={{color: palette.accent}}>Manage Instances</Text></TouchableOpacity></> : <ActivityIndicator color={palette.accent} />}</View>;
   }
 
+  if (mediaRoom) return <MediaRoomScreen account={account} name={mediaRoom.name} onLeave={() => setMediaRoom(undefined)} palette={palette} roomID={mediaRoom.id} />;
+
   if (!activeID || (!channel && !direct)) {
-    const textChannels = community.channels.filter(item => item.type === 'text' && !item.archived).sort((a, b) => a.position - b.position);
+    const visibleChannels = community.channels.filter(item => !item.archived).sort((a, b) => a.position - b.position);
     return (
       <View style={styles.fill}>
         <View style={[styles.header, {borderBottomColor: palette.border}]}>
@@ -212,13 +228,13 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         <FlatList
           contentContainerStyle={styles.conversationList}
           data={[
-            ...community.direct_messages.map(item => ({id: item.id, name: displayName(item), direct: true, unread: unreadFor(community, item.id)})),
-            ...textChannels.map(item => ({id: item.id, name: `# ${item.name}`, direct: false, unread: unreadFor(community, item.id)})),
+            ...community.direct_messages.map(item => ({id: item.id, name: displayName(item), direct: true, voice: false, unread: unreadFor(community, item.id)})),
+            ...visibleChannels.map(item => ({id: item.id, name: `${item.type === 'voice' ? '🔊' : '#'} ${item.name}`, direct: false, voice: item.type === 'voice', unread: unreadFor(community, item.id)})),
           ]}
           keyExtractor={item => item.id}
-          ListHeaderComponent={<Text style={[styles.section, {color: palette.muted}]}>CONVERSATIONS</Text>}
+          ListHeaderComponent={<>{currentCall ? <CallBanner call={currentCall} currentMemberID={community.member.id} onAction={callAction} onOpen={() => openConversation(currentCall.direct_message_id, true)} palette={palette} /> : null}<Text style={[styles.section, {color: palette.muted}]}>CONVERSATIONS</Text></>}
           ListEmptyComponent={<Text style={{color: palette.muted}}>No text conversations are available.</Text>}
-          renderItem={({item}) => <TouchableOpacity onPress={() => openConversation(item.id, item.direct)} style={[styles.conversation, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.conversationName, {color: palette.text}]}>{item.name}</Text>{item.unread > 0 ? <Text style={styles.badge}>{item.unread}</Text> : null}</TouchableOpacity>}
+          renderItem={({item}) => <TouchableOpacity onPress={() => item.voice ? setMediaRoom({id: item.id, name: item.name.replace(/^🔊\s*/, '')}) : openConversation(item.id, item.direct)} style={[styles.conversation, {backgroundColor: palette.field}]}><Text numberOfLines={1} style={[styles.conversationName, {color: palette.text}]}>{item.name}</Text>{item.unread > 0 ? <Text style={styles.badge}>{item.unread}</Text> : null}</TouchableOpacity>}
         />
         <MembersPanel busy={panelBusy} currentMemberID={community.member.id} members={community.members} onClose={() => setMembersOpen(false)} onOpenProfile={member => { setMembersOpen(false); setProfileMember(member); }} open={membersOpen} palette={palette} presence={community.presence} />
         <MemberProfile client={client} instanceURL={account.instance_url} member={profileMember} moderator={community.member.owner} onClose={() => setProfileMember(undefined)} onProfileUpdated={updated => { setProfileMember(updated); setCommunity(value => value ? {...value, member: value.member.id === updated.id ? updated : value.member, members: value.members.map(item => item.id === updated.id ? updated : item)} : value); }} onStartDM={startDM} palette={palette} self={profileMember?.id === community.member.id} token={account.session_token} />
@@ -235,9 +251,12 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
         <TouchableOpacity accessibilityLabel="Back to conversations" onPress={() => setActiveID('')} style={styles.back}><Text style={[styles.backText, {color: palette.accent}]}>‹</Text></TouchableOpacity>
         <View style={styles.grow}><Text numberOfLines={1} style={[styles.title, {color: palette.text}]}>{title}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{status === 'connected' ? 'Live' : 'Reconnecting…'}</Text></View>
         {direct ? <TouchableOpacity accessibilityLabel={direct.blocked_by_me ? 'Unblock Member' : 'Block Member'} onPress={toggleBlock} style={styles.iconButton}><Text style={[styles.headerIcon, direct.blocked_by_me ? styles.dangerText : {color: palette.text}]}>⊘</Text></TouchableOpacity> : null}
+        {direct && !currentCall ? <TouchableOpacity accessibilityLabel="Start Direct Call" onPress={startDirectCall} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>☎</Text></TouchableOpacity> : null}
         {!direct ? <TouchableOpacity accessibilityLabel="Pinned Messages" onPress={openPins} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>◆</Text></TouchableOpacity> : null}
         <TouchableOpacity accessibilityLabel="Search Messages" onPress={() => setPanel('search')} style={styles.iconButton}><Text style={[styles.headerIcon, {color: palette.text}]}>⌕</Text></TouchableOpacity>
       </View>
+      {currentCall?.direct_message_id === activeID ? <CallBanner call={currentCall} currentMemberID={community.member.id} onAction={callAction} palette={palette} /> : null}
+      {currentCall?.direct_message_id === activeID && currentCall.state === 'accepted' ? <View style={styles.directCallStage}><MediaRoomScreen account={account} compact name={`Call with ${displayName(direct!)}`} onLeave={() => callAction('end')} palette={palette} roomID={currentCall.id} /></View> : null}
       <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} onMessageAction={setActionMessage} onReaction={toggleReaction} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
       {direct && (direct.blocked_by_me || direct.blocked_me) ? <Text style={[styles.blockedNotice, {color: palette.muted}]}>Messages are disabled while either Member has blocked the other.</Text> : null}
@@ -254,6 +273,34 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       <ConversationPanel busy={panelBusy} messages={panelMessages} mode={panel} onClose={() => setPanel('')} onSearch={search} palette={palette} query={searchQuery} results={searchResults} setQuery={setSearchQuery} />
     </KeyboardAvoidingView>
   );
+}
+
+function CallBanner({call, currentMemberID, onAction, onOpen, palette}: {call: DirectCall; currentMemberID: string; onAction(action: 'accept' | 'decline' | 'end'): void; onOpen?(): void; palette: Palette}) {
+  const incoming = call.state === 'ringing' && call.recipient_id === currentMemberID;
+  return <View style={[styles.callBanner, {backgroundColor: palette.field}]}><TouchableOpacity disabled={!onOpen} onPress={onOpen} style={styles.grow}><Text style={[styles.author, {color: palette.text}]}>{call.state === 'accepted' ? 'Direct Call connected' : incoming ? 'Incoming Direct Call' : 'Calling…'}</Text></TouchableOpacity>{incoming ? <><TouchableOpacity onPress={() => onAction('accept')} style={[styles.callAction, styles.successBackground]}><Text style={styles.whiteText}>Accept</Text></TouchableOpacity><TouchableOpacity onPress={() => onAction('decline')} style={[styles.callAction, styles.dangerBackground]}><Text style={styles.whiteText}>Decline</Text></TouchableOpacity></> : <TouchableOpacity onPress={() => onAction('end')} style={[styles.callAction, styles.dangerBackground]}><Text style={styles.whiteText}>{call.state === 'accepted' ? 'End' : 'Cancel'}</Text></TouchableOpacity>}</View>;
+}
+
+function MediaRoomScreen({account, compact = false, name, onLeave, palette, roomID}: {account: InstanceAccount; compact?: boolean; name: string; onLeave(): void; palette: Palette; roomID: string}) {
+  const session = useRef<MediaSession | undefined>(undefined); const [status, setStatus] = useState<MediaStatus>('connecting'); const [error, setError] = useState('');
+  const [remote, setRemote] = useState<RemoteMedia[]>([]); const [muted, setMuted] = useState(false); const [camera, setCamera] = useState(false); const [sharing, setSharing] = useState(false); const [local, setLocal] = useState<MediaStream>(); const [screen, setScreen] = useState<MediaStream>();
+  useEffect(() => {
+    const connection = new MediaSession({instanceURL: account.instance_url, token: account.session_token, roomID, onStatus: (next, cause) => { setStatus(next); setError(cause?.message || ''); if (next === 'failed' || next === 'idle') { setLocal(undefined); setScreen(undefined); } }, onRemote: setRemote});
+    session.current = connection; requestMediaPermissions(false).then(granted => granted ? connection.start().then(() => setLocal(connection.localStream())) : setError('Microphone permission is required.')).catch(caught => setError(caught instanceof Error ? caught.message : 'Could not request microphone permission.'));
+    return () => { connection.stop(); session.current = undefined; };
+  }, [account.instance_url, account.session_token, roomID]);
+  async function toggleCamera() { try { if (!camera && !await requestMediaPermissions(true)) throw new Error('Camera permission is required.'); await session.current?.setCamera(!camera); setCamera(!camera); setLocal(session.current?.localStream()); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Camera failed.'); } }
+  async function toggleScreen() { try { await session.current?.setScreenSharing(!sharing); setSharing(!sharing); setScreen(session.current?.screenStream()); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Screen sharing failed.'); } }
+  function leave() { session.current?.stop(); onLeave(); }
+  const videos = remote.filter(item => item.kind === 'video');
+  return <View style={[styles.mediaRoom, compact && styles.compactMediaRoom, {backgroundColor: palette.background}]}>{!compact ? <View style={[styles.header, {borderBottomColor: palette.border}]}><View style={styles.grow}><Text style={[styles.title, {color: palette.text}]}>🔊 {name}</Text><Text style={status === 'connected' ? styles.connected : {color: palette.muted}}>{mediaStatusText(status)}</Text></View><TouchableOpacity accessibilityLabel="Leave Voice Room" onPress={leave} style={[styles.leaveButton, styles.dangerBackground]}><Text style={styles.whiteText}>Leave</Text></TouchableOpacity></View> : <Text style={[styles.compactMediaStatus, status === 'connected' ? styles.connected : {color: palette.muted}]}>{mediaStatusText(status)}</Text>}<ScrollView contentContainerStyle={[styles.mediaGrid, compact && styles.compactMediaGrid]} horizontal={compact}>{screen ? <RTCView mirror={false} objectFit="contain" streamURL={screen.toURL()} style={[styles.mediaVideo, compact && styles.compactMediaVideo]} /> : null}{videos.map(item => <RTCView key={item.id} mirror={false} objectFit="contain" streamURL={item.stream.toURL()} style={[styles.mediaVideo, compact && styles.compactMediaVideo]} />)}{camera && local ? <RTCView mirror objectFit="cover" streamURL={local.toURL()} style={[styles.mediaVideo, compact && styles.compactMediaVideo]} /> : null}{!videos.length && !screen && !camera ? <View style={[styles.mediaEmpty, compact && styles.compactMediaEmpty, {backgroundColor: palette.field}]}><Text style={styles.mediaEmptyIcon}>🎙️</Text><Text style={{color: palette.text}}>Voice connected</Text></View> : null}</ScrollView>{error ? <Text style={styles.mediaError}>{error}</Text> : null}<View style={[styles.mediaControls, {borderTopColor: palette.border}]}><TouchableOpacity onPress={() => { const next = !muted; session.current?.setMuted(next); setMuted(next); }} style={[styles.mediaControl, {backgroundColor: palette.field}]}><Text style={{color: palette.text}}>{muted ? 'Unmute' : 'Mute'}</Text></TouchableOpacity><TouchableOpacity disabled={status !== 'connected'} onPress={toggleCamera} style={[styles.mediaControl, {backgroundColor: palette.field}, status !== 'connected' && styles.disabled]}><Text style={{color: palette.text}}>{camera ? 'Stop video' : 'Camera'}</Text></TouchableOpacity><TouchableOpacity disabled={status !== 'connected'} onPress={toggleScreen} style={[styles.mediaControl, {backgroundColor: palette.field}, status !== 'connected' && styles.disabled]}><Text style={{color: palette.text}}>{sharing ? 'Stop sharing' : 'Share screen'}</Text></TouchableOpacity></View></View>;
+}
+
+function mediaStatusText(status: MediaStatus) { return status === 'connected' ? 'Connected' : status === 'recovering' ? 'Reconnecting…' : status === 'failed' ? 'Connection failed' : status === 'idle' ? 'Disconnected' : 'Connecting…'; }
+async function requestMediaPermissions(camera: boolean) {
+  if (Platform.OS !== 'android') return true;
+  const permissions = [PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, ...(camera ? [PermissionsAndroid.PERMISSIONS.CAMERA] : [])];
+  const result = await PermissionsAndroid.requestMultiple(permissions);
+  return permissions.every(permission => result[permission] === PermissionsAndroid.RESULTS.GRANTED);
 }
 
 function SelectedFile({file, onRemove, palette}: {file: DocumentPickerResponse; onRemove(): void; palette: Palette}) {
@@ -510,4 +557,7 @@ const styles = StyleSheet.create({
   memberRow: {alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 12, padding: 12}, memberAvatar: {borderRadius: 22, fontSize: 18, fontWeight: '800', height: 44, lineHeight: 44, overflow: 'hidden', textAlign: 'center', width: 44}, memberName: {fontSize: 16, fontWeight: '700'}, profileBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', flex: 1, justifyContent: 'center', padding: 24}, profileCard: {borderRadius: 16, maxWidth: 420, padding: 20, width: '100%'}, profileAvatar: {borderRadius: 38, fontSize: 30, fontWeight: '800', height: 76, lineHeight: 76, marginBottom: 12, overflow: 'hidden', textAlign: 'center', width: 76}, profileAvatarImage: {borderRadius: 38, height: 76, marginBottom: 12, width: 76}, profileName: {fontSize: 22, fontWeight: '800'}, profileStatus: {marginTop: 10}, profileInput: {borderRadius: 10, fontSize: 16, marginTop: 12, paddingHorizontal: 12, paddingVertical: 11}, profilePrimary: {alignItems: 'center', borderRadius: 10, marginTop: 16, padding: 13}, profileAction: {alignItems: 'center', padding: 13}, reportInput: {borderRadius: 10, marginTop: 16, minHeight: 100, padding: 12, textAlignVertical: 'top'},
   linkCard: {borderLeftWidth: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', marginTop: 8, maxWidth: 420, overflow: 'hidden', width: '100%'}, linkContent: {flex: 1, gap: 4, justifyContent: 'center', padding: 10}, linkTitle: {fontSize: 15, fontWeight: '800'}, linkImage: {height: 112, width: 112},
   moderationActions: {gap: 8, marginTop: 12}, moderationAction: {alignItems: 'center', borderRadius: 8, padding: 12}, panelStatus: {paddingHorizontal: 12, paddingTop: 12}, resolveButton: {alignItems: 'center', borderRadius: 8, marginTop: 10, padding: 10},
+  mediaRoom: {flex: 1}, leaveButton: {borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10}, mediaGrid: {alignItems: 'center', flexGrow: 1, gap: 12, justifyContent: 'center', padding: 12}, mediaVideo: {backgroundColor: '#000', borderRadius: 10, height: 260, maxWidth: 720, width: '100%'}, mediaEmpty: {alignItems: 'center', borderRadius: 12, gap: 10, maxWidth: 420, padding: 30, width: '100%'}, mediaEmptyIcon: {fontSize: 48}, mediaControls: {borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 8, justifyContent: 'center', padding: 12}, mediaControl: {alignItems: 'center', borderRadius: 22, minWidth: 92, paddingHorizontal: 14, paddingVertical: 12}, mediaError: {color: '#ed4245', paddingHorizontal: 14, textAlign: 'center'},
+  callBanner: {alignItems: 'center', borderRadius: 8, flexDirection: 'row', gap: 8, margin: 8, padding: 10}, callAction: {borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9}, directCallStage: {height: 330}, compactMediaRoom: {minHeight: 0}, compactMediaStatus: {fontSize: 12, paddingHorizontal: 12, paddingTop: 6}, compactMediaGrid: {flexGrow: 0, height: 190, justifyContent: 'flex-start'}, compactMediaVideo: {height: 170, width: 260}, compactMediaEmpty: {height: 170, padding: 16, width: 260},
+  successBackground: {backgroundColor: '#3ba55d'}, dangerBackground: {backgroundColor: '#ed4245'},
 });

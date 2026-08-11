@@ -19,6 +19,7 @@ export type LocalAttachment = {uri: string; name: string; type: string; size?: n
 export type LinkPreview = {url: string; site_name?: string; title?: string; description?: string; image_url?: string};
 export type Report = {id: string; reporter_id: string; target_member_id?: string; target_message_id?: string; reason: string; status: string; created_at: string; outcome?: string};
 export type ModerationAction = 'warn' | 'timeout' | 'suspend' | 'kick';
+export type DirectCall = {id: string; direct_message_id: string; caller_id: string; recipient_id: string; state: 'ringing' | 'accepted' | 'declined' | 'ended' | string; created_at: string; expires_at?: string; finished_at?: string};
 
 type Fetch = typeof fetch;
 
@@ -197,6 +198,22 @@ export class AllChatClient {
       headers: {Authorization: `Bearer ${token}`},
     });
     return this.decode<LinkPreview>(response, 'Link preview unavailable.');
+  }
+
+  async currentCall(token: string): Promise<DirectCall | undefined> {
+    const response = await this.request(`${this.instanceURL}/api/v1/calls/current`, {headers: {Authorization: `Bearer ${token}`}});
+    if (response.status === 204) return undefined;
+    return this.decode<DirectCall>(response, 'Could not load the current Call.');
+  }
+
+  async startCall(token: string, directMessageID: string): Promise<DirectCall> {
+    const response = await this.request(`${this.instanceURL}/api/v1/dms/${encodeURIComponent(directMessageID)}/calls`, {method: 'POST', headers: {Authorization: `Bearer ${token}`}});
+    return this.decode<DirectCall>(response, 'Could not start the Call.');
+  }
+
+  async callAction(token: string, callID: string, action: 'accept' | 'decline' | 'end'): Promise<DirectCall> {
+    const response = await this.request(`${this.instanceURL}/api/v1/calls/${encodeURIComponent(callID)}/${action}`, {method: 'POST', headers: {Authorization: `Bearer ${token}`}});
+    return this.decode<DirectCall>(response, `Could not ${action} the Call.`);
   }
 
   async uploadAttachment(token: string, file: LocalAttachment): Promise<Attachment> {

@@ -3,9 +3,11 @@
   if (window.__allchatCallRuntime) return;
   window.__allchatCallRuntime = true;
 
-  let call = null, peer = null, socket = null, microphone = null, screenStream = null;
+  let call = null, connection = null, microphone = null, screenStream = null;
+  let localScreenVideo = null, screenSender = null;
   let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0;
   let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
+  const remoteAudio = new Map(), remoteVideo = new Map();
   const panel = document.createElement("section");
   panel.className = "call-banner";
   panel.hidden = true;
@@ -14,9 +16,16 @@
   const request = (url, method = "GET") => fetch(url, {method, headers: {"X-CSRF-Token": decodeURIComponent(csrf())}});
   const isDMView = () => document.querySelector(".channel-topic")?.textContent.trim() === "Direct Message";
   const currentDM = () => isDMView() ? document.body.dataset.channelId : "";
+  const resumeKey = id => `allchat-media-resume:${id}`;
+
   const attachPanel = () => {
+    if (document.querySelector(".direct-call-workspace")) return;
     const conversation = document.querySelector(".conversation-layout"), content = document.querySelector(".content-shell");
-    if (conversation) conversation.before(panel); else if (content && call) {const header=content.querySelector(":scope > .content-header"); header ? header.after(panel) : content.prepend(panel);}
+    if (conversation) conversation.before(panel);
+    else if (content && call) {
+      const header = content.querySelector(":scope > .content-header");
+      header ? header.after(panel) : content.prepend(panel);
+    }
   };
 
   const installView = () => {
@@ -26,114 +35,192 @@
       if (actions) {
         startButton = document.createElement("button");
         startButton.type = "button"; startButton.className = "button-ghost dm-call-button";
-        startButton.textContent = "Start Call"; startButton.title = "Start one-to-one Call";
+        startButton.textContent = "Start Call"; startButton.title = "Start Direct Call";
         startButton.onclick = startCall; actions.prepend(startButton);
       }
     }
-    attachPanel();
+    if (call?.state === "accepted" && connection?.state === "connected" && currentDM() === call.direct_message_id) renderConnectedView();
+    else attachPanel();
     if (startButton) startButton.disabled = !!call;
   };
 
-  const cleanupMedia = () => {
+  const restoreConversation = () => {
+    const workspace = document.querySelector(".direct-call-workspace");
+    if (!workspace) return;
+    const content = workspace.closest(".content-shell"), header = content?.querySelector(":scope > .content-header");
+    const chat = workspace.querySelector(".direct-call-chat");
+    const conversation = chat?.querySelector(":scope > .conversation-layout");
+    const composer = chat?.querySelector(":scope > .composer-wrap");
+    if (conversation) header?.after(conversation);
+    if (composer) content?.append(composer);
+    workspace.remove(); content?.classList.remove("direct-call-active");
+  };
+
+  const mediaGrid = () => document.querySelector(".direct-call-workspace [data-media-stage-grid]");
+  const participantTile = (label, image, video) => {
+    const tile = document.createElement("article"), visual = document.createElement("div"), name = document.createElement("strong");
+    tile.className = `media-stage-tile participant-tile${video ? " sharing" : ""}`; visual.className = "media-stage-visual"; name.textContent = label;
+    if (video) {
+      visual.append(video);
+      const badge = document.createElement("span"); badge.className = "screen-sharing-badge"; badge.textContent = "Sharing screen"; tile.append(visual, name, badge);
+    } else {
+      const avatar = document.createElement(image ? "img" : "span");
+      if (image) {avatar.src = image; avatar.alt = "";} else {avatar.className = "media-stage-avatar-fallback";avatar.textContent = Array.from(label || "?")[0].toUpperCase();}
+      visual.append(avatar); tile.append(visual, name);
+    }
+    return tile;
+  };
+  const renderMedia = () => {
+    const grid = mediaGrid(); if (!grid) return;
+    const summary = document.querySelector(".member-summary"), other = document.querySelector(".dm-profile-card"), videos = [...remoteVideo.values()];
+    const ownName = summary?.querySelector("strong")?.textContent.trim() || "You", ownImage = summary?.querySelector("img")?.src || "";
+    const otherName = other?.querySelector("h2")?.textContent.trim() || "Other Member", otherImage = other?.querySelector("img")?.src || "";
+    grid.replaceChildren(participantTile(ownName === "You" ? ownName : `${ownName} (You)`, ownImage, localScreenVideo), participantTile(otherName, otherImage, videos[0]));
+    for (const video of videos.slice(1)) grid.append(participantTile("Shared screen", "", video));
+    grid.dataset.tileCount = String(grid.children.length);
+  };
+
+  const stopScreen = async ({renegotiate = true} = {}) => {
+    const stream = screenStream; screenStream = null;
+    screenSender = null;
+    localScreenVideo?.remove(); localScreenVideo = null;
+    stream?.getTracks().forEach(track => {track.onended = null; track.stop();});
+    for (const sender of stream?.__allchatSenders || []) { try { connection?.removeTrack(sender); } catch (_) {} }
+    document.querySelector("[data-call-screen]")?.classList.remove("active");
+    renderMedia();
+    if (renegotiate && connection && !connection.stopped) await connection.renegotiate();
+  };
+
+  const toggleScreen = async button => {
+    if (screenStream) return stopScreen();
+    if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this browser.");
+    const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
+    const videoTrack = stream.getVideoTracks()[0], senders = [];
+    let sender;
+    try {
+      sender = connection.addTransceiver(videoTrack, {direction: "sendonly", streams: [stream], sendEncodings: [
+        {rid: "q", scaleResolutionDownBy: 4, maxBitrate: Math.min(250000, mediaConfig.screen_bitrate)},
+        {rid: "h", scaleResolutionDownBy: 2, maxBitrate: Math.min(750000, mediaConfig.screen_bitrate)},
+        {rid: "f", maxBitrate: mediaConfig.screen_bitrate},
+      ]}).sender;
+    } catch (_) { sender = connection.addTrack(videoTrack, stream); }
+    screenSender = sender; senders.push(sender); stream.getAudioTracks().forEach(track => senders.push(connection.addTrack(track, stream)));
+    stream.__allchatSenders = senders; screenStream = stream; button.classList.add("active");
+    localScreenVideo = document.createElement("video"); localScreenVideo.autoplay = true; localScreenVideo.muted = true; localScreenVideo.playsInline = true; localScreenVideo.className = "shared-screen"; localScreenVideo.srcObject = stream; renderMedia();
+    videoTrack.onended = () => stopScreen().catch(() => {});
+    await connection.renegotiate();
+  };
+
+  const renderConnectedView = () => {
+    if (!isDMView() || currentDM() !== call?.direct_message_id) return attachPanel();
+    panel.hidden = true; restoreConversation();
+    const content = document.querySelector(".content-shell"), header = content?.querySelector(":scope > .content-header");
+    const conversation = content?.querySelector(":scope > .conversation-layout"), composer = content?.querySelector(":scope > .composer-wrap");
+    if (!content || !header || !conversation || !composer) return;
+    content.classList.add("direct-call-active");
+    const workspace = document.createElement("section"), stage = document.createElement("div"), toolbar = document.createElement("header"), grid = document.createElement("div"), chat = document.createElement("div");
+    workspace.className = "direct-call-workspace"; stage.className = "direct-call-stage media-stage";
+    toolbar.className = "direct-call-toolbar"; grid.className = "media-stage-grid"; grid.dataset.mediaStageGrid = "";
+    chat.className = "direct-call-chat";
+    toolbar.innerHTML = '<strong data-call-status>Direct Call connected</strong><div class="call-controls"><button type="button" class="button-secondary" data-call-mute>Mute</button><button type="button" class="button-secondary" data-call-screen>Share Screen</button><button type="button" class="button-danger" data-call-end>End Call</button></div>';
+    toolbar.querySelector("[data-call-mute]").onclick = event => {const track = microphone?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;event.currentTarget.textContent=track.enabled?"Mute":"Unmute";}};
+    toolbar.querySelector("[data-call-screen]").onclick = event => toggleScreen(event.currentTarget).catch(error => {toolbar.querySelector("[data-call-status]").textContent=error?.message||"Screen sharing failed";});
+    toolbar.querySelector("[data-call-end]").onclick = endCall;
+    stage.append(toolbar, grid); chat.append(conversation, composer); workspace.append(stage, chat); header.after(workspace);
+    renderMedia();
+  };
+
+  const clearRemoteMedia = () => {
+    remoteAudio.forEach(element => element.remove()); remoteAudio.clear();
+    remoteVideo.forEach(element => element.remove()); remoteVideo.clear();
+  };
+
+  const cleanupMedia = ({explicit = false} = {}) => {
     generation++;
-    socket?.close(); socket = null;
-    peer?.close(); peer = null;
+    connection?.stop({explicit}); connection = null;
     microphone?.getTracks().forEach(track => track.stop()); microphone = null;
-    screenStream?.getTracks().forEach(track => track.stop()); screenStream = null;
-    panel.querySelectorAll("audio,video").forEach(media => media.remove());
+    stopScreen({renegotiate: false}).catch(() => {});
+    clearRemoteMedia(); restoreConversation();
   };
 
   const endCall = async () => {
     if (call) await request(`/api/v1/calls/${call.id}/end`, "POST");
-    cleanupMedia(); call = null; panel.hidden = true; installView();
+    cleanupMedia({explicit: true});
+    if (call) sessionStorage.removeItem(resumeKey(call.id));
+    call = null; panel.hidden = true; installView();
   };
 
-  const renderConnected = () => {
-    panel.hidden = false; panel.replaceChildren();
-    const label = document.createElement("strong"), controls = document.createElement("div"), media = document.createElement("div");
-    const mute = document.createElement("button"), screen = document.createElement("button"), end = document.createElement("button");
-    label.textContent = "Direct Call connected"; controls.className = "call-controls"; media.className = "call-media";
-    mute.textContent = "Mute"; screen.textContent = "Share Screen"; end.textContent = "End Call";
-    mute.className = screen.className = "button-secondary"; end.className = "button-danger";
-    mute.onclick = () => {const track = microphone?.getAudioTracks()[0]; if (track) {track.enabled = !track.enabled; mute.textContent = track.enabled ? "Mute" : "Unmute";}};
-    screen.onclick = () => toggleScreen(screen);
-    end.onclick = endCall;
-    controls.append(mute, screen, end); panel.append(label, controls, media); attachPanel();
-  };
-
-  const addRemoteMedia = event => {
-    const mediaHost = panel.querySelector(".call-media") || panel;
-    const element = document.createElement(event.track.kind === "video" ? "video" : "audio");
-    element.autoplay = true; element.playsInline = true;
-    if (event.track.kind === "video") element.className = "shared-screen";
-    element.srcObject = event.streams[0] || new MediaStream([event.track]); mediaHost.append(element);
-    event.track.addEventListener("ended", () => element.remove());
+  const receiveTrack = event => {
+    const stream = event.streams[0] || new MediaStream([event.track]);
+    if (event.track.kind === "video") {
+      const video = document.createElement("video");
+      video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
+      remoteVideo.set(event.track.id || crypto.randomUUID(), video);
+      event.track.addEventListener("ended", () => {for(const [id,value] of remoteVideo)if(value===video)remoteVideo.delete(id);video.remove();renderMedia();});
+      renderMedia(); return;
+    }
+    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;
+    remoteAudio.set(event.track, audio); document.body.append(audio);
+    event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});
   };
 
   const connect = async activeCall => {
-    if (peer) return;
+    if (connection) return;
     const run = ++generation;
     panel.hidden = false; panel.textContent = "Connecting Direct Call…"; attachPanel();
-    const [stream, ice, config] = await Promise.all([
+    if (!window.AllChatVoiceConnection) await import("/assets/voice-connection.js");
+    const [stream, config] = await Promise.all([
       navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false}),
-      fetch("/api/v1/turn-credentials").then(response => response.ok ? response.json() : {ice_servers: []}),
-      fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig)
+      fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
     ]);
     if (run !== generation) return stream.getTracks().forEach(track => track.stop());
     microphone = stream; mediaConfig = config;
-    peer = new RTCPeerConnection({iceServers: ice.ice_servers || []});
-    const outgoing = [], incoming = [];
-    peer.onicecandidate = event => {if (!event.candidate) return; const value = JSON.stringify({version: 1, type: "candidate", candidate: event.candidate.toJSON()}); socket?.readyState === WebSocket.OPEN ? socket.send(value) : outgoing.push(value);};
-    peer.ontrack = addRemoteMedia;
-    stream.getTracks().forEach(track => peer.addTrack(track, stream)); peer.addTransceiver("audio", {direction: "sendrecv"});
-    const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
-    socket = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/api/v1/media`);
-    socket.onopen = () => {socket.send(JSON.stringify({version: 1, type: "join", room_id: activeCall.id, sdp: peer.localDescription})); outgoing.splice(0).forEach(value => socket.send(value));};
-    socket.onmessage = async event => {
-      const frame = JSON.parse(event.data);
-      if (frame.type === "answer") {await peer.setRemoteDescription(frame.sdp); for (const candidate of incoming.splice(0)) await peer.addIceCandidate(candidate); renderConnected();}
-      else if (frame.type === "candidate" && frame.candidate) {peer.remoteDescription ? await peer.addIceCandidate(frame.candidate) : incoming.push(frame.candidate);}
-      else if (frame.type === "offer") {await peer.setRemoteDescription(frame.sdp); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); socket.send(JSON.stringify({version: 1, type: "answer", sdp: peer.localDescription}));}
-      else if (frame.type === "error") {panel.textContent = frame.error || "Direct Call failed";}
+    const key = resumeKey(activeCall.id);
+    const stateChanged = (state, error) => {
+      if (run !== generation || !call) return;
+      if (state === "connected") renderConnectedView();
+      if (state === "recovering") {
+        document.querySelector("[data-call-status]")?.replaceChildren("Reconnecting Direct Call…");
+        stopScreen({renegotiate: false}).catch(() => {});
+      }
+      if (state === "failed") {
+        restoreConversation(); panel.hidden = false; panel.textContent = error?.message || "Direct Call failed"; attachPanel();
+      }
     };
-    socket.onclose = () => {if (run === generation && call) panel.textContent = "Direct Call disconnected";};
-  };
-
-  const renegotiate = async () => {if (!peer || socket?.readyState !== WebSocket.OPEN) return; const offer = await peer.createOffer(); await peer.setLocalDescription(offer); socket.send(JSON.stringify({version: 1, type: "offer", sdp: peer.localDescription}));};
-  const toggleScreen = async button => {
-    if (screenStream) {screenStream.getTracks().forEach(track => track.stop()); screenStream = null; button.textContent = "Share Screen"; return;}
-    screenStream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
-    const tracks = screenStream.getTracks(), senders = tracks.map(track => peer.addTrack(track, screenStream));
-    button.textContent = "Stop Sharing";
-    const stop = async () => {senders.forEach(sender => {try {peer.removeTrack(sender);} catch (_) {}}); screenStream = null; button.textContent = "Share Screen"; await renegotiate();};
-    tracks.forEach(track => track.addEventListener("ended", () => {if (screenStream) stop();}, {once: true})); await renegotiate();
+    const receiveFrame = frame => {
+      if ((frame.type === "screen-low" || frame.type === "screen-high") && screenSender) {
+        const parameters = screenSender.getParameters();
+        (parameters.encodings || []).forEach(encoding => {encoding.active = frame.type === "screen-high" || encoding.rid === "q" || !encoding.rid;});
+        screenSender.setParameters(parameters).catch(() => {});
+      } else if (frame.type === "screen-rejected") {
+        stopScreen().catch(() => {});
+        const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
+      }
+    };
+    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
+    await connection.start();
   };
 
   const render = next => {
     call = next; installView();
-    if (!next) {if (!peer) panel.hidden = true; return;}
+    if (!next) {if (!connection) panel.hidden = true; return;}
     panel.hidden = false; attachPanel();
-    if (next.state === "accepted") {connect(next).catch(error => panel.textContent = error.message || "Direct Call failed"); return;}
-    if (next.state !== "ringing") {cleanupMedia(); panel.textContent = `Direct Call ${next.state}`; return;}
+    if (next.state === "accepted") {connect(next).catch(error => {panel.hidden=false;panel.textContent=error.message||"Direct Call failed";attachPanel();});return;}
+    if (next.state !== "ringing") {cleanupMedia();panel.textContent=`Direct Call ${next.state}`;return;}
     panel.replaceChildren();
     const label = document.createElement("strong"); label.textContent = next.recipient_id === document.body.dataset.memberId ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);
     if (next.recipient_id === document.body.dataset.memberId) {
-      const accept = document.createElement("button"), decline = document.createElement("button"); accept.textContent = "Accept"; decline.textContent = "Decline"; decline.className = "button-danger";
-      accept.onclick = async () => {const response = await request(`/api/v1/calls/${next.id}/accept`, "POST"); if (response.ok) render(await response.json());};
-      decline.onclick = async () => {await request(`/api/v1/calls/${next.id}/decline`, "POST"); cleanupMedia(); call = null; panel.hidden = true; installView();};
-      panel.append(accept, decline);
-      if (notifiedCallID !== next.id && document.hidden && Notification.permission === "granted") {const notice = new Notification("Incoming AllChat Call", {body: "Open AllChat to accept or decline.", tag: "allchat-call"}); notice.onclick = () => {window.focus(); window.allchatNavigate?.(`/channels/${next.direct_message_id}`);}; notifiedCallID = next.id;}
-    } else {const cancel = document.createElement("button"); cancel.textContent = "Cancel"; cancel.className = "button-danger"; cancel.onclick = endCall; panel.append(cancel);}
+      const accept=document.createElement("button"),decline=document.createElement("button");accept.textContent="Accept";decline.textContent="Decline";decline.className="button-danger";
+      accept.onclick=async()=>{const response=await request(`/api/v1/calls/${next.id}/accept`,"POST");if(response.ok)render(await response.json());};
+      decline.onclick=async()=>{await request(`/api/v1/calls/${next.id}/decline`,"POST");cleanupMedia({explicit:true});call=null;panel.hidden=true;installView();};panel.append(accept,decline);
+      if(notifiedCallID!==next.id&&document.hidden&&Notification.permission==="granted"){const notice=new Notification("Incoming AllChat Call",{body:"Open AllChat to accept or decline.",tag:"allchat-call"});notice.onclick=()=>{window.focus();window.allchatNavigate?.(`/channels/${next.direct_message_id}`);};notifiedCallID=next.id;}
+    } else {const cancel=document.createElement("button");cancel.textContent="Cancel";cancel.className="button-danger";cancel.onclick=endCall;panel.append(cancel);}
   };
 
-  async function startCall() {
-    const dm = currentDM(); if (!dm) return;
-    const response = await request(`/api/v1/dms/${dm}/calls`, "POST");
-    if (response.ok) render(await response.json()); else if (response.status === 409) alert("One of you is already in another Call.");
-  }
-  const poll = async () => {if (pollBusy) return; pollBusy = true; try {const response = await request("/api/v1/calls/current"); if (response.status === 204) {if (call) {cleanupMedia(); call = null; panel.hidden = true; installView();} return;} if (response.ok) {const next = await response.json(); if (!call || call.id !== next.id || call.state !== next.state) render(next);}} finally {pollBusy = false;}};
+  async function startCall(){const dm=currentDM();if(!dm)return;const response=await request(`/api/v1/dms/${dm}/calls`,"POST");if(response.ok)render(await response.json());else if(response.status===409)alert("One of you is already in another Call.");}
+  const poll=async()=>{if(pollBusy)return;pollBusy=true;try{const response=await request("/api/v1/calls/current");if(response.status===204){if(call){cleanupMedia();call=null;panel.hidden=true;installView();}return;}if(response.ok){const next=await response.json();if(!call||call.id!==next.id||call.state!==next.state)render(next);}}finally{pollBusy=false;}};
 
-  installView(); poll(); setInterval(poll, 1000);
-  document.addEventListener("allchat:view-swapped", installView);
-  addEventListener("pagehide", () => cleanupMedia());
+  installView(); poll(); setInterval(poll,1000);
+  document.addEventListener("allchat:view-swapped",installView);
+  addEventListener("pagehide",()=>cleanupMedia());
 })();

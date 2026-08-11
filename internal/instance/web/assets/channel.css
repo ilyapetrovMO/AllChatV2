@@ -144,6 +144,16 @@
 .call-media { flex: 1 0 100%; display: grid; place-items: center; }
 .call-media:empty { display: none; }
 .call-media audio { display: none; }
+.channel-content.direct-call-active { grid-template-rows: 48px minmax(0,1fr); }
+.direct-call-workspace { grid-row: 2; min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(0,3fr) minmax(320px,2fr); overflow: hidden; }
+.direct-call-stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; border-right: 1px solid rgba(0,0,0,.35); }
+.direct-call-toolbar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 8px 12px; background: #1e1f22; }
+.direct-call-toolbar > strong { color: #57f287; }
+.direct-call-stage > .media-stage-grid { flex: 1; padding: 16px; background: #111214; }
+.direct-call-chat { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0,1fr) auto; overflow: hidden; }
+.direct-call-chat > .conversation-layout { grid-row: 1; grid-template-columns: minmax(0,1fr); }
+.direct-call-chat > .conversation-layout > .participant-sidebar { display: none; }
+.direct-call-chat > .composer-wrap { grid-row: 2; margin-right: 0; }
 .member-popover { position: fixed; z-index: 20; width: min(300px, calc(100vw - 16px)); overflow: visible; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-sidebar); box-shadow: var(--shadow); }
 .member-popover[hidden] { display: none; }
 .member-popover-banner { position: relative; height: 86px; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, #7d2940, #a43b55); }
@@ -211,6 +221,12 @@
   .message-actions { right: 8px; }
   .message-image { max-height: 320px; }
   .message-video { max-height: 320px; }
+  .direct-call-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(180px,42%) minmax(0,58%); }
+  .direct-call-stage { border-right: 0; border-bottom: 1px solid rgba(0,0,0,.35); }
+  .direct-call-toolbar { min-height: 46px; padding: 5px 8px; }
+  .direct-call-toolbar > strong { display: none; }
+  .direct-call-toolbar .call-controls { width: 100%; justify-content: center; }
+  .direct-call-stage > .media-stage-grid { padding: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .message-actions { transition: none; }

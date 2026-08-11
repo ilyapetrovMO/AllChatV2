@@ -425,6 +425,48 @@ test('voice connection exposes receiver-side audio flow diagnostics', async ({pa
   expect(samples.at(-1)).toMatchObject({state:'connected',inbound:{packets:321,bytes:6543,lost:2},outbound:{packets:123,bytes:4567}});
 });
 
+test('Direct Call keeps remote screen media when tracks arrive with the SDP answer', async ({page})=>{
+  await page.goto('/login');
+  await page.evaluate(()=>{
+    document.body.dataset.memberId='member-one';
+    document.body.dataset.channelId='dm-one';
+    document.body.innerHTML='<main class="content-shell channel-content"><header class="content-header"><span class="channel-topic">Direct Message</span><div class="header-actions"></div></header><section class="conversation-layout"></section><div class="composer-wrap"><input name="csrf_token" value="token"></div></main>';
+    const call={id:'call-one',direct_message_id:'dm-one',caller_id:'member-one',recipient_id:'member-two',state:'accepted'};
+    window.fetch=async url=>{
+      if(String(url).endsWith('/api/v1/calls/current'))return new Response(JSON.stringify(call),{status:200,headers:{'Content-Type':'application/json'}});
+      if(String(url).endsWith('/api/v1/turn-credentials'))return new Response(JSON.stringify({ice_servers:[]}),{status:200,headers:{'Content-Type':'application/json'}});
+      if(String(url).endsWith('/api/v1/media/config'))return new Response(JSON.stringify({audio_bitrate:64000,screen_bitrate:2500000}),{status:200,headers:{'Content-Type':'application/json'}});
+      return new Response('',{status:204});
+    };
+    const microphoneTrack={kind:'audio',enabled:true,stop(){},addEventListener(){}};
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[microphoneTrack],getAudioTracks:()=>[microphoneTrack]})}});
+    class Peer {
+      constructor(){this.localDescription=null;this.remoteDescription=null;}
+      addTrack(){} addTransceiver(){} createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}
+      setLocalDescription(value){this.localDescription=value;return Promise.resolve()}
+      async setRemoteDescription(value){this.remoteDescription=value;const track={kind:'video',addEventListener(){}};this.ontrack?.({track,streams:[new MediaStream()]})}
+      addIceCandidate(){return Promise.resolve()} close(){}
+    }
+    class Socket {
+      static OPEN=1;
+      constructor(){this.readyState=1;(window.__directCallSockets||=[]).push(this);queueMicrotask(()=>this.onopen?.())}
+      send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'answer',sdp:{type:'answer',sdp:'answer'}})}))}
+      close(){if(this.readyState===3)return;this.readyState=3;queueMicrotask(()=>this.onclose?.())}
+    }
+    window.RTCPeerConnection=Peer;
+    window.WebSocket=Socket;
+  });
+  await page.addStyleTag({url:'/assets/channel.css'});
+  await page.addScriptTag({url:'/assets/call.js'});
+  await expect(page.locator('.direct-call-workspace [data-media-stage-grid] video')).toHaveCount(1);
+  await expect(page.locator('.direct-call-workspace .media-stage-tile')).toHaveCount(2);
+  const layout=await page.locator('.direct-call-workspace').evaluate(workspace=>{const stage=workspace.querySelector('.direct-call-stage').getBoundingClientRect(),chat=workspace.querySelector('.direct-call-chat').getBoundingClientRect();return{stage:{x:stage.x,y:stage.y},chat:{x:chat.x,y:chat.y},mobile:innerWidth<=760}});
+  if(layout.mobile)expect(layout.chat.y).toBeGreaterThan(layout.stage.y);else expect(layout.chat.x).toBeGreaterThan(layout.stage.x);
+  await page.evaluate(()=>window.__directCallSockets[0].close());
+  await expect.poll(()=>page.evaluate(()=>window.__directCallSockets.length)).toBe(2);
+  await expect(page.locator('[data-call-status]')).toHaveText('Direct Call connected');
+});
+
 test('voice connection restarts failed ICE before replacing the signaling socket', async ({ page }) => {
   await page.goto('/login');
   await page.addScriptTag({url: '/assets/voice-connection.js'});

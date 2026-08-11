@@ -15,10 +15,9 @@ export function normalizeInstanceURL(input: string, allowDevelopmentHTTP = false
   if (url.protocol !== 'https:' && !(allowDevelopmentHTTP && developmentHost && url.protocol === 'http:')) {
     throw new Error('Instances must use HTTPS.');
   }
-  if (url.username || url.password || url.search || url.hash) {
-    throw new Error('Enter the Instance address without credentials, query parameters, or fragments.');
+  if (url.username || url.password || url.search || url.hash || (url.pathname !== '' && url.pathname !== '/')) {
+    throw new Error('Enter the Instance address without credentials, paths, query parameters, or fragments.');
   }
 
-  url.pathname = url.pathname.replace(/\/+$/, '');
-  return url.toString().replace(/\/$/, '');
+  return `${url.protocol}//${url.host}`;
 }

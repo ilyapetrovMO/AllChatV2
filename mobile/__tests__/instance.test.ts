@@ -17,5 +17,6 @@ describe('normalizeInstanceURL', () => {
   it('rejects embedded credentials and query parameters', () => {
     expect(() => normalizeInstanceURL('https://member@example.test')).toThrow();
     expect(() => normalizeInstanceURL('https://example.test?token=secret')).toThrow();
+    expect(() => normalizeInstanceURL('https://example.test/nested')).toThrow();
   });
 });

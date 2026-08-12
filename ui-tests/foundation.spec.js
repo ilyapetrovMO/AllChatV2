@@ -503,11 +503,41 @@ test('Direct Call keeps remote screen media when tracks arrive with the SDP answ
   await page.addScriptTag({url:'/assets/call.js'});
   await expect(page.locator('.direct-call-workspace [data-media-stage-grid] video')).toHaveCount(1);
   await expect(page.locator('.direct-call-workspace .media-stage-tile')).toHaveCount(2);
+  await page.evaluate(() => window.__directCallSockets[0].onmessage({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-two'})}));
+  await expect(page.locator('.direct-call-workspace [data-media-stage-grid] video')).toHaveCount(0);
   const layout=await page.locator('.direct-call-workspace').evaluate(workspace=>{const stage=workspace.querySelector('.direct-call-stage').getBoundingClientRect(),chat=workspace.querySelector('.direct-call-chat').getBoundingClientRect();return{stage:{x:stage.x,y:stage.y},chat:{x:chat.x,y:chat.y},mobile:innerWidth<=760}});
   if(layout.mobile)expect(layout.chat.y).toBeGreaterThan(layout.stage.y);else expect(layout.chat.x).toBeGreaterThan(layout.stage.x);
   await page.evaluate(()=>window.__directCallSockets[0].close());
   await expect.poll(()=>page.evaluate(()=>window.__directCallSockets.length)).toBe(2);
   await expect(page.locator('[data-call-status]')).toHaveText('Direct Call connected');
+});
+
+test('incoming Direct Call chime stops when the call stops ringing', async ({page})=>{
+  await page.goto('/login');
+  await page.evaluate(()=>{
+    document.body.dataset.memberId='member-recipient';
+    document.body.dataset.channelId='dm-one';
+    document.body.innerHTML='<main class="content-shell"><header class="content-header"><span class="channel-topic">Direct Message</span><div class="header-actions"></div></header><section class="conversation-layout"></section></main>';
+    window.__ringStarts=0;
+    window.__incomingCall={id:'call-one',direct_message_id:'dm-one',caller_id:'member-caller',recipient_id:'member-recipient',state:'ringing'};
+    class FakeAudioContext {
+      constructor(){this.currentTime=0;this.destination={}}
+      resume(){return Promise.resolve()}
+      createOscillator(){return{frequency:{value:0},connect(node){return node},start(){window.__ringStarts++},stop(){}}}
+      createGain(){return{gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(node){return node}}}
+    }
+    window.AudioContext=FakeAudioContext;
+    window.fetch=async url=>String(url).endsWith('/api/v1/calls/current')
+      ? new Response(JSON.stringify(window.__incomingCall),{status:200,headers:{'Content-Type':'application/json'}})
+      : new Response('',{status:204});
+  });
+  await page.addScriptTag({url:'/assets/call.js'});
+  await expect.poll(()=>page.evaluate(()=>window.__ringStarts)).toBe(2);
+  await page.evaluate(()=>{window.__incomingCall.state='ended'});
+  await page.waitForTimeout(1200);
+  const stoppedAt=await page.evaluate(()=>window.__ringStarts);
+  await page.waitForTimeout(2300);
+  expect(await page.evaluate(()=>window.__ringStarts)).toBe(stoppedAt);
 });
 
 test('voice connection restarts failed ICE before replacing the signaling socket', async ({ page }) => {

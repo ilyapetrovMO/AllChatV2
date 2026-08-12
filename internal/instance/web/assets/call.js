@@ -5,7 +5,8 @@
 
   let call = null, connection = null, microphone = null, screenStream = null;
   let localScreenVideo = null, screenSender = null;
-  let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0;
+  let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0, mediaPreparation = null;
+  let ringContext = null, ringTimer = null;
   let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
   const remoteAudio = new Map(), remoteVideo = new Map();
   const panel = document.createElement("section");
@@ -17,6 +18,16 @@
   const isDMView = () => document.querySelector(".channel-topic")?.textContent.trim() === "Direct Message";
   const currentDM = () => isDMView() ? document.body.dataset.channelId : "";
   const resumeKey = id => `allchat-media-resume:${id}`;
+  const ringPulse = async () => {
+    try {
+      ringContext ||= new AudioContext(); await ringContext.resume();
+      const now=ringContext.currentTime;
+      [523.25,659.25].forEach((frequency,index)=>{const oscillator=ringContext.createOscillator(),gain=ringContext.createGain(),start=now+index*.12;oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075,start+.02);gain.gain.exponentialRampToValueAtTime(.0001,start+.24);oscillator.connect(gain).connect(ringContext.destination);oscillator.start(start);oscillator.stop(start+.25);});
+    } catch (_) {}
+  };
+  const stopRinging = () => { if(ringTimer)clearInterval(ringTimer);ringTimer=null; };
+  const startRinging = () => { if(ringTimer)return;ringPulse();ringTimer=setInterval(ringPulse,2200); };
+  addEventListener("pointerdown",()=>{try{ringContext ||= new AudioContext();ringContext.resume().catch(()=>{});}catch(_){}},{once:true});
 
   const attachPanel = () => {
     if (document.querySelector(".direct-call-workspace")) return;
@@ -136,7 +147,12 @@
     remoteVideo.forEach(element => element.remove()); remoteVideo.clear();
   };
 
+  const clearRemoteVideo = () => {
+    remoteVideo.forEach(element => element.remove()); remoteVideo.clear(); renderMedia();
+  };
+
   const cleanupMedia = ({explicit = false} = {}) => {
+    stopRinging();
     generation++;
     connection?.stop({explicit}); connection = null;
     microphone?.getTracks().forEach(track => track.stop()); microphone = null;
@@ -171,13 +187,8 @@
     if (connection) return;
     const run = ++generation;
     panel.hidden = false; panel.textContent = "Connecting Direct Call…"; attachPanel();
-    if (!window.AllChatVoiceConnection) await import("/assets/voice-connection.js");
-    const [stream, config] = await Promise.all([
-      navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false}),
-      fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
-    ]);
-    if (run !== generation) return stream.getTracks().forEach(track => track.stop());
-    microphone = stream; mediaConfig = config;
+    await prepareMedia(run);
+    if (run !== generation) return;
     const key = resumeKey(activeCall.id);
     const stateChanged = (state, error) => {
       if (run !== generation || !call) return;
@@ -199,24 +210,42 @@
         stopScreen().catch(() => {});
         const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
       } else if (frame.type === "video-stopped") {
-        for (const [id, video] of remoteVideo) if (video.dataset.memberId === frame.member_id) { remoteVideo.delete(id); video.remove(); }
-        renderMedia();
+        clearRemoteVideo();
       }
     };
     const progress = message => { if (!connection || connection.state !== "connected") { panel.hidden=false;panel.innerHTML='<span class="call-progress"></span>';panel.firstElementChild.textContent=message;attachPanel(); } };
-    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
+    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
     await connection.start();
+  };
+
+  const prepareMedia = async expectedGeneration => {
+    if (microphone) return;
+    if (!mediaPreparation) {
+      mediaPreparation = (async () => {
+        panel.hidden=false;panel.innerHTML='<span class="call-progress">Requesting microphone permission…</span>';attachPanel();
+        if (!window.AllChatVoiceConnection) await import("/assets/voice-connection.js");
+        const [stream, config] = await Promise.all([
+          navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false}),
+          fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
+        ]);
+        if (expectedGeneration !== generation) { stream.getTracks().forEach(track => track.stop()); throw new Error("Direct Call preparation cancelled"); }
+        microphone=stream;mediaConfig=config;
+      })().finally(() => { mediaPreparation=null; });
+    }
+    await mediaPreparation;
   };
 
   const render = next => {
     call = next; installView();
+    const incoming=next?.state==="ringing"&&next.recipient_id===document.body.dataset.memberId;
+    if(incoming)startRinging();else stopRinging();
     if (!next) {if (!connection) panel.hidden = true; return;}
     panel.hidden = false; attachPanel();
     if (next.state === "accepted") {connect(next).catch(error => {panel.hidden=false;panel.textContent=error.message||"Direct Call failed";attachPanel();});return;}
     if (next.state !== "ringing") {cleanupMedia();panel.textContent=`Direct Call ${next.state}`;return;}
     panel.replaceChildren();
-    const label = document.createElement("strong"); label.textContent = next.recipient_id === document.body.dataset.memberId ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);
-    if (next.recipient_id === document.body.dataset.memberId) {
+    const label = document.createElement("strong"); label.textContent = incoming ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);
+    if (incoming) {
       const accept=document.createElement("button"),decline=document.createElement("button");accept.textContent="Accept";decline.textContent="Decline";decline.className="button-danger";
       accept.onclick=async()=>{const response=await request(`/api/v1/calls/${next.id}/accept`,"POST");if(response.ok)render(await response.json());};
       decline.onclick=async()=>{await request(`/api/v1/calls/${next.id}/decline`,"POST");cleanupMedia({explicit:true});call=null;panel.hidden=true;installView();};panel.append(accept,decline);
@@ -224,10 +253,10 @@
     } else {const cancel=document.createElement("button");cancel.textContent="Cancel";cancel.className="button-danger";cancel.onclick=endCall;panel.append(cancel);}
   };
 
-  async function startCall(){const dm=currentDM();if(!dm)return;const response=await request(`/api/v1/dms/${dm}/calls`,"POST");if(response.ok)render(await response.json());else if(response.status===409)alert("One of you is already in another Call.");}
+  async function startCall(){const dm=currentDM();if(!dm)return;try{await prepareMedia(generation);const response=await request(`/api/v1/dms/${dm}/calls`,"POST");if(response.ok)render(await response.json());else{cleanupMedia({explicit:true});if(response.status===409)alert("One of you is already in another Call.");}}catch(error){cleanupMedia();panel.hidden=false;panel.textContent=error?.message||"Could not prepare Direct Call";attachPanel();}}
   const poll=async()=>{if(pollBusy)return;pollBusy=true;try{const response=await request("/api/v1/calls/current");if(response.status===204){if(call){cleanupMedia();call=null;panel.hidden=true;installView();}return;}if(response.ok){const next=await response.json();if(!call||call.id!==next.id||call.state!==next.state)render(next);}}finally{pollBusy=false;}};
 
   installView(); poll(); setInterval(poll,1000);
   document.addEventListener("allchat:view-swapped",installView);
-  addEventListener("pagehide",()=>cleanupMedia());
+  addEventListener("pagehide",()=>{stopRinging();cleanupMedia()});
 })();

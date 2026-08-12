@@ -592,10 +592,12 @@ test('Direct Call caller connects after the recipient accepts', async ({browser}
   const recipientAPI = await request.newContext({baseURL, storageState: fixture.secondState});
   const caller = await callerContext.newPage();
   const recipient = await recipientContext.newPage();
-  await caller.addInitScript(() => Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => new MediaStream()}}));
+  await caller.addInitScript(() => Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => { window.__callMicrophoneRequests = (window.__callMicrophoneRequests || 0) + 1; return new MediaStream(); }}}));
   await caller.goto(`/channels/${fixture.dm.id}`);
   await recipient.goto('/login');
   await caller.getByRole('button', {name: 'Start Call'}).click();
+  await expect.poll(() => caller.evaluate(() => window.__callMicrophoneRequests || 0)).toBe(1);
+  await expect.poll(async () => (await recipientAPI.get('/api/v1/calls/current')).status()).toBe(200);
   const currentResponse = await recipientAPI.get('/api/v1/calls/current');
   const current = await currentResponse.json();
   await post(recipientAPI, `/api/v1/calls/${current.id}/accept`, {});

@@ -61,6 +61,16 @@ describe('native conversation timeline', () => {
     expect(formatMessageTime(new Date(2030, 4, 9, 9, 30).toISOString(), now)).toMatch(/May|5|09/);
   });
 
+  it('renders the timestamp beside the Member name', () => {
+    let tree!: renderer.ReactTestRenderer;
+    act(() => { tree = renderer.create(<MessageRow instanceURL="https://chat.example.test" message={message} mine={false} palette={palette} token="session-token" />); });
+    const timestamp = tree.root.find(node => typeof node.props.accessibilityLabel === 'string' && node.props.accessibilityLabel.startsWith('Sent '));
+    const authorLine = timestamp.parent;
+    const author = authorLine?.children[0];
+    expect(typeof author === 'string' ? author : author?.props.children).toBe('Member');
+    expect(authorLine?.children[1]).toBe(timestamp);
+  });
+
   it('merges cursor pages without duplicates and trims the oldest history at present', () => {
     const messages = Array.from({length: 125}, (_, index) => ({...message, id: `message-${index + 1}`, sequence: index + 1}));
     const merged = mergeMessagePage(messages.slice(50), messages.slice(0, 51));

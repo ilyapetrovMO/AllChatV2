@@ -86,7 +86,7 @@ jobs:
 
   android-emulator-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -103,12 +103,18 @@ jobs:
       - run: npm --prefix mobile test -- --runInBand
       - name: Build standalone x86_64 APK
         run: cd mobile/android && ./gradlew assembleStandalone -PreactNativeArchitectures=x86_64 --no-daemon
+      - name: Enable KVM acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: Boot Android and launch bundled application
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 36
           arch: x86_64
           disable-animations: true
+          emulator-boot-timeout: 300
           script: |
             adb install -r mobile/android/app/build/outputs/apk/standalone/app-standalone.apk
             adb shell am start -W -n org.allchat.mobile/.MainActivity

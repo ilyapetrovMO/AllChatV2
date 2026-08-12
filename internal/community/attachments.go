@@ -20,7 +20,6 @@ import (
 	"unicode"
 
 	"allchat/internal/identity"
-	animatedwebp "github.com/gen2brain/webp"
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
 )
@@ -232,12 +231,7 @@ func (s *Service) AttachmentPreview(ctx context.Context, member identity.Member,
 	if err != nil {
 		return Attachment{}, "", "", err
 	}
-	var decoded image.Image
-	if item.ContentType == "image/webp" {
-		decoded, err = animatedwebp.Decode(file, animatedwebp.Options{AutoRotate: true})
-	} else {
-		decoded, _, err = image.Decode(file)
-	}
+	decoded, _, err := image.Decode(file)
 	file.Close()
 	if err != nil {
 		return Attachment{}, "", "", fmt.Errorf("decode image preview: %w", err)

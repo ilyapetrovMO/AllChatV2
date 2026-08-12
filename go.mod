@@ -7,7 +7,6 @@ require modernc.org/sqlite v1.54.0
 require (
 	fyne.io/fyne/v2 v2.7.1
 	github.com/coder/websocket v1.8.14
-	github.com/gen2brain/webp v0.6.4
 	github.com/go-acme/lego/v4 v4.31.0
 	github.com/pion/interceptor v0.1.45
 	github.com/pion/logging v0.2.4
@@ -17,6 +16,8 @@ require (
 	github.com/pion/turn/v5 v5.0.4
 	github.com/pion/webrtc/v4 v4.2.13
 	golang.org/x/crypto v0.54.0
+	golang.org/x/image v0.24.0
+	golang.org/x/net v0.56.0
 )
 
 require (
@@ -25,7 +26,6 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fyne-io/gl-js v0.2.0 // indirect
@@ -65,9 +65,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
-	golang.org/x/image v0.24.0 // indirect
 	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect

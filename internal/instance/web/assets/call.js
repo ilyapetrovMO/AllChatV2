@@ -173,13 +173,12 @@
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
       video.dataset.memberId=(event.track.id||stream.id||"").replace(/^screen-/,"");
-      // A Direct Call has one remote Member and each client exposes one video
-      // source at a time. Replace stale/restarted tracks instead of rendering
-      // them as phantom participants.
-      for(const old of remoteVideo.values())old.remove();remoteVideo.clear();
-      remoteVideo.set(event.track.id || crypto.randomUUID(), video);
-      event.track.addEventListener("ended", () => {for(const [id,value] of remoteVideo)if(value===video)remoteVideo.delete(id);video.remove();renderMedia();});
-      renderMedia(); return;
+      const id=event.track.id||crypto.randomUUID(),remove=()=>{if(remoteVideo.get(id)===video)remoteVideo.delete(id);video.remove();renderMedia()},publish=()=>{
+        // A Direct Call has one remote Member and one active video source.
+        for(const old of remoteVideo.values())old.remove();remoteVideo.clear();remoteVideo.set(id,video);renderMedia();video.play().catch(()=>{});
+      };
+      event.track.addEventListener("ended",remove);event.track.addEventListener("mute",remove);event.track.addEventListener("unmute",publish);
+      if(!event.track.muted)publish();return;
     }
     const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;
     remoteAudio.set(event.track, audio); document.body.append(audio);

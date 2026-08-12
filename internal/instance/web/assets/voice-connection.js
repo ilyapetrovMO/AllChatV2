@@ -121,7 +121,7 @@
           if (frame.type === "answer") {
             this.onProgress("Finishing media connection…");
             await peer.setRemoteDescription(frame.sdp);
-            for (const candidate of pendingRemote.splice(0)) await peer.addIceCandidate(candidate);
+            for (const candidate of pendingRemote.splice(0)) peer.addIceCandidate(candidate).catch(() => {});
             if (frame.resume_token) {
               this.resumeToken = frame.resume_token;
               this.onResumeToken(frame.resume_token);
@@ -136,7 +136,7 @@
             return;
           }
           if (frame.type === "candidate" && frame.candidate) {
-            if (peer.remoteDescription) await peer.addIceCandidate(frame.candidate); else pendingRemote.push(frame.candidate);
+            if (peer.remoteDescription) peer.addIceCandidate(frame.candidate).catch(() => {}); else pendingRemote.push(frame.candidate);
             return;
           }
           if (frame.type === "offer") {

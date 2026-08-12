@@ -86,7 +86,14 @@ export class MediaSession {
     let frameQueue = Promise.resolve();
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
     this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'}); peer.addTransceiver('video', {direction: 'recvonly'});
-    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); if (event.track.kind === 'video' && ownerID) for (const [remoteID, item] of this.remote) if (item.kind === 'video' && item.ownerID === ownerID) this.remote.delete(remoteID); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'}; this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
+    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; muted?: boolean; onended?: () => void; onmute?: () => void; onunmute?: () => void}}) => {
+      const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'};
+      const remove = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); };
+      const publish = () => { if (event.track.kind === 'video' && ownerID) for (const [remoteID, current] of this.remote) if (current.kind === 'video' && current.ownerID === ownerID) this.remote.delete(remoteID); this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
+      event.track.onended = remove;
+      if (event.track.kind === 'video') { event.track.onmute = remove; event.track.onunmute = publish; if (!event.track.muted) publish(); }
+      else publish();
+    };
     peer.onicecandidate = (event: {candidate?: {toJSON(): object}}) => { if (!event.candidate) return; const frame = {type: 'candidate', candidate: event.candidate.toJSON()}; if (this.socket?.readyState === 1) this.send(frame); else pendingLocal.push(frame); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
@@ -105,13 +112,13 @@ export class MediaSession {
     if (this.stopped || generation !== this.generation || frame.type === 'heartbeat-ack') return;
     if (frame.type === 'error') { const error = new Error(frame.error || 'Media signaling failed') as Error & {code?: string}; error.code = frame.code; throw error; }
     if (frame.type === 'answer' && frame.sdp) { this.options.onProgress?.('Finishing media connection…'); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; if (frame.participants) this.options.onParticipants?.(frame.participants); this.retry = 0; this.send({type: 'screen-visibility', visible: this.screenVisible}); this.options.onStatus?.('connected'); return; }
-    if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) await peer.addIceCandidate(frame.candidate as never); else pendingRemote.push(frame.candidate); return; }
+    if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) peer.addIceCandidate(frame.candidate as never).catch(() => {}); else pendingRemote.push(frame.candidate); return; }
     if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
     else if (frame.type === 'video-stopped' && frame.member_id) { for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }
     else this.options.onFrame?.(frame);
   }
 
-  private async flushRemoteCandidates(peer: RTCPeerConnection, pending: object[]) { for (const candidate of pending.splice(0)) await peer.addIceCandidate(candidate as never); }
+  private async flushRemoteCandidates(peer: RTCPeerConnection, pending: object[]) { for (const candidate of pending.splice(0)) peer.addIceCandidate(candidate as never).catch(() => {}); }
 
   private async renegotiate() { if (!this.peer) return; const offer = await this.peer.createOffer(); await this.peer.setLocalDescription(offer); this.send({type: 'offer', sdp: this.peer.localDescription}); }
   private addVideoTrack(track: MediaStream['getVideoTracks'] extends () => Array<infer T> ? T : never, stream: MediaStream) {

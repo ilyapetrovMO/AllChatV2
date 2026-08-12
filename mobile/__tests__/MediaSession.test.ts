@@ -100,6 +100,18 @@ describe('MediaSession', () => {
     session.stop();
   });
 
+  it('becomes connected when an obsolete queued ICE candidate is rejected', async () => {
+    const {session, socket, peer, statuses} = harness();
+    peer.addIceCandidate.mockRejectedValueOnce(new Error('obsolete candidate'));
+    await session.start(); socket.onopen?.();
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'candidate', candidate: {candidate: 'candidate:obsolete'}})});
+
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+
+    expect(statuses).toContain('connected');
+    session.stop();
+  });
+
   it('serializes an initial answer and immediate SFU offer', async () => {
     const {session, socket, peer, statuses} = harness();
     let settingRemote = false;
@@ -133,6 +145,18 @@ describe('MediaSession', () => {
     expect(remotes.at(-1)).toEqual([{id: 'screen-member-2', ownerID: 'member-2'}]);
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-2'})});
     expect(remotes.at(-1)).toEqual([]);
+    session.stop();
+  });
+
+  it('does not expose a remote video receiver until media starts', async () => {
+    const {session, socket, peer, remotes} = harness();
+    await session.start(); socket.onopen?.();
+    const track = {id: 'screen-member-2', kind: 'video', muted: true, onended: undefined as undefined | (() => void), onunmute: undefined as undefined | (() => void)};
+
+    peer.ontrack?.({track, streams: [{id: 'screen-member-2'}]});
+    expect(remotes.at(-1) || []).toEqual([]);
+    track.muted = false; track.onunmute?.();
+    expect(remotes.at(-1)).toEqual([{id: 'screen-member-2', ownerID: 'member-2'}]);
     session.stop();
   });
 

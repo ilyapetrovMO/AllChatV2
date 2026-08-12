@@ -173,13 +173,17 @@
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
       video.dataset.memberId=(event.track.id||stream.id||"").replace(/^screen-/,"");
-      for(const [id,old] of remoteVideo)if(old.dataset.memberId===video.dataset.memberId){remoteVideo.delete(id);old.remove()}
+      // A Direct Call has one remote Member and each client exposes one video
+      // source at a time. Replace stale/restarted tracks instead of rendering
+      // them as phantom participants.
+      for(const old of remoteVideo.values())old.remove();remoteVideo.clear();
       remoteVideo.set(event.track.id || crypto.randomUUID(), video);
       event.track.addEventListener("ended", () => {for(const [id,value] of remoteVideo)if(value===video)remoteVideo.delete(id);video.remove();renderMedia();});
       renderMedia(); return;
     }
     const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;
     remoteAudio.set(event.track, audio); document.body.append(audio);
+    audio.play().catch(() => {});
     event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});
   };
 

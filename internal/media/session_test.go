@@ -210,6 +210,23 @@ func TestScreenVisibilitySignalsAdaptiveLayerChoice(t *testing.T) {
 	manager.mu.Unlock()
 }
 
+func TestScreenVisibilityBeforeTrackSelectsHighLayerWhenTrackAppears(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("sharer", "room"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.Join("viewer", "room"); err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.SetScreenVisible("viewer", true); err != nil {
+		t.Fatal(err)
+	}
+	if quality := manager.screenQuality("room", "sharer"); quality != "screen-high" {
+		t.Fatalf("quality when visible viewer preceded track = %q, want screen-high", quality)
+	}
+}
+
 func TestSpeakingStateClearsAfterAudioStops(t *testing.T) {
 	manager := NewManager(time.Second)
 	defer manager.Close()

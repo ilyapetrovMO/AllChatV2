@@ -347,6 +347,10 @@ func (m *Manager) detachPeer(memberID string, lease uint64, removeSession, force
 }
 
 func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
+	// Visibility can arrive before the browser publishes its first simulcast
+	// layer. Reassert the desired layer as soon as any layer appears so a
+	// browser previously left on screen-low enables the full layer we forward.
+	source.signal(Signal{Type: m.screenQuality(source.roomID, source.memberID)})
 	// The browser orders screen simulcast layers low-to-high as q/h/f. The MVP
 	// SFU forwards the full layer and drains lower layers; receivers can still
 	// use congestion control while avoiding duplicate rendered tracks.
@@ -425,6 +429,17 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 			return
 		}
 	}
+}
+
+func (m *Manager) screenQuality(roomID, ownerID string) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for memberID, visible := range m.screenVisible[roomID] {
+		if memberID != ownerID && visible {
+			return "screen-high"
+		}
+	}
+	return "screen-low"
 }
 
 func (m *Manager) publishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) {

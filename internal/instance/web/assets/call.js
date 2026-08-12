@@ -82,6 +82,7 @@
 
   const stopScreen = async ({renegotiate = true} = {}) => {
     const stream = screenStream; screenStream = null;
+    if (stream) connection?.send("video-stopped");
     screenSender = null;
     localScreenVideo?.remove(); localScreenVideo = null;
     stream?.getTracks().forEach(track => {track.onended = null; track.stop();});
@@ -155,6 +156,8 @@
     if (event.track.kind === "video") {
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
+      video.dataset.memberId=(event.track.id||stream.id||"").replace(/^screen-/,"");
+      for(const [id,old] of remoteVideo)if(old.dataset.memberId===video.dataset.memberId){remoteVideo.delete(id);old.remove()}
       remoteVideo.set(event.track.id || crypto.randomUUID(), video);
       event.track.addEventListener("ended", () => {for(const [id,value] of remoteVideo)if(value===video)remoteVideo.delete(id);video.remove();renderMedia();});
       renderMedia(); return;
@@ -195,9 +198,13 @@
       } else if (frame.type === "screen-rejected") {
         stopScreen().catch(() => {});
         const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
+      } else if (frame.type === "video-stopped") {
+        for (const [id, video] of remoteVideo) if (video.dataset.memberId === frame.member_id) { remoteVideo.delete(id); video.remove(); }
+        renderMedia();
       }
     };
-    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
+    const progress = message => { if (!connection || connection.state !== "connected") { panel.hidden=false;panel.innerHTML='<span class="call-progress"></span>';panel.firstElementChild.textContent=message;attachPanel(); } };
+    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
     await connection.start();
   };
 

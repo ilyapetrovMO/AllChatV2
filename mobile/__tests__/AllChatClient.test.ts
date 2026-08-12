@@ -256,6 +256,14 @@ describe('AllChatClient', () => {
     await expect(client.currentCall('session-token')).resolves.toBeUndefined();
   });
 
+  it('loads active Voice Room participants for the channel browser', async () => {
+    const state = {participants: [{member_id: 'member-2', connected: true, speaking: true}], names: {'member-2': 'Other Member'}, members: {'member-2': {id: 'member-2', username: 'other', owner: false}}};
+    const request = jest.fn(async () => new Response(JSON.stringify(state), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+    await expect(client.voiceRoomParticipants('session-token', 'voice/1')).resolves.toEqual(state);
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/voice/voice%2F1/participants', {headers: {Authorization: 'Bearer session-token'}});
+  });
+
   it('updates inherited global and Channel notification settings', async () => {
     const request = jest.fn(async () => new Response(null, {status: 204}));
     const client = new AllChatClient('https://chat.example.test', request as typeof fetch);

@@ -9,6 +9,7 @@
       this.onState = options.onState || (() => {});
       this.onTrack = options.onTrack || (() => {});
       this.onFrame = options.onFrame || (() => {});
+      this.onProgress = options.onProgress || (() => {});
       this.onResumeToken = options.onResumeToken || (() => {});
 	  this.onDiagnostics = options.onDiagnostics || (() => {});
       this.fetchCredentials = options.fetchCredentials || (async () => {
@@ -72,8 +73,10 @@
 	  clearInterval(this.diagnosticsTimer);
       this.socket?.close();
       this.peer?.close();
+      this.onProgress("Fetching relay configuration…");
       const iceServers = await this.fetchCredentials();
       if (this.stopped || generation !== this.generation) throw new Error("Voice connection cancelled");
+      this.onProgress("Preparing encrypted media…");
       const peer = this.createPeer({iceServers});
       this.peer = peer;
       const pendingLocal = [], pendingRemote = [];
@@ -91,20 +94,22 @@
       await peer.setLocalDescription(offer);
       const socket = this.createSocket();
       this.socket = socket;
+      this.onProgress("Opening media signaling…");
       return new Promise((resolve, reject) => {
         let settled = false;
 		let connected = false;
+        let frameQueue = Promise.resolve();
         const fail = error => { if (!settled) { settled = true; reject(error); } };
         socket.onopen = () => {
           if (this.stopped || generation !== this.generation) return socket.close();
+          this.onProgress("Waiting for the media server…");
           this._send({type: "join", room_id: this.roomID, resume_token: resumeToken, takeover, sdp: peer.localDescription});
           pendingLocal.splice(0).forEach(frame => this._send(frame));
           this.lastHeartbeatAck = Date.now();
           this.heartbeat = setInterval(() => this._heartbeat(socket, generation), this.heartbeatInterval);
         };
-        socket.onmessage = async event => {
+        const handleFrame = async frame => {
           if (this.stopped || generation !== this.generation) return;
-          const frame = JSON.parse(event.data);
           if (frame.type === "heartbeat-ack") { this.lastHeartbeatAck = Date.now(); return; }
           if (frame.type === "error") {
             const error = new Error(frame.error || "Voice connection failed");
@@ -114,6 +119,7 @@
             return;
           }
           if (frame.type === "answer") {
+            this.onProgress("Finishing media connection…");
             await peer.setRemoteDescription(frame.sdp);
             for (const candidate of pendingRemote.splice(0)) await peer.addIceCandidate(candidate);
             if (frame.resume_token) {
@@ -142,6 +148,13 @@
             return;
           }
           this.onFrame(frame);
+        };
+        socket.onmessage = event => {
+          const frame = JSON.parse(event.data);
+          frameQueue = frameQueue.then(() => handleFrame(frame)).catch(error => {
+            fail(error);
+            socket.close();
+          });
         };
         socket.onerror = () => {
           if (connected) socket.close();

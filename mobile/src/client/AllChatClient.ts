@@ -21,6 +21,8 @@ export type Report = {id: string; reporter_id: string; target_member_id?: string
 export type ModerationAction = 'warn' | 'timeout' | 'suspend' | 'kick';
 export type DirectCall = {id: string; direct_message_id: string; caller_id: string; recipient_id: string; state: 'ringing' | 'accepted' | 'declined' | 'ended' | string; created_at: string; expires_at?: string; finished_at?: string};
 export type SoundboardSound = {id: string; name: string; emoji?: string; content_type: string; size: number; duration_ms: number; position: number; audio_url: string};
+export type VoiceRoomParticipant = {member_id: string; connected: boolean; muted?: boolean; server_muted?: boolean; speaking?: boolean; screen_sharing?: boolean};
+export type VoiceRoomState = {participants: VoiceRoomParticipant[]; names: Record<string, string>; members: Record<string, Member>};
 
 type Fetch = typeof fetch;
 
@@ -213,6 +215,11 @@ export class AllChatClient {
     const response = await this.request(`${this.instanceURL}/api/v1/calls/current`, {headers: {Authorization: `Bearer ${token}`}});
     if (response.status === 204) return undefined;
     return this.decode<DirectCall>(response, 'Could not load the current Call.');
+  }
+
+  async voiceRoomParticipants(token: string, channelID: string): Promise<VoiceRoomState> {
+    const response = await this.request(`${this.instanceURL}/api/v1/voice/${encodeURIComponent(channelID)}/participants`, {headers: {Authorization: `Bearer ${token}`}});
+    return this.decode<VoiceRoomState>(response, 'Could not load Voice Room participants.');
   }
 
   async startCall(token: string, directMessageID: string): Promise<DirectCall> {

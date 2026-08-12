@@ -425,6 +425,49 @@ test('voice connection exposes receiver-side audio flow diagnostics', async ({pa
   expect(samples.at(-1)).toMatchObject({state:'connected',inbound:{packets:321,bytes:6543,lost:2},outbound:{packets:123,bytes:4567}});
 });
 
+test('voice connection serializes an initial answer and immediate SFU offer', async ({page}) => {
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/voice-connection.js'});
+  const result = await page.evaluate(async () => {
+    const sent = [], states = [], progress = [];
+    class Peer {
+      constructor() { this.localDescription = null; this.remoteDescription = null; this.settingRemote = false; }
+      addTrack() {} addTransceiver() {} addIceCandidate() { return Promise.resolve(); } close() {}
+      createOffer() { return Promise.resolve({type: 'offer', sdp: 'client-offer'}); }
+      createAnswer() { return Promise.resolve({type: 'answer', sdp: 'client-answer'}); }
+      setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
+      async setRemoteDescription(value) {
+        if (this.settingRemote) throw new Error('concurrent remote description');
+        this.settingRemote = true;
+        await new Promise(resolve => setTimeout(resolve, 5));
+        this.remoteDescription = value;
+        this.settingRemote = false;
+      }
+    }
+    class Socket {
+      static OPEN = 1;
+      constructor() { this.readyState = 1; queueMicrotask(() => this.onopen?.()); }
+      send(raw) {
+        const frame = JSON.parse(raw); sent.push(frame);
+        if (frame.type === 'join') queueMicrotask(() => {
+          this.onmessage?.({data: JSON.stringify({type: 'answer', sdp: {type: 'answer', sdp: 'server-answer'}})});
+          this.onmessage?.({data: JSON.stringify({type: 'offer', sdp: {type: 'offer', sdp: 'server-offer'}})});
+        });
+      }
+      close() { this.readyState = 3; }
+    }
+    const connection = new window.AllChatVoiceConnection({roomID: 'direct-call', stream: {getTracks: () => []}, fetchCredentials: async () => [], createPeer: () => new Peer(), createSocket: () => new Socket(), onState: state => states.push(state), onProgress: message => progress.push(message)});
+    await connection.start();
+    await new Promise(resolve => setTimeout(resolve, 20));
+    const snapshot = {states, progress, answers: sent.filter(frame => frame.type === 'answer').length};
+    connection.stop();
+    return snapshot;
+  });
+  expect(result.states).toContain('connected');
+  expect(result.progress).toEqual(['Fetching relay configuration…', 'Preparing encrypted media…', 'Opening media signaling…', 'Waiting for the media server…', 'Finishing media connection…']);
+  expect(result.answers).toBe(1);
+});
+
 test('Direct Call keeps remote screen media when tracks arrive with the SDP answer', async ({page})=>{
   await page.goto('/login');
   await page.evaluate(()=>{
@@ -600,7 +643,7 @@ test('clicking a voice channel joins in place without replacing the text convers
     };
     window.WebSocket = class {
       static OPEN = 1;
-      constructor() { this.readyState = 1; window.voiceHeartbeatFrames = 0; setTimeout(() => this.onopen?.(), 0); }
+      constructor() { this.readyState = 1; window.voiceSocket = this; window.voiceHeartbeatFrames = 0; setTimeout(() => this.onopen?.(), 0); }
       send(value) { const frame = JSON.parse(value); if (frame.type === 'join') { window.voiceJoinFrame = frame; setTimeout(() => this.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'mock-answer'}, resume_token: 'resume'}),}), 500); } if (frame.type === 'heartbeat') window.voiceHeartbeatFrames++; if (frame.type === 'mute-state') window.voiceMuteFrame = frame; }
       close() { this.readyState = 3; }
     };
@@ -620,7 +663,8 @@ test('clicking a voice channel joins in place without replacing the text convers
   await page.locator('a[href="/channels/voice-one"]').click();
   await expect(page.locator('#text-conversation')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toBeVisible();
-  await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText('Connecting');
+  await expect(page.locator('[data-voice-connection="voice-one"] strong')).toContainText(/Fetching relay|Preparing encrypted media|Opening media signaling|Waiting for the media server/);
+  await expect(page.locator('[data-voice-participants="voice-one"]')).toContainText(/Connecting|media server/);
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   expect(Date.now() - voiceStarted).toBeLessThan(1500);
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, join: window.voiceJoinFrame}))).toMatchObject({captureRequests: 1, join: {type: 'join', room_id: 'voice-one'}});
@@ -639,10 +683,25 @@ test('clicking a voice channel joins in place without replacing the text convers
   expect(await page.evaluate(() => [...document.querySelectorAll('body > audio')].map(audio => audio.srcObject).includes(window.botOneAudio))).toBe(true);
   await page.locator('a[href="/channels/voice-one"]').click();
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).toContainText('Akko');
-  await page.evaluate(() => window.voicePeer.ontrack({track: {kind: 'video', id: 'screen', addEventListener() {}}, streams: [new MediaStream()]}));
+  await page.evaluate(() => {
+    const listeners = [];
+    window.firstVideoTrack = {kind: 'video', id: 'screen-member-one', addEventListener(type, listener) { if (type === 'ended') listeners.push(listener); }, end() { listeners.forEach(listener => listener()); }};
+    window.voicePeer.ontrack({track: window.firstVideoTrack, streams: [new MediaStream()]});
+  });
   await expect(page.locator('[data-media-stage-grid]')).toHaveAttribute('data-tile-count', '1');
   await expect(page.locator('[data-media-stage-grid] .participant-tile video')).toHaveCount(1);
   await expect(page.locator('[data-media-stage-grid] .screen-tile')).toHaveCount(0);
+  await page.evaluate(() => {
+    const replacement = {kind: 'video', id: 'screen-member-one', addEventListener() {}};
+    window.voicePeer.ontrack({track: replacement, streams: [new MediaStream()]});
+    window.firstVideoTrack.end();
+  });
+  await expect(page.locator('[data-media-stage-grid] .participant-tile video')).toHaveCount(1);
+  await page.locator('[data-media-stage-grid] .participant-tile').click();
+  await expect(page.locator('[data-media-stage-grid] .participant-tile')).toHaveClass(/expanded/);
+  await page.evaluate(() => window.voiceSocket.onmessage({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-one'})}));
+  await expect(page.locator('[data-media-stage-grid] .participant-tile video')).toHaveCount(0);
+  await expect(page.locator('[data-media-stage-grid] .participant-tile')).not.toHaveClass(/expanded/);
   await page.evaluate(() => {
     document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity = 'preserved';
     window.stageChildMutations = 0;

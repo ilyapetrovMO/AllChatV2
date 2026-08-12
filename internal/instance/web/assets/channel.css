@@ -140,6 +140,7 @@
 .call-banner { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; min-height: 48px; padding: 8px 16px; background: #232428; border-bottom: 1px solid var(--border); }
 .call-banner[hidden] { display: none; }
 .call-banner button { min-height: 32px; padding: 5px 10px; }
+.call-progress { color: #3ba55d; font-size: 13px; }
 .call-controls { display: flex; align-items: center; gap: 8px; }
 .call-media { flex: 1 0 100%; display: grid; place-items: center; }
 .call-media:empty { display: none; }

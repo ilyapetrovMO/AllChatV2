@@ -585,3 +585,41 @@ test('incoming one-to-one calls surface outside the DM and can be declined', asy
   expect(started.state).toBe('ringing');
   await owner.dispose();
 });
+
+test('Direct Call caller connects after the recipient accepts', async ({browser}) => {
+  const callerContext = await browser.newContext({storageState: fixture.ownerState, permissions: ['microphone']});
+  const recipientContext = await browser.newContext({storageState: fixture.secondState});
+  const recipientAPI = await request.newContext({baseURL, storageState: fixture.secondState});
+  const caller = await callerContext.newPage();
+  const recipient = await recipientContext.newPage();
+  await caller.addInitScript(() => Object.defineProperty(navigator, 'mediaDevices', {configurable: true, value: {getUserMedia: async () => new MediaStream()}}));
+  await caller.goto(`/channels/${fixture.dm.id}`);
+  await recipient.goto('/login');
+  await caller.getByRole('button', {name: 'Start Call'}).click();
+  const currentResponse = await recipientAPI.get('/api/v1/calls/current');
+  const current = await currentResponse.json();
+  await post(recipientAPI, `/api/v1/calls/${current.id}/accept`, {});
+  const recipientConnected = recipient.evaluate(async callID => {
+    const peer = new RTCPeerConnection();
+    peer.addTransceiver('audio', {direction: 'sendrecv'});
+    peer.addTransceiver('video', {direction: 'recvonly'});
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    const socket = new WebSocket(`ws://${location.host}/api/v1/media`);
+    return new Promise((resolve, reject) => {
+      socket.onopen = () => socket.send(JSON.stringify({version: 1, type: 'join', room_id: callID, sdp: peer.localDescription}));
+      socket.onerror = reject;
+      socket.onmessage = async event => {
+        const frame = JSON.parse(event.data);
+        if (frame.type === 'error') reject(new Error(frame.error));
+        if (frame.type === 'answer') { await peer.setRemoteDescription(frame.sdp); window.__mobileLikeCall = {peer, socket}; resolve(true); }
+      };
+    });
+  }, current.id);
+  await expect(recipientConnected).resolves.toBe(true);
+  await expect(caller.locator('[data-call-status]')).toHaveText('Direct Call connected', {timeout: 10_000});
+  await caller.getByRole('button', {name: 'End Call'}).click();
+  await recipientAPI.dispose();
+  await callerContext.close();
+  await recipientContext.close();
+});

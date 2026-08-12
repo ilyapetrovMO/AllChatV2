@@ -23,6 +23,7 @@
   const stopScreen = async session => {
     const stream=session.screenStream;
     session.screenStream=null;
+    session.connection?.send("video-stopped");
     stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
     session.screenSenders.forEach(sender=>{try{session.connection?.removeTrack(sender)}catch(_){}});
     session.screenSenders=[];session.screenSender=null;
@@ -53,7 +54,7 @@
     const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[],screensByMember=new Map(),unmatchedScreens=[];
     if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screensByMember.set(session.profile.id,local)}
     const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const [trackID,video] of session.remoteVideos||[]){const memberID=trackID.startsWith("screen-")?trackID.slice(7):"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
-    for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{},screen=screensByMember.get(participant.member_id)||(participant.screen_sharing?unmatchedScreens.shift():null);let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;const visual=document.createElement("div");visual.className="media-stage-visual";tile.append(visual,document.createElement("strong"))}const visual=tile.querySelector(".media-stage-visual"),sharing=!!screen;tile.classList.toggle("speaking",!!participant.speaking);tile.classList.toggle("sharing",sharing);tile.onclick=sharing?()=>tile.classList.toggle("expanded"):null;if(sharing){if(screen.parentElement!==visual)visual.replaceChildren(screen)}else{let avatar=visual.firstElementChild;if(!avatar||avatar.matches("video")){avatar=document.createElement(profile.avatar_url?"img":"span");visual.replaceChildren(avatar)}const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if((sharing||participant.screen_sharing)&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!sharing&&!participant.screen_sharing){badge?.remove()}desired.push(tile)}
+    for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{},screen=screensByMember.get(participant.member_id)||(participant.screen_sharing?unmatchedScreens.shift():null);let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;const visual=document.createElement("div");visual.className="media-stage-visual";tile.append(visual,document.createElement("strong"))}const visual=tile.querySelector(".media-stage-visual"),sharing=!!screen;tile.classList.toggle("speaking",!!participant.speaking);tile.classList.toggle("sharing",sharing);tile.onclick=sharing?()=>tile.classList.toggle("expanded"):null;if(sharing){if(screen.parentElement!==visual)visual.replaceChildren(screen)}else{tile.classList.remove("expanded");let avatar=visual.firstElementChild;if(!avatar||avatar.matches("video")){avatar=document.createElement(profile.avatar_url?"img":"span");visual.replaceChildren(avatar)}const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if((sharing||participant.screen_sharing)&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!sharing&&!participant.screen_sharing){badge?.remove()}desired.push(tile)}
     if(!desired.length){let empty=existing.get("empty");if(!empty){empty=document.createElement("p");empty.className="media-stage-empty";empty.dataset.stageKey="empty";empty.textContent="No one is connected to this Voice Room."}desired.push(empty)}
     desired.forEach((node,index)=>{if(grid.children[index]!==node)grid.insertBefore(node,grid.children[index]||null)});
     const keep=new Set(desired);for(const node of [...grid.children])if(!keep.has(node))node.remove();
@@ -166,8 +167,10 @@
           const video = document.createElement("video");
           video.autoplay = true; video.playsInline = true; video.className = "shared-screen";
           video.srcObject = event.streams[0] || new MediaStream([event.track]);
-          session.remoteVideos.set(event.track.id, video);
-          event.track.addEventListener("ended", () => { session.remoteVideos.delete(event.track.id); video.remove(); renderStage(); });
+          const memberID=(event.track.id||event.streams[0]?.id||"").replace(/^screen-/,"");
+          for(const [id,old] of session.remoteVideos)if(old.dataset.memberId===memberID){session.remoteVideos.delete(id);old.remove()}
+          video.dataset.memberId=memberID;session.remoteVideos.set(event.track.id, video);
+          event.track.addEventListener("ended", () => { if(session.remoteVideos.get(event.track.id)===video)session.remoteVideos.delete(event.track.id);video.remove();renderStage(); });
           renderStage();
           return;
         }
@@ -184,6 +187,10 @@
           const parameters=session.screenSender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);session.screenSender.setParameters(parameters).catch(()=>{});
         } else if (frame.type === "screen-rejected") {
           stopScreen(session); status.textContent = "Someone else is already sharing their screen.";
+        } else if(frame.type === "video-stopped") {
+          for(const [id,video] of session.remoteVideos)if(video.dataset.memberId===frame.member_id){session.remoteVideos.delete(id);video.remove()}
+          document.querySelector(`[data-media-stage-grid] [data-stage-key="participant:${CSS.escape(frame.member_id)}"]`)?.classList.remove("expanded");
+          renderStage();
         } else if(frame.type === "soundboard-played" && frame.sound) playSound(frame.sound);
       };
       const connectionState = (state, error) => {
@@ -210,6 +217,7 @@
           setPending(session, "Connection failed");
         }
       };
+      const connectionProgress = message => { if(active===session && session.connection?.state!=="connected"){status.textContent=message;setPending(session,message.replace(/…$/, ""));} };
       const recordDiagnostics = sample => {
 		const audio=[...session.remoteAudios.entries()].map(([track,element])=>({track_id:track.id,track_state:track.readyState,track_muted:track.muted,element_paused:element.paused,element_ready_state:element.readyState,element_current_time:element.currentTime}));
 		const value={...sample,audio};let history=[];try{history=JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){history=[]}
@@ -217,7 +225,7 @@
 	  };
 	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};
 	  window.allchatClearVoiceDiagnostics=()=>localStorage.removeItem("allchat:voice-diagnostics");
-      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
+      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onProgress:connectionProgress,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
       await session.connection.start();
     } catch (error) {
       if (active === session) {

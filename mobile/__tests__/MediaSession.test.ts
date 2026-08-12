@@ -2,7 +2,7 @@ import {MediaSession, mediaOwnerID} from '../src/media/MediaSession';
 
 function harness() {
   const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn()};
-  const cameraTrack = {id: 'camera-1', kind: 'video', enabled: true, stop: jest.fn()}; const screenTrack = {id: 'screen-1', kind: 'video', enabled: true, stop: jest.fn()};
+  const cameraTrack = {id: 'camera-1', kind: 'video', enabled: true, stop: jest.fn(), _switchCamera: jest.fn()}; const screenTrack = {id: 'screen-1', kind: 'video', enabled: true, stop: jest.fn()};
   const videoTracks: typeof cameraTrack[] = [];
   const local = {getTracks: () => [track, ...videoTracks], getAudioTracks: () => [track], getVideoTracks: () => videoTracks, addTrack: jest.fn((item: typeof cameraTrack) => videoTracks.push(item)), removeTrack: jest.fn((item: typeof cameraTrack) => { const index = videoTracks.indexOf(item); if (index >= 0) videoTracks.splice(index, 1); })};
   const cameraStream = {getTracks: () => [cameraTrack], getAudioTracks: () => [], getVideoTracks: () => [cameraTrack]};
@@ -16,13 +16,13 @@ function harness() {
   };
   peer.setRemoteDescription.mockImplementation(async (description: object) => { peer.remoteDescription = description; });
   const socket: any = {readyState: 1, onopen: null, onmessage: null, onerror: null, onclose: null, send: jest.fn(), close: jest.fn()};
-  const statuses: string[] = []; const participants: string[][] = [];
+  const statuses: string[] = []; const participants: string[][] = []; const progress: string[] = []; const remotes: Array<Array<{id: string; ownerID: string}>> = [];
   const session = new MediaSession({
     instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1',
     getUserMedia: jest.fn(async constraints => ((constraints as {video?: unknown}).video ? cameraStream : local) as never), getDisplayMedia: jest.fn(async () => screenStream as never), fetchICE: jest.fn(async () => []),
-    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onParticipants: values => participants.push(values.map(value => value.member_id)),
+    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onProgress: value => progress.push(value), onRemote: values => remotes.push(values.map(value => ({id: value.id, ownerID: value.ownerID}))), onParticipants: values => participants.push(values.map(value => value.member_id)),
   });
-  return {cameraTrack, local, participants, peer, screenTrack, session, socket, statuses, track};
+  return {cameraTrack, local, participants, peer, progress, remotes, screenTrack, session, socket, statuses, track};
 }
 
 describe('MediaSession', () => {
@@ -89,6 +89,50 @@ describe('MediaSession', () => {
     session.stop();
   });
 
+  it('serializes an initial answer and immediate SFU offer', async () => {
+    const {session, socket, peer, statuses} = harness();
+    let settingRemote = false;
+    peer.setRemoteDescription.mockImplementation(async (description: object) => {
+      if (settingRemote) throw new Error('concurrent remote description');
+      settingRemote = true;
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 5));
+      peer.remoteDescription = description;
+      settingRemote = false;
+    });
+    await session.start(); socket.onopen?.(); socket.send.mockClear();
+
+    const answer = socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+    const offer = socket.onmessage?.({data: JSON.stringify({version: 1, type: 'offer', sdp: {type: 'offer', sdp: 'offer'}})});
+    await Promise.all([answer, offer]);
+
+    expect(statuses).toContain('connected');
+    expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0]).type)).toContain('answer');
+    session.stop();
+  });
+
+  it('replaces restarted remote video and ignores the old track ending', async () => {
+    const {session, socket, peer, remotes} = harness();
+    await session.start(); socket.onopen?.();
+    const firstTrack = {id: 'screen-member-2', kind: 'video', onended: undefined as undefined | (() => void)};
+    const secondTrack = {id: 'screen-member-2', kind: 'video', onended: undefined as undefined | (() => void)};
+    peer.ontrack?.({track: firstTrack, streams: [{id: 'screen-member-2'}]});
+    peer.ontrack?.({track: secondTrack, streams: [{id: 'screen-member-2'}]});
+    firstTrack.onended?.();
+
+    expect(remotes.at(-1)).toEqual([{id: 'screen-member-2', ownerID: 'member-2'}]);
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-2'})});
+    expect(remotes.at(-1)).toEqual([]);
+    session.stop();
+  });
+
+  it('reports detailed connection progress', async () => {
+    const {progress, session, socket} = harness();
+    await session.start(); socket.onopen?.();
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+    expect(progress).toEqual(['Fetching relay configuration…', 'Preparing encrypted media…', 'Opening media signaling…', 'Waiting for the media server…', 'Finishing media connection…']);
+    session.stop();
+  });
+
   it('queues local ICE candidates until signaling opens', async () => {
     const {session, socket, peer} = harness(); socket.readyState = 0;
     await session.start();
@@ -114,6 +158,14 @@ describe('MediaSession', () => {
     expect(screenTrack.stop).toHaveBeenCalled();
     expect(session.screenStream()).toBeUndefined();
     expect(session.localStream()?.getVideoTracks()).toEqual([cameraTrack]);
+    session.stop();
+  });
+
+  it('switches between the front and rear native cameras', async () => {
+    const {cameraTrack, session} = harness();
+    await session.start(); await session.setCamera(true);
+    session.switchCamera();
+    expect(cameraTrack._switchCamera).toHaveBeenCalledTimes(1);
     session.stop();
   });
 });

@@ -4,13 +4,14 @@ export type MediaStatus = 'idle' | 'connecting' | 'connected' | 'recovering' | '
 export type MediaParticipant = {member_id: string; connected?: boolean; muted?: boolean; server_muted?: boolean; speaking?: boolean; screen_sharing?: boolean};
 export type RemoteMedia = {id: string; ownerID: string; stream: MediaStream; kind: 'audio' | 'video'};
 type SocketLike = {readyState: number; onopen: null | (() => void); onmessage: null | ((event: {data: string}) => void); onerror: null | (() => void); onclose: null | (() => void); send(value: string): void; close(): void};
-type MediaFrame = {type: string; code?: string; error?: string; sdp?: object; candidate?: object; resume_token?: string; participants?: MediaParticipant[]; sound?: {id: string; name: string; emoji?: string; audio_url: string}};
+type MediaFrame = {type: string; code?: string; error?: string; member_id?: string; sdp?: object; candidate?: object; resume_token?: string; participants?: MediaParticipant[]; sound?: {id: string; name: string; emoji?: string; audio_url: string}};
 type IceServer = {urls: string | string[]; username?: string; credential?: string};
 type PeerConfiguration = {iceServers: IceServer[]};
 
 export type MediaSessionOptions = {
   instanceURL: string; token: string; roomID: string;
   onStatus?(status: MediaStatus, error?: Error): void;
+  onProgress?(message: string): void;
   onRemote?(media: RemoteMedia[]): void;
   onParticipants?(participants: MediaParticipant[]): void;
   onFrame?(frame: MediaFrame): void;
@@ -48,13 +49,19 @@ export class MediaSession {
     if (!this.peer || !this.local) throw new Error('Media Session is not connected.');
     if (enabled && this.screen) await this.setScreenSharing(false);
     const existing = this.local.getVideoTracks()[0];
-    if (!enabled && existing) { existing.stop(); this.local.removeTrack(existing); const sender = this.peer.getSenders().find(item => item.track?.id === existing.id); if (sender) this.peer.removeTrack(sender); await this.renegotiate(); return; }
+    if (!enabled && existing) { this.send({type: 'video-stopped'}); existing.stop(); this.local.removeTrack(existing); const sender = this.peer.getSenders().find(item => item.track?.id === existing.id); if (sender) this.peer.removeTrack(sender); await this.renegotiate(); return; }
     if (enabled && !existing) { const camera = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: false, video: {facingMode: 'user'}}) as MediaStream; const track = camera.getVideoTracks()[0]; if (track) { this.local.addTrack(track); this.addVideoTrack(track, this.local); await this.renegotiate(); } }
+  }
+
+  switchCamera(): void {
+    const track = this.local?.getVideoTracks()[0] as (MediaStream['getVideoTracks'] extends () => Array<infer T> ? T : never) & {_switchCamera?: () => void};
+    if (!track?._switchCamera) throw new Error('Camera switching is unavailable on this device.');
+    track._switchCamera();
   }
 
   async setScreenSharing(enabled: boolean): Promise<void> {
     if (!this.peer) throw new Error('Media Session is not connected.');
-    if (!enabled) { const stream = this.screen; this.screen = undefined; stream?.getTracks().forEach(track => { const sender = this.peer?.getSenders().find(item => item.track?.id === track.id); if (sender) this.peer?.removeTrack(sender); track.stop(); }); this.send({type: 'screen-visibility', visible: false}); await this.renegotiate(); return; }
+    if (!enabled) { const stream = this.screen; this.screen = undefined; if (stream) this.send({type: 'video-stopped'}); stream?.getTracks().forEach(track => { const sender = this.peer?.getSenders().find(item => item.track?.id === track.id); if (sender) this.peer?.removeTrack(sender); track.stop(); }); this.send({type: 'screen-visibility', visible: false}); await this.renegotiate(); return; }
     if (this.screen) return;
     if (this.local?.getVideoTracks()[0]) await this.setCamera(false);
     const stream = await (this.options.getDisplayMedia || mediaDevices.getDisplayMedia)({android: {resolutionScale: 1}}) as MediaStream; this.screen = stream;
@@ -69,27 +76,36 @@ export class MediaSession {
 
   private async connect(takeover: boolean): Promise<void> {
     const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close();
+    this.options.onProgress?.('Fetching relay configuration…');
     const iceServers = this.options.fetchICE ? await this.options.fetchICE() : await this.fetchICE();
     if (this.stopped || generation !== this.generation) return;
+    this.options.onProgress?.('Preparing encrypted media…');
     const pendingLocal: object[] = []; const pendingRemote: object[] = [];
+    let frameQueue = Promise.resolve();
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
     this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'}); peer.addTransceiver('video', {direction: 'recvonly'});
-    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; this.remote.set(id, {id, ownerID: mediaOwnerID(id, stream.id), stream, kind: event.track.kind as 'audio' | 'video'}); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
+    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); if (event.track.kind === 'video' && ownerID) for (const [remoteID, item] of this.remote) if (item.kind === 'video' && item.ownerID === ownerID) this.remote.delete(remoteID); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'}; this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
     peer.onicecandidate = (event: {candidate?: {toJSON(): object}}) => { if (!event.candidate) return; const frame = {type: 'candidate', candidate: event.candidate.toJSON()}; if (this.socket?.readyState === 1) this.send(frame); else pendingLocal.push(frame); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
+    this.options.onProgress?.('Opening media signaling…');
     const socket = (this.options.createSocket || nativeSocket)(this.mediaURL(), this.options.token); this.socket = socket;
-    socket.onopen = () => { this.send({type: 'join', room_id: this.options.roomID, resume_token: this.resumeToken, takeover, sdp: peer.localDescription}); for (const frame of pendingLocal.splice(0)) this.send(frame); this.heartbeat = setInterval(() => this.send({type: 'heartbeat'}), 10000); };
-    socket.onmessage = event => this.handleFrame(JSON.parse(event.data) as MediaFrame, peer, generation, pendingRemote).catch(caught => this.recover(asError(caught)));
+    socket.onopen = () => { this.options.onProgress?.('Waiting for the media server…'); this.send({type: 'join', room_id: this.options.roomID, resume_token: this.resumeToken, takeover, sdp: peer.localDescription}); for (const frame of pendingLocal.splice(0)) this.send(frame); this.heartbeat = setInterval(() => this.send({type: 'heartbeat'}), 10000); };
+    socket.onmessage = event => {
+      const frame = JSON.parse(event.data) as MediaFrame;
+      frameQueue = frameQueue.then(() => this.handleFrame(frame, peer, generation, pendingRemote)).catch(caught => this.recover(asError(caught)));
+      return frameQueue;
+    };
     socket.onerror = () => socket.close(); socket.onclose = () => { if (!this.stopped && generation === this.generation) this.recover(new Error('Media signaling closed')); };
   }
 
   private async handleFrame(frame: MediaFrame, peer: RTCPeerConnection, generation: number, pendingRemote: object[]) {
     if (this.stopped || generation !== this.generation || frame.type === 'heartbeat-ack') return;
     if (frame.type === 'error') { const error = new Error(frame.error || 'Media signaling failed') as Error & {code?: string}; error.code = frame.code; throw error; }
-    if (frame.type === 'answer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; if (frame.participants) this.options.onParticipants?.(frame.participants); this.retry = 0; this.options.onStatus?.('connected'); return; }
+    if (frame.type === 'answer' && frame.sdp) { this.options.onProgress?.('Finishing media connection…'); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; if (frame.participants) this.options.onParticipants?.(frame.participants); this.retry = 0; this.options.onStatus?.('connected'); return; }
     if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) await peer.addIceCandidate(frame.candidate as never); else pendingRemote.push(frame.candidate); return; }
     if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
+    else if (frame.type === 'video-stopped' && frame.member_id) { for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }
     else this.options.onFrame?.(frame);
   }
 

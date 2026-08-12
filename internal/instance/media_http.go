@@ -148,6 +148,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			}
 		case "screen-visibility":
 			_ = i.media.SetScreenVisible(member.ID, command.Visible)
+		case "video-stopped":
+			i.media.Broadcast(mediaRoomID, media.Signal{Type: "video-stopped", MemberID: member.ID})
 		case "mute-state":
 			_ = i.media.SetClientMuted(member.ID, command.Muted)
 		case "soundboard-play":

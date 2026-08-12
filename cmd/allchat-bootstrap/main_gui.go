@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image/color"
 	"net"
 	"net/url"
 	"os"
@@ -18,8 +19,10 @@ import (
 	"allchat/internal/buildinfo"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -30,10 +33,54 @@ const (
 	releaseExact  = "Choose a specific version"
 )
 
+type bootstrapTheme struct{ fyne.Theme }
+
+func (bootstrapTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	colors := map[fyne.ThemeColorName]color.Color{
+		theme.ColorNameBackground:      color.NRGBA{R: 10, G: 15, B: 24, A: 255},
+		theme.ColorNameButton:          color.NRGBA{R: 30, G: 38, B: 52, A: 255},
+		theme.ColorNameDisabledButton:  color.NRGBA{R: 24, G: 31, B: 43, A: 255},
+		theme.ColorNameInputBackground: color.NRGBA{R: 19, G: 27, B: 40, A: 255},
+		theme.ColorNameInputBorder:     color.NRGBA{R: 45, G: 56, B: 74, A: 255},
+		theme.ColorNameForeground:      color.NRGBA{R: 236, G: 240, B: 248, A: 255},
+		theme.ColorNamePlaceHolder:     color.NRGBA{R: 119, G: 132, B: 153, A: 255},
+		theme.ColorNamePrimary:         color.NRGBA{R: 88, G: 101, B: 242, A: 255},
+		theme.ColorNameHover:           color.NRGBA{R: 40, G: 50, B: 68, A: 255},
+		theme.ColorNameFocus:           color.NRGBA{R: 108, G: 92, B: 231, A: 255},
+		theme.ColorNameSeparator:       color.NRGBA{R: 37, G: 47, B: 64, A: 255},
+	}
+	if value, ok := colors[name]; ok {
+		return value
+	}
+	return theme.DefaultTheme().Color(name, theme.VariantDark)
+}
+func (bootstrapTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+func (bootstrapTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+func (bootstrapTheme) Size(name fyne.ThemeSizeName) float32 {
+	if name == theme.SizeNameText {
+		return 14
+	}
+	if name == theme.SizeNamePadding {
+		return 10
+	}
+	return theme.DefaultTheme().Size(name)
+}
+
+func surface(object fyne.CanvasObject, background color.Color) fyne.CanvasObject {
+	panel := canvas.NewRectangle(background)
+	panel.CornerRadius = 10
+	return container.NewStack(panel, container.NewPadded(object))
+}
+
 func main() {
 	a := app.NewWithID("org.allchat.bootstrap")
+	a.Settings().SetTheme(bootstrapTheme{})
 	w := a.NewWindow("AllChat Instance Bootstrapper")
-	w.Resize(fyne.NewSize(760, 680))
+	w.Resize(fyne.NewSize(940, 650))
 
 	user := widget.NewEntry()
 	user.SetText("root")
@@ -104,9 +151,11 @@ func main() {
 	statusScroll := container.NewVScroll(status)
 	statusScroll.SetMinSize(fyne.NewSize(0, 160))
 	statusScroll.Hide()
+	installProgress := widget.NewProgressBarInfinite()
+	installProgress.Hide()
 	successMessage := widget.NewLabel("The server is healthy and ready. Community Owner setup has been opened in your browser.")
 	successMessage.Wrapping = fyne.TextWrapWord
-	successCard := widget.NewCard("✓ Installation complete", "AllChat is ready to use", successMessage)
+	successCard := widget.NewCard("✓  Installation successful", "Your server is set up and ready to use", successMessage)
 	successCard.Hide()
 	review := widget.NewLabel("")
 	review.Wrapping = fyne.TextWrapWord
@@ -114,10 +163,13 @@ func main() {
 	page := func(title, description string, body ...fyne.CanvasObject) fyne.CanvasObject {
 		detail := widget.NewLabel(description)
 		detail.Wrapping = fyne.TextWrapWord
-		items := []fyne.CanvasObject{widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), detail, widget.NewSeparator()}
-		return container.NewVBox(append(items, body...)...)
+		heading := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		items := []fyne.CanvasObject{heading, detail, widget.NewSeparator()}
+		return surface(container.NewVBox(append(items, body...)...), color.NRGBA{R: 14, G: 21, B: 32, A: 255})
 	}
 	pages := []fyne.CanvasObject{
+		page("Welcome to the AllChat setup wizard", "This wizard installs or safely upgrades AllChat on your VPS. You will need an SSH account and either a password or private key.",
+			widget.NewLabel("✓  Secure SSH connection"), widget.NewLabel("✓  Automatic server configuration"), widget.NewLabel("✓  Firewall, TLS, and voice setup"), widget.NewLabel("✓  Ready in minutes")),
 		page("How do you sign in to the VPS?", "Use the same account and authentication method you use when connecting to the server with SSH.",
 			widget.NewForm(widget.NewFormItem("Username", user)), authMode, passwordFields, keyFields,
 			widget.NewSeparator(), widget.NewLabel("Privilege escalation"), widget.NewForm(widget.NewFormItem("Sudo password", sudoPassword))),
@@ -126,12 +178,23 @@ func main() {
 			widget.NewLabel("Supported servers: Debian 12+ and Ubuntu 22.04+. SSH, HTTP, HTTPS, and media ports must be reachable.")),
 		page("Which AllChat version should be installed?", "The latest stable release is the best choice for most installations. Choose a tag only when you need a particular version.",
 			releaseMode, releaseFields),
-		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", review, successCard, statusScroll),
+		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", surface(review, color.NRGBA{R: 18, G: 26, B: 39, A: 255}), installProgress, successCard, statusScroll),
 	}
 	stack := container.NewStack(pages...)
 	for index := 1; index < len(pages); index++ {
 		pages[index].Hide()
 	}
+	stepNames := []string{"Welcome", "SSH / Password", "Hostname", "Server Version", "Review & Install"}
+	stepRows := make([]*widget.Label, len(stepNames))
+	stepObjects := make([]fyne.CanvasObject, 0, len(stepNames)+2)
+	brand := widget.NewLabelWithStyle("ALLCHAT", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	stepObjects = append(stepObjects, brand, widget.NewSeparator())
+	for index, name := range stepNames {
+		label := widget.NewLabel(fmt.Sprintf("  %d   %s", index+1, name))
+		stepRows[index] = label
+		stepObjects = append(stepObjects, label)
+	}
+	sidebar := surface(container.NewVBox(stepObjects...), color.NRGBA{R: 12, G: 18, B: 28, A: 255})
 
 	config := func() (bootstrap.Config, error) {
 		sshPort, err := strconv.Atoi(strings.TrimSpace(port.Text))
@@ -188,8 +251,21 @@ func main() {
 		current = index
 		pages[current].Show()
 		stepProgress.SetText(fmt.Sprintf("Step %d of %d", current+1, len(pages)))
-		stepHeading.SetText([]string{"VPS login", "Server", "Version", "Review"}[current])
+		stepHeading.SetText([]string{"Welcome", "SSH access", "Server details", "Server version", "Review and install"}[current])
 		errorLabel.SetText("")
+		for step, label := range stepRows {
+			if step == current {
+				label.SetText(fmt.Sprintf("●  %d   %s", step+1, stepNames[step]))
+				label.TextStyle = fyne.TextStyle{Bold: true}
+			} else if step < current {
+				label.SetText(fmt.Sprintf("✓  %d   %s", step+1, stepNames[step]))
+				label.TextStyle = fyne.TextStyle{}
+			} else {
+				label.SetText(fmt.Sprintf("○  %d   %s", step+1, stepNames[step]))
+				label.TextStyle = fyne.TextStyle{}
+			}
+			label.Refresh()
+		}
 		if current == len(pages)-1 {
 			cfg, _ := config()
 			version := cfg.Release
@@ -215,13 +291,13 @@ func main() {
 	}
 	validateStep := func(index int) error {
 		switch index {
-		case 0:
+		case 1:
 			if strings.TrimSpace(user.Text) == "" {
 				return fmt.Errorf("enter the SSH username")
 			}
 			_, err := credentials()
 			return err
-		case 1:
+		case 2:
 			if strings.TrimSpace(host.Text) == "" {
 				return fmt.Errorf("enter the VPS address")
 			}
@@ -229,7 +305,7 @@ func main() {
 			if err != nil || sshPort < 1 || sshPort > 65535 {
 				return fmt.Errorf("SSH port must be between 1 and 65535")
 			}
-		case 2:
+		case 3:
 			cfg, err := config()
 			if err != nil {
 				return err
@@ -272,6 +348,8 @@ func main() {
 		install.Disable()
 		back.Disable()
 		successCard.Hide()
+		installProgress.Show()
+		stepHeading.SetText("Installing AllChat")
 		statusText = ""
 		status.SetText("")
 		statusScroll.Show()
@@ -281,6 +359,7 @@ func main() {
 				back.Enable()
 				if !completed {
 					install.Enable()
+					installProgress.Hide()
 				}
 			})
 			appendStatus("Resolving the VPS public IP…")
@@ -337,6 +416,7 @@ func main() {
 			}
 			completed = true
 			fyne.Do(func() {
+				installProgress.Hide()
 				successMessage.SetText("The server passed its health checks and is ready. Community Owner setup has been opened in your browser.\n\n" + link)
 				successCard.Show()
 				install.SetText("Installation complete")
@@ -348,7 +428,11 @@ func main() {
 
 	showStep(0)
 	version := widget.NewLabel("Bootstrapper " + buildinfo.String())
+	version.Alignment = fyne.TextAlignTrailing
 	footer := container.NewVBox(errorLabel, container.NewBorder(nil, nil, back, container.NewHBox(next, install)), version)
-	w.SetContent(container.NewBorder(container.NewVBox(stepProgress, stepHeading, widget.NewSeparator()), footer, nil, nil, container.NewVScroll(stack)))
+	header := container.NewVBox(stepProgress, stepHeading, widget.NewSeparator())
+	content := container.NewBorder(header, footer, nil, nil, container.NewVScroll(stack))
+	sidebarBox := container.NewGridWrap(fyne.NewSize(220, 610), sidebar)
+	w.SetContent(container.NewPadded(container.NewBorder(nil, nil, sidebarBox, nil, content)))
 	w.ShowAndRun()
 }

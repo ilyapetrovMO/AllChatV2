@@ -399,6 +399,12 @@ function MediaRoomScreen({account, compact = false, members, minimized = false, 
     new AllChatClient(account.instance_url).soundboard(account.session_token).then(setSounds).catch(() => setSounds([]));
     return () => { connection.stop(); stopCallForegroundService().catch(() => {}); session.current = undefined; };
   }, [account.instance_url, account.session_token, name, roomID]);
+  useEffect(() => {
+    const updateVisibility = (state = AppState.currentState) => session.current?.setScreenVisible(!minimized && state === 'active');
+    updateVisibility();
+    const subscription = AppState.addEventListener('change', updateVisibility);
+    return () => subscription.remove();
+  }, [minimized]);
   async function toggleCamera() { try { const next = !camera; if (next && !await requestMediaPermissions(true)) throw new Error('Camera permission is required.'); await session.current?.setCamera(next); setCamera(next); if (next) { setSharing(false); setScreen(undefined); } else setExpandedVideo(undefined); setLocal(session.current?.localStream()); await updateCallForegroundService(next, false); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Camera failed.'); } }
   function switchCamera() { try { session.current?.switchCamera(); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Could not switch camera.'); } }
   async function toggleScreen() { try { const next = !sharing; await session.current?.setScreenSharing(next); setSharing(next); if (next) { setCamera(false); setLocal(session.current?.localStream()); } else setExpandedVideo(undefined); setScreen(session.current?.screenStream()); await updateCallForegroundService(false, next); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Screen sharing failed.'); } }

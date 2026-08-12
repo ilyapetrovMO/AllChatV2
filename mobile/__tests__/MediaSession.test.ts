@@ -46,6 +46,17 @@ describe('MediaSession', () => {
     session.stop();
   });
 
+  it('reports receiver visibility after signaling connects', async () => {
+    const {session, socket} = harness();
+    session.setScreenVisible(true);
+    await session.start(); socket.onopen?.(); socket.send.mockClear();
+
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+
+    expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0]))).toContainEqual(expect.objectContaining({type: 'screen-visibility', visible: true}));
+    session.stop();
+  });
+
   it('always stops local tracks when the Session ends', async () => {
     const {session, socket, peer, track} = harness();
     await session.start(); socket.onopen?.();
@@ -145,8 +156,9 @@ describe('MediaSession', () => {
   });
 
   it('keeps camera and screen capture mutually exclusive', async () => {
-    const {cameraTrack, screenTrack, session} = harness();
-    await session.start();
+    const {cameraTrack, screenTrack, session, socket} = harness();
+    session.setScreenVisible(true);
+    await session.start(); socket.onopen?.(); socket.send.mockClear();
 
     await session.setCamera(true);
     expect(session.localStream()?.getVideoTracks()).toEqual([cameraTrack]);
@@ -158,6 +170,7 @@ describe('MediaSession', () => {
     expect(screenTrack.stop).toHaveBeenCalled();
     expect(session.screenStream()).toBeUndefined();
     expect(session.localStream()?.getVideoTracks()).toEqual([cameraTrack]);
+    expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0])).filter((frame: {type?: string}) => frame.type === 'screen-visibility')).toEqual([]);
     session.stop();
   });
 

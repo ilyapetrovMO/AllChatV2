@@ -6,7 +6,6 @@ import {
 import {errorCodes, isErrorWithCode, pick, types, type DocumentPickerResponse} from '@react-native-documents/picker';
 import Video from 'react-native-video';
 import {RTCView, type MediaStream} from 'react-native-webrtc';
-import InCallManager from 'react-native-incall-manager';
 
 import {AllChatClient} from '../client/AllChatClient';
 import type {DirectCall, LinkPreview, Member, ModerationAction, Report, SoundboardSound, VoiceRoomState} from '../client/AllChatClient';
@@ -14,6 +13,7 @@ import type {DirectMessage, Message, NotificationSetting, SearchResult} from '..
 import {KeychainConversationCache} from '../cache/ConversationCache';
 import {RealtimeClient, type RealtimeStatus} from '../realtime/RealtimeClient';
 import {MediaSession, type MediaParticipant, type MediaStatus, type RemoteMedia} from '../media/MediaSession';
+import {startCallAudioSession, stopCallAudioSession} from '../media/CallAudioSession';
 import {startCallForegroundService, stopCallForegroundService, updateCallForegroundService} from '../media/CallForegroundService';
 import {NotificationService} from '../notifications/NotificationService';
 import type {InstanceAccount} from '../session/SessionVault';
@@ -395,13 +395,11 @@ function MediaRoomScreen({account, compact = false, members, minimized = false, 
   const [sounds, setSounds] = useState<SoundboardSound[]>([]); const [soundboardOpen, setSoundboardOpen] = useState(false); const [playingSound, setPlayingSound] = useState('');
   const [expandedVideo, setExpandedVideo] = useState<{label: string; self: boolean; stream: MediaStream}>();
   useEffect(() => {
-    InCallManager.start({media: 'video', auto: true});
-    InCallManager.setForceSpeakerphoneOn(true);
-    InCallManager.requestAudioFocus().catch(() => {});
+    startCallAudioSession();
     const connection = new MediaSession({instanceURL: account.instance_url, token: account.session_token, roomID, onStatus: (next, cause) => { setStatus(next); setError(cause?.message || ''); if (next === 'connected') setProgress('Connected'); if (next === 'recovering') setProgress('Reconnecting media…'); if (next === 'failed' || next === 'idle') { setLocal(undefined); setScreen(undefined); } }, onProgress: setProgress, onRemote: next => { setRemote(next); setExpandedVideo(current => current && !current.self && !next.some(item => item.stream === current.stream) ? undefined : current); }, onParticipants: setParticipants, onFrame: frame => { if (frame.type === 'soundboard-played' && frame.sound?.audio_url) setPlayingSound(attachmentURL(account.instance_url, frame.sound.audio_url)); if (frame.type === 'screen-rejected') { setSharing(false); setScreen(undefined); setError('Another Member is already sharing their screen.'); } }});
     session.current = connection; requestMediaPermissions(false).then(granted => granted ? startCallForegroundService(name).then(() => connection.start()).then(() => setLocal(connection.localStream())) : setError('Microphone permission is required.')).catch(caught => setError(caught instanceof Error ? caught.message : 'Could not request microphone permission.'));
     new AllChatClient(account.instance_url).soundboard(account.session_token).then(setSounds).catch(() => setSounds([]));
-    return () => { connection.stop(); InCallManager.setForceSpeakerphoneOn(false); InCallManager.abandonAudioFocus().catch(() => {}); InCallManager.stop(); stopCallForegroundService().catch(() => {}); session.current = undefined; };
+    return () => { connection.stop(); stopCallAudioSession(); stopCallForegroundService().catch(() => {}); session.current = undefined; };
   }, [account.instance_url, account.session_token, name, roomID]);
   useEffect(() => {
     const updateVisibility = (state = AppState.currentState) => session.current?.setScreenVisible(!minimized && state === 'active');

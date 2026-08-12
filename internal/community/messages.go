@@ -29,6 +29,7 @@ type Message struct {
 	Reactions       []Reaction    `json:"reactions,omitempty"`
 	Pinned          bool          `json:"pinned,omitempty"`
 	Attachments     []Attachment  `json:"attachments,omitempty"`
+	ClientID        string        `json:"client_id,omitempty"`
 }
 
 type MessageInput struct {
@@ -36,6 +37,7 @@ type MessageInput struct {
 	ReplyTo       string
 	MentionIDs    []string
 	AttachmentIDs []string
+	ClientID      string
 }
 
 func (s *Service) PublishMessage(ctx context.Context, member identity.Member, channelID, body string) (Message, error) {
@@ -80,6 +82,17 @@ func (s *Service) PublishRichMessage(ctx context.Context, member identity.Member
 }
 
 func (s *Service) ListMessages(ctx context.Context, member identity.Member, channelID string, before int64, limit int) ([]Message, error) {
+	return s.listMessages(ctx, member, channelID, before, limit, false)
+}
+
+// ListMessagesAfter returns the next page after a Conversation Sequence. It
+// complements ListMessages so bounded clients can evict either edge and later
+// recover it without offset pagination.
+func (s *Service) ListMessagesAfter(ctx context.Context, member identity.Member, channelID string, after int64, limit int) ([]Message, error) {
+	return s.listMessages(ctx, member, channelID, after, limit, true)
+}
+
+func (s *Service) listMessages(ctx context.Context, member identity.Member, channelID string, cursor int64, limit int, forward bool) ([]Message, error) {
 	visible, err := s.CanUseChannel(ctx, member.ID, channelID, PermissionViewChannels, true)
 	if err != nil || !visible {
 		return nil, ErrNotFound
@@ -87,22 +100,42 @@ func (s *Service) ListMessages(ctx context.Context, member identity.Member, chan
 	if limit < 1 || limit > 100 {
 		limit = 50
 	}
-	if before <= 0 {
-		before = int64(^uint64(0) >> 1)
+	predicate, order := "msg.sequence < ?", "DESC"
+	if forward {
+		predicate, order = "msg.sequence > ?", "ASC"
+	} else if cursor <= 0 {
+		cursor = int64(^uint64(0) >> 1)
 	}
 	rows, err := s.db.QueryContext(ctx, `SELECT msg.id, msg.channel_id, msg.author_id,
-		COALESCE(NULLIF(m.display_name, ''), m.username), msg.sequence, COALESCE(msg.body, ''), msg.created_at,
-		COALESCE(msg.edited_at, ''), msg.deleted_at IS NOT NULL
+		COALESCE(NULLIF(m.display_name, ''), m.username), m.avatar IS NOT NULL,
+		msg.sequence, COALESCE(msg.body, ''), msg.created_at, COALESCE(msg.edited_at, ''),
+		msg.deleted_at IS NOT NULL, msg.rendered_html, COALESCE(msg.reply_to_message_id, ''),
+		COALESCE(NULLIF(reply_author.display_name, ''), reply_author.username, ''),
+		COALESCE(reply.body, ''), COALESCE(reply.deleted_at IS NOT NULL, FALSE)
 		FROM messages msg JOIN members m ON m.id = msg.author_id
-		WHERE msg.channel_id = ? AND msg.sequence < ? ORDER BY msg.sequence DESC LIMIT ?`, channelID, before, limit)
+		LEFT JOIN messages reply ON reply.id = msg.reply_to_message_id
+		LEFT JOIN members reply_author ON reply_author.id = reply.author_id
+		WHERE msg.channel_id = ? AND `+predicate+` ORDER BY msg.sequence `+order+` LIMIT ?`, channelID, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
 	var result []Message
 	for rows.Next() {
 		var message Message
-		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.AuthorName, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted); err != nil {
+		var authorHasAvatar bool
+		var replyID, replyAuthor, replyBody string
+		var replyDeleted bool
+		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.AuthorName, &authorHasAvatar, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted, &message.RenderedHTML, &replyID, &replyAuthor, &replyBody, &replyDeleted); err != nil {
 			return nil, err
+		}
+		if authorHasAvatar {
+			message.AuthorAvatarURL = "/api/v1/members/" + message.AuthorID + "/avatar"
+		}
+		if replyID != "" {
+			if characters := []rune(replyBody); len(characters) > 120 {
+				replyBody = string(characters[:120])
+			}
+			message.Reply = &ReplyPreview{MessageID: replyID, AuthorName: replyAuthor, Body: replyBody, Deleted: replyDeleted}
 		}
 		result = append(result, message)
 	}
@@ -111,13 +144,13 @@ func (s *Service) ListMessages(ctx context.Context, member identity.Member, chan
 		return nil, err
 	}
 	rows.Close()
-	for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
-		result[left], result[right] = result[right], result[left]
-	}
-	for index := range result {
-		if err := s.decorateMessage(ctx, member.ID, &result[index]); err != nil {
-			return nil, err
+	if !forward {
+		for left, right := 0, len(result)-1; left < right; left, right = left+1, right-1 {
+			result[left], result[right] = result[right], result[left]
 		}
+	}
+	if err := s.decorateMessagePage(ctx, member.ID, result); err != nil {
+		return nil, err
 	}
 	return result, nil
 }

@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 18
+const schemaVersion = 20
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -692,6 +692,44 @@ func initializeSchema(db *sql.DB) error {
 		}
 		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 18, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
 			return fmt.Errorf("record notification settings schema: %w", err)
+		}
+	}
+	if currentVersion < 19 {
+		if _, err := tx.ExecContext(ctx, `
+			CREATE INDEX pinned_messages_message ON pinned_messages(message_id);
+			CREATE INDEX attachments_message_state_created ON attachments(message_id, state, created_at);
+		`); err != nil {
+			return fmt.Errorf("index Message decoration paths: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 19, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Message decoration index migration: %w", err)
+		}
+	}
+	if currentVersion < 20 {
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE unread_counts (
+				member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+				channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+				count INTEGER NOT NULL DEFAULT 0 CHECK(count >= 0),
+				PRIMARY KEY(member_id, channel_id)
+			);
+			INSERT INTO unread_counts(member_id, channel_id, count)
+			SELECT participant.member_id, participant.channel_id, COUNT(messages.id)
+			FROM (
+				SELECT id AS channel_id, member_low_id AS member_id FROM direct_messages
+				UNION ALL
+				SELECT id, member_high_id FROM direct_messages
+			) participant
+			LEFT JOIN read_positions ON read_positions.member_id = participant.member_id AND read_positions.channel_id = participant.channel_id
+			LEFT JOIN messages ON messages.channel_id = participant.channel_id
+				AND messages.author_id != participant.member_id
+				AND messages.sequence > COALESCE(read_positions.sequence, 0)
+			GROUP BY participant.member_id, participant.channel_id;
+		`); err != nil {
+			return fmt.Errorf("create incremental unread state: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 20, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record incremental unread schema: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {

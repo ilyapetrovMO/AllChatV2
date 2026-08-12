@@ -27,6 +27,9 @@ type messagePublishResult struct {
 }
 
 func (s *Service) enqueueMessage(request messagePublishRequest) (Message, error) {
+	depth := int64(len(s.messageRequests) + 1)
+	for current := s.messageQueueHigh.Load(); depth > current && !s.messageQueueHigh.CompareAndSwap(current, depth); current = s.messageQueueHigh.Load() {
+	}
 	select {
 	case <-request.ctx.Done():
 		return Message{}, request.ctx.Err()
@@ -116,6 +119,14 @@ func (s *Service) publishMessageBatch(batch []messagePublishRequest) {
 			}
 		}
 	}
+	if err == nil {
+		s.messageTransactions.Add(1)
+		for _, result := range results {
+			if result.err == nil {
+				s.messageCommitted.Add(1)
+			}
+		}
+	}
 	for index, request := range batch {
 		request.result <- results[index]
 	}
@@ -138,6 +149,12 @@ func (s *Service) publishMessageInTransaction(ctx context.Context, tx *sql.Tx, r
 	if _, err := tx.ExecContext(ctx, "INSERT INTO messages(id, channel_id, author_id, sequence, body, created_at, reply_to_message_id, rendered_html) VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?)", request.id, request.channelID, request.member.ID, sequence, request.input.Body, request.now, request.input.ReplyTo, request.rendered); err != nil {
 		return Message{}, err
 	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO unread_counts(member_id, channel_id, count)
+		SELECT CASE WHEN member_low_id = ? THEN member_high_id ELSE member_low_id END, id, 1
+		FROM direct_messages WHERE id = ? AND ? IN (member_low_id, member_high_id)
+		ON CONFLICT(member_id, channel_id) DO UPDATE SET count = unread_counts.count + 1`, request.member.ID, request.channelID, request.member.ID); err != nil {
+		return Message{}, err
+	}
 	if _, err := tx.ExecContext(ctx, "INSERT INTO message_search(message_id, channel_id, body) VALUES (?, ?, ?)", request.id, request.channelID, request.input.Body); err != nil {
 		return Message{}, err
 	}
@@ -149,7 +166,7 @@ func (s *Service) publishMessageInTransaction(ctx context.Context, tx *sql.Tx, r
 	if err := s.publishAttachments(ctx, tx, request.member.ID, request.id, request.input.AttachmentIDs); err != nil {
 		return Message{}, err
 	}
-	message := Message{ID: request.id, ChannelID: request.channelID, AuthorID: request.member.ID, AuthorName: nameForMember(request.member), Sequence: sequence, Body: request.input.Body, CreatedAt: request.now, RenderedHTML: request.rendered}
+	message := Message{ID: request.id, ChannelID: request.channelID, AuthorID: request.member.ID, AuthorName: nameForMember(request.member), Sequence: sequence, Body: request.input.Body, CreatedAt: request.now, RenderedHTML: request.rendered, ClientID: request.input.ClientID}
 	if err := s.decorateMessageWith(ctx, tx, request.member.ID, &message); err != nil {
 		return Message{}, err
 	}

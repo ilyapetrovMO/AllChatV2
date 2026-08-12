@@ -48,6 +48,11 @@ func (s *Service) UpdateReadPosition(ctx context.Context, member identity.Member
 		return ChannelState{}, err
 	}
 	defer tx.Rollback()
+	var previous int64
+	if err := tx.QueryRowContext(ctx, `SELECT COALESCE((SELECT sequence FROM read_positions
+		WHERE member_id = ? AND channel_id = ?), 0)`, member.ID, channelID).Scan(&previous); err != nil {
+		return ChannelState{}, err
+	}
 	_, err = tx.ExecContext(ctx, `INSERT INTO read_positions(member_id, channel_id, sequence, updated_at) VALUES (?, ?, ?, ?)
 		ON CONFLICT(member_id, channel_id) DO UPDATE SET sequence = MAX(read_positions.sequence, excluded.sequence), updated_at = excluded.updated_at`,
 		member.ID, channelID, sequence, databaseTime(time.Now()))
@@ -57,6 +62,18 @@ func (s *Service) UpdateReadPosition(ctx context.Context, member identity.Member
 	var stored int64
 	if err := tx.QueryRowContext(ctx, "SELECT sequence FROM read_positions WHERE member_id = ? AND channel_id = ?", member.ID, channelID).Scan(&stored); err != nil {
 		return ChannelState{}, err
+	}
+	if stored > previous {
+		var newlyRead int64
+		if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM messages
+			WHERE channel_id = ? AND author_id != ? AND sequence > ? AND sequence <= ?`,
+			channelID, member.ID, previous, stored).Scan(&newlyRead); err != nil {
+			return ChannelState{}, err
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE unread_counts SET count = MAX(0, count - ?)
+			WHERE member_id = ? AND channel_id = ?`, newlyRead, member.ID, channelID); err != nil {
+			return ChannelState{}, err
+		}
 	}
 	state := ChannelState{ChannelID: channelID, ReadSequence: stored, LastSequence: last, Unread: max(0, last-stored)}
 	if err := appendRealtimeEvent(ctx, tx, "read.updated", channelID, map[string]any{"member_id": member.ID, "state": state}); err != nil {

@@ -126,9 +126,9 @@ func TestMigrationFailureRollsBackAndCanRecover(t *testing.T) {
 	if err = initializeSchema(db); err != nil {
 		t.Fatal(err)
 	}
-	// Mark the database as v17 while leaving the v18 tables behind to force the
+	// Mark the database as v18 while leaving the v19 indexes behind to force the
 	// next forward migration to fail after it has started its transaction.
-	if _, err = db.Exec(`DELETE FROM schema_migrations WHERE version=18`); err != nil {
+	if _, err = db.Exec(`DELETE FROM schema_migrations WHERE version>=19`); err != nil {
 		t.Fatal(err)
 	}
 	if err = db.Close(); err != nil {
@@ -151,10 +151,10 @@ func TestMigrationFailureRollsBackAndCanRecover(t *testing.T) {
 	if err = db.QueryRow(`SELECT MAX(version) FROM schema_migrations`).Scan(&version); err != nil {
 		t.Fatal(err)
 	}
-	if version != 17 {
+	if version != 18 {
 		t.Fatalf("failed migration left schema version %d", version)
 	}
-	if _, err = db.Exec(`DROP TABLE member_notification_settings; ALTER TABLE channel_notification_settings DROP COLUMN level`); err != nil {
+	if _, err = db.Exec(`DROP INDEX pinned_messages_message; DROP INDEX attachments_message_state_created; DROP TABLE unread_counts`); err != nil {
 		t.Fatal(err)
 	}
 	if err = db.Close(); err != nil {

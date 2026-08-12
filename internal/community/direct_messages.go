@@ -91,10 +91,9 @@ func (s *Service) DirectMessage(ctx context.Context, member identity.Member, id 
 		member.ID, otherID, otherID, member.ID).Scan(&item.BlockedByMe, &item.BlockedMe); err != nil {
 		return DirectMessage{}, err
 	}
-	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM messages
-		WHERE channel_id = ? AND author_id != ? AND sequence > COALESCE(
-			(SELECT sequence FROM read_positions WHERE member_id = ? AND channel_id = ?), 0)`,
-		id, member.ID, member.ID, id).Scan(&item.Unread); err != nil {
+	if err := s.db.QueryRowContext(ctx, `SELECT COALESCE(
+		(SELECT count FROM unread_counts WHERE member_id = ? AND channel_id = ?), 0)`,
+		member.ID, id).Scan(&item.Unread); err != nil {
 		return DirectMessage{}, err
 	}
 	return item, nil

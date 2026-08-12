@@ -2,7 +2,7 @@
 
 **What to build:** An operator can download a verifiable AGPL release, install it on a clean supported VPS, and rely on the documented security, durability, media, upgrade, and capacity envelope as one coherent MVP.
 
-**Blocked by:** 18 — Moderate live media; 20 — Relay media from restrictive networks; 22 — Export and delete Member data; 23 — Expose safe operations and resource controls; 24 — Polish the accessible embedded web client
+**Blocked by:** 18 — Moderate live media; 20 — Relay media from restrictive networks; 22 — Export and delete Member data; 23 — Expose safe operations and resource controls; 24 — Polish the accessible embedded web client; 26 — Optimize messaging hot paths
 
 **Status:** ready-for-agent
 

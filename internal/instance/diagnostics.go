@@ -76,5 +76,9 @@ func (i *Instance) metrics(w http.ResponseWriter, r *http.Request) {
 	if err := i.db.QueryRowContext(r.Context(), "SELECT COALESCE(MAX(version),0) FROM schema_migrations").Scan(&version); err != nil {
 		ready = 0
 	}
-	fmt.Fprintf(w, "# HELP allchat_up Whether the Instance database is available.\n# TYPE allchat_up gauge\nallchat_up %d\n# HELP allchat_schema_version Current database schema version.\n# TYPE allchat_schema_version gauge\nallchat_schema_version %d\n", ready, version)
+	var transactions, committed, queueHigh int64
+	if i.community != nil {
+		transactions, committed, queueHigh = i.community.MessagingMetrics()
+	}
+	fmt.Fprintf(w, "# HELP allchat_up Whether the Instance database is available.\n# TYPE allchat_up gauge\nallchat_up %d\n# HELP allchat_schema_version Current database schema version.\n# TYPE allchat_schema_version gauge\nallchat_schema_version %d\n# TYPE allchat_message_transactions_total counter\nallchat_message_transactions_total %d\n# TYPE allchat_messages_committed_total counter\nallchat_messages_committed_total %d\n# TYPE allchat_message_ingress_queue_high_water gauge\nallchat_message_ingress_queue_high_water %d\n", ready, version, transactions, committed, queueHigh)
 }

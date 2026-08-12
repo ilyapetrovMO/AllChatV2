@@ -90,6 +90,113 @@ type richQueryer interface {
 	QueryRowContext(context.Context, string, ...any) *sql.Row
 }
 
+func messagePagePlaceholders(messages []Message) (string, []any) {
+	placeholders := make([]string, len(messages))
+	arguments := make([]any, len(messages))
+	for index := range messages {
+		placeholders[index], arguments[index] = "?", messages[index].ID
+	}
+	return strings.Join(placeholders, ","), arguments
+}
+
+// decorateMessagePage completes a Message page with a fixed number of
+// set-based queries. The page is bounded by ListMessages, so every IN clause is
+// bounded to at most 100 Message IDs.
+func (s *Service) decorateMessagePage(ctx context.Context, viewerID string, messages []Message) error {
+	if len(messages) == 0 {
+		return nil
+	}
+	byID := make(map[string]*Message, len(messages))
+	for index := range messages {
+		byID[messages[index].ID] = &messages[index]
+	}
+	placeholders, ids := messagePagePlaceholders(messages)
+
+	rows, err := s.db.QueryContext(ctx, `SELECT mm.message_id, m.id, m.username, COALESCE(m.display_name, '')
+		FROM message_mentions mm JOIN members m ON m.id = mm.member_id
+		WHERE mm.message_id IN (`+placeholders+`) ORDER BY mm.message_id, m.username_key`, ids...)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var messageID string
+		var mention Mention
+		if err := rows.Scan(&messageID, &mention.MemberID, &mention.Username, &mention.DisplayName); err != nil {
+			rows.Close()
+			return err
+		}
+		byID[messageID].Mentions = append(byID[messageID].Mentions, mention)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	reactionArguments := append([]any{viewerID}, ids...)
+	rows, err = s.db.QueryContext(ctx, `SELECT message_id, emoji, COUNT(*), MAX(member_id = ?)
+		FROM message_reactions WHERE message_id IN (`+placeholders+`)
+		GROUP BY message_id, emoji ORDER BY message_id, emoji`, reactionArguments...)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var messageID string
+		var reaction Reaction
+		if err := rows.Scan(&messageID, &reaction.Emoji, &reaction.Count, &reaction.Me); err != nil {
+			rows.Close()
+			return err
+		}
+		byID[messageID].Reactions = append(byID[messageID].Reactions, reaction)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	rows, err = s.db.QueryContext(ctx, `SELECT message_id FROM pinned_messages WHERE message_id IN (`+placeholders+`)`, ids...)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var messageID string
+		if err := rows.Scan(&messageID); err != nil {
+			rows.Close()
+			return err
+		}
+		byID[messageID].Pinned = true
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	rows, err = s.db.QueryContext(ctx, `SELECT id, message_id, original_name, content_type, size FROM attachments
+		WHERE message_id IN (`+placeholders+`) AND state = 'published' ORDER BY message_id, created_at`, ids...)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var attachment Attachment
+		if err := rows.Scan(&attachment.ID, &attachment.MessageID, &attachment.Name, &attachment.ContentType, &attachment.Size); err != nil {
+			rows.Close()
+			return err
+		}
+		attachment.URL = "/api/v1/attachments/" + attachment.ID
+		if strings.HasPrefix(attachment.ContentType, "image/") {
+			attachment.PreviewURL = attachment.URL + "/preview"
+		}
+		byID[attachment.MessageID].Attachments = append(byID[attachment.MessageID].Attachments, attachment)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	return rows.Close()
+}
+
 func (s *Service) decorateMessage(ctx context.Context, viewerID string, message *Message) error {
 	return s.decorateMessageWith(ctx, s.db, viewerID, message)
 }

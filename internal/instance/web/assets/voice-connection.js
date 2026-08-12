@@ -308,7 +308,7 @@
 			if (item.type==="inbound-rtp") { inbound.packets+=item.packetsReceived||0;inbound.bytes+=item.bytesReceived||0;inbound.lost+=item.packetsLost||0;inbound.jitter=Math.max(inbound.jitter,item.jitter||0); }
 			if (item.type==="outbound-rtp") { outbound.packets+=item.packetsSent||0;outbound.bytes+=item.bytesSent||0;outbound.discarded+=item.packetsDiscardedOnSend||0; }
 		  });
-		  this.onDiagnostics({schema:"allchat.media.test/v1",at:new Date().toISOString(),roomID:this.roomID,generation,connectionState:peer.connectionState||"",iceConnectionState:peer.iceConnectionState||"",signalingState:peer.signalingState||"",inbound,outbound});
+		  this.onDiagnostics({schema:"allchat.media.test/v1",at:new Date().toISOString(),roomID:this.roomID,generation,state:this.state,connectionState:peer.connectionState||"",iceConnectionState:peer.iceConnectionState||"",signalingState:peer.signalingState||"",inbound,outbound});
 		} catch (_) {}
 	  };
 	  collect();

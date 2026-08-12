@@ -3,12 +3,14 @@
 
   window.createConversationFollower = (messages, prompt, threshold = 120) => {
     let following = true;
+    let presentLoader = null;
     const nearBottom = () => messages.scrollHeight - messages.scrollTop - messages.clientHeight < threshold;
     const setFollowing = value => {
       following = value;
       prompt.hidden = value;
     };
-    const scrollToLatest = () => {
+    const scrollToLatest = async () => {
+      if (presentLoader) await presentLoader();
       messages.scrollTop = messages.scrollHeight;
       setFollowing(true);
     };
@@ -26,6 +28,7 @@
       nearBottom,
       scrollToLatest,
       setFollowing,
+      setPresentLoader: loader => { presentLoader = loader; },
     };
   };
 })();

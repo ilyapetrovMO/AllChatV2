@@ -8,6 +8,7 @@
       this.native = protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
       if (typeof this.native.addEventListener !== "function") return this.native;
       this.queue = [];
+      this.maxQueueDepth = 0;
       this.draining = false;
       this.livenessTimer = null;
       this.lastInboundAt = Date.now();
@@ -28,7 +29,18 @@
         let frame;
         try { frame = JSON.parse(event.data); } catch (_) { this.emit("message", event); return; }
         if (frame.type !== "events" || !Array.isArray(frame.events)) { this.emit("message", event); return; }
-        this.queue.push(...frame.events.map(item => JSON.stringify({type: item.type, cursor: item.cursor, channel_id: item.channel_id, payload: item.payload})));
+        for (const item of frame.events) {
+          const encoded = JSON.stringify({type: item.type, cursor: item.cursor, channel_id: item.channel_id, payload: item.payload});
+          if (item.type === "read.updated") {
+            const member = item.payload?.member_id || "";
+            const prefix = `\"type\":\"read.updated\"`;
+            const existing = this.queue.findIndex(value => value.includes(prefix) && value.includes(`\"channel_id\":\"${item.channel_id}\"`) && (!member || value.includes(`\"member_id\":\"${member}\"`)));
+            if (existing >= 0) { this.queue[existing] = encoded; continue; }
+          }
+          this.queue.push(encoded);
+        }
+        this.maxQueueDepth = Math.max(this.maxQueueDepth, this.queue.length);
+        sessionStorage.setItem("allchat.realtime.queue_high_water", String(Math.max(Number(sessionStorage.getItem("allchat.realtime.queue_high_water") || 0), this.maxQueueDepth)));
         if (this.queue.length > 1000) {
           this.queue.length = 0;
           this.emit("message", {data: JSON.stringify({type:"snapshot_required", cursor:frame.cursor})});
@@ -38,7 +50,7 @@
       });
     }
     emit(type, source) { const event = type === "message" ? new MessageEvent(type, {data: source.data}) : new Event(type); this.dispatchEvent(event); this[`on${type}`]?.call(this, event); }
-    drain() { if (this.draining || !this.queue.length) return; this.draining = true; const next = () => { const data = this.queue.shift(); if (data !== undefined) this.emit("message", {data}); if (this.queue.length) setTimeout(next, 32); else this.draining = false; }; next(); }
+    drain() { if (this.draining || !this.queue.length) return; this.draining = true; const next = () => { for(let count=0;count<16&&this.queue.length;count++){const data=this.queue.shift();this.emit("message",{data})}if(this.queue.length)requestAnimationFrame(next);else this.draining=false;};requestAnimationFrame(next); }
     send(data) { return this.native.send(data); }
     close(code, reason) { this.queue.length = 0; clearInterval(this.livenessTimer); return this.native.close(code, reason); }
     get readyState() { return this.native.readyState; }
@@ -178,9 +190,10 @@
   // scripts, so the conversation follower must exist in the persistent shell.
   window.createConversationFollower ||= (messages, prompt, threshold = 120) => {
     let following = true;
+    let presentLoader = null;
     const nearBottom = () => messages.scrollHeight - messages.scrollTop - messages.clientHeight < threshold;
     const setFollowing = value => { following = value; prompt.hidden = value; };
-    const scrollToLatest = () => { messages.scrollTop = messages.scrollHeight; setFollowing(true); };
+    const scrollToLatest = async () => { if (presentLoader) await presentLoader(); messages.scrollTop = messages.scrollHeight; setFollowing(true); };
     const followMediaGrowth = event => {
       if (following && event.target.matches("img, video")) requestAnimationFrame(scrollToLatest);
     };
@@ -188,7 +201,7 @@
     messages.addEventListener("load", followMediaGrowth, true);
     messages.addEventListener("loadedmetadata", followMediaGrowth, true);
     prompt.addEventListener("click", scrollToLatest);
-    return {isFollowing: () => following, nearBottom, scrollToLatest, setFollowing};
+    return {isFollowing: () => following, nearBottom, scrollToLatest, setFollowing, setPresentLoader: loader => { presentLoader = loader; }};
   };
 
   document.addEventListener("click", event => {

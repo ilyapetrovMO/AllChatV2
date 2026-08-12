@@ -4,12 +4,12 @@
 
 **Blocked by:** 11 — Upload and safely retrieve Attachments; 20 — Relay media from restrictive networks; 21 — Back up, restore, and migrate an Instance
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Structured stdout logs contain operational context but exclude Message bodies, passwords, tokens, Session identifiers, and Relay secrets.
-- [ ] Authenticated administration diagnostics report database, storage, listener, certificate, SFU, Relay, backup, and migration health.
-- [ ] An optional Prometheus endpoint is disabled by default and exposes no Member/content labels.
-- [ ] Low-disk thresholds and a reserved margin reject risky new uploads before filesystem exhaustion.
-- [ ] SQLite or disk write failure never produces a successful persistent-action acknowledgement.
-- [ ] Safe reads and live media continue where possible during persistent-storage failure, with a prominent operator alert.
-- [ ] Community-facing limits are configurable within hard ceilings; authentication and Relay safety limits cannot be disabled.
+- [x] Structured stdout logs contain operational context but exclude Message bodies, passwords, tokens, Session identifiers, and Relay secrets.
+- [x] Authenticated administration diagnostics report database, storage, listener, certificate, SFU, Relay, backup, and migration health.
+- [x] An optional Prometheus endpoint is disabled by default and exposes no Member/content labels.
+- [x] Low-disk thresholds and a reserved margin reject risky new uploads before filesystem exhaustion.
+- [x] SQLite or disk write failure never produces a successful persistent-action acknowledgement.
+- [x] Safe reads and live media continue where possible during persistent-storage failure, with a prominent operator alert.
+- [x] Community-facing limits are configurable within hard ceilings; authentication and Relay safety limits cannot be disabled.

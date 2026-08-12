@@ -14,6 +14,11 @@ func (i *Instance) uploadAttachmentAPI(response http.ResponseWriter, request *ht
 	if !ok {
 		return
 	}
+	if request.ContentLength > i.community.MaxAttachmentBytes() {
+		response.Header().Set("Retry-After", "30")
+		writeJSON(response, http.StatusRequestEntityTooLarge, map[string]string{"error": "attachment exceeds the configured admission limit"})
+		return
+	}
 	name := request.Header.Get("X-AllChat-Filename")
 	if name == "" {
 		name = request.URL.Query().Get("filename")

@@ -91,10 +91,35 @@ func (s *Service) RealtimeEventsAfter(ctx context.Context, member identity.Membe
 		return nil, latest, false, err
 	}
 	rows.Close()
+	overview, err := s.ChannelOverview(ctx, member, false)
+	if err != nil {
+		return nil, latest, false, err
+	}
+	visible := make(map[string]bool, len(overview.Channels))
+	for _, channel := range overview.Channels {
+		visible[channel.ID] = true
+	}
+	directRows, err := s.db.QueryContext(ctx, `SELECT id FROM direct_messages
+		WHERE member_low_id = ? OR member_high_id = ?`, member.ID, member.ID)
+	if err != nil {
+		return nil, latest, false, err
+	}
+	for directRows.Next() {
+		var channelID string
+		if err := directRows.Scan(&channelID); err != nil {
+			directRows.Close()
+			return nil, latest, false, err
+		}
+		visible[channelID] = true
+	}
+	if err := directRows.Err(); err != nil {
+		directRows.Close()
+		return nil, latest, false, err
+	}
+	directRows.Close()
 	events := make([]RealtimeEvent, 0, len(candidates))
 	for _, event := range candidates {
-		visible, _ := s.CanUseChannel(ctx, member.ID, event.ChannelID, PermissionViewChannels, true)
-		if visible {
+		if visible[event.ChannelID] {
 			events = append(events, event)
 		}
 	}

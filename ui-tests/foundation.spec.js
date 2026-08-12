@@ -416,7 +416,7 @@ test('voice connection exposes receiver-side audio flow diagnostics', async ({pa
   await page.addScriptTag({url:'/assets/voice-connection.js'});
   const samples=await page.evaluate(async()=>{
     const captured=[];
-    class Peer{constructor(){this.localDescription=null;this.connectionState='new';this.iceConnectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}getStats(){return Promise.resolve(new Map([['in',{type:'inbound-rtp',kind:'audio',packetsReceived:321,bytesReceived:6543,packetsLost:2,jitter:.015}],['out',{type:'outbound-rtp',kind:'audio',packetsSent:123,bytesSent:4567}]]))}}
+    class Peer{constructor(){this.localDescription=null;this.connectionState='new';this.iceConnectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}getStats(){return Promise.resolve(new Map([['in',{type:'inbound-rtp',kind:'audio',packetsReceived:321,bytesReceived:6543,packetsLost:2,jitter:.015}],['out',{type:'outbound-rtp',kind:'audio',packetsSent:123,bytesSent:4567}]]))}}
     class Socket{static OPEN=1;constructor(){this.readyState=1;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({type:'answer',sdp:{type:'answer',sdp:'answer'}})}))}close(){this.readyState=3}}
     const connection=new window.AllChatVoiceConnection({roomID:'voice-example',stream:{getTracks:()=>[]},fetchCredentials:async()=>[],createPeer:()=>new Peer(),createSocket:()=>new Socket(),diagnosticsInterval:5,onDiagnostics:value=>captured.push(value)});
     await connection.start();await new Promise(resolve=>setTimeout(resolve,16));connection.stop();return captured;
@@ -442,6 +442,8 @@ test('voice connection serializes an initial answer and immediate SFU offer', as
         await new Promise(resolve => setTimeout(resolve, 5));
         this.remoteDescription = value;
         this.settingRemote = false;
+        this.connectionState = 'connected';
+        queueMicrotask(() => this.onconnectionstatechange?.());
       }
     }
     class Socket {
@@ -487,7 +489,7 @@ test('Direct Call keeps remote screen media when tracks arrive with the SDP answ
       constructor(){this.localDescription=null;this.remoteDescription=null;}
       addTrack(){} addTransceiver(){} createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}
       setLocalDescription(value){this.localDescription=value;return Promise.resolve()}
-      async setRemoteDescription(value){this.remoteDescription=value;const track={kind:'video',addEventListener(){}};this.ontrack?.({track,streams:[new MediaStream()]})}
+      async setRemoteDescription(value){this.remoteDescription=value;this.connectionState='connected';this.onconnectionstatechange?.();const track={kind:'video',addEventListener(){}};this.ontrack?.({track,streams:[new MediaStream()]})}
       addIceCandidate(){return Promise.resolve()} close(){}
     }
     class Socket {
@@ -577,7 +579,7 @@ test('voice connection replaces a half-open socket after missed heartbeat acknow
   await page.addScriptTag({url:'/assets/voice-connection.js'});
   const result=await page.evaluate(async()=>{
     let socketCount=0,credentialFetches=0;const states=[];
-    class Peer{constructor(){this.localDescription=null}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}}
+    class Peer{constructor(){this.localDescription=null;this.connectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}}
     class Socket{static OPEN=1;constructor(){this.readyState=1;this.number=++socketCount;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'answer',sdp:{type:'answer',sdp:'answer'},resume_token:'resume'})}));if(frame.type==='heartbeat'&&this.number>1)queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'heartbeat-ack'})}))}close(){if(this.readyState===3)return;this.readyState=3;queueMicrotask(()=>this.onclose?.())}}
     const connection=new window.AllChatVoiceConnection({roomID:'voice-room',stream:{getTracks:()=>[{kind:'audio'}]},onState:state=>states.push(state),fetchCredentials:async()=>{credentialFetches++;return[]},createPeer:()=>new Peer(),createSocket:()=>new Socket(),heartbeatInterval:5,heartbeatTimeout:12,recoveryDelays:[0],recoveryTimeout:100});
     await connection.start();await new Promise(resolve=>setTimeout(resolve,35));
@@ -665,7 +667,7 @@ test('clicking a voice channel joins in place without replacing the text convers
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'mock-offer'}); }
       createAnswer() { return Promise.resolve({type: 'answer', sdp: 'mock-client-answer'}); }
       setLocalDescription(value) { this.localDescription = value; setTimeout(() => this.onicecandidate?.({candidate: {toJSON: () => ({candidate: 'candidate:mock'})}}), 10); setTimeout(() => {this.iceGatheringState = 'complete'; (this.listeners.icegatheringstatechange || []).forEach(listener => listener());}, 1500); return Promise.resolve(); }
-      setRemoteDescription() { return Promise.resolve(); }
+      setRemoteDescription() { this.connectionState = 'connected'; queueMicrotask(() => this.onconnectionstatechange?.()); return Promise.resolve(); }
       addIceCandidate() { return Promise.resolve(); }
       addEventListener(type, listener) { (this.listeners[type] ||= []).push(listener); }
       removeEventListener(type, listener) { this.listeners[type] = (this.listeners[type] || []).filter(item => item !== listener); }
@@ -690,7 +692,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   `);
   await expect(page.locator('.channel-nav')).toHaveAttribute('data-voice-sidebar-ready', 'true');
   const voiceStarted = Date.now();
-  await page.locator('a[href="/channels/voice-one"]').click();
+  await page.locator('a[href="/channels/voice-one"]').dispatchEvent('click');
   await expect(page.locator('#text-conversation')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toContainText(/Fetching relay|Preparing encrypted media|Opening media signaling|Waiting for the media server/);
@@ -711,7 +713,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   });
   await expect(page.locator('body > audio')).toHaveCount(2);
   expect(await page.evaluate(() => [...document.querySelectorAll('body > audio')].map(audio => audio.srcObject).includes(window.botOneAudio))).toBe(true);
-  await page.locator('a[href="/channels/voice-one"]').click();
+  await page.locator('a[href="/channels/voice-one"]').dispatchEvent('click');
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).toContainText('Akko');
   await page.evaluate(() => {
     const listeners = [];
@@ -731,6 +733,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).toHaveClass(/expanded/);
   await page.evaluate(() => window.voiceSocket.onmessage({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-one'})}));
   await expect(page.locator('[data-media-stage-grid] .participant-tile video')).toHaveCount(0);
+  await expect(page.locator('[data-media-stage-grid] .screen-sharing-badge')).toHaveCount(0);
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).not.toHaveClass(/expanded/);
   await page.evaluate(() => {
     document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity = 'preserved';
@@ -740,12 +743,12 @@ test('clicking a voice channel joins in place without replacing the text convers
   await page.waitForTimeout(1100);
   expect(await page.evaluate(() => document.querySelector('[data-media-stage-grid] .participant-tile').stageIdentity)).toBe('preserved');
   expect(await page.evaluate(() => window.stageChildMutations)).toBe(0);
-  await page.locator('a[href="/channels/text-two"]').click();
+  await page.locator('a[href="/channels/text-two"]').dispatchEvent('click');
   await expect(page.locator('#second-conversation')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, trackStopped: window.voiceTrackStopped || false}))).toEqual({captureRequests: 1, trackStopped: false});
   expect(new URL(page.url()).pathname).toBe('/channels/text-two');
-  await page.locator('a[href="/profile"]').click();
+  await page.locator('a[href="/profile"]').dispatchEvent('click');
   await expect(page.locator('[data-app-overlay] #profile-settings')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   await page.locator('[data-app-overlay] a[href="/sessions"]').evaluate(link => link.click());

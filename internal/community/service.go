@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"allchat/internal/identity"
@@ -48,14 +49,17 @@ var validPermissions = map[string]bool{
 }
 
 type Service struct {
-	db                 *sql.DB
-	dataDir            string
-	maxAttachmentBytes int64
-	maxStorageBytes    int64
-	messageRequests    chan messagePublishRequest
-	messageStop        chan struct{}
-	messageDone        chan struct{}
-	messageClose       sync.Once
+	db                  *sql.DB
+	dataDir             string
+	maxAttachmentBytes  int64
+	maxStorageBytes     int64
+	messageRequests     chan messagePublishRequest
+	messageStop         chan struct{}
+	messageDone         chan struct{}
+	messageClose        sync.Once
+	messageTransactions atomic.Int64
+	messageCommitted    atomic.Int64
+	messageQueueHigh    atomic.Int64
 }
 
 func New(db *sql.DB, dataDir ...string) *Service {
@@ -64,6 +68,12 @@ func New(db *sql.DB, dataDir ...string) *Service {
 		directory = dataDir[0]
 	}
 	return newServiceWithAttachmentLimits(db, directory)
+}
+
+func (s *Service) MaxAttachmentBytes() int64 { return s.maxAttachmentBytes }
+
+func (s *Service) MessagingMetrics() (transactions, committed, queueHigh int64) {
+	return s.messageTransactions.Load(), s.messageCommitted.Load(), s.messageQueueHigh.Load()
 }
 
 type Role struct {

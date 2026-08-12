@@ -65,7 +65,7 @@ async function authenticate(page) {
 
 async function stabilize(page) {
   await page.emulateMedia({reducedMotion: 'reduce'});
-  await page.addStyleTag({content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}'});
+  await page.addStyleTag({content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}.message-time{color:transparent!important}'});
 }
 
 async function shot(page, name) {
@@ -74,6 +74,7 @@ async function shot(page, name) {
 
 async function openCommunity(page, mobile) {
   await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(() => Boolean(window.allchatConversationWindow)), {timeout: 30_000}).toBe(true);
   await page.locator('.channel-content').waitFor();
   await page.locator('[data-notification-bell]').waitFor();
   await expect(page.locator('.channel-sidebar .dm-link')).toHaveCount(1);
@@ -109,6 +110,7 @@ test('browser interaction reports presence activity over realtime', async ({page
 test('typing indicator names up to three members and summarizes larger groups', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(() => typeof window.allchatTypingSummary)).toBe('function');
   const summaries = await page.evaluate(channelID => {
     const typing = names => names.map((member_name, index) => ({member_id: `member-${index}`, member_name, channel_id: channelID}));
     return [
@@ -122,6 +124,58 @@ test('typing indicator names up to three members and summarizes larger groups', 
     'Member One, Member Two, Member Three are typing…',
     'Several people are typing…',
   ]);
+});
+
+test('bounded conversation window recovers its newer edge by Conversation Sequence', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(() => Boolean(window.allchatConversationWindow)), {timeout: 30_000}).toBe(true);
+  await page.locator('#messages').waitFor();
+  await page.route(`**/api/v1/channels/${fixture.textChannel.id}/messages?after=300&limit=100`, route => route.fulfill({json: {
+    messages: Array.from({length: 50}, (_, index) => ({id: `newer-${index + 301}`, channel_id: fixture.textChannel.id, author_id: fixture.ownerMember.id, author_name: 'visual-owner', sequence: index + 301, body: `Message ${index + 301}`, created_at: '2026-01-01T12:00:00Z'})),
+    has_more: false,
+    next_after: 0,
+  }}));
+  const result = await page.evaluate(async () => {
+    const messages = document.querySelector('#messages');
+    messages.replaceChildren(...Array.from({length: 350}, (_, index) => {
+      const item = document.createElement('article');
+      item.className = 'message'; item.id = `message-old-${index + 1}`; item.dataset.sequence = String(index + 1);
+      item.style.height = '30px'; item.textContent = `Message ${index + 1}`;
+      return item;
+    }));
+    messages.scrollTop = 0;
+    window.allchatConversationWindow.trim('newer');
+    const bounded = [...messages.querySelectorAll(':scope > .message')].map(item => Number(item.dataset.sequence));
+    await window.allchatConversationWindow.loadPresent();
+    const recovered = [...messages.querySelectorAll(':scope > .message')].map(item => Number(item.dataset.sequence));
+    return {bounded, recovered, reportedSize: messages.dataset.windowSize, virtualized: messages.dataset.virtualized};
+  });
+  expect(result.bounded).toHaveLength(300);
+  expect(result.bounded[0]).toBe(1);
+  expect(result.bounded.at(-1)).toBe(300);
+  expect(result.recovered).toHaveLength(80);
+  expect(result.recovered[0]).toBe(271);
+  expect(result.recovered.at(-1)).toBe(350);
+  expect(result.reportedSize).toBe('300');
+  expect(result.virtualized).toBe('220');
+});
+
+test('locally-authored Message reconciles its optimistic identity without duplication', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.route(`**/api/v1/channels/${fixture.textChannel.id}/messages`, async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    const input = route.request().postDataJSON();
+    await new Promise(resolve => setTimeout(resolve, 150));
+    await route.fulfill({status: 201, json: {id: 'committed-optimistic', client_id: input.client_id, channel_id: fixture.textChannel.id, author_id: fixture.ownerMember.id, author_name: 'visual-owner', sequence: 999, body: input.body, created_at: '2026-01-01T12:00:00Z'}});
+  });
+  await page.locator('#message-body').fill('Optimistic Message');
+  await page.locator('#composer-submit').click();
+  await expect(page.locator('.message.optimistic', {hasText: 'Optimistic Message'})).toHaveCount(1);
+  await expect(page.locator('#message-committed-optimistic')).toHaveCount(1);
+  await expect(page.locator('#message-committed-optimistic')).not.toHaveClass(/optimistic/);
+  await expect(page.locator('.message', {hasText: 'Optimistic Message'})).toHaveCount(1);
 });
 
 async function addVoiceState(page) {
@@ -224,14 +278,70 @@ test('SPA-opened channel receives remote messages before local input and starts 
   await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: recoveredBody});
   await expect(page.locator('#messages')).toContainText(recoveredBody);
   await expect.poll(() => page.locator('#messages').evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(3);
-  await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
-  await expect(page.locator('#messages')).toContainText('Scroll fixture 29');
-  await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
-  await expect(page.locator('#messages')).toContainText('Scroll fixture 01');
-  await page.locator('#messages').evaluate(element => { element.scrollTop = element.scrollHeight; element.dispatchEvent(new Event('scroll')); });
-  await expect(page.locator('#messages > .message')).toHaveCount(100);
+  await expect.poll(async () => {
+    await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
+    return page.locator('#messages').textContent();
+  }).toContain('Scroll fixture 01');
+  await expect.poll(() => page.locator('#messages > .message').count()).toBeLessThanOrEqual(80);
+  await expect.poll(async () => {
+    await page.locator('#messages').evaluate(element => { element.scrollTop = element.scrollHeight; element.dispatchEvent(new Event('scroll')); });
+    return page.locator('#messages').textContent();
+  }).toContain(recoveredBody);
+  await expect.poll(() => page.locator('#messages > .message').count()).toBeLessThanOrEqual(300);
   await owner.dispose();
   await second.dispose();
+});
+
+test('records the representative messaging burst benchmark', async ({page}, testInfo) => {
+  test.skip(process.env.ALLCHAT_BENCHMARK !== '1', 'opt-in performance benchmark');
+  test.setTimeout(180_000);
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  const publish = async body => {
+    const started = performance.now();
+    await post(owner, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body});
+    return performance.now() - started;
+  };
+  for (let offset = 0; offset < 10_000; offset += 500) {
+    await Promise.all(Array.from({length: 500}, (_, index) => publish(`Benchmark seed ${offset + index + 1}`)));
+  }
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.evaluate(() => {
+    window.benchmarkFrames = [];
+    let previous = performance.now();
+    const sample = now => { window.benchmarkFrames.push(now - previous); previous = now; if (window.benchmarkFrames.length < 1200) requestAnimationFrame(sample); };
+    requestAnimationFrame(sample);
+  });
+  const metric = async name => {
+    const text = await (await owner.get('/metrics')).text();
+    return Number(text.match(new RegExp(`^${name} (\\d+)$`, 'm'))?.[1] || 0);
+  };
+  const beforeTransactions = await metric('allchat_message_transactions_total');
+  const beforeCommitted = await metric('allchat_messages_committed_total');
+  const memoryBefore = await page.evaluate(() => performance.memory?.usedJSHeapSize || 0);
+  const started = performance.now();
+  const latencies = await Promise.all(Array.from({length: 1000}, (_, index) => publish(`Measured burst ${index + 1}`)));
+  await expect.poll(() => metric('allchat_messages_committed_total'), {timeout: 30_000}).toBeGreaterThanOrEqual(beforeCommitted + 1000);
+  await page.locator('#messages').waitFor();
+  const elapsedSeconds = (performance.now() - started) / 1000;
+  const afterTransactions = await metric('allchat_message_transactions_total');
+  const frames = await page.evaluate(() => (window.benchmarkFrames || []).slice(1));
+  const percentile = (values, quantile) => [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.floor(values.length * quantile))] || 0;
+  const report = {
+    existing_messages: 10_000,
+    burst_messages: 1000,
+    publication_latency_ms: {p50: percentile(latencies, 0.50), p95: percentile(latencies, 0.95), p99: percentile(latencies, 0.99)},
+    sqlite_transactions_per_second: (afterTransactions - beforeTransactions) / elapsedSeconds,
+    realtime_queue_high_water: await page.evaluate(() => Number(sessionStorage.getItem('allchat.realtime.queue_high_water') || 0)),
+    browser_frame_ms_p95: percentile(frames, 0.95),
+    message_dom_nodes: await page.locator('#messages > .message').count(),
+    browser_heap_bytes: {before: memoryBefore, after: await page.evaluate(() => performance.memory?.usedJSHeapSize || 0)},
+  };
+  expect(report.message_dom_nodes).toBeLessThanOrEqual(80);
+  expect(report.sqlite_transactions_per_second).toBeGreaterThan(0);
+  await testInfo.attach('messaging-benchmark.json', {body: JSON.stringify(report, null, 2), contentType: 'application/json'});
+  console.log(`MESSAGING_BENCHMARK ${JSON.stringify(report)}`);
+  await owner.dispose();
 });
 
 test('Community Member rail appears outside DMs, settings, and Voice Room grids', async ({page}) => {

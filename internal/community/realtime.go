@@ -102,16 +102,11 @@ func (s *Service) RealtimeEventsAfter(ctx context.Context, member identity.Membe
 }
 
 func (s *Service) RealtimeSnapshot(ctx context.Context, member identity.Member) (RealtimeSnapshot, error) {
-	_, cursor, err := s.RealtimeBounds(ctx)
+	snapshot, err := s.RealtimeSnapshotMetadata(ctx, member)
 	if err != nil {
 		return RealtimeSnapshot{}, err
 	}
-	overview, err := s.ChannelOverview(ctx, member, false)
-	if err != nil {
-		return RealtimeSnapshot{}, err
-	}
-	snapshot := RealtimeSnapshot{Cursor: cursor, Channels: overview.Channels, Messages: make(map[string][]Message)}
-	for _, channel := range overview.Channels {
+	for _, channel := range snapshot.Channels {
 		if channel.Type != "text" {
 			continue
 		}
@@ -121,18 +116,31 @@ func (s *Service) RealtimeSnapshot(ctx context.Context, member identity.Member) 
 		}
 		snapshot.Messages[channel.ID] = messages
 	}
-	directMessages, err := s.ListDirectMessages(ctx, member)
-	if err != nil {
-		return RealtimeSnapshot{}, err
-	}
-	snapshot.DirectMessages = directMessages
-	for _, directMessage := range directMessages {
+	for _, directMessage := range snapshot.DirectMessages {
 		messages, err := s.ListMessages(ctx, member, directMessage.ID, 0, 100)
 		if err != nil {
 			return RealtimeSnapshot{}, err
 		}
 		snapshot.Messages[directMessage.ID] = messages
 	}
+	return snapshot, nil
+}
+
+func (s *Service) RealtimeSnapshotMetadata(ctx context.Context, member identity.Member) (RealtimeSnapshot, error) {
+	_, cursor, err := s.RealtimeBounds(ctx)
+	if err != nil {
+		return RealtimeSnapshot{}, err
+	}
+	overview, err := s.ChannelOverview(ctx, member, false)
+	if err != nil {
+		return RealtimeSnapshot{}, err
+	}
+	snapshot := RealtimeSnapshot{Cursor: cursor, Channels: overview.Channels, Messages: make(map[string][]Message)}
+	directMessages, err := s.ListDirectMessages(ctx, member)
+	if err != nil {
+		return RealtimeSnapshot{}, err
+	}
+	snapshot.DirectMessages = directMessages
 	return snapshot, nil
 }
 

@@ -62,3 +62,32 @@ func (i *Instance) downloadAttachmentAPI(response http.ResponseWriter, request *
 	response.Header().Set("Cache-Control", "private, no-store")
 	http.ServeContent(response, request, attachment.Name, info.ModTime(), file)
 }
+
+func (i *Instance) previewAttachmentAPI(response http.ResponseWriter, request *http.Request) {
+	member, _, ok := i.authenticated(response, request)
+	if !ok {
+		return
+	}
+	attachment, path, contentType, err := i.community.AttachmentPreview(request.Context(), member, request.PathValue("attachmentID"))
+	if err != nil {
+		writeCommunityError(response, err)
+		return
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		http.NotFound(response, request)
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		http.NotFound(response, request)
+		return
+	}
+	response.Header().Set("Content-Disposition", mime.FormatMediaType("inline", map[string]string{"filename": filepath.Base(attachment.Name)}))
+	response.Header().Set("Content-Type", contentType)
+	response.Header().Set("X-Content-Type-Options", "nosniff")
+	response.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
+	response.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+	http.ServeContent(response, request, attachment.Name, info.ModTime(), file)
+}

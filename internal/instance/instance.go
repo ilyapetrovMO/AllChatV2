@@ -758,6 +758,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/channels/{channelID}/pins", i.pinnedMessagesAPI)
 	mux.HandleFunc("POST /api/v1/attachments", i.uploadAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentID}", i.downloadAttachmentAPI)
+	mux.HandleFunc("GET /api/v1/attachments/{attachmentID}/preview", i.previewAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/search", i.searchMessagesAPI)
 	mux.HandleFunc("GET /api/v1/link-preview", i.linkPreviewAPI)
 	mux.HandleFunc("GET /api/v1/link-preview/image", i.linkPreviewImageAPI)

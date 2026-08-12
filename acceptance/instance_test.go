@@ -1069,8 +1069,8 @@ func TestRealtimeEventsResumeConvergeAndRespectVisibility(t *testing.T) {
 	if snapshotRequired.Type != "snapshot_required" || snapshotRequired.Snapshot == nil || snapshotRequired.Snapshot.Cursor != snapshotRequired.Cursor {
 		t.Fatalf("snapshot-required frame = %+v", snapshotRequired)
 	}
-	if len(snapshotRequired.Snapshot.Messages[channel.ID]) != 1 {
-		t.Fatalf("authorized snapshot missing history: %+v", snapshotRequired.Snapshot)
+	if len(snapshotRequired.Snapshot.Messages) != 0 {
+		t.Fatalf("realtime recovery snapshot included conversation history: %+v", snapshotRequired.Snapshot)
 	}
 	expired.CloseNow()
 

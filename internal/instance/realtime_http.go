@@ -31,17 +31,22 @@ type realtimeCommand struct {
 	Active    bool   `json:"active,omitempty"`
 }
 
+func lightweightSnapshot(snapshot community.RealtimeSnapshot) community.RealtimeSnapshot {
+	snapshot.Messages = map[string][]community.Message{}
+	return snapshot
+}
+
 func (i *Instance) realtimeSnapshotAPI(response http.ResponseWriter, request *http.Request) {
 	member, _, ok := i.authenticated(response, request)
 	if !ok {
 		return
 	}
-	snapshot, err := i.community.RealtimeSnapshot(request.Context(), member)
+	snapshot, err := i.community.RealtimeSnapshotMetadata(request.Context(), member)
 	if err != nil {
 		writeCommunityError(response, err)
 		return
 	}
-	writeJSON(response, http.StatusOK, snapshot)
+	writeJSON(response, http.StatusOK, lightweightSnapshot(snapshot))
 }
 
 func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http.Request) {
@@ -90,11 +95,12 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 	}
 
 	if cursor > latest || (cursor > 0 && oldest > 0 && cursor < oldest-1) {
-		snapshot, snapshotErr := i.community.RealtimeSnapshot(request.Context(), member)
+		snapshot, snapshotErr := i.community.RealtimeSnapshotMetadata(request.Context(), member)
 		if snapshotErr != nil {
 			_ = connection.Close(websocket.StatusInternalError, "snapshot unavailable")
 			return
 		}
+		snapshot = lightweightSnapshot(snapshot)
 		if !writeRealtimeFrame(request.Context(), connection, realtimeFrame{Type: "snapshot_required", Cursor: snapshot.Cursor, Snapshot: &snapshot}) {
 			return
 		}
@@ -188,8 +194,12 @@ func (i *Instance) realtimeWebSocket(response http.ResponseWriter, request *http
 				return
 			}
 			if snapshotRequired {
-				snapshot, err := i.community.RealtimeSnapshot(request.Context(), currentMember)
-				if err != nil || !writeRealtimeFrame(request.Context(), connection, realtimeFrame{Type: "snapshot_required", Cursor: snapshot.Cursor, Snapshot: &snapshot}) {
+				snapshot, err := i.community.RealtimeSnapshotMetadata(request.Context(), currentMember)
+				if err != nil {
+					return
+				}
+				snapshot = lightweightSnapshot(snapshot)
+				if !writeRealtimeFrame(request.Context(), connection, realtimeFrame{Type: "snapshot_required", Cursor: snapshot.Cursor, Snapshot: &snapshot}) {
 					return
 				}
 				cursor = snapshot.Cursor

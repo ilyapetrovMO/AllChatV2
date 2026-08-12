@@ -44,6 +44,9 @@ func (i *Instance) mobileBootstrapAPI(response http.ResponseWriter, request *htt
 		writeCommunityError(response, err)
 		return
 	}
+	if request.URL.Query().Get("history") == "none" {
+		snapshot.Messages = map[string][]community.Message{}
+	}
 	overview, err := i.community.ChannelOverview(request.Context(), member, false)
 	if err != nil {
 		writeCommunityError(response, err)

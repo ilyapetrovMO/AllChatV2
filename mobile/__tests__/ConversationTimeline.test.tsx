@@ -2,7 +2,7 @@ import React from 'react';
 import {FlatList, Image, Modal} from 'react-native';
 import renderer, {act} from 'react-test-renderer';
 
-import {ConversationTimeline, IncomingCallChime, loadAuthenticatedImage, MessageRow} from '../src/screens/CommunityScreen';
+import {ConversationTimeline, formatMessageTime, IncomingCallChime, loadAuthenticatedImage, mergeMessagePage, MessageRow, trimMessageWindow} from '../src/screens/CommunityScreen';
 import type {Message} from '../src/client/bootstrap';
 
 const palette = {background: '#111111', field: '#222222', border: '#333333', text: '#ffffff', muted: '#aaaaaa', placeholder: '#777777', accent: '#5555ff'};
@@ -46,12 +46,27 @@ describe('native conversation timeline', () => {
     let tree!: renderer.ReactTestRenderer;
     await act(async () => { tree = renderer.create(<MessageRow imageLoader={loadImage} instanceURL="https://chat.example.test" message={withImage} mine={false} palette={palette} token="session-token" />); });
 
-    expect(loadImage).toHaveBeenCalledWith('https://chat.example.test/api/v1/attachments/attachment-1', 'session-token');
+    expect(loadImage).toHaveBeenCalledWith('https://chat.example.test/api/v1/attachments/attachment-1/preview', 'session-token');
     expect(tree.root.findByType(Image).props.source).toEqual({uri: 'data:image/png;base64,cGl4ZWxz'});
 
-    act(() => { tree.root.findByProps({accessibilityLabel: 'Open photo.png'}).props.onPress(); });
+    await act(async () => { tree.root.findByProps({accessibilityLabel: 'Open photo.png'}).props.onPress(); });
+    expect(loadImage).toHaveBeenLastCalledWith('https://chat.example.test/api/v1/attachments/attachment-1', 'session-token');
     expect(tree.root.findByType(Modal).props.visible).toBe(true);
     expect(tree.root.findAllByType(Image)).toHaveLength(2);
+  });
+
+  it('shows time for today and date plus time for older Messages', () => {
+    const now = new Date(2030, 4, 10, 12, 0);
+    expect(formatMessageTime(new Date(2030, 4, 10, 9, 30).toISOString(), now)).toMatch(/09:30|9:30/);
+    expect(formatMessageTime(new Date(2030, 4, 9, 9, 30).toISOString(), now)).toMatch(/May|5|09/);
+  });
+
+  it('merges cursor pages without duplicates and trims the oldest history at present', () => {
+    const messages = Array.from({length: 125}, (_, index) => ({...message, id: `message-${index + 1}`, sequence: index + 1}));
+    const merged = mergeMessagePage(messages.slice(50), messages.slice(0, 51));
+    expect(merged).toHaveLength(125);
+    expect(merged.map(item => item.sequence)).toEqual(Array.from({length: 125}, (_, index) => index + 1));
+    expect(trimMessageWindow(merged)).toEqual(messages.slice(25));
   });
 
   it('converts an authenticated image response into a decoder-local data URI', async () => {

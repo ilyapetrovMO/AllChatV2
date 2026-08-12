@@ -20,6 +20,12 @@ import {communityStateFromBootstrap, reduceRealtimeFrame, type CommunityState} f
 
 type Palette = {background: string; field: string; border: string; text: string; muted: string; placeholder: string; accent: string};
 
+export function mergeMessagePage(current: Message[], page: Message[]) {
+  return [...new Map([...page, ...current].map(item => [item.id, item])).values()].sort((a, b) => a.sequence - b.sequence);
+}
+
+export function trimMessageWindow(messages: Message[], limit = 100) { return messages.slice(-limit); }
+
 export function CommunityScreen({account, palette, onManage}: {account: InstanceAccount; palette: Palette; onManage(): void}): React.JSX.Element {
   const [community, setCommunity] = useState<CommunityState>();
   const [activeID, setActiveID] = useState('');
@@ -46,6 +52,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
   const [notificationPanel, setNotificationPanel] = useState<'global' | 'channel' | ''>('');
   const [allDMsOpen, setAllDMsOpen] = useState(false);
   const [voiceRooms, setVoiceRooms] = useState<Record<string, VoiceRoomState>>({});
+  const [history, setHistory] = useState<Record<string, {hasMore: boolean; nextBefore: number; loading: boolean}>>({});
   const realtime = useRef<RealtimeClient | null>(null);
   const client = useMemo(() => new AllChatClient(account.instance_url), [account.instance_url]);
   const cache = useMemo(() => new KeychainConversationCache(), []);
@@ -62,6 +69,15 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
     async function synchronize() {
       try {
         const bootstrap = await client.bootstrap(account.session_token);
+        const activeConversation = activeIDRef.current;
+        if (activeConversation) {
+          const direct = bootstrap.direct_messages.some(item => item.id === activeConversation);
+          const page = await client.listMessages(account.session_token, activeConversation, direct).catch(() => undefined);
+          if (page) {
+            bootstrap.messages[activeConversation] = page.messages;
+            if (mounted) setHistory(value => ({...value, [activeConversation]: {hasMore: page.has_more, nextBefore: page.next_before, loading: false}}));
+          }
+        }
         if (!mounted) return;
         setCommunity(communityStateFromBootstrap(bootstrap));
         setError('');
@@ -132,12 +148,44 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
 
   async function openConversation(id: string, isDirect: boolean) {
     setActiveID(id);
+    setHistory(value => ({...value, [id]: {...(value[id] || {hasMore: true, nextBefore: 0}), loading: true}}));
+    try {
+      const page = await client.listMessages(account.session_token, id, isDirect);
+      setCommunity(value => value ? {...value, messages: {...value.messages, [id]: page.messages}} : value);
+      setHistory(value => ({...value, [id]: {hasMore: page.has_more, nextBefore: page.next_before, loading: false}}));
+    } catch {
+      setHistory(value => ({...value, [id]: {...(value[id] || {hasMore: true, nextBefore: 0}), loading: false}}));
+    }
     const current = community?.channel_states.find(item => item.channel_id === id);
     if (!current || current.last_sequence <= current.read_sequence) return;
     try {
       const next = await client.updateReadPosition(account.session_token, id, current.last_sequence, isDirect);
       setCommunity(value => value ? {...value, channel_states: [...value.channel_states.filter(item => item.channel_id !== id), next]} : value);
     } catch {}
+  }
+
+  async function loadOlder() {
+    if (!activeID || !community) return;
+    const state = history[activeID];
+    if (!state?.hasMore || state.loading) return;
+    setHistory(value => ({...value, [activeID]: {...state, loading: true}}));
+    try {
+      const page = await client.listMessages(account.session_token, activeID, Boolean(direct), state.nextBefore);
+      setCommunity(value => {
+        if (!value) return value;
+        return {...value, messages: {...value.messages, [activeID]: mergeMessagePage(value.messages[activeID] || [], page.messages)}};
+      });
+      setHistory(value => ({...value, [activeID]: {hasMore: page.has_more, nextBefore: page.next_before, loading: false}}));
+    } catch { setHistory(value => ({...value, [activeID]: {...state, loading: false}})); }
+  }
+
+  function trimHistory() {
+    if (!activeID) return;
+    const current = communityRef.current?.messages[activeID] || [];
+    if (current.length <= 100) return;
+    const trimmed = trimMessageWindow(current);
+    setHistory(value => ({...value, [activeID]: {hasMore: trimmed[0].sequence > 1, nextBefore: trimmed[0].sequence, loading: false}}));
+    setCommunity(value => value ? {...value, messages: {...value.messages, [activeID]: trimmed}} : value);
   }
 
   async function send() {
@@ -305,7 +353,7 @@ export function CommunityScreen({account, palette, onManage}: {account: Instance
       </View>
       {currentCall?.direct_message_id === activeID ? <CallBanner call={currentCall} currentMemberID={community.member.id} onAction={callAction} palette={palette} /> : null}
       {currentCall?.direct_message_id === activeID && currentCall.state === 'accepted' ? <View style={styles.directCallStage}><MediaRoomScreen account={account} compact members={community.members} name={`Call with ${displayName(direct!)}`} onLeave={() => callAction('end')} palette={palette} roomID={currentCall.id} /></View> : null}
-      <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} messages={messages} onMessageAction={setActionMessage} onReaction={toggleReaction} palette={palette} />
+      <ConversationTimeline account={account} currentMemberID={community.member.id} key={activeID} loadingOlder={history[activeID]?.loading} messages={messages} onAtPresent={trimHistory} onLoadOlder={loadOlder} onMessageAction={setActionMessage} onReaction={toggleReaction} palette={palette} />
       {typing.length ? <Text style={[styles.typing, {color: palette.muted}]}>{typingText(typing)}</Text> : null}
       {direct && (direct.blocked_by_me || direct.blocked_me) ? <Text style={[styles.blockedNotice, {color: palette.muted}]}>Messages are disabled while either Member has blocked the other.</Text> : null}
       {error ? <Text style={[styles.composerError, styles.errorColor]}>{error}</Text> : null}
@@ -394,12 +442,17 @@ function SelectedFile({file, onRemove, palette}: {file: DocumentPickerResponse; 
   return <View style={[styles.selectedFile, {backgroundColor: palette.field, borderColor: palette.border}]}>{image ? <Image resizeMode="cover" source={{uri: file.uri}} style={styles.selectedThumbnail} /> : <Text style={styles.selectedIcon}>{icon}</Text>}<Text numberOfLines={1} style={[styles.selectedName, {color: palette.text}]}>{file.name || 'Attachment'}</Text><TouchableOpacity accessibilityLabel={`Remove ${file.name || 'Attachment'}`} onPress={onRemove} style={styles.selectedRemove}><Text style={styles.selectedRemoveText}>×</Text></TouchableOpacity></View>;
 }
 
-export function ConversationTimeline({account, currentMemberID, messages, onMessageAction, onReaction, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; messages: Message[]; onMessageAction?(message: Message): void; onReaction?(message: Message, emoji: string): void; palette: Palette}) {
+export function ConversationTimeline({account, currentMemberID, loadingOlder, messages, onAtPresent, onLoadOlder, onMessageAction, onReaction, palette}: {account: Pick<InstanceAccount, 'instance_url' | 'session_token'>; currentMemberID: string; loadingOlder?: boolean; messages: Message[]; onAtPresent?(): void; onLoadOlder?(): void; onMessageAction?(message: Message): void; onReaction?(message: Message, emoji: string): void; palette: Palette}) {
   return <FlatList
     contentContainerStyle={styles.messageList}
     data={[...messages].reverse()}
     inverted
     keyExtractor={item => item.id}
+    ListFooterComponent={loadingOlder ? <ActivityIndicator color={palette.accent} /> : null}
+    onEndReached={onLoadOlder}
+    onEndReachedThreshold={0.25}
+    onScroll={event => { if (event.nativeEvent.contentOffset.y < 80) onAtPresent?.(); }}
+    scrollEventThrottle={100}
     renderItem={({item}) => <MessageRow instanceURL={account.instance_url} message={item} mine={item.author_id === currentMemberID} onLongPress={onMessageAction} onReaction={onReaction} palette={palette} token={account.session_token} />}
     ListEmptyComponent={<Text style={{color: palette.muted}}>This is the beginning of the conversation.</Text>}
     maintainVisibleContentPosition={{minIndexForVisible: 0, autoscrollToTopThreshold: 80}}
@@ -411,7 +464,7 @@ export function MessageRow({imageLoader, instanceURL, message, mine, onLongPress
     {message.reply ? <View style={[styles.replyPreview, {borderLeftColor: palette.border}]}><Text numberOfLines={1} style={{color: palette.muted}}>↳ {message.reply.author_name}: {message.reply.deleted ? 'deleted Message' : message.reply.body}</Text></View> : null}
     <View style={styles.authorLine}><Text style={[styles.author, {color: mine ? palette.accent : palette.text}]}>{mine ? 'You' : message.author_name}</Text>{message.pinned ? <Text style={{color: palette.muted}}> ◆ Pinned</Text> : null}</View>
     {message.deleted ? <Text style={[styles.messageBody, {color: palette.muted}]}>Message deleted</Text> : <><FormattedBody body={message.body || ''} color={palette.text} /><MessageLinkPreview body={message.body || ''} instanceURL={instanceURL} palette={palette} token={token} />{message.attachments?.map(attachment => <AttachmentView attachment={attachment} imageLoader={imageLoader} instanceURL={instanceURL} key={attachment.id} palette={palette} token={token} />)}{message.reactions?.length ? <View style={styles.reactions}>{message.reactions.map(reaction => <TouchableOpacity accessibilityLabel={`${reaction.emoji} reaction, ${reaction.count}`} disabled={!onReaction} key={reaction.emoji} onPress={() => onReaction?.(message, reaction.emoji)} style={[styles.reaction, {backgroundColor: reaction.me ? palette.accent : palette.field, borderColor: reaction.me ? palette.accent : palette.border}]}><Text style={reaction.me ? styles.whiteText : {color: palette.text}}>{reaction.emoji} {reaction.count}</Text></TouchableOpacity>)}</View> : null}</>}
-    <Text style={[styles.time, {color: palette.muted}]}>{new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}{message.edited_at ? ' · edited' : ''}</Text>
+    <Text accessibilityLabel={`Sent ${new Date(message.created_at).toLocaleString()}`} style={[styles.time, {color: palette.muted}]}>{formatMessageTime(message.created_at)}{message.edited_at ? ' · edited' : ''}</Text>
   </TouchableOpacity>;
 }
 
@@ -419,26 +472,34 @@ type ImageLoader = (url: string, token: string) => Promise<string>;
 
 function AttachmentView({attachment, imageLoader, instanceURL, palette, token}: {attachment: NonNullable<Message['attachments']>[number]; imageLoader?: ImageLoader; instanceURL: string; palette: Palette; token: string}) {
   const source = {uri: attachmentURL(instanceURL, attachment.url || `/api/v1/attachments/${attachment.id}`), headers: {Authorization: `Bearer ${token}`}};
-  if (attachment.content_type.startsWith('image/')) return <AuthenticatedImage accessibilityLabel={attachment.name} loader={imageLoader} palette={palette} token={token} url={source.uri} />;
+  if (attachment.content_type.startsWith('image/')) return <AuthenticatedImage accessibilityLabel={attachment.name} loader={imageLoader} originalURL={source.uri} palette={palette} previewURL={attachmentURL(instanceURL, attachment.preview_url || `${attachment.url || `/api/v1/attachments/${attachment.id}`}/preview`)} token={token} />;
   if (attachment.content_type.startsWith('audio/') || attachment.content_type.startsWith('video/')) return <InlineMedia attachment={attachment} palette={palette} source={source} />;
   const icon = attachment.content_type.startsWith('audio/') ? '🎵' : attachment.content_type.startsWith('video/') ? '🎬' : '📄';
   return <View style={[styles.attachment, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>{icon}</Text><View style={styles.grow}><Text numberOfLines={1} style={[styles.attachmentName, {color: palette.text}]}>{attachment.name}</Text><Text style={{color: palette.muted}}>{fileSize(attachment.size)} · {attachment.content_type || 'File'}</Text></View></View>;
 }
 
-function AuthenticatedImage({accessibilityLabel, loader = loadAuthenticatedImage, palette, token, url}: {accessibilityLabel: string; loader?: ImageLoader; palette: Palette; token: string; url: string}) {
+function AuthenticatedImage({accessibilityLabel, loader = loadAuthenticatedImage, originalURL, palette, previewURL, token}: {accessibilityLabel: string; loader?: ImageLoader; originalURL: string; palette: Palette; previewURL: string; token: string}) {
   const [dataURL, setDataURL] = useState('');
   const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
+  const [originalDataURL, setOriginalDataURL] = useState('');
   useEffect(() => {
     let mounted = true;
     setDataURL(''); setFailed(false);
-    loader(url, token).then(value => { if (mounted) setDataURL(value); }).catch(() => { if (mounted) setFailed(true); });
+    loader(previewURL, token).then(value => { if (mounted) setDataURL(value); }).catch(() => { if (mounted) setFailed(true); });
     return () => { mounted = false; };
-  }, [loader, token, url]);
+  }, [loader, previewURL, token]);
   if (failed) return <View style={[styles.imageFallback, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={styles.attachmentIcon}>🖼️</Text><Text style={{color: palette.muted}}>Image could not be loaded</Text></View>;
   if (!dataURL) return <View accessibilityLabel={`Loading ${accessibilityLabel}`} style={[styles.imagePlaceholder, {backgroundColor: palette.field}]}><ActivityIndicator color={palette.accent} /></View>;
   const source = {uri: dataURL};
-  return <><TouchableOpacity accessibilityLabel={`Open ${accessibilityLabel}`} accessibilityRole="imagebutton" activeOpacity={0.85} onPress={() => setOpen(true)}><Image accessibilityLabel={accessibilityLabel} resizeMode="contain" source={source} style={[styles.image, {backgroundColor: palette.field}]} /></TouchableOpacity>{open ? <Modal animationType="fade" onRequestClose={() => setOpen(false)} statusBarTranslucent transparent visible><View style={styles.viewer}><TouchableOpacity accessibilityLabel="Close image" accessibilityRole="button" onPress={() => setOpen(false)} style={styles.viewerClose}><Text style={styles.viewerCloseText}>×</Text></TouchableOpacity><Image accessibilityLabel={accessibilityLabel} resizeMode="contain" source={source} style={styles.viewerImage} /></View></Modal> : null}</>;
+  const expand = () => { setOpen(true); if (!originalDataURL) loader(originalURL, token).then(setOriginalDataURL).catch(() => {}); };
+  return <><TouchableOpacity accessibilityLabel={`Open ${accessibilityLabel}`} accessibilityRole="imagebutton" activeOpacity={0.85} onPress={expand}><Image accessibilityLabel={accessibilityLabel} resizeMode="contain" source={source} style={[styles.image, {backgroundColor: palette.field}]} /></TouchableOpacity>{open ? <Modal animationType="fade" onRequestClose={() => setOpen(false)} statusBarTranslucent transparent visible><View style={styles.viewer}><TouchableOpacity accessibilityLabel="Close image" accessibilityRole="button" onPress={() => setOpen(false)} style={styles.viewerClose}><Text style={styles.viewerCloseText}>×</Text></TouchableOpacity><Image accessibilityLabel={accessibilityLabel} resizeMode="contain" source={{uri: originalDataURL || dataURL}} style={styles.viewerImage} /></View></Modal> : null}</>;
+}
+
+export function formatMessageTime(value: string, now = new Date()) {
+  const date = new Date(value);
+  const sameDay = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+  return sameDay ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : date.toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'});
 }
 
 function FormattedBody({body, color}: {body: string; color: string}) {

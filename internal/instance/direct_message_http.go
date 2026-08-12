@@ -136,7 +136,7 @@ func (i *Instance) directMessageMessagesAPI(response http.ResponseWriter, reques
 		writeCommunityError(response, err)
 		return
 	}
-	writeJSON(response, http.StatusOK, map[string]any{"messages": messages})
+	writeJSON(response, http.StatusOK, messagePage(messages, limit))
 }
 
 func (i *Instance) publishDirectMessageAPI(response http.ResponseWriter, request *http.Request) {

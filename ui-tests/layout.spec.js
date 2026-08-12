@@ -207,13 +207,14 @@ for (const viewport of [{name: 'desktop', width: 1280, height: 720, mobile: fals
 test('SPA-opened channel receives remote messages before local input and starts at present', async ({page}) => {
   const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
   const second = await request.newContext({baseURL, storageState: fixture.secondState});
-  for (let index = 0; index < 78; index++) {
+  for (let index = 0; index < 128; index++) {
     await post(owner, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: `Scroll fixture ${String(index + 1).padStart(2, '0')}`});
   }
   await authenticate(page);
   await page.goto('/');
   await page.locator(`a[href="/channels/${fixture.textChannel.id}"]`).click();
   await page.locator('#messages').waitFor();
+  await expect(page.locator('#messages > .message')).toHaveCount(50);
   const remoteBody = `Remote before local input ${Date.now()}`;
   await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: remoteBody});
   await expect(page.locator('#messages')).toContainText(remoteBody);
@@ -224,7 +225,11 @@ test('SPA-opened channel receives remote messages before local input and starts 
   await expect(page.locator('#messages')).toContainText(recoveredBody);
   await expect.poll(() => page.locator('#messages').evaluate(element => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeLessThan(3);
   await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
+  await expect(page.locator('#messages')).toContainText('Scroll fixture 29');
+  await page.locator('#messages').evaluate(element => { element.scrollTop = 0; element.dispatchEvent(new Event('scroll')); });
   await expect(page.locator('#messages')).toContainText('Scroll fixture 01');
+  await page.locator('#messages').evaluate(element => { element.scrollTop = element.scrollHeight; element.dispatchEvent(new Event('scroll')); });
+  await expect(page.locator('#messages > .message')).toHaveCount(100);
   await owner.dispose();
   await second.dispose();
 });
@@ -397,10 +402,16 @@ test('composer aligns controls, fills the member rail, and previews removable at
   await stabilize(page);
   await expect(page.locator('#attachment-previews')).toHaveScreenshot('composer-attachment-preview.png', {animations: 'disabled', caret: 'hide'});
   let attachmentUploads = 0;
-  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/v1/attachments')) attachmentUploads++; });
+  page.on('request', request => { if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/v1/attachments') attachmentUploads++; });
   await page.locator('#message-body').fill('Message with a selected image');
   await page.locator('#composer-submit').click();
-  await expect(page.locator('#messages')).toContainText('Message with a selected image');
+  const sentMessage = page.locator('.message').filter({hasText: 'Message with a selected image'});
+  await expect(sentMessage).toBeVisible();
+  await expect(sentMessage.locator('.message-image')).toHaveAttribute('src', /\/api\/v1\/attachments\/.+\/preview$/);
+  const originalURL = await sentMessage.locator('.message-image-button').getAttribute('data-original-src');
+  await sentMessage.locator('.message-image-button').click();
+  await expect(page.locator('.message-image-dialog img')).toHaveAttribute('src', originalURL);
+  await page.locator('.message-image-dialog button').click();
   await expect(page.locator('#attachment-previews')).toBeHidden();
   expect(attachmentUploads).toBe(1);
 });

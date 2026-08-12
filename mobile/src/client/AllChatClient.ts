@@ -1,4 +1,4 @@
-import type {Attachment, ChannelState, DirectMessage, Message, MobileBootstrap, NotificationSetting, SearchPage} from './bootstrap';
+import type {Attachment, ChannelState, DirectMessage, Message, MessagePage, MobileBootstrap, NotificationSetting, SearchPage} from './bootstrap';
 
 export type Member = {
   id: string;
@@ -62,7 +62,7 @@ export class AllChatClient {
   }
 
   async bootstrap(token: string): Promise<MobileBootstrap> {
-    const response = await this.request(`${this.instanceURL}/api/v1/mobile/bootstrap`, {
+    const response = await this.request(`${this.instanceURL}/api/v1/mobile/bootstrap?history=none`, {
       headers: {Authorization: `Bearer ${token}`},
     });
     const bootstrap = await this.decode<MobileBootstrap>(response, 'Could not synchronize the Instance.');
@@ -70,6 +70,15 @@ export class AllChatClient {
       throw new Error(`Unsupported mobile protocol version: ${bootstrap.version}`);
     }
     return bootstrap;
+  }
+
+  async listMessages(token: string, conversationID: string, direct = false, before = 0, limit = 50): Promise<MessagePage> {
+    const query = new URLSearchParams({limit: String(limit)});
+    if (before > 0) query.set('before', String(before));
+    const response = await this.request(`${this.instanceURL}/api/v1/${direct ? 'dms' : 'channels'}/${encodeURIComponent(conversationID)}/messages?${query}`, {
+      headers: {Authorization: `Bearer ${token}`},
+    });
+    return this.decode<MessagePage>(response, 'Could not load Messages.');
   }
 
   async publishMessage(token: string, conversationID: string, body: string, direct = false, attachmentIDs: string[] = [], replyTo = ''): Promise<Message> {

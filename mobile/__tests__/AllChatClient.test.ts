@@ -70,9 +70,16 @@ describe('AllChatClient', () => {
     const bootstrap = await client.bootstrap('session-token');
 
     expect(bootstrap.version).toBe(1);
-    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/mobile/bootstrap', {
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/mobile/bootstrap?history=none', {
       headers: {Authorization: 'Bearer session-token'},
     });
+  });
+
+  it('loads a sequence-cursor Message page', async () => {
+    const request = jest.fn(async () => new Response(JSON.stringify({messages: [], has_more: false, next_before: 0}), {status: 200}));
+    const client = new AllChatClient('https://chat.example.test', request as typeof fetch);
+    await client.listMessages('session-token', 'conversation/1', true, 51);
+    expect(request).toHaveBeenCalledWith('https://chat.example.test/api/v1/dms/conversation%2F1/messages?limit=50&before=51', {headers: {Authorization: 'Bearer session-token'}});
   });
 
   it('rejects an unsupported bootstrap protocol', async () => {

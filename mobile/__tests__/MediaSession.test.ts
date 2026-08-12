@@ -2,11 +2,16 @@ import {MediaSession, mediaOwnerID} from '../src/media/MediaSession';
 
 function harness() {
   const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn()};
-  const local = {getTracks: () => [track], getAudioTracks: () => [track], getVideoTracks: () => [], addTrack: jest.fn(), removeTrack: jest.fn()};
+  const cameraTrack = {id: 'camera-1', kind: 'video', enabled: true, stop: jest.fn()}; const screenTrack = {id: 'screen-1', kind: 'video', enabled: true, stop: jest.fn()};
+  const videoTracks: typeof cameraTrack[] = [];
+  const local = {getTracks: () => [track, ...videoTracks], getAudioTracks: () => [track], getVideoTracks: () => videoTracks, addTrack: jest.fn((item: typeof cameraTrack) => videoTracks.push(item)), removeTrack: jest.fn((item: typeof cameraTrack) => { const index = videoTracks.indexOf(item); if (index >= 0) videoTracks.splice(index, 1); })};
+  const cameraStream = {getTracks: () => [cameraTrack], getAudioTracks: () => [], getVideoTracks: () => [cameraTrack]};
+  const screenStream = {getTracks: () => [screenTrack], getAudioTracks: () => [], getVideoTracks: () => [screenTrack]};
+  const senders: Array<{track: typeof cameraTrack | typeof screenTrack}> = [];
   const peer: any = {
-    addTrack: jest.fn(), addTransceiver: jest.fn(), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
+    addTrack: jest.fn(), addTransceiver: jest.fn((source: string | typeof cameraTrack | typeof screenTrack) => { const sender = {track: typeof source === 'string' ? undefined : source}; if (sender.track) senders.push(sender as never); return {sender, setCodecPreferences: jest.fn()}; }), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
     setLocalDescription: jest.fn(async () => {}), setRemoteDescription: jest.fn(async () => {}), addIceCandidate: jest.fn(async () => {}),
-    createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => [], removeTrack: jest.fn(), close: jest.fn(),
+    createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => senders, removeTrack: jest.fn((sender: never) => { const index = senders.indexOf(sender); if (index >= 0) senders.splice(index, 1); }), close: jest.fn(),
     localDescription: {type: 'offer', sdp: 'offer'}, remoteDescription: null, connectionState: 'new', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
   };
   peer.setRemoteDescription.mockImplementation(async (description: object) => { peer.remoteDescription = description; });
@@ -14,10 +19,10 @@ function harness() {
   const statuses: string[] = []; const participants: string[][] = [];
   const session = new MediaSession({
     instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1',
-    getUserMedia: jest.fn(async () => local as never), fetchICE: jest.fn(async () => []),
+    getUserMedia: jest.fn(async constraints => ((constraints as {video?: unknown}).video ? cameraStream : local) as never), getDisplayMedia: jest.fn(async () => screenStream as never), fetchICE: jest.fn(async () => []),
     createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onParticipants: values => participants.push(values.map(value => value.member_id)),
   });
-  return {local, participants, peer, session, socket, statuses, track};
+  return {cameraTrack, local, participants, peer, screenTrack, session, socket, statuses, track};
 }
 
 describe('MediaSession', () => {
@@ -92,6 +97,23 @@ describe('MediaSession', () => {
 
     socket.readyState = 1; socket.onopen?.();
     expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0]).type)).toEqual(['join', 'candidate']);
+    session.stop();
+  });
+
+  it('keeps camera and screen capture mutually exclusive', async () => {
+    const {cameraTrack, screenTrack, session} = harness();
+    await session.start();
+
+    await session.setCamera(true);
+    expect(session.localStream()?.getVideoTracks()).toEqual([cameraTrack]);
+    await session.setScreenSharing(true);
+    expect(cameraTrack.stop).toHaveBeenCalled();
+    expect(session.localStream()?.getVideoTracks()).toEqual([]);
+
+    await session.setCamera(true);
+    expect(screenTrack.stop).toHaveBeenCalled();
+    expect(session.screenStream()).toBeUndefined();
+    expect(session.localStream()?.getVideoTracks()).toEqual([cameraTrack]);
     session.stop();
   });
 });

@@ -18,6 +18,7 @@ export type MediaSessionOptions = {
   createPeer?(configuration: PeerConfiguration): RTCPeerConnection;
   createSocket?(url: string, token: string): SocketLike;
   getUserMedia?(constraints: object): Promise<MediaStream>;
+  getDisplayMedia?(constraints: object): Promise<MediaStream>;
   schedule?(callback: () => void, delay: number): ReturnType<typeof setTimeout>;
 };
 
@@ -45,6 +46,7 @@ export class MediaSession {
 
   async setCamera(enabled: boolean): Promise<void> {
     if (!this.peer || !this.local) throw new Error('Media Session is not connected.');
+    if (enabled && this.screen) await this.setScreenSharing(false);
     const existing = this.local.getVideoTracks()[0];
     if (!enabled && existing) { existing.stop(); this.local.removeTrack(existing); const sender = this.peer.getSenders().find(item => item.track?.id === existing.id); if (sender) this.peer.removeTrack(sender); await this.renegotiate(); return; }
     if (enabled && !existing) { const camera = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: false, video: {facingMode: 'user'}}) as MediaStream; const track = camera.getVideoTracks()[0]; if (track) { this.local.addTrack(track); this.addVideoTrack(track, this.local); await this.renegotiate(); } }
@@ -54,7 +56,8 @@ export class MediaSession {
     if (!this.peer) throw new Error('Media Session is not connected.');
     if (!enabled) { const stream = this.screen; this.screen = undefined; stream?.getTracks().forEach(track => { const sender = this.peer?.getSenders().find(item => item.track?.id === track.id); if (sender) this.peer?.removeTrack(sender); track.stop(); }); this.send({type: 'screen-visibility', visible: false}); await this.renegotiate(); return; }
     if (this.screen) return;
-    const stream = await mediaDevices.getDisplayMedia({android: {resolutionScale: 1}}) as MediaStream; this.screen = stream;
+    if (this.local?.getVideoTracks()[0]) await this.setCamera(false);
+    const stream = await (this.options.getDisplayMedia || mediaDevices.getDisplayMedia)({android: {resolutionScale: 1}}) as MediaStream; this.screen = stream;
     const videoTrack = stream.getVideoTracks()[0]; if (videoTrack) this.addVideoTrack(videoTrack, stream);
     stream.getAudioTracks().forEach(track => this.peer?.addTrack(track, stream)); this.send({type: 'screen-visibility', visible: true});
     if (videoTrack) (videoTrack as unknown as {onended?: () => void}).onended = () => { if (this.screen === stream) this.setScreenSharing(false).catch(() => {}); };

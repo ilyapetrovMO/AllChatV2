@@ -29,12 +29,13 @@ describe('MediaSession', () => {
   });
 
   it('joins with the versioned room protocol and becomes connected on answer', async () => {
-    const {participants, session, socket, statuses} = harness();
+    const {participants, peer, session, socket, statuses} = harness();
     await session.start();
     socket.onopen?.();
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-1', participants: [{member_id: 'member-1'}]})});
 
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({version: 1, type: 'join', room_id: 'voice-1'});
+    expect(peer.addTransceiver).toHaveBeenCalledWith('video', {direction: 'recvonly'});
     expect(statuses).toEqual(['connecting', 'connected']);
     expect(participants).toEqual([['member-1']]);
     session.stop();

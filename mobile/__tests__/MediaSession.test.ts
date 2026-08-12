@@ -11,24 +11,25 @@ function harness() {
   };
   peer.setRemoteDescription.mockImplementation(async (description: object) => { peer.remoteDescription = description; });
   const socket: any = {readyState: 1, onopen: null, onmessage: null, onerror: null, onclose: null, send: jest.fn(), close: jest.fn()};
-  const statuses: string[] = [];
+  const statuses: string[] = []; const participants: string[][] = [];
   const session = new MediaSession({
     instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1',
     getUserMedia: jest.fn(async () => local as never), fetchICE: jest.fn(async () => []),
-    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status),
+    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onParticipants: values => participants.push(values.map(value => value.member_id)),
   });
-  return {local, peer, session, socket, statuses, track};
+  return {local, participants, peer, session, socket, statuses, track};
 }
 
 describe('MediaSession', () => {
   it('joins with the versioned room protocol and becomes connected on answer', async () => {
-    const {session, socket, statuses} = harness();
+    const {participants, session, socket, statuses} = harness();
     await session.start();
     socket.onopen?.();
-    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-1'})});
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-1', participants: [{member_id: 'member-1'}]})});
 
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({version: 1, type: 'join', room_id: 'voice-1'});
     expect(statuses).toEqual(['connecting', 'connected']);
+    expect(participants).toEqual([['member-1']]);
     session.stop();
   });
 
@@ -72,6 +73,17 @@ describe('MediaSession', () => {
 
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
     expect(peer.addIceCandidate).toHaveBeenCalledWith(candidate);
+    session.stop();
+  });
+
+  it('queues local ICE candidates until signaling opens', async () => {
+    const {session, socket, peer} = harness(); socket.readyState = 0;
+    await session.start();
+    peer.onicecandidate?.({candidate: {toJSON: () => ({candidate: 'candidate:local'})}});
+    expect(socket.send).not.toHaveBeenCalled();
+
+    socket.readyState = 1; socket.onopen?.();
+    expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0]).type)).toEqual(['join', 'candidate']);
     session.stop();
   });
 });

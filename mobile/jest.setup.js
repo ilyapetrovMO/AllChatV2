@@ -6,6 +6,7 @@ jest.mock('react-native-webrtc', () => {
     mediaDevices: {},
     MediaStream: class {},
     RTCPeerConnection: class {},
+    RTCRtpSender: {getCapabilities: () => ({codecs: []})},
     RTCSessionDescription: class { constructor(value) { return value; } },
     RTCView: props => React.createElement(View, props),
   };

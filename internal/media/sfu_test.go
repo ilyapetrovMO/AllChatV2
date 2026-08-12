@@ -2,6 +2,7 @@ package media
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -183,6 +184,97 @@ func TestSFUForwardsNonSimulcastScreenToExistingViewer(t *testing.T) {
 		}
 	}
 	t.Fatal("viewer did not receive the source's screen RTP")
+}
+
+func TestSFUForwardsExistingScreenToLateViewer(t *testing.T) {
+	manager := NewManager(5 * time.Second)
+	defer manager.Close()
+	source, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	screen, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000}, "screen", "source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = source.AddTrack(screen); err != nil {
+		t.Fatal(err)
+	}
+	sourceOffer, err := gatheredOffer(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sourceAnswer, _, _, err := manager.AcceptOffer("source", "room", sourceOffer, func(Signal) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = source.SetRemoteDescription(sourceAnswer); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		_ = screen.WriteSample(media.Sample{Data: []byte{0x10, 0x00, 0x00, 0x9d, 0x01, 0x2a, 0x40, 0x01, 0xb4, 0x00}, Duration: 100 * time.Millisecond})
+		manager.mu.Lock()
+		published := manager.screenTracks["room"]["source"] != nil
+		manager.mu.Unlock()
+		if published {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	viewer, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer viewer.Close()
+	if _, err = viewer.AddTransceiverFromKind(webrtc.RTPCodecTypeAudio, webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionSendrecv}); err != nil {
+		t.Fatal(err)
+	}
+	received := make(chan struct{}, 1)
+	viewer.OnTrack(func(track *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
+		if track.Kind() == webrtc.RTPCodecTypeVideo {
+			if _, _, readErr := track.ReadRTP(); readErr == nil {
+				received <- struct{}{}
+			}
+		}
+	})
+	viewerOffer, err := gatheredOffer(viewer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signals := make(chan Signal, 8)
+	viewerAnswer, _, _, err := manager.AcceptOffer("viewer", "room", viewerOffer, func(signal Signal) { signals <- signal })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = viewer.SetRemoteDescription(viewerAnswer); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go answerServerOffers(ctx, viewer, manager, "viewer", signals)
+	manager.Renegotiate("viewer")
+	deadline = time.Now().Add(8 * time.Second)
+	for time.Now().Before(deadline) {
+		_ = screen.WriteSample(media.Sample{Data: []byte{0x10, 0x00, 0x00, 0x9d, 0x01, 0x2a, 0x40, 0x01, 0xb4, 0x00}, Duration: 100 * time.Millisecond})
+		select {
+		case <-received:
+			return
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+	t.Fatal("late viewer did not receive the existing screen RTP")
+}
+
+func TestSetScreenPublishingRequiresAnActiveMediaSession(t *testing.T) {
+	manager := NewManager(5 * time.Second)
+	defer manager.Close()
+	if err := manager.SetScreenPublishing("missing-member", false); !errors.Is(err, ErrNotPresent) {
+		t.Fatalf("SetScreenPublishing error = %v, want ErrNotPresent", err)
+	}
 }
 
 func TestSFUForwardsScreensFromMultiplePublishers(t *testing.T) {

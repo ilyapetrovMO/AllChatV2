@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pion/interceptor"
+	"github.com/pion/rtp"
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 )
@@ -47,6 +48,35 @@ type session struct {
 	joinOrder   uint64
 }
 
+type rtpContinuity struct {
+	mu             sync.Mutex
+	initialized    bool
+	inputSSRC      uint32
+	inputSequence  uint16
+	inputTime      uint32
+	outputSequence uint16
+	outputTime     uint32
+}
+
+func (c *rtpContinuity) rewrite(packet *rtp.Packet) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.initialized {
+		c.initialized = true
+		c.inputSSRC, c.inputSequence, c.inputTime = packet.SSRC, packet.SequenceNumber, packet.Timestamp
+		c.outputSequence, c.outputTime = packet.SequenceNumber, packet.Timestamp
+	} else if packet.SSRC != c.inputSSRC {
+		c.inputSSRC, c.inputSequence, c.inputTime = packet.SSRC, packet.SequenceNumber, packet.Timestamp
+		c.outputSequence++
+		c.outputTime += 960
+	} else {
+		c.outputSequence += packet.SequenceNumber - c.inputSequence
+		c.outputTime += packet.Timestamp - c.inputTime
+		c.inputSequence, c.inputTime = packet.SequenceNumber, packet.Timestamp
+	}
+	packet.SequenceNumber, packet.Timestamp = c.outputSequence, c.outputTime
+}
+
 // Manager is the process-local authority for all Voice Rooms and Direct Calls.
 // Restart intentionally clears it so clients never display stale participation.
 type Manager struct {
@@ -59,6 +89,7 @@ type Manager struct {
 	rooms           map[string]map[string]*session
 	peers           map[string]*Peer
 	tracks          map[string]map[string]*webrtc.TrackLocalStaticRTP
+	continuity      map[string]*rtpContinuity
 	screenTracks    map[string]map[string]*webrtc.TrackLocalStaticRTP
 	screenVisible   map[string]map[string]bool
 	calls           map[string]*DirectCall
@@ -84,6 +115,11 @@ func NewManagerWithLimits(rejoinWindow time.Duration, portMin, portMax uint16, m
 	engine := &webrtc.MediaEngine{}
 	_ = engine.RegisterDefaultCodecs()
 	_ = engine.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: sdp.AudioLevelURI}, webrtc.RTPCodecTypeAudio)
+	for _, kind := range []webrtc.RTPCodecType{webrtc.RTPCodecTypeAudio, webrtc.RTPCodecTypeVideo} {
+		_ = engine.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: sdp.SDESMidURI}, kind)
+	}
+	_ = engine.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: sdp.SDESRTPStreamIDURI}, webrtc.RTPCodecTypeVideo)
+	_ = engine.RegisterHeaderExtension(webrtc.RTPHeaderExtensionCapability{URI: sdp.SDESRepairRTPStreamIDURI}, webrtc.RTPCodecTypeVideo)
 	registry := &interceptor.Registry{}
 	_ = webrtc.RegisterDefaultInterceptors(engine, registry)
 	settings := webrtc.SettingEngine{}
@@ -94,7 +130,7 @@ func NewManagerWithLimits(rejoinWindow time.Duration, portMin, portMax uint16, m
 		maxParticipants = 2
 	}
 	api := webrtc.NewAPI(webrtc.WithMediaEngine(engine), webrtc.WithInterceptorRegistry(registry), webrtc.WithSettingEngine(settings))
-	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenTracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenVisible: map[string]map[string]bool{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
+	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, continuity: map[string]*rtpContinuity{}, screenTracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenVisible: map[string]map[string]bool{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
 }
 
 func (m *Manager) WebRTCAPI() *webrtc.API { return m.api }
@@ -352,6 +388,7 @@ func (m *Manager) Close() {
 	m.rooms = map[string]map[string]*session{}
 	m.peers = map[string]*Peer{}
 	m.tracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
+	m.continuity = map[string]*rtpContinuity{}
 	m.screenTracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
 	m.screenVisible = map[string]map[string]bool{}
 	m.calls = map[string]*DirectCall{}

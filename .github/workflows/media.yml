@@ -1,0 +1,142 @@
+name: Media reliability
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  contract-and-pion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:media:manifest
+      - run: go test -buildvcs=false ./internal/media ./internal/relay
+
+  browser-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run real-browser media test
+        env:
+          ALLCHAT_MEDIA_BROWSER: chromium
+        run: npm run test:media:browser
+      - name: Retain media diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-chromium-${{ github.run_attempt }}
+          path: .dev/media-tests/
+          if-no-files-found: ignore
+
+  browser-full-matrix:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run real-browser media test
+        env:
+          ALLCHAT_MEDIA_BROWSER: ${{ matrix.browser }}
+        run: npm run test:media:browser
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-${{ matrix.browser }}-${{ github.run_attempt }}
+          path: .dev/media-tests/
+          if-no-files-found: ignore
+
+  android-emulator-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: npm ci --prefix mobile
+      - run: npm --prefix mobile test -- --runInBand
+      - name: Build standalone x86_64 APK
+        run: cd mobile/android && ./gradlew assembleStandalone -PreactNativeArchitectures=x86_64 --no-daemon
+      - name: Boot Android and launch bundled application
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r mobile/android/app/build/outputs/apk/standalone/app-standalone.apk
+            adb shell am start -W -n org.allchat.mobile/.MainActivity
+            sleep 5
+            adb shell pidof org.allchat.mobile
+
+  nightly-soak:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Repeat real media lifecycle
+        env:
+          ALLCHAT_MEDIA_ITERATIONS: 20
+        run: npm run test:media:soak
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-soak-${{ github.run_attempt }}
+          path: .dev/media-tests/
+          if-no-files-found: ignore

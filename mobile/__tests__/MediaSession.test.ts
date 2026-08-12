@@ -9,20 +9,21 @@ function harness() {
   const screenStream = {getTracks: () => [screenTrack], getAudioTracks: () => [], getVideoTracks: () => [screenTrack]};
   const senders: Array<{track: typeof cameraTrack | typeof screenTrack}> = [];
   const peer: any = {
-    addTrack: jest.fn(), addTransceiver: jest.fn((source: string | typeof cameraTrack | typeof screenTrack) => { const sender = {track: typeof source === 'string' ? undefined : source}; if (sender.track) senders.push(sender as never); return {sender, setCodecPreferences: jest.fn()}; }), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
+    addTrack: jest.fn(), addTransceiver: jest.fn((source: string | typeof cameraTrack | typeof screenTrack) => { const sender = {track: typeof source === 'string' ? undefined : source, replaceTrack: jest.fn(async (next: typeof cameraTrack | typeof screenTrack | null) => { sender.track = next || undefined; })}; if (sender.track) senders.push(sender as never); return {sender, direction: typeof source === 'string' ? 'recvonly' : 'sendonly', setCodecPreferences: jest.fn()}; }), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
     setLocalDescription: jest.fn(async () => {}), setRemoteDescription: jest.fn(async () => {}), addIceCandidate: jest.fn(async () => {}),
-    createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => senders, removeTrack: jest.fn((sender: never) => { const index = senders.indexOf(sender); if (index >= 0) senders.splice(index, 1); }), close: jest.fn(),
-    localDescription: {type: 'offer', sdp: 'offer'}, remoteDescription: null, connectionState: 'new', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
+    createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => senders, removeTrack: jest.fn((sender: never) => { const index = senders.indexOf(sender); if (index >= 0) senders.splice(index, 1); }), getStats: jest.fn(async () => new Map()), close: jest.fn(),
+    localDescription: {type: 'offer', sdp: 'offer'}, remoteDescription: null, connectionState: 'new', iceConnectionState: 'new', signalingState: 'have-local-offer', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
   };
-  peer.setRemoteDescription.mockImplementation(async (description: object) => { peer.remoteDescription = description; });
+  peer.setRemoteDescription.mockImplementation(async (description: {type?: string}) => { peer.remoteDescription = description; peer.signalingState = description.type === 'offer' ? 'have-remote-offer' : 'stable'; });
+  peer.setLocalDescription.mockImplementation(async (description: {type?: string}) => { peer.localDescription = description; peer.signalingState = description.type === 'rollback' ? 'stable' : description.type === 'answer' ? 'stable' : 'have-local-offer'; });
   const socket: any = {readyState: 1, onopen: null, onmessage: null, onerror: null, onclose: null, send: jest.fn(), close: jest.fn()};
-  const statuses: string[] = []; const participants: string[][] = []; const progress: string[] = []; const remotes: Array<Array<{id: string; ownerID: string}>> = [];
+  const statuses: string[] = []; const participants: string[][] = []; const progress: string[] = []; const remotes: Array<Array<{id: string; ownerID: string}>> = []; const diagnostics: object[] = [];
   const session = new MediaSession({
     instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1',
     getUserMedia: jest.fn(async constraints => ((constraints as {video?: unknown}).video ? cameraStream : local) as never), getDisplayMedia: jest.fn(async () => screenStream as never), fetchICE: jest.fn(async () => []),
-    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onProgress: value => progress.push(value), onRemote: values => remotes.push(values.map(value => ({id: value.id, ownerID: value.ownerID}))), onParticipants: values => participants.push(values.map(value => value.member_id)),
+    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onProgress: value => progress.push(value), onRemote: values => remotes.push(values.map(value => ({id: value.id, ownerID: value.ownerID}))), onParticipants: values => participants.push(values.map(value => value.member_id)), onDiagnostics: value => diagnostics.push(value),
   });
-  return {cameraTrack, local, participants, peer, progress, remotes, screenTrack, session, socket, statuses, track};
+  return {cameraTrack, diagnostics, local, participants, peer, progress, remotes, screenTrack, session, socket, statuses, track};
 }
 
 describe('MediaSession', () => {
@@ -38,6 +39,7 @@ describe('MediaSession', () => {
     await session.start();
     socket.onopen?.();
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-1', participants: [{member_id: 'member-1'}]})});
+	peer.connectionState = 'connected'; peer.onconnectionstatechange?.();
 
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({version: 1, type: 'join', room_id: 'voice-1'});
     expect(peer.addTransceiver).toHaveBeenCalledWith('video', {direction: 'recvonly'});
@@ -107,6 +109,7 @@ describe('MediaSession', () => {
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'candidate', candidate: {candidate: 'candidate:obsolete'}})});
 
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+	peer.connectionState = 'connected'; peer.onconnectionstatechange?.();
 
     expect(statuses).toContain('connected');
     session.stop();
@@ -127,6 +130,7 @@ describe('MediaSession', () => {
     const answer = socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
     const offer = socket.onmessage?.({data: JSON.stringify({version: 1, type: 'offer', sdp: {type: 'offer', sdp: 'offer'}})});
     await Promise.all([answer, offer]);
+	peer.connectionState = 'connected'; peer.onconnectionstatechange?.();
 
     expect(statuses).toContain('connected');
     expect(socket.send.mock.calls.map((call: string[]) => JSON.parse(call[0]).type)).toContain('answer');
@@ -145,6 +149,25 @@ describe('MediaSession', () => {
     expect(remotes.at(-1)).toEqual([{id: 'screen-member-2', ownerID: 'member-2'}]);
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'video-stopped', member_id: 'member-2'})});
     expect(remotes.at(-1)).toEqual([]);
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'video-started', member_id: 'member-2'})});
+    expect(remotes.at(-1)).toEqual([{id: 'screen-member-2', ownerID: 'member-2'}]);
+    session.stop();
+  });
+
+  it('reuses the negotiated outbound video transceiver across capture cycles', async () => {
+    const {peer, session, socket} = harness();
+    await session.start(); socket.onopen?.();
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+    const offersAfterJoin = peer.createOffer.mock.calls.length;
+
+    await session.setCamera(true);
+    const offersAfterFirstVideo = peer.createOffer.mock.calls.length;
+    await session.setCamera(false);
+    await session.setCamera(true);
+
+    expect(offersAfterFirstVideo).toBe(offersAfterJoin + 1);
+    expect(peer.createOffer).toHaveBeenCalledTimes(offersAfterFirstVideo);
+    expect(peer.addTransceiver.mock.calls.filter((call: unknown[]) => typeof call[0] !== 'string')).toHaveLength(1);
     session.stop();
   });
 
@@ -165,6 +188,23 @@ describe('MediaSession', () => {
     await session.start(); socket.onopen?.();
     await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
     expect(progress).toEqual(['Fetching relay configuration…', 'Preparing encrypted media…', 'Opening media signaling…', 'Waiting for the media server…', 'Finishing media connection…']);
+    session.stop();
+  });
+
+  it('emits sanitized, versioned media progress counters', async () => {
+    const {diagnostics, peer, session, socket} = harness();
+    peer.getStats.mockResolvedValue(new Map([
+      ['in-audio', {type: 'inbound-rtp', kind: 'audio', packetsReceived: 12, packetsLost: 1, jitter: 0.02}],
+      ['in-video', {type: 'inbound-rtp', kind: 'video', packetsReceived: 34, framesDecoded: 9}],
+      ['out-video', {type: 'outbound-rtp', kind: 'video', packetsSent: 21, bytesSent: 4096}],
+    ]));
+    await session.start(); socket.onopen?.();
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}})});
+	peer.connectionState = 'connected'; peer.onconnectionstatechange?.();
+    await Promise.resolve();
+
+    expect(diagnostics[0]).toMatchObject({schema: 'allchat.media.test/v1', roomID: 'voice-1', inbound: {audioPackets: 12, videoPackets: 34, videoFrames: 9}, outbound: {videoPackets: 21, bytesSent: 4096}});
+    expect(JSON.stringify(diagnostics[0])).not.toContain('candidate');
     session.stop();
   });
 

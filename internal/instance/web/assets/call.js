@@ -83,7 +83,7 @@
   };
   const renderMedia = () => {
     const grid = mediaGrid(); if (!grid) return;
-    const summary = document.querySelector(".member-summary"), other = document.querySelector(".dm-profile-card"), videos = [...remoteVideo.values()];
+    const summary = document.querySelector(".member-summary"), other = document.querySelector(".dm-profile-card"), videos = [...remoteVideo.values()].filter(video => video.dataset.stopped !== "true");
     const ownName = summary?.querySelector("strong")?.textContent.trim() || "You", ownImage = summary?.querySelector("img")?.src || "";
     const otherName = other?.querySelector("h2")?.textContent.trim() || "Other Member", otherImage = other?.querySelector("img")?.src || "";
     grid.replaceChildren(participantTile(ownName === "You" ? ownName : `${ownName} (You)`, ownImage, localScreenVideo), participantTile(otherName, otherImage, videos[0]));
@@ -93,14 +93,13 @@
 
   const stopScreen = async ({renegotiate = true} = {}) => {
     const stream = screenStream; screenStream = null;
-    if (stream) connection?.send("video-stopped");
     screenSender = null;
     localScreenVideo?.remove(); localScreenVideo = null;
     stream?.getTracks().forEach(track => {track.onended = null; track.stop();});
     for (const sender of stream?.__allchatSenders || []) { try { connection?.removeTrack(sender); } catch (_) {} }
     document.querySelector("[data-call-screen]")?.classList.remove("active");
     renderMedia();
-    if (renegotiate && connection && !connection.stopped) await connection.renegotiate();
+    if (renegotiate && connection && !connection.stopped) await connection.clearVideoTrack();
   };
 
   const toggleScreen = async button => {
@@ -108,19 +107,16 @@
     if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this browser.");
     const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
     const videoTrack = stream.getVideoTracks()[0], senders = [];
-    let sender;
-    try {
-      sender = connection.addTransceiver(videoTrack, {direction: "sendonly", streams: [stream], sendEncodings: [
+    stream.getAudioTracks().forEach(track => senders.push(connection.addTrack(track, stream)));
+    const sender = await connection.setVideoTrack(videoTrack, stream, {sendEncodings: [
         {rid: "q", scaleResolutionDownBy: 4, maxBitrate: Math.min(250000, mediaConfig.screen_bitrate)},
         {rid: "h", scaleResolutionDownBy: 2, maxBitrate: Math.min(750000, mediaConfig.screen_bitrate)},
         {rid: "f", maxBitrate: mediaConfig.screen_bitrate},
-      ]}).sender;
-    } catch (_) { sender = connection.addTrack(videoTrack, stream); }
-    screenSender = sender; senders.push(sender); stream.getAudioTracks().forEach(track => senders.push(connection.addTrack(track, stream)));
+      ]});
+    screenSender = sender;
     stream.__allchatSenders = senders; screenStream = stream; button.classList.add("active");
     localScreenVideo = document.createElement("video"); localScreenVideo.autoplay = true; localScreenVideo.muted = true; localScreenVideo.playsInline = true; localScreenVideo.className = "shared-screen"; localScreenVideo.srcObject = stream; renderMedia();
     videoTrack.onended = () => stopScreen().catch(() => {});
-    await connection.renegotiate();
   };
 
   const renderConnectedView = () => {
@@ -213,7 +209,11 @@
         stopScreen().catch(() => {});
         const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
       } else if (frame.type === "video-stopped") {
-        clearRemoteVideo();
+        for (const video of remoteVideo.values()) { video.dataset.stopped = "true"; video.remove(); }
+        renderMedia();
+      } else if (frame.type === "video-started") {
+        for (const video of remoteVideo.values()) { video.dataset.stopped = "false"; video.play().catch(() => {}); }
+        renderMedia();
       }
     };
     const progress = message => { if (!connection || connection.state !== "connected") { panel.hidden=false;panel.innerHTML='<span class="call-progress"></span>';panel.firstElementChild.textContent=message;attachPanel(); } };

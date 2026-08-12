@@ -3,7 +3,10 @@
   "private": true,
   "scripts": {
     "test:ui": "playwright test",
-    "test:ui:update": "playwright test --update-snapshots"
+    "test:ui:update": "playwright test --update-snapshots",
+    "test:media:manifest": "node media-tests/validate-scenarios.js",
+    "test:media:browser": "node media-tests/browser/run.js",
+    "test:media:soak": "node media-tests/soak.js"
   },
   "devDependencies": {
     "@playwright/test": "latest"

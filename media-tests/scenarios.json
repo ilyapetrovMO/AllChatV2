@@ -1,0 +1,23 @@
+{
+  "schema": "allchat.media.scenarios/v1",
+  "scenarios": [
+    {"id":"two-way-audio","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"late-participant","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"camera-start-stop-restart","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"screen-start-stop-restart","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"camera-screen-replacement","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"publisher-crash-sharing","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"viewer-rejoin-takeover","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"signaling-loss-media-live","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"media-loss-signaling-live","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"ice-restart","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"stale-candidate","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"glare","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"background-foreground","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"capture-release-cycles","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"late-viewer-screen","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"track-mute-unmute","tiers":["pr","full","nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"instance-restart","tiers":["nightly"],"sessions":["voice_room","direct_call"]},
+    {"id":"forced-turn","tiers":["full","nightly"],"sessions":["voice_room","direct_call"]}
+  ]
+}

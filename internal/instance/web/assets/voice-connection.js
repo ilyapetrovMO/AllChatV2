@@ -33,7 +33,9 @@
       this.heartbeat = null;
       this.iceTimer = null;
       this.lastHeartbeatAck = 0;
-	  this.diagnosticsTimer = null;
+      this.diagnosticsTimer = null;
+      this.negotiation = Promise.resolve();
+      this.videoTransceiver = null;
     }
 
     async start() {
@@ -57,7 +59,33 @@
     addTransceiver(...arguments_) { return this.peer?.addTransceiver(...arguments_); }
     removeTrack(sender) { if (this.peer && sender) this.peer.removeTrack(sender); }
 
+    async setVideoTrack(track, stream, options = {}) {
+      if (!this.peer) throw new Error("Media Session is not connected");
+      return this._withNegotiation(async () => {
+        if (this.videoTransceiver) {
+          await this.videoTransceiver.sender.replaceTrack(track);
+        } else {
+          this.videoTransceiver = this.peer.addTransceiver(track, {direction: "sendonly", streams: [stream], ...options});
+          await this._sendOffer();
+        }
+        this._send({type: "video-started"});
+        return this.videoTransceiver.sender;
+      });
+    }
+
+    async clearVideoTrack() {
+      if (!this.videoTransceiver) return;
+      return this._withNegotiation(async () => {
+        this._send({type: "video-stopped"});
+        await this.videoTransceiver.sender.replaceTrack(null);
+      });
+    }
+
     async renegotiate({iceRestart = false} = {}) {
+      return this._withNegotiation(() => this._sendOffer(iceRestart));
+    }
+
+    async _sendOffer(iceRestart = false) {
       if (!this.peer || this.socket?.readyState !== 1) throw new Error("Voice signaling is unavailable");
       if (iceRestart) this.peer.restartIce?.();
       const offer = await this.peer.createOffer(iceRestart ? {iceRestart: true} : undefined);
@@ -119,6 +147,10 @@
             return;
           }
           if (frame.type === "answer") {
+            // A simultaneous server offer may have rolled back this client's
+            // offer. Its eventual answer is then obsolete and must not tear
+            // down the otherwise-stable session.
+            if (peer.signalingState && peer.signalingState !== "have-local-offer") return;
             this.onProgress("Finishing media connection…");
             await peer.setRemoteDescription(frame.sdp);
             for (const candidate of pendingRemote.splice(0)) peer.addIceCandidate(candidate).catch(() => {});
@@ -128,9 +160,7 @@
             }
 			if (!connected) {
 			  connected = true;
-			  this._state("connected");
 			  this._startDiagnostics(peer, generation);
-			  this.recovering = false;
 			  if (!settled) { settled = true; resolve(); }
 			}
             return;
@@ -140,11 +170,21 @@
             return;
           }
           if (frame.type === "offer") {
-            await peer.setRemoteDescription(frame.sdp);
-            const answer = await peer.createAnswer();
-            await peer.setLocalDescription(answer);
-            await this._waitForGathering(peer);
-            this._send({type: "answer", sdp: peer.localDescription});
+            await this._withNegotiation(async () => {
+              const retryLocalOffer = peer.signalingState === "have-local-offer";
+              if (retryLocalOffer) await peer.setLocalDescription({type: "rollback"});
+              await peer.setRemoteDescription(frame.sdp);
+              const answer = await peer.createAnswer();
+              await peer.setLocalDescription(answer);
+              await this._waitForGathering(peer);
+              this._send({type: "answer", sdp: peer.localDescription});
+              if (retryLocalOffer) {
+                const offer = await peer.createOffer();
+                await peer.setLocalDescription(offer);
+                await this._waitForGathering(peer);
+                this._send({type: "offer", sdp: peer.localDescription});
+              }
+            });
             return;
           }
           this.onFrame(frame);
@@ -216,6 +256,7 @@
       this.peer?.close();
       this.socket = null;
       this.peer = null;
+      this.videoTransceiver = null;
       if (!this.localMediaReleased) {
         this.localMediaReleased = true;
         this.stream?.getTracks().forEach(track => track.stop?.());
@@ -229,7 +270,8 @@
       clearTimeout(this.iceTimer);
       if (state === "connected" || state === "completed") {
         clearTimeout(this.iceTimer);
-        if (this.state === "recovering") { this.recovering = false; this._state("connected"); }
+        this.recovering = false;
+        this._state("connected");
         return;
       }
       if (state === "failed") { this._tryIceRestart(generation); return; }
@@ -266,7 +308,7 @@
 			if (item.type==="inbound-rtp") { inbound.packets+=item.packetsReceived||0;inbound.bytes+=item.bytesReceived||0;inbound.lost+=item.packetsLost||0;inbound.jitter=Math.max(inbound.jitter,item.jitter||0); }
 			if (item.type==="outbound-rtp") { outbound.packets+=item.packetsSent||0;outbound.bytes+=item.bytesSent||0;outbound.discarded+=item.packetsDiscardedOnSend||0; }
 		  });
-		  this.onDiagnostics({at:new Date().toISOString(),roomID:this.roomID,state:this.state,peerState:peer.connectionState||"",iceState:peer.iceConnectionState||"",inbound,outbound});
+		  this.onDiagnostics({schema:"allchat.media.test/v1",at:new Date().toISOString(),roomID:this.roomID,generation,connectionState:peer.connectionState||"",iceConnectionState:peer.iceConnectionState||"",signalingState:peer.signalingState||"",inbound,outbound});
 		} catch (_) {}
 	  };
 	  collect();
@@ -277,6 +319,12 @@
       if (this.socket?.readyState !== 1) return false;
       this.socket.send(JSON.stringify({version: 1, ...frame}));
       return true;
+    }
+
+    _withNegotiation(action) {
+      const result = this.negotiation.catch(() => {}).then(action);
+      this.negotiation = result.catch(() => {});
+      return result;
     }
 
     _state(state, error) {

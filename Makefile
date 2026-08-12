@@ -2,7 +2,7 @@ DEV_DATA_DIR ?= .dev/data
 DEV_LISTEN ?= 127.0.0.1:8080
 GOFLAGS ?= -buildvcs=false
 
-.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-music-bot dev-bot-gui drop-db test test-ui test-ui-update test-mobile lint-mobile typecheck-mobile android build build-music-bot build-bootstrap build-mobile clean
+.PHONY: dev dev-bot dev-voice-bot dev-echo-bot dev-music-bot dev-bot-gui drop-db test test-ui test-ui-update test-media-manifest test-media-browser test-media-soak test-mobile lint-mobile typecheck-mobile android build build-music-bot build-bootstrap build-mobile clean
 
 dev:
 	go run $(GOFLAGS) ./cmd/allchat --data-dir "$(DEV_DATA_DIR)" --listen "$(DEV_LISTEN)"
@@ -33,6 +33,15 @@ test-ui:
 
 test-ui-update:
 	npm run test:ui:update
+
+test-media-browser:
+	npm run test:media:browser
+
+test-media-manifest:
+	npm run test:media:manifest
+
+test-media-soak:
+	npm run test:media:soak
 
 test-mobile:
 	npm --prefix mobile test -- --runInBand

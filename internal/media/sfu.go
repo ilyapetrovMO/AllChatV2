@@ -2,8 +2,6 @@
 package media
 
 import (
-	"errors"
-	"io"
 	"strings"
 	"sync"
 	"time"
@@ -32,6 +30,8 @@ type Peer struct {
 	signal     func(Signal)
 	negotiate  sync.Mutex
 	pending    bool
+	tracks     map[string]*webrtc.RTPSender
+	screens    map[string]*webrtc.RTPSender
 }
 
 // Broadcast sends an authoritative room event to each currently connected peer.
@@ -86,16 +86,19 @@ func (m *Manager) acceptJoinedOffer(memberID, roomID string, joined JoinResult, 
 	m.mu.Lock()
 	m.nextPeerLease++
 	lease := m.nextPeerLease
-	peer := &Peer{memberID: memberID, roomID: roomID, lease: lease, connection: connection, signal: signal}
+	peer := &Peer{memberID: memberID, roomID: roomID, lease: lease, connection: connection, signal: signal, tracks: map[string]*webrtc.RTPSender{}, screens: map[string]*webrtc.RTPSender{}}
 	previousPeer := m.peers[memberID]
 	for sourceTrackID, track := range m.tracks[roomID] {
 		if !strings.HasPrefix(sourceTrackID, memberID+":") {
-			_, _ = connection.AddTrack(track)
+			if sender, addErr := connection.AddTrack(track); addErr == nil {
+				peer.tracks[sourceTrackID] = sender
+			}
 		}
 	}
+	existingScreens := make(map[string]*webrtc.TrackLocalStaticRTP, len(m.screenTracks[roomID]))
 	for ownerID, screen := range m.screenTracks[roomID] {
 		if ownerID != memberID {
-			_, _ = connection.AddTrack(screen)
+			existingScreens[ownerID] = screen
 		}
 	}
 	m.peers[memberID] = peer
@@ -111,9 +114,22 @@ func (m *Manager) acceptJoinedOffer(memberID, roomID string, joined JoinResult, 
 		if remote.Kind() != webrtc.RTPCodecTypeAudio {
 			return
 		}
-		local, trackErr := webrtc.NewTrackLocalStaticRTP(remote.Codec().RTPCodecCapability, "audio-"+memberID, "member-"+memberID)
-		if trackErr != nil {
-			return
+		trackKey := memberID + ":" + remote.ID()
+		m.mu.Lock()
+		local := m.tracks[peer.roomID][trackKey]
+		continuityKey := peer.roomID + ":" + trackKey
+		continuity := m.continuity[continuityKey]
+		if continuity == nil {
+			continuity = &rtpContinuity{}
+			m.continuity[continuityKey] = continuity
+		}
+		m.mu.Unlock()
+		if local == nil {
+			var trackErr error
+			local, trackErr = webrtc.NewTrackLocalStaticRTP(remote.Codec().RTPCodecCapability, remote.ID(), "member-"+memberID)
+			if trackErr != nil {
+				return
+			}
 		}
 		m.publishTrack(peer, local)
 		defer m.unpublishTrack(peer, local)
@@ -137,9 +153,11 @@ func (m *Manager) acceptJoinedOffer(memberID, roomID string, joined JoinResult, 
 					m.MarkSpeaking(memberID)
 				}
 			}
-			if writeErr := local.WriteRTP(packet); writeErr != nil && !errors.Is(writeErr, io.ErrClosedPipe) {
-				return
-			}
+			continuity.rewrite(packet)
+			// A subscriber binding can disappear while its Media Session is being
+			// replaced. Never terminate the publisher reader because one binding
+			// failed; remaining and future subscribers must keep receiving RTP.
+			_ = local.WriteRTP(packet)
 		}
 	})
 	connection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
@@ -173,6 +191,19 @@ func (m *Manager) acceptJoinedOffer(memberID, roomID string, joined JoinResult, 
 		return webrtc.SessionDescription{}, "", 0, err
 	}
 	<-gathered
+	// The client's initial offer may contain no video media section. Adding an
+	// existing screen before answering rejects that transceiver permanently in
+	// some WebRTC implementations. Attach screens only after the initial
+	// exchange is stable; Renegotiate then introduces them with a server offer.
+	m.mu.Lock()
+	for ownerID, screen := range existingScreens {
+		if m.screenTracks[roomID][ownerID] == screen {
+			if sender, addErr := connection.AddTrack(screen); addErr == nil {
+				peer.screens[ownerID] = sender
+			}
+		}
+	}
+	m.mu.Unlock()
 	return *connection.LocalDescription(), joined.ResumeToken, lease, nil
 }
 
@@ -296,6 +327,51 @@ func (m *Manager) SetScreenVisible(memberID string, visible bool) error {
 	return nil
 }
 
+// SetScreenPublishing explicitly gates a Member's forwarded video without
+// destroying its negotiated transceiver. Browsers may emit padding or frozen
+// frames after replaceTrack(nil); recipients must not treat those as media.
+func (m *Manager) SetScreenPublishing(memberID string, publishing bool) error {
+	m.mu.Lock()
+	item := m.byMember[memberID]
+	if item == nil {
+		m.mu.Unlock()
+		return ErrNotPresent
+	}
+	roomID := item.participant.RoomID
+	track := m.screenTracks[roomID][memberID]
+	if track == nil {
+		m.mu.Unlock()
+		return nil
+	}
+	peers := make([]*Peer, 0, len(m.rooms[roomID]))
+	for otherID := range m.rooms[roomID] {
+		peer := m.peers[otherID]
+		if peer == nil || otherID == memberID {
+			continue
+		}
+		sender := peer.screens[memberID]
+		if sender != nil {
+			if publishing {
+				_ = sender.ReplaceTrack(track)
+			} else {
+				_ = sender.ReplaceTrack(nil)
+			}
+			continue
+		}
+		if publishing {
+			if added, addErr := peer.connection.AddTrack(track); addErr == nil {
+				peer.screens[memberID] = added
+				peers = append(peers, peer)
+			}
+		}
+	}
+	m.mu.Unlock()
+	for _, peer := range peers {
+		go peer.sendOffer()
+	}
+	return nil
+}
+
 func (m *Manager) RemovePeer(memberID string) {
 	m.detachPeer(memberID, 0, true, true)
 }
@@ -374,8 +450,12 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
-			_, _ = peer.connection.AddTrack(local)
-			peers = append(peers, peer)
+			if sender := peer.screens[source.memberID]; sender != nil {
+				_ = sender.ReplaceTrack(local)
+			} else if added, addErr := peer.connection.AddTrack(local); addErr == nil {
+				peer.screens[source.memberID] = added
+				peers = append(peers, peer)
+			}
 		}
 	}
 	m.mu.Unlock()
@@ -409,25 +489,21 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 		if m.screenTracks[source.roomID][source.memberID] == local {
 			delete(m.screenTracks[source.roomID], source.memberID)
 		}
-		targets := append([]*Peer(nil), peers...)
-		m.mu.Unlock()
-		for _, peer := range targets {
-			for _, sender := range peer.connection.GetSenders() {
-				if sender.Track() == local {
-					_ = peer.connection.RemoveTrack(sender)
+		for memberID := range m.rooms[source.roomID] {
+			if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
+				if sender := peer.screens[source.memberID]; sender != nil && sender.Track() == local {
+					_ = sender.ReplaceTrack(nil)
 				}
 			}
-			go peer.sendOffer()
 		}
+		m.mu.Unlock()
 	}()
 	for {
 		packet, _, readErr := remote.ReadRTP()
 		if readErr != nil {
 			return
 		}
-		if writeErr := local.WriteRTP(packet); writeErr != nil && !errors.Is(writeErr, io.ErrClosedPipe) {
-			return
-		}
+		_ = local.WriteRTP(packet)
 	}
 }
 
@@ -452,8 +528,12 @@ func (m *Manager) publishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) 
 	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
-			_, _ = peer.connection.AddTrack(track)
-			peers = append(peers, peer)
+			if sender := peer.tracks[sourceTrackID]; sender != nil {
+				_ = sender.ReplaceTrack(track)
+			} else if added, addErr := peer.connection.AddTrack(track); addErr == nil {
+				peer.tracks[sourceTrackID] = added
+				peers = append(peers, peer)
+			}
 		}
 	}
 	m.mu.Unlock()
@@ -464,27 +544,26 @@ func (m *Manager) publishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) 
 
 func (m *Manager) unpublishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) {
 	m.mu.Lock()
+	// A replacement Media Session may already be writing into the same stable
+	// publication. Cleanup from the superseded peer must not detach it.
+	if m.peers[source.memberID] != source {
+		m.mu.Unlock()
+		return
+	}
 	trackKey := source.memberID + ":" + track.ID()
 	if m.tracks[source.roomID][trackKey] != track {
 		m.mu.Unlock()
 		return
 	}
 	delete(m.tracks[source.roomID], trackKey)
-	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
-			for _, sender := range peer.connection.GetSenders() {
-				if sender.Track() == track {
-					_ = peer.connection.RemoveTrack(sender)
-				}
+			if sender := peer.tracks[trackKey]; sender != nil && sender.Track() == track {
+				_ = sender.ReplaceTrack(nil)
 			}
-			peers = append(peers, peer)
 		}
 	}
 	m.mu.Unlock()
-	for _, peer := range peers {
-		go peer.sendOffer()
-	}
 }
 
 func (p *Peer) sendOffer() {

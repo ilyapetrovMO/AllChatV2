@@ -329,6 +329,17 @@ make test-ui
 
 Node and Playwright are test dependencies only; the AllChat binary continues to embed every runtime frontend asset.
 
+WebRTC reliability has deterministic Pion, real-browser, Android lifecycle, and soak tiers. After installing the Playwright browsers, run:
+
+```sh
+make test-media-manifest
+make test-media-browser
+ALLCHAT_MEDIA_BROWSER=firefox make test-media-browser
+ALLCHAT_MEDIA_ITERATIONS=20 make test-media-soak
+```
+
+See [Media testing](docs/media-testing.md) for scenario coverage, pass criteria, network impairment profiles, CI tiers, and sanitized failure artifacts.
+
 The embedded client targets the current and previous major desktop releases of Chromium and Firefox plus current Safari. Mobile text messaging is supported responsively; microphone calls depend on browser media permissions, and mobile screen sharing is best-effort because browsers may not expose `getDisplayMedia`. The UI honors reduced-motion preferences, provides visible keyboard focus, and renders stored UTC instants through the browser's local timezone. English strings are routed through a client text catalog seam for later localization.
 
 ## License

@@ -1,6 +1,12 @@
 import {mediaDevices, MediaStream, RTCPeerConnection, RTCRtpSender, RTCSessionDescription} from 'react-native-webrtc';
 
 export type MediaStatus = 'idle' | 'connecting' | 'connected' | 'recovering' | 'failed';
+export type MediaDiagnostics = {
+  schema: 'allchat.media.test/v1'; at: string; roomID: string; generation: number;
+  connectionState: string; iceConnectionState: string; signalingState: string;
+  inbound: {audioPackets: number; videoPackets: number; videoFrames: number; packetsLost: number; jitter: number};
+  outbound: {audioPackets: number; videoPackets: number; bytesSent: number};
+};
 export type MediaParticipant = {member_id: string; connected?: boolean; muted?: boolean; server_muted?: boolean; speaking?: boolean; screen_sharing?: boolean};
 export type RemoteMedia = {id: string; ownerID: string; stream: MediaStream; kind: 'audio' | 'video'};
 type SocketLike = {readyState: number; onopen: null | (() => void); onmessage: null | ((event: {data: string}) => void); onerror: null | (() => void); onclose: null | (() => void); send(value: string): void; close(): void};
@@ -15,6 +21,7 @@ export type MediaSessionOptions = {
   onRemote?(media: RemoteMedia[]): void;
   onParticipants?(participants: MediaParticipant[]): void;
   onFrame?(frame: MediaFrame): void;
+  onDiagnostics?(snapshot: MediaDiagnostics): void;
   fetchICE?(): Promise<IceServer[]>;
   createPeer?(configuration: PeerConfiguration): RTCPeerConnection;
   createSocket?(url: string, token: string): SocketLike;
@@ -25,9 +32,11 @@ export type MediaSessionOptions = {
 
 export class MediaSession {
   private peer?: RTCPeerConnection; private socket?: SocketLike; private local?: MediaStream;
-  private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private resumeToken = '';
+  private outgoingVideo?: ReturnType<RTCPeerConnection['addTransceiver']>;
+  private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private suspendedRemote = new Map<string, RemoteMedia>(); private resumeToken = '';
   private screenVisible = false;
-  private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0;
+  private negotiation = Promise.resolve();
+  private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private diagnostics?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0;
   constructor(private readonly options: MediaSessionOptions) {}
 
   async start(): Promise<void> {
@@ -40,7 +49,7 @@ export class MediaSession {
   stop(explicit = true): void {
     if (explicit && this.socket?.readyState === 1) this.send({type: 'leave'});
     this.stopped = true; this.generation += 1; this.clearTimers(); this.socket?.close(); this.peer?.close();
-    this.socket = undefined; this.peer = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
+    this.socket = undefined; this.peer = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.suspendedRemote.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
   }
 
   setMuted(muted: boolean): void { this.local?.getAudioTracks().forEach(track => { track.enabled = !muted; }); this.send({type: 'mute-state', muted}); }
@@ -51,8 +60,8 @@ export class MediaSession {
     if (!this.peer || !this.local) throw new Error('Media Session is not connected.');
     if (enabled && this.screen) await this.setScreenSharing(false);
     const existing = this.local.getVideoTracks()[0];
-    if (!enabled && existing) { this.send({type: 'video-stopped'}); existing.stop(); this.local.removeTrack(existing); const sender = this.peer.getSenders().find(item => item.track?.id === existing.id); if (sender) this.peer.removeTrack(sender); await this.renegotiate(); return; }
-    if (enabled && !existing) { const camera = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: false, video: {facingMode: 'user'}}) as MediaStream; const track = camera.getVideoTracks()[0]; if (track) { this.local.addTrack(track); this.addVideoTrack(track, this.local); await this.renegotiate(); } }
+    if (!enabled && existing) { this.send({type: 'video-stopped'}); await this.clearVideoTrack(); existing.stop(); this.local.removeTrack(existing); return; }
+    if (enabled && !existing) { const camera = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: false, video: {facingMode: 'user'}}) as MediaStream; const track = camera.getVideoTracks()[0]; if (track) { this.local.addTrack(track); await this.setVideoTrack(track, this.local); } }
   }
 
   switchCamera(): void {
@@ -63,21 +72,20 @@ export class MediaSession {
 
   async setScreenSharing(enabled: boolean): Promise<void> {
     if (!this.peer) throw new Error('Media Session is not connected.');
-    if (!enabled) { const stream = this.screen; this.screen = undefined; if (stream) this.send({type: 'video-stopped'}); stream?.getTracks().forEach(track => { const sender = this.peer?.getSenders().find(item => item.track?.id === track.id); if (sender) this.peer?.removeTrack(sender); track.stop(); }); await this.renegotiate(); return; }
+    if (!enabled) { const stream = this.screen; this.screen = undefined; if (stream) { this.send({type: 'video-stopped'}); await this.clearVideoTrack(); } stream?.getTracks().forEach(track => track.stop()); return; }
     if (this.screen) return;
     if (this.local?.getVideoTracks()[0]) await this.setCamera(false);
     const stream = await (this.options.getDisplayMedia || mediaDevices.getDisplayMedia)({android: {resolutionScale: 1}}) as MediaStream; this.screen = stream;
-    const videoTrack = stream.getVideoTracks()[0]; if (videoTrack) this.addVideoTrack(videoTrack, stream);
+    const videoTrack = stream.getVideoTracks()[0]; if (videoTrack) await this.setVideoTrack(videoTrack, stream);
     stream.getAudioTracks().forEach(track => this.peer?.addTrack(track, stream));
     if (videoTrack) (videoTrack as unknown as {onended?: () => void}).onended = () => { if (this.screen === stream) this.setScreenSharing(false).catch(() => {}); };
-    await this.renegotiate();
   }
 
   localStream(): MediaStream | undefined { return this.local; }
   screenStream(): MediaStream | undefined { return this.screen; }
 
   private async connect(takeover: boolean): Promise<void> {
-    const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close();
+    const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close(); this.outgoingVideo = undefined;
     this.options.onProgress?.('Fetching relay configuration…');
     const iceServers = this.options.fetchICE ? await this.options.fetchICE() : await this.fetchICE();
     if (this.stopped || generation !== this.generation) return;
@@ -88,14 +96,15 @@ export class MediaSession {
     this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'}); peer.addTransceiver('video', {direction: 'recvonly'});
     peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; muted?: boolean; onended?: () => void; onmute?: () => void; onunmute?: () => void}}) => {
       const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'};
-      const remove = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); };
-      const publish = () => { if (event.track.kind === 'video' && ownerID) for (const [remoteID, current] of this.remote) if (current.kind === 'video' && current.ownerID === ownerID) this.remote.delete(remoteID); this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
+      const remove = () => { if (this.remote.get(id) === item) this.remote.delete(id); if (this.suspendedRemote.get(id) === item) this.suspendedRemote.delete(id); this.options.onRemote?.([...this.remote.values()]); };
+      const suspend = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.suspendedRemote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
+      const publish = () => { if (event.track.kind === 'video' && ownerID) for (const [remoteID, current] of this.remote) if (current.kind === 'video' && current.ownerID === ownerID) this.remote.delete(remoteID); this.suspendedRemote.delete(id); this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
       event.track.onended = remove;
-      if (event.track.kind === 'video') { event.track.onmute = remove; event.track.onunmute = publish; if (!event.track.muted) publish(); }
+      if (event.track.kind === 'video') { event.track.onmute = suspend; event.track.onunmute = publish; if (!event.track.muted) publish(); }
       else publish();
     };
     peer.onicecandidate = (event: {candidate?: {toJSON(): object}}) => { if (!event.candidate) return; const frame = {type: 'candidate', candidate: event.candidate.toJSON()}; if (this.socket?.readyState === 1) this.send(frame); else pendingLocal.push(frame); };
-    peer.onconnectionstatechange = () => { if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
+    peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') { this.retry = 0; this.options.onStatus?.('connected'); this.startDiagnostics(peer, generation); } else if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
     this.options.onProgress?.('Opening media signaling…');
     const socket = (this.options.createSocket || nativeSocket)(this.mediaURL(), this.options.token); this.socket = socket;
@@ -111,27 +120,51 @@ export class MediaSession {
   private async handleFrame(frame: MediaFrame, peer: RTCPeerConnection, generation: number, pendingRemote: object[]) {
     if (this.stopped || generation !== this.generation || frame.type === 'heartbeat-ack') return;
     if (frame.type === 'error') { const error = new Error(frame.error || 'Media signaling failed') as Error & {code?: string}; error.code = frame.code; throw error; }
-    if (frame.type === 'answer' && frame.sdp) { this.options.onProgress?.('Finishing media connection…'); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; if (frame.participants) this.options.onParticipants?.(frame.participants); this.retry = 0; this.send({type: 'screen-visibility', visible: this.screenVisible}); this.options.onStatus?.('connected'); return; }
+    if (frame.type === 'answer' && frame.sdp) { if (peer.signalingState && peer.signalingState !== 'have-local-offer') return; this.options.onProgress?.('Finishing media connection…'); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); if (frame.resume_token) this.resumeToken = frame.resume_token; if (frame.participants) this.options.onParticipants?.(frame.participants); this.send({type: 'screen-visibility', visible: this.screenVisible}); return; }
     if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) peer.addIceCandidate(frame.candidate as never).catch(() => {}); else pendingRemote.push(frame.candidate); return; }
-    if (frame.type === 'offer' && frame.sdp) { await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); }
-    else if (frame.type === 'video-stopped' && frame.member_id) { for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }
+    if (frame.type === 'offer' && frame.sdp) { await this.withNegotiation(async () => { const retryLocalOffer = peer.signalingState === 'have-local-offer'; if (retryLocalOffer) await peer.setLocalDescription({type: 'rollback'} as never); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); if (retryLocalOffer) { const offer = await peer.createOffer(); await peer.setLocalDescription(offer); this.send({type: 'offer', sdp: peer.localDescription}); } }); }
+    else if (frame.type === 'video-stopped' && frame.member_id) { for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.remote.delete(id); this.suspendedRemote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
+    else if (frame.type === 'video-started' && frame.member_id) { for (const [id, item] of this.suspendedRemote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.suspendedRemote.delete(id); this.remote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
     else this.options.onFrame?.(frame);
   }
 
   private async flushRemoteCandidates(peer: RTCPeerConnection, pending: object[]) { for (const candidate of pending.splice(0)) peer.addIceCandidate(candidate as never).catch(() => {}); }
 
-  private async renegotiate() { if (!this.peer) return; const offer = await this.peer.createOffer(); await this.peer.setLocalDescription(offer); this.send({type: 'offer', sdp: this.peer.localDescription}); }
-  private addVideoTrack(track: MediaStream['getVideoTracks'] extends () => Array<infer T> ? T : never, stream: MediaStream) {
+  private async renegotiate() { return this.withNegotiation(async () => { if (!this.peer) return; const offer = await this.peer.createOffer(); await this.peer.setLocalDescription(offer); this.send({type: 'offer', sdp: this.peer.localDescription}); }); }
+  private withNegotiation(action: () => Promise<void>) { const result = this.negotiation.catch(() => {}).then(action); this.negotiation = result.catch(() => {}); return result; }
+  private async setVideoTrack(track: MediaStream['getVideoTracks'] extends () => Array<infer T> ? T : never, stream: MediaStream) {
     if (!this.peer) return;
-    const transceiver = this.peer.addTransceiver(track, {direction: 'sendonly', streams: [stream]});
+    if (this.outgoingVideo) { await this.outgoingVideo.sender.replaceTrack(track); this.send({type: 'video-started'}); return; }
+    const transceiver = this.peer.addTransceiver(track, {direction: 'sendonly', streams: [stream]}); this.outgoingVideo = transceiver;
     const capabilities = RTCRtpSender.getCapabilities('video').codecs;
     const preferred = [...capabilities.filter(codec => codec.mimeType.toLowerCase() === 'video/vp8'), ...capabilities.filter(codec => codec.mimeType.toLowerCase() !== 'video/vp8')];
     if (preferred.length) transceiver.setCodecPreferences(preferred);
+    await this.renegotiate(); this.send({type: 'video-started'});
   }
+  private async clearVideoTrack() { if (!this.outgoingVideo) return; await this.outgoingVideo.sender.replaceTrack(null); }
   private recover(error: Error) { if (this.stopped || this.reconnect) return; this.options.onStatus?.('recovering', error); const delay = Math.min(4000, 500 * 2 ** Math.min(this.retry++, 3)); this.reconnect = (this.options.schedule || setTimeout)(() => { this.reconnect = undefined; this.connect(this.retry > 2).catch(caught => this.fail(caught)); }, delay); }
   private fail(caught: unknown) { const error = asError(caught); this.stopped = true; this.clearTimers(); this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.peer?.close(); this.socket?.close(); this.options.onStatus?.('failed', error); }
   private send(frame: object) { if (this.socket?.readyState === 1) this.socket.send(JSON.stringify({version: 1, ...frame})); }
-  private clearTimers() { if (this.heartbeat) clearInterval(this.heartbeat); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.reconnect = undefined; }
+  private startDiagnostics(peer: RTCPeerConnection, generation: number) {
+    if (!this.options.onDiagnostics) return;
+    if (this.diagnostics) clearInterval(this.diagnostics);
+    const collect = async () => {
+      if (this.stopped || this.peer !== peer || this.generation !== generation) return;
+      try {
+        const inbound = {audioPackets: 0, videoPackets: 0, videoFrames: 0, packetsLost: 0, jitter: 0};
+        const outbound = {audioPackets: 0, videoPackets: 0, bytesSent: 0};
+        const report = await peer.getStats();
+        report.forEach((item: {type?: string; kind?: string; mediaType?: string; packetsReceived?: number; packetsSent?: number; packetsLost?: number; framesDecoded?: number; jitter?: number; bytesSent?: number}) => {
+          const kind = item.kind || item.mediaType;
+          if (item.type === 'inbound-rtp') { if (kind === 'audio') inbound.audioPackets += item.packetsReceived || 0; if (kind === 'video') { inbound.videoPackets += item.packetsReceived || 0; inbound.videoFrames += item.framesDecoded || 0; } inbound.packetsLost += item.packetsLost || 0; inbound.jitter = Math.max(inbound.jitter, item.jitter || 0); }
+          if (item.type === 'outbound-rtp') { if (kind === 'audio') outbound.audioPackets += item.packetsSent || 0; if (kind === 'video') outbound.videoPackets += item.packetsSent || 0; outbound.bytesSent += item.bytesSent || 0; }
+        });
+        this.options.onDiagnostics?.({schema: 'allchat.media.test/v1', at: new Date().toISOString(), roomID: this.options.roomID, generation, connectionState: peer.connectionState || '', iceConnectionState: peer.iceConnectionState || '', signalingState: peer.signalingState || '', inbound, outbound});
+      } catch {}
+    };
+    collect(); this.diagnostics = setInterval(collect, 1000);
+  }
+  private clearTimers() { if (this.heartbeat) clearInterval(this.heartbeat); if (this.diagnostics) clearInterval(this.diagnostics); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.diagnostics = undefined; this.reconnect = undefined; }
   private release(stream?: MediaStream) { stream?.getTracks().forEach(track => track.stop()); }
   private mediaURL() { const url = new URL(this.options.instanceURL); return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/api/v1/media`; }
   private async fetchICE(): Promise<IceServer[]> {

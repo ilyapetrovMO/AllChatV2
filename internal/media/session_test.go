@@ -5,8 +5,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 )
+
+func TestRTPContinuityKeepsSequenceAndTimestampMonotonicAcrossSourceReplacement(t *testing.T) {
+	continuity := &rtpContinuity{}
+	packets := []*rtp.Packet{
+		{Header: rtp.Header{SSRC: 10, SequenceNumber: 65000, Timestamp: 48000}},
+		{Header: rtp.Header{SSRC: 10, SequenceNumber: 65001, Timestamp: 48960}},
+		{Header: rtp.Header{SSRC: 20, SequenceNumber: 2, Timestamp: 1000}},
+		{Header: rtp.Header{SSRC: 20, SequenceNumber: 3, Timestamp: 1960}},
+	}
+	for _, packet := range packets {
+		continuity.rewrite(packet)
+	}
+	if packets[2].SequenceNumber != 65002 || packets[2].Timestamp != 49920 {
+		t.Fatalf("replacement packet = seq %d timestamp %d, want seq 65002 timestamp 49920", packets[2].SequenceNumber, packets[2].Timestamp)
+	}
+	if packets[3].SequenceNumber != 65003 || packets[3].Timestamp != 50880 {
+		t.Fatalf("next packet = seq %d timestamp %d, want seq 65003 timestamp 50880", packets[3].SequenceNumber, packets[3].Timestamp)
+	}
+}
 
 func TestManagerEnforcesOneSessionAndBoundedResume(t *testing.T) {
 	now := time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC)

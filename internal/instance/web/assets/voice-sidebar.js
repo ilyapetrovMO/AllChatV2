@@ -17,31 +17,26 @@
 	  window.allchatVoicePending.set(session.roomID, {member_id: session.profile.id, profile: session.profile, status});
 	  document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
 	};
-  const renegotiate = async session => {
-    await session.connection?.renegotiate();
-  };
   const stopScreen = async session => {
     const stream=session.screenStream;
     session.screenStream=null;
-    session.connection?.send("video-stopped");
     stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
     session.screenSenders.forEach(sender=>{try{session.connection?.removeTrack(sender)}catch(_){}});
     session.screenSenders=[];session.screenSender=null;
     session.panel.querySelector("[data-voice-screen]")?.classList.remove("active");
     renderStage();
-    await renegotiate(session);
+    await session.connection?.clearVideoTrack();
   };
   const toggleScreen = async session => {
     if(session.screenStream)return stopScreen(session);
     if(!navigator.mediaDevices?.getDisplayMedia)throw new Error(window.allchatText?.screenUnavailable||"Screen sharing is unavailable on this browser.");
     const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}),track=stream.getVideoTracks()[0],senders=[];
-    let sender;
-    try{sender=session.connection.addTransceiver(track,{direction:"sendonly",streams:[stream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]}).sender}catch(_){sender=session.connection.addTrack(track,stream)}
-    session.screenStream=stream;session.screenSender=sender;senders.push(sender);stream.getAudioTracks().forEach(audio=>senders.push(session.connection.addTrack(audio,stream)));session.screenSenders=senders;
+    stream.getAudioTracks().forEach(audio=>senders.push(session.connection.addTrack(audio,stream)));
+    const sender=await session.connection.setVideoTrack(track,stream,{sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate}]});
+    session.screenStream=stream;session.screenSender=sender;session.screenSenders=senders;
     session.panel.querySelector("[data-voice-screen]")?.classList.add("active");
     track.onended=()=>stopScreen(session).catch(()=>{});
     renderStage();
-    await renegotiate(session);
   };
   let stageRenderSequence=0;
   const renderStage = async () => {
@@ -53,7 +48,7 @@
     if(sequence!==stageRenderSequence||active!==session||!grid.isConnected)return;
     const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[],screensByMember=new Map(),unmatchedScreens=[];
     if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screensByMember.set(session.profile.id,local)}
-    const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const [trackID,video] of session.remoteVideos||[]){const memberID=trackID.startsWith("screen-")?trackID.slice(7):"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
+    const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const [trackID,video] of session.remoteVideos||[]){if(video.dataset.stopped==="true")continue;const memberID=trackID.startsWith("screen-")?trackID.slice(7):"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
     for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{},screen=screensByMember.get(participant.member_id)||(participant.screen_sharing?unmatchedScreens.shift():null);let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;const visual=document.createElement("div");visual.className="media-stage-visual";tile.append(visual,document.createElement("strong"))}const visual=tile.querySelector(".media-stage-visual"),sharing=!!screen;tile.classList.toggle("speaking",!!participant.speaking);tile.classList.toggle("sharing",sharing);tile.onclick=sharing?()=>tile.classList.toggle("expanded"):null;if(sharing){if(screen.parentElement!==visual)visual.replaceChildren(screen)}else{tile.classList.remove("expanded");let avatar=visual.firstElementChild;if(!avatar||avatar.matches("video")){avatar=document.createElement(profile.avatar_url?"img":"span");visual.replaceChildren(avatar)}const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge");if((sharing||participant.screen_sharing)&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!sharing&&!participant.screen_sharing){badge?.remove()}desired.push(tile)}
     if(!desired.length){let empty=existing.get("empty");if(!empty){empty=document.createElement("p");empty.className="media-stage-empty";empty.dataset.stageKey="empty";empty.textContent="No one is connected to this Voice Room."}desired.push(empty)}
     desired.forEach((node,index)=>{if(grid.children[index]!==node)grid.insertBefore(node,grid.children[index]||null)});
@@ -188,8 +183,11 @@
         } else if (frame.type === "screen-rejected") {
           stopScreen(session); status.textContent = "Someone else is already sharing their screen.";
         } else if(frame.type === "video-stopped") {
-          for(const [id,video] of session.remoteVideos)if(video.dataset.memberId===frame.member_id){session.remoteVideos.delete(id);video.remove()}
+          for(const video of session.remoteVideos.values())if(video.dataset.memberId===frame.member_id){video.dataset.stopped="true";video.remove()}
           document.querySelector(`[data-media-stage-grid] [data-stage-key="participant:${CSS.escape(frame.member_id)}"]`)?.classList.remove("expanded");
+          renderStage();
+        } else if(frame.type === "video-started") {
+          for(const video of session.remoteVideos.values())if(video.dataset.memberId===frame.member_id){video.dataset.stopped="false";video.play().catch(()=>{})}
           renderStage();
         } else if(frame.type === "soundboard-played" && frame.sound) playSound(frame.sound);
       };

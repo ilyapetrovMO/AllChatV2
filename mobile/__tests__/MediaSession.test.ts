@@ -1,4 +1,4 @@
-import {MediaSession} from '../src/media/MediaSession';
+import {MediaSession, mediaOwnerID} from '../src/media/MediaSession';
 
 function harness() {
   const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn()};
@@ -21,6 +21,13 @@ function harness() {
 }
 
 describe('MediaSession', () => {
+  it('uses SFU stream identity instead of rewritten native track IDs', () => {
+    expect(mediaOwnerID('native-random-track', 'member-member-1')).toBe('member-1');
+    expect(mediaOwnerID('native-random-track', 'screen-member-2')).toBe('member-2');
+    expect(mediaOwnerID('audio-member-3')).toBe('member-3');
+    expect(mediaOwnerID('native-random-track')).toBe('');
+  });
+
   it('joins with the versioned room protocol and becomes connected on answer', async () => {
     const {participants, session, socket, statuses} = harness();
     await session.start();

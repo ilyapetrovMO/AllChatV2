@@ -71,7 +71,7 @@ export class MediaSession {
     const pendingLocal: object[] = []; const pendingRemote: object[] = [];
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
     this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'});
-    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; this.remote.set(id, {id, ownerID: mediaOwnerID(id), stream, kind: event.track.kind as 'audio' | 'video'}); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
+    peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; onended?: () => void}}) => { const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; this.remote.set(id, {id, ownerID: mediaOwnerID(id, stream.id), stream, kind: event.track.kind as 'audio' | 'video'}); this.options.onRemote?.([...this.remote.values()]); event.track.onended = () => { this.remote.delete(id); this.options.onRemote?.([...this.remote.values()]); }; };
     peer.onicecandidate = (event: {candidate?: {toJSON(): object}}) => { if (!event.candidate) return; const frame = {type: 'candidate', candidate: event.candidate.toJSON()}; if (this.socket?.readyState === 1) this.send(frame); else pendingLocal.push(frame); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
@@ -118,4 +118,10 @@ export class MediaSession {
 
 function nativeSocket(url: string, token: string) { return new WebSocket(url, null, {headers: {Authorization: `Bearer ${token}`}}) as unknown as SocketLike; }
 function asError(value: unknown) { return value instanceof Error ? value : new Error('Media Session failed.'); }
-export function mediaOwnerID(trackID: string) { return trackID.replace(/^(?:audio|screen)-/, ''); }
+export function mediaOwnerID(trackID: string, streamID = '') {
+  for (const value of [streamID, trackID]) {
+    const match = /^(?:member|audio|screen)-(.+)$/.exec(value);
+    if (match) return match[1];
+  }
+  return '';
+}

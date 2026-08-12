@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v4"
 	"github.com/pion/webrtc/v4/pkg/media"
 )
@@ -135,9 +136,27 @@ func TestSFUForwardsNonSimulcastScreenToExistingViewer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = source.AddTrack(screen); err != nil {
+	sender, err := source.AddTrack(screen)
+	if err != nil {
 		t.Fatal(err)
 	}
+	keyframeRequested := make(chan struct{}, 1)
+	go func() {
+		for {
+			packets, _, readErr := sender.ReadRTCP()
+			if readErr != nil {
+				return
+			}
+			for _, packet := range packets {
+				if _, ok := packet.(*rtcp.PictureLossIndication); ok {
+					select {
+					case keyframeRequested <- struct{}{}:
+					default:
+					}
+				}
+			}
+		}
+	}()
 	sourceOffer, err := gatheredOffer(source)
 	if err != nil {
 		t.Fatal(err)
@@ -154,7 +173,12 @@ func TestSFUForwardsNonSimulcastScreenToExistingViewer(t *testing.T) {
 		_ = screen.WriteSample(media.Sample{Data: []byte{0x10, 0x00, 0x00, 0x9d, 0x01, 0x2a, 0x40, 0x01, 0xb4, 0x00}, Duration: 100 * time.Millisecond})
 		select {
 		case <-videoPackets:
-			return
+			select {
+			case <-keyframeRequested:
+				return
+			case <-time.After(3 * time.Second):
+				t.Fatal("source did not receive a keyframe request")
+			}
 		case <-time.After(100 * time.Millisecond):
 		}
 	}

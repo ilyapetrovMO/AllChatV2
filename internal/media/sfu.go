@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pion/rtcp"
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 )
@@ -377,6 +378,28 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 	for _, peer := range peers {
 		go peer.sendOffer()
 	}
+	// Video sources need periodic picture-loss feedback. Without it, a viewer
+	// that misses the first keyframe remains black and packet loss leaves every
+	// viewer frozen indefinitely because this SFU terminates the original RTCP
+	// feedback path when it republishes the RTP track.
+	requestKeyframe := func() {
+		_ = source.connection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remote.SSRC())}})
+	}
+	done := make(chan struct{})
+	go func() {
+		requestKeyframe()
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				requestKeyframe()
+			case <-done:
+				return
+			}
+		}
+	}()
+	defer close(done)
 	defer func() {
 		m.mu.Lock()
 		if m.screenTracks[source.roomID][source.memberID] == local {

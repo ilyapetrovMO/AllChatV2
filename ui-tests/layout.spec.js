@@ -100,6 +100,9 @@ test('Voice and Video settings persist processing and volume preferences per Mem
   await expect(page.getByRole('button', {name: 'Test Video'})).toBeVisible();
   await stabilize(page);
   await expect(page).toHaveScreenshot('voice-video-settings.png', {animations: 'disabled', caret: 'hide', fullPage: true});
+  await page.locator('a[href="#advanced"]').click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await expect(page.getByRole('heading', {name: 'Advanced'})).toBeInViewport();
   await page.getByLabel('Automatic gain control').check();
   await page.locator('input[name="inputGain"]').fill('1.5');
   await page.reload();
@@ -114,6 +117,9 @@ test('Voice and Video settings save when opened inside the settings overlay', as
   await page.locator('.member-settings').click();
   await page.locator('[data-app-overlay] a[href="/voice-video"]').click();
   await expect(page.locator('[data-app-overlay] [data-voice-settings]')).toBeVisible();
+  await page.locator('[data-app-overlay] a[href="#processing"]').click();
+  await expect.poll(() => page.locator('[data-app-overlay]').evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+  await expect(page.getByRole('heading', {name: 'Input processing'})).toBeInViewport();
   await page.getByLabel('Automatic gain control').check();
   await page.locator('[data-overlay-close]').click();
   await page.locator('.member-settings').click();

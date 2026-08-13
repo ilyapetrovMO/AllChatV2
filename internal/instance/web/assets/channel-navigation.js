@@ -124,6 +124,14 @@
     const link = event.target.closest("a[href]");
     if (!link || !link.closest(".app-shell") || link.matches(".voice-link") || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target || link.hasAttribute("download")) return;
     const url = new URL(link.href, location.href);
+    if (url.origin === location.origin && url.pathname === location.pathname && url.search === location.search && url.hash) {
+      const target = link.closest(".app-shell").querySelector(url.hash);
+      if (!target) return;
+      event.preventDefault();
+      target.scrollIntoView({block: "start"});
+      history.pushState(history.state, "", url);
+      return;
+    }
     if (link.closest("[data-app-overlay]") && url.pathname === "/") {
       event.preventDefault();
       closeOverlay();

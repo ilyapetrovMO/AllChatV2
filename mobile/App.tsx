@@ -7,6 +7,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
+  Modal,
   StatusBar,
   StyleSheet,
   Text,
@@ -116,46 +117,8 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
     return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><View style={styles.centered}><ActivityIndicator color={palette.accent} /></View></SafeAreaView>;
   }
 
-  if (active && voiceSettingsOpen) {
-    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><VoiceVideoSettingsScreen initial={voiceSettings} onBack={() => setVoiceSettingsOpen(false)} onChange={next => { setVoiceSettings(next); voiceSettingsStore.save(active.instance_url, active.member.id, next).catch(() => {}); }} palette={palette} /></SafeAreaView>;
-  }
-
-  if (active && !adding && !managing) {
-    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><CommunityScreen account={active} onManage={() => setManaging(true)} onVoiceSettingsChange={next => { setVoiceSettings(next); voiceSettingsStore.save(active.instance_url, active.member.id, next).catch(() => {}); }} palette={palette} voiceSettings={voiceSettings} /></SafeAreaView>;
-  }
-
-  if (active && managing && !adding) {
-    const name = active.member.display_name || active.member.username;
-    return (
-      <SafeAreaView style={shellStyle}>
-        <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
-        <View style={styles.accountHeader}>
-          <View style={styles.grow}>
-            <Text style={[styles.eyebrow, {color: palette.accent}]}>ACTIVE INSTANCE</Text>
-            <Text numberOfLines={1} style={[styles.instanceTitle, {color: palette.text}]}>{instanceName(active.instance_url)}</Text>
-            <Text style={[styles.copy, {color: palette.muted}]}>{name} · @{active.member.username}</Text>
-          </View>
-          <TouchableOpacity accessibilityRole="button" onPress={() => setAdding(true)} style={[styles.smallButton, {borderColor: palette.border}]}>
-            <Text style={{color: palette.text}}>Add</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.accountList}>
-          <Text style={[styles.sectionTitle, {color: palette.text}]}>Your Instances</Text>
-          {accounts.map(account => (
-            <TouchableOpacity accessibilityRole="button" key={account.instance_url} onPress={() => setActive(account)} style={[styles.account, {backgroundColor: palette.field, borderColor: account.instance_url === active.instance_url ? palette.accent : palette.border}]}>
-              <Text style={[styles.accountName, {color: palette.text}]}>{instanceName(account.instance_url)}</Text>
-              <Text style={{color: palette.muted}}>@{account.member.username}</Text>
-            </TouchableOpacity>
-          ))}
-          {status ? <Text style={[styles.notice, {color: palette.muted}]}>{status}</Text> : null}
-          <TouchableOpacity accessibilityRole="button" onPress={() => setManaging(false)} style={[styles.button, {backgroundColor: palette.accent}]}><Text style={styles.buttonText}>Open Community</Text></TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" onPress={() => setVoiceSettingsOpen(true)} style={[styles.button, styles.secondaryButton, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={[styles.secondaryButtonText, {color: palette.text}]}>Voice & Video Settings</Text></TouchableOpacity>
-          <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={() => signOut(active)} style={styles.dangerButton}>
-            <Text style={styles.dangerText}>{submitting ? 'Signing out…' : 'Sign out of this Instance'}</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
+  if (active && !adding) {
+    return <ActiveCommunity account={active} accounts={accounts} dark={dark} managing={managing} onAdd={() => setAdding(true)} onCloseSettings={() => setVoiceSettingsOpen(false)} onManage={() => setManaging(true)} onOpenCommunity={() => setManaging(false)} onOpenSettings={() => setVoiceSettingsOpen(true)} onSelectAccount={setActive} onSignOut={() => signOut(active)} onVoiceSettingsChange={next => { setVoiceSettings(next); voiceSettingsStore.save(active.instance_url, active.member.id, next).catch(() => {}); }} palette={palette} status={status} submitting={submitting} voiceSettings={voiceSettings} voiceSettingsOpen={voiceSettingsOpen} />;
   }
 
   return (
@@ -176,6 +139,43 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
       </View>
     </SafeAreaView>
   );
+}
+
+type Palette = typeof darkPalette;
+
+function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSettings, onManage, onOpenCommunity, onOpenSettings, onSelectAccount, onSignOut, onVoiceSettingsChange, palette, status, submitting, voiceSettings, voiceSettingsOpen}: {
+  account: InstanceAccount; accounts: InstanceAccount[]; dark: boolean; managing: boolean;
+  onAdd(): void; onCloseSettings(): void; onManage(): void; onOpenCommunity(): void; onOpenSettings(): void;
+  onSelectAccount(account: InstanceAccount): void; onSignOut(): void; onVoiceSettingsChange(settings: VoiceVideoSettings): void;
+  palette: Palette; status: string; submitting: boolean; voiceSettings: VoiceVideoSettings; voiceSettingsOpen: boolean;
+}) {
+  const name = account.member.display_name || account.member.username;
+  const shellStyle = [styles.screen, {backgroundColor: palette.background}];
+  return <SafeAreaView style={shellStyle}>
+    <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
+    <CommunityScreen account={account} onManage={onManage} onVoiceSettingsChange={onVoiceSettingsChange} palette={palette} voiceSettings={voiceSettings} />
+    <Modal animationType="slide" onRequestClose={voiceSettingsOpen ? onCloseSettings : onOpenCommunity} visible={managing}>
+      {voiceSettingsOpen ? <SafeAreaView style={shellStyle}><VoiceVideoSettingsScreen initial={voiceSettings} onBack={onCloseSettings} onChange={onVoiceSettingsChange} palette={palette} /></SafeAreaView> : <SafeAreaView style={shellStyle}>
+        <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
+        <View style={styles.accountHeader}>
+          <View style={styles.grow}>
+            <Text style={[styles.eyebrow, {color: palette.accent}]}>ACTIVE INSTANCE</Text>
+            <Text numberOfLines={1} style={[styles.instanceTitle, {color: palette.text}]}>{instanceName(account.instance_url)}</Text>
+            <Text style={[styles.copy, {color: palette.muted}]}>{name} · @{account.member.username}</Text>
+          </View>
+          <TouchableOpacity accessibilityRole="button" onPress={onAdd} style={[styles.smallButton, {borderColor: palette.border}]}><Text style={{color: palette.text}}>Add</Text></TouchableOpacity>
+        </View>
+        <View style={styles.accountList}>
+          <Text style={[styles.sectionTitle, {color: palette.text}]}>Your Instances</Text>
+          {accounts.map(item => <TouchableOpacity accessibilityRole="button" key={item.instance_url} onPress={() => onSelectAccount(item)} style={[styles.account, {backgroundColor: palette.field, borderColor: item.instance_url === account.instance_url ? palette.accent : palette.border}]}><Text style={[styles.accountName, {color: palette.text}]}>{instanceName(item.instance_url)}</Text><Text style={{color: palette.muted}}>@{item.member.username}</Text></TouchableOpacity>)}
+          {status ? <Text style={[styles.notice, {color: palette.muted}]}>{status}</Text> : null}
+          <TouchableOpacity accessibilityRole="button" onPress={onOpenCommunity} style={[styles.button, {backgroundColor: palette.accent}]}><Text style={styles.buttonText}>Open Community</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={onOpenSettings} style={[styles.button, styles.secondaryButton, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={[styles.secondaryButtonText, {color: palette.text}]}>Voice & Video Settings</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={onSignOut} style={styles.dangerButton}><Text style={styles.dangerText}>{submitting ? 'Signing out…' : 'Sign out of this Instance'}</Text></TouchableOpacity>
+        </View>
+      </SafeAreaView>}
+    </Modal>
+  </SafeAreaView>;
 }
 
 function instanceName(instanceURL: string): string {

@@ -42,6 +42,7 @@ export class MediaSession {
   private screenVisible = false;
   private negotiation = Promise.resolve();
   private audioUpdate = Promise.resolve();
+  private audioSettingsRevision = 0;
   private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private diagnostics?: ReturnType<typeof setInterval>; private gateTimer?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0; private manuallyMuted = false;
   constructor(private readonly options: MediaSessionOptions) {}
 
@@ -73,11 +74,12 @@ export class MediaSession {
     setTrackVolume(this.local?.getAudioTracks()[0], settings.inputGain);
     for (const item of this.remote.values()) if (item.kind === 'audio') setTrackVolume(item.stream.getAudioTracks()[0], settings.outputVolume * (settings.memberVolumes[item.ownerID] ?? 1));
     if (!this.local || !this.peer || sameCaptureSettings(previous, settings)) return this.audioUpdate;
+    const revision = ++this.audioSettingsRevision;
     const apply = async () => {
       if (this.stopped || !this.local || !this.peer) return;
       const replacement = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: voiceAudioConstraints(settings), video: false}) as MediaStream;
       const next = replacement.getAudioTracks()[0], current = this.local.getAudioTracks()[0];
-      if (!next || this.stopped || !this.peer) { this.release(replacement); return; }
+      if (!next || revision !== this.audioSettingsRevision || this.stopped || !this.peer) { this.release(replacement); return; }
       const sender = this.outgoingAudio;
       if (!sender) { this.release(replacement); throw new Error('The active microphone sender is unavailable. Rejoin to apply processing changes.'); }
       next.enabled = !this.manuallyMuted; setTrackVolume(next, settings.inputGain);

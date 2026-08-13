@@ -57,6 +57,29 @@ describe('MediaSession', () => {
     session.stop();
   });
 
+  it('never installs a stale microphone capture after a newer setting is requested', async () => {
+    const {peer, session} = harness();
+    const staleTrack = {id: 'audio-stale', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    const currentTrack = {id: 'audio-current', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    const stream = (track: typeof staleTrack) => ({getTracks: () => [track], getAudioTracks: () => [track], getVideoTracks: () => []});
+    let resolveStale!: (value: ReturnType<typeof stream>) => void;
+    const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
+    await session.start();
+    getUserMedia.mockImplementationOnce(() => new Promise(resolve => { resolveStale = resolve; })).mockResolvedValueOnce(stream(currentTrack));
+
+    const stale = session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+    for (let attempt = 0; attempt < 5 && !resolveStale; attempt++) await Promise.resolve();
+    expect(resolveStale).toBeDefined();
+    const current = session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, echoCancellation: false});
+    resolveStale(stream(staleTrack));
+    await Promise.all([stale, current]);
+
+    const sender = peer.getSenders().find((item: {track?: {kind?: string}}) => item.track?.kind === 'audio');
+    expect(staleTrack.stop).toHaveBeenCalled();
+    expect(sender.track).toBe(currentTrack);
+    session.stop();
+  });
+
   it('uses SFU stream identity instead of rewritten native track IDs', () => {
     expect(mediaOwnerID('native-random-track', 'member-member-1')).toBe('member-1');
     expect(mediaOwnerID('native-random-track', 'screen-member-2')).toBe('member-2');

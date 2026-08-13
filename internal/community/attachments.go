@@ -26,7 +26,7 @@ import (
 
 const (
 	defaultAttachmentBytes = int64(10 << 20)
-	hardAttachmentBytes    = int64(25 << 20)
+	hardAttachmentBytes    = int64(256 << 20)
 	defaultStorageBytes    = int64(1 << 30)
 	hardStorageBytes       = int64(10 << 30)
 	attachmentRecovery     = time.Hour
@@ -73,7 +73,7 @@ func (s *Service) UpdateMaxAttachmentBytes(ctx context.Context, actor identity.M
 		return ErrForbidden
 	}
 	if maximum < 1<<20 || maximum > hardAttachmentBytes {
-		return fmt.Errorf("%w: attachment limit must be between 1 and 25 MiB", ErrInvalidInput)
+		return fmt.Errorf("%w: attachment limit must be between 1 and 256 MiB", ErrInvalidInput)
 	}
 	if _, err := s.db.ExecContext(ctx, `UPDATE attachment_settings SET max_file_bytes=? WHERE id=1`, maximum); err != nil {
 		return err

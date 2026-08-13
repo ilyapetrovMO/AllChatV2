@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 21
+const schemaVersion = 22
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -743,6 +743,22 @@ func initializeSchema(db *sql.DB) error {
 		}
 		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 21, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
 			return fmt.Errorf("record Attachment settings schema: %w", err)
+		}
+	}
+	if currentVersion < 22 {
+		if _, err := tx.ExecContext(ctx, `
+			ALTER TABLE attachment_settings RENAME TO attachment_settings_v21;
+			CREATE TABLE attachment_settings (
+				id INTEGER PRIMARY KEY CHECK(id=1),
+				max_file_bytes INTEGER NOT NULL CHECK(max_file_bytes BETWEEN 1048576 AND 268435456)
+			);
+			INSERT INTO attachment_settings(id,max_file_bytes) SELECT id,max_file_bytes FROM attachment_settings_v21;
+			DROP TABLE attachment_settings_v21;
+		`); err != nil {
+			return fmt.Errorf("raise Attachment size ceiling: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 22, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Attachment ceiling migration: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {

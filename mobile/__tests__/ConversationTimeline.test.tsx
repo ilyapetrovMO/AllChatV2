@@ -12,6 +12,7 @@ import {
   mergeMessagePage,
   MessageRow,
   trimMessageWindow,
+  conversationKeyboardBehavior,
 } from '../src/screens/CommunityScreen';
 import type { Message } from '../src/client/bootstrap';
 import type { DirectMessage } from '../src/client/bootstrap';
@@ -37,14 +38,18 @@ const message: Message = {
 };
 
 describe('native conversation timeline', () => {
+  it('resizes the conversation above Android keyboards', () => {
+    expect(conversationKeyboardBehavior('android')).toBe('height');
+    expect(conversationKeyboardBehavior('ios')).toBe('padding');
+  });
   it('keeps the home DM preview bounded and removes transient duplicates', () => {
     const dm = (id: string): DirectMessage => ({
       id,
-        other: { id: `member-${id}`, username: id, owner: false },
-        blocked_by_me: false,
-        blocked_me: false,
-        unread: 0,
-        created_at: '2030-01-01T00:00:00Z',
+      other: { id: `member-${id}`, username: id, owner: false },
+      blocked_by_me: false,
+      blocked_me: false,
+      unread: 0,
+      created_at: '2030-01-01T00:00:00Z',
     });
     expect(
       homeDirectMessages([

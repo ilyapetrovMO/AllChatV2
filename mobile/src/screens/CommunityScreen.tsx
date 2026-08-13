@@ -140,6 +140,10 @@ export function homeDirectMessages(items: DirectMessage[], limit = 3) {
     .slice(0, limit);
 }
 
+export function conversationKeyboardBehavior(platform: string) {
+  return platform === 'ios' ? ('padding' as const) : ('height' as const);
+}
+
 export function CommunityScreen({
   account,
   palette,
@@ -1289,7 +1293,7 @@ export function CommunityScreen({
       {mediaSession}
       {!mediaRoomOpen ? (
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={conversationKeyboardBehavior(Platform.OS)}
           style={styles.fill}
         >
           <View style={[styles.header, { borderBottomColor: palette.border }]}>

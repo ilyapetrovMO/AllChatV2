@@ -116,3 +116,7 @@
 .composer { background: #222329; }
 .sidebar-footer { background: #0e0f12; }
 a[href="/search"] { display: none; }
+.header-search { display: block; margin: 0; }
+.header-search input { width: min(220px,24vw); height: 30px; padding: 4px 10px; border-color: var(--border); background: var(--bg-input); font-size: .82rem; }
+.app-overlay .content-header .header-actions { margin-right: 52px; }
+@media(max-width:760px) { .header-search input { width: min(34vw,160px); } }

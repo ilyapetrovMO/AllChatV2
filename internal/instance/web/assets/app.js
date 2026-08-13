@@ -20,7 +20,19 @@
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});
   };
   const removeDuplicateSearchEntries=(root=document)=>root.querySelectorAll?.('a[href="/search"]').forEach(link=>link.remove());
-  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root)});
+  const installGlobalSearch=(root=document)=>{
+    root.querySelectorAll?.('.content > form[action="/search"]').forEach(form=>form.remove());
+    root.querySelectorAll?.(".content-header").forEach((header,index)=>{
+      if(header.querySelector('[role="search"]'))return;
+      const form=document.createElement("form"),label=document.createElement("label"),input=document.createElement("input");
+      form.className="header-search global-header-search";form.role="search";form.method="get";form.action="/search";
+      label.className="sr-only";label.htmlFor=`global-search-${index}`;label.textContent="Search Community";
+      input.id=label.htmlFor;input.name="q";input.type="search";input.maxLength=200;input.placeholder="Search Community";input.autocomplete="off";
+      if(location.pathname==="/search")input.value=new URLSearchParams(location.search).get("q")||"";
+      form.append(label,input);let actions=header.querySelector(".header-actions");if(!actions){actions=document.createElement("div");actions.className="header-actions";header.append(actions)}actions.append(form);
+    });
+  };
+  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();installGlobalSearch();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);installGlobalSearch(root)});
   if (window.__allchatWebSocketBatches) return;
   window.__allchatWebSocketBatches = true;
   const NativeWebSocket = window.WebSocket;

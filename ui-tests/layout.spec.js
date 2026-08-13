@@ -87,14 +87,22 @@ async function openCommunity(page, mobile) {
   if (mobile) await page.locator('[data-sidebar-toggle]').click();
 }
 
-test('web search is exposed only in the conversation header', async ({page}) => {
+test('community search stays in the top-right header across web screens', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);
   await expect(page.locator('.content-header [role="search"]')).toHaveCount(1);
   await expect(page.locator('a[href="/search"]')).toHaveCount(0);
   await page.locator('.member-settings').click();
   await expect(page.locator('[data-app-overlay] a[href="/search"]')).toHaveCount(0);
-  await expect(page.locator('[data-app-overlay] [role="search"]')).toHaveCount(0);
+  await expect(page.locator('[data-app-overlay] .content-header [role="search"]')).toHaveCount(1);
+  await page.locator('[data-app-overlay] a[href="/sessions"]').click();
+  await expect(page.locator('[data-app-overlay] .content-header [role="search"]')).toHaveCount(1);
+  await expect(page.locator('[data-app-overlay] .content > form[action="/search"]')).toHaveCount(0);
+  await page.locator('[data-app-overlay] .content-header [role="search"] input').fill('Welcome');
+  await page.locator('[data-app-overlay] .content-header [role="search"] input').press('Enter');
+  await expect(page).toHaveURL(/\/search\?q=Welcome$/);
+  await expect(page.locator('[data-app-overlay] .content-header [role="search"]')).toHaveCount(1);
+  await expect(page.locator('[data-app-overlay] .content > form[action="/search"]')).toHaveCount(0);
 });
 
 test('Voice and Video settings persist processing and volume preferences per Member', async ({page}) => {

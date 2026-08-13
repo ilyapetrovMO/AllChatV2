@@ -218,7 +218,7 @@
   .channel-content > .content-header { position: relative; width: 100%; min-width: 0; }
   .channel-content > .content-header h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .channel-content > .content-header .header-actions { min-width: 0; }
-  .channel-content > .content-header .header-search { display: none; }
+  .channel-content > .content-header .header-search { display: block; }
   .channel-topic { display: none; }
   .header-search input { width: min(36vw, 180px); }
   .conversation-layout, .conversation-layout.search-open { grid-template-columns: 1fr; }

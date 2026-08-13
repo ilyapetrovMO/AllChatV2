@@ -19,7 +19,12 @@ export function VoiceVideoSettingsScreen({initial, onBack, onChange, palette}: {
     {choices('Audio route', value.speakerID, routes, 'speakerID')}
     {choices('Microphone', value.microphoneID, devices.filter(item => item.kind === 'audioinput'), 'microphoneID')}
     {choices('Camera', value.cameraID, devices.filter(item => item.kind === 'videoinput'), 'cameraID')}
-    <View style={[styles.card, {backgroundColor: palette.field}]}>{toggle('Echo cancellation', 'echoCancellation')}{toggle('Noise suppression', 'noiseSuppression')}{toggle('Automatic gain control', 'autoGainControl')}{toggle('Noise gate', 'noiseGate')}</View>
+    <View style={styles.group}><Text style={[styles.label, {color: palette.text}]}>Noise suppression</Text><View style={styles.wrap}>
+      <Choice active={value.noiseSuppressionMode === 'standard'} label="Standard" onPress={() => update({noiseSuppression: true, noiseSuppressionMode: 'standard'})} palette={palette} />
+      <Choice active={value.noiseSuppressionMode === 'enhanced'} label="Enhanced (RNNoise)" onPress={() => update({noiseSuppression: true, noiseSuppressionMode: 'enhanced'})} palette={palette} />
+      <Choice active={value.noiseSuppressionMode === 'off'} label="Off" onPress={() => update({noiseSuppression: false, noiseSuppressionMode: 'off'})} palette={palette} />
+    </View><Text style={{color: palette.muted}}>Enhanced runs locally. Standard suppression remains active automatically if the native RNNoise processor is unavailable.</Text></View>
+    <View style={[styles.card, {backgroundColor: palette.field}]}>{toggle('Echo cancellation', 'echoCancellation')}{toggle('Automatic gain control', 'autoGainControl')}{toggle('Noise gate', 'noiseGate')}</View>
     <NumberSetting label="Noise gate threshold (dBFS)" value={value.noiseGateThresholdDB} minimum={-80} maximum={-20} onChange={number => update({noiseGateThresholdDB: number})} palette={palette} />
     <NumberSetting label="Outgoing microphone volume (%)" value={Math.round(value.inputGain * 100)} minimum={0} maximum={200} onChange={number => update({inputGain: number / 100})} palette={palette} />
     <NumberSetting label="Incoming voice volume (%)" value={Math.round(value.outputVolume * 100)} minimum={0} maximum={100} onChange={number => update({outputVolume: number / 100})} palette={palette} />

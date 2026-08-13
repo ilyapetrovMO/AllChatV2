@@ -33,7 +33,7 @@ describe('MediaSession', () => {
     const {peer, session, socket, track} = harness(settings);
     const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
     await session.start(); socket.onopen?.();
-    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: false}, video: false});
+    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAutoGainControl: false}, video: false});
     expect(track._setVolume).toHaveBeenCalledWith(1.4);
     const remoteTrack = {id: 'audio-member-2', kind: 'audio', _setVolume: jest.fn()};
     peer.ontrack({streams: [{id: 'member-member-2', getTracks: () => [remoteTrack]}], track: remoteTrack});
@@ -51,7 +51,7 @@ describe('MediaSession', () => {
 
     await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
 
-    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: true}, video: false});
+    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAutoGainControl: true}, video: false});
     expect(peer.getSenders().find((sender: {track?: {kind?: string}}) => sender.track?.kind === 'audio')?.track).toBe(replacementTrack);
     expect(track.stop).toHaveBeenCalled();
     session.stop();

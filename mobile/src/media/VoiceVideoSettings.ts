@@ -31,7 +31,7 @@ export function normalizeVoiceVideoSettings(value: unknown): VoiceVideoSettings 
   const memberVolumes = source.memberVolumes && typeof source.memberVolumes === 'object' ? Object.fromEntries(Object.entries(source.memberVolumes).map(([id, volume]) => [id, clamp(volume, 0, 1, 1)])) : {};
   return {
     version: 1, microphoneID: text(source.microphoneID), speakerID: text(source.speakerID), cameraID: text(source.cameraID),
-    echoCancellation: bool(source.echoCancellation, true), noiseSuppression: bool(source.noiseSuppression, true), noiseSuppressionMode: source.noiseSuppressionMode === 'off' ? 'off' : 'standard', autoGainControl: bool(source.autoGainControl, false),
+    echoCancellation: bool(source.echoCancellation, true), noiseSuppression: bool(source.noiseSuppression, true), noiseSuppressionMode: source.noiseSuppressionMode === 'enhanced' || source.noiseSuppressionMode === 'off' ? source.noiseSuppressionMode : 'standard', autoGainControl: bool(source.autoGainControl, false),
     inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1), memberVolumes,
     noiseGate: bool(source.noiseGate, true), noiseGateThresholdDB: clamp(source.noiseGateThresholdDB, -80, -20, -50),
   };
@@ -43,7 +43,12 @@ export function voiceAudioConstraints(settings: VoiceVideoSettings) {
     // react-native-webrtc forwards these directly to native WebRTC's
     // MediaConstraints parser, which uses the legacy `goog*` audio keys.
     googEchoCancellation: settings.echoCancellation,
-    googNoiseSuppression: settings.noiseSuppressionMode === 'standard' && settings.noiseSuppression,
+    // Until the owned WebRTC fork confirms enhanced processing on the native
+    // audio thread, keep baseline WebRTC suppression enabled. The fork consumes
+    // googAllChatRNNoise and atomically disables its standard NS only after the
+    // RNNoise state is ready, so an unsupported wrapper always fails open.
+    googNoiseSuppression: settings.noiseSuppressionMode !== 'off' && settings.noiseSuppression,
+    googAllChatRNNoise: settings.noiseSuppressionMode === 'enhanced' && settings.noiseSuppression,
     googAutoGainControl: settings.autoGainControl,
   };
 }

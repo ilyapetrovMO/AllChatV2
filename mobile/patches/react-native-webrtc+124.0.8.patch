@@ -1,0 +1,96 @@
+diff --git a/node_modules/react-native-webrtc/android/build.gradle b/node_modules/react-native-webrtc/android/build.gradle
+index 033a226..3d9cfa5 100644
+--- a/node_modules/react-native-webrtc/android/build.gradle
++++ b/node_modules/react-native-webrtc/android/build.gradle
+@@ -31,6 +31,6 @@ android {
+ 
+ dependencies {
+     implementation "com.facebook.react:react-android:+"
+-    api 'org.jitsi:webrtc:124.+'
++    api files("${rootProject.projectDir}/app/libs/allchat-webrtc-m124-rnnoise.aar")
+     implementation "androidx.core:core:1.7.0"
+ }
+diff --git a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java
+index e15cdb8..3a3afea 100644
+--- a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java
++++ b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java
+@@ -110,6 +110,14 @@ class GetUserMediaImpl {
+         PeerConnectionFactory pcFactory = webRTCModule.mFactory;
+         MediaConstraints peerConstraints = webRTCModule.constraintsForOptions(audioConstraintsMap);
+ 
++        boolean allChatRnnoise = audioConstraintsMap.hasKey("googAllChatRNNoise")
++            && audioConstraintsMap.getBoolean("googAllChatRNNoise");
++        PeerConnectionFactory.setAllChatRnnoiseEnabled(allChatRnnoise);
++        if (allChatRnnoise) {
++            disableConstraint(peerConstraints.mandatory, "googNoiseSuppression");
++            disableConstraint(peerConstraints.optional, "googNoiseSuppression");
++        }
++
+         // PeerConnectionFactory.createAudioSource will throw an error when mandatory constraints contain nulls.
+         // so, let's check for nulls
+         checkMandatoryConstraints(peerConstraints);
+@@ -123,6 +131,14 @@ class GetUserMediaImpl {
+         return track;
+     }
+ 
++    private void disableConstraint(List<MediaConstraints.KeyValuePair> constraints, String key) {
++        for (int index = 0; index < constraints.size(); index++) {
++            if (key.equals(constraints.get(index).getKey())) {
++                constraints.set(index, new MediaConstraints.KeyValuePair(key, "false"));
++            }
++        }
++    }
++
+     private void checkMandatoryConstraints(MediaConstraints peerConstraints) {
+         ArrayList<MediaConstraints.KeyValuePair> valid = new ArrayList<>(peerConstraints.mandatory.size());
+ 
+diff --git a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
+index d5a9fb4..54c3a75 100644
+--- a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
++++ b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModule.java
+@@ -68,6 +68,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
+         WebRTCModuleOptions options = WebRTCModuleOptions.getInstance();
+ 
+         AudioDeviceModule adm = options.audioDeviceModule;
++        AudioProcessingFactory audioProcessingFactory = options.audioProcessingFactory;
+         VideoEncoderFactory encoderFactory = options.videoEncoderFactory;
+         VideoDecoderFactory decoderFactory = options.videoDecoderFactory;
+         Loggable injectableLogger = options.injectableLogger;
+@@ -104,11 +105,14 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
+         Log.d(TAG, "Using video encoder factory: " + encoderFactory.getClass().getCanonicalName());
+         Log.d(TAG, "Using video decoder factory: " + decoderFactory.getClass().getCanonicalName());
+ 
+-        mFactory = PeerConnectionFactory.builder()
++        PeerConnectionFactory.Builder factoryBuilder = PeerConnectionFactory.builder()
+                            .setAudioDeviceModule(adm)
+                            .setVideoEncoderFactory(encoderFactory)
+-                           .setVideoDecoderFactory(decoderFactory)
+-                           .createPeerConnectionFactory();
++                           .setVideoDecoderFactory(decoderFactory);
++        if (audioProcessingFactory != null) {
++            factoryBuilder.setAudioProcessingFactory(audioProcessingFactory);
++        }
++        mFactory = factoryBuilder.createPeerConnectionFactory();
+ 
+         // PeerConnectionFactory now owns the adm native pointer, and we don't need it anymore.
+         adm.release();
+diff --git a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModuleOptions.java b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModuleOptions.java
+index 01d31d7..641a66e 100644
+--- a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModuleOptions.java
++++ b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/WebRTCModuleOptions.java
+@@ -2,6 +2,7 @@ package com.oney.WebRTCModule;
+ 
+ import org.webrtc.Loggable;
+ import org.webrtc.Logging;
++import org.webrtc.AudioProcessingFactory;
+ import org.webrtc.VideoDecoderFactory;
+ import org.webrtc.VideoEncoderFactory;
+ import org.webrtc.audio.AudioDeviceModule;
+@@ -12,6 +13,7 @@ public class WebRTCModuleOptions {
+     public VideoEncoderFactory videoEncoderFactory;
+     public VideoDecoderFactory videoDecoderFactory;
+     public AudioDeviceModule audioDeviceModule;
++    public AudioProcessingFactory audioProcessingFactory;
+     public Loggable injectableLogger;
+     public Logging.Severity loggingSeverity;
+     public String fieldTrials;

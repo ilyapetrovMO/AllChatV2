@@ -14,13 +14,13 @@ describe('Voice & Video settings', () => {
   });
 
   it('generates settings-driven microphone constraints', () => {
-    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, microphoneID: 'mic-2'})).toEqual({deviceId: {ideal: 'mic-2'}, echoCancellation: true, noiseSuppression: true, autoGainControl: false});
+    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, microphoneID: 'mic-2'})).toEqual({deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: false});
   });
 
   it('falls unsupported enhanced mobile settings back to standard suppression', () => {
     const normalized = normalizeVoiceVideoSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, noiseSuppressionMode: 'enhanced'});
     expect(normalized).toMatchObject({noiseSuppressionMode: 'standard', noiseSuppression: true});
-    expect(voiceAudioConstraints(normalized)).toMatchObject({echoCancellation: true, noiseSuppression: true});
-    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, noiseSuppressionMode: 'off'})).toMatchObject({echoCancellation: true, noiseSuppression: false});
+    expect(voiceAudioConstraints(normalized)).toMatchObject({googEchoCancellation: true, googNoiseSuppression: true});
+    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, noiseSuppressionMode: 'off'})).toMatchObject({googEchoCancellation: true, googNoiseSuppression: false});
   });
 });

@@ -100,6 +100,19 @@ test('Voice and Video settings persist processing and volume preferences per Mem
   await expect(page.getByLabel('Noise gate')).toBeChecked();
 });
 
+test('Voice and Video settings save when opened inside the settings overlay', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('.member-settings').click();
+  await page.locator('[data-app-overlay] a[href="/voice-video"]').click();
+  await expect(page.locator('[data-app-overlay] [data-voice-settings]')).toBeVisible();
+  await page.getByLabel('Automatic gain control').check();
+  await page.locator('[data-overlay-close]').click();
+  await page.locator('.member-settings').click();
+  await page.locator('[data-app-overlay] a[href="/voice-video"]').click();
+  await expect(page.getByLabel('Automatic gain control')).toBeChecked();
+});
+
 test('enhanced suppression initializes the local RNNoise AudioWorklet', async ({page}) => {
   await authenticate(page);
   await page.goto('/voice-video');

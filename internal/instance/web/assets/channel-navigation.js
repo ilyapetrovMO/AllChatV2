@@ -38,6 +38,7 @@
   };
   const closeOverlay = ({restoreURL = true} = {}) => {
     if (!overlay) return;
+    document.dispatchEvent(new CustomEvent("allchat:before-overlay-close", {detail: {root: overlay}}));
     overlay.remove();
     overlay = null;
     document.body.classList.remove("app-overlay-open");
@@ -52,6 +53,7 @@
       overlay.setAttribute("aria-label", "Settings");
       document.body.append(overlay);
     }
+    else document.dispatchEvent(new CustomEvent("allchat:before-overlay-close", {detail: {root: overlay}}));
     const shell = next.querySelector(".app-shell");
     if (!shell) throw new Error("Settings response has no app shell");
     const imported = document.importNode(shell, true);

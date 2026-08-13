@@ -40,9 +40,11 @@ export function normalizeVoiceVideoSettings(value: unknown): VoiceVideoSettings 
 export function voiceAudioConstraints(settings: VoiceVideoSettings) {
   return {
     ...(settings.microphoneID ? {deviceId: {ideal: settings.microphoneID}} : {}),
-    echoCancellation: settings.echoCancellation,
-    noiseSuppression: settings.noiseSuppressionMode === 'standard' && settings.noiseSuppression,
-    autoGainControl: settings.autoGainControl,
+    // react-native-webrtc forwards these directly to native WebRTC's
+    // MediaConstraints parser, which uses the legacy `goog*` audio keys.
+    googEchoCancellation: settings.echoCancellation,
+    googNoiseSuppression: settings.noiseSuppressionMode === 'standard' && settings.noiseSuppression,
+    googAutoGainControl: settings.autoGainControl,
   };
 }
 

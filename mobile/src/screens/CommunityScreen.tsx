@@ -407,7 +407,7 @@ function MediaRoomScreen({account, compact = false, members, minimized = false, 
     new AllChatClient(account.instance_url).soundboard(account.session_token).then(setSounds).catch(() => setSounds([]));
     return () => { connection.stop(); stopCallAudioSession(); stopCallForegroundService().catch(() => {}); session.current = undefined; };
   }, [account.instance_url, account.session_token, captureSettings, name, roomID]);
-  useEffect(() => { session.current?.updateAudioSettings(voiceSettings); }, [voiceSettings]);
+  useEffect(() => { session.current?.updateAudioSettings(voiceSettings).catch(caught => setError(caught instanceof Error ? caught.message : 'Could not apply audio processing settings.')); }, [voiceSettings]);
   useEffect(() => {
     const updateVisibility = (state = AppState.currentState) => session.current?.setScreenVisible(!minimized && state === 'active');
     updateVisibility();

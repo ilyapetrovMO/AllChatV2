@@ -40,6 +40,7 @@ export class MediaSession {
   private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private suspendedRemote = new Map<string, RemoteMedia>(); private resumeToken = '';
   private screenVisible = false;
   private negotiation = Promise.resolve();
+  private audioUpdate = Promise.resolve();
   private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private diagnostics?: ReturnType<typeof setInterval>; private gateTimer?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0; private manuallyMuted = false;
   constructor(private readonly options: MediaSessionOptions) {}
 
@@ -57,10 +58,26 @@ export class MediaSession {
   }
 
   setMuted(muted: boolean): void { this.manuallyMuted = muted; this.local?.getAudioTracks().forEach(track => { track.enabled = !muted; }); this.send({type: 'mute-state', muted}); }
-  updateAudioSettings(settings: VoiceVideoSettings): void {
+  updateAudioSettings(settings: VoiceVideoSettings): Promise<void> {
+    const previous = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS;
     this.options.settings = settings;
     setTrackVolume(this.local?.getAudioTracks()[0], settings.inputGain);
     for (const item of this.remote.values()) if (item.kind === 'audio') setTrackVolume(item.stream.getAudioTracks()[0], settings.outputVolume * (settings.memberVolumes[item.ownerID] ?? 1));
+    if (!this.local || !this.peer || sameCaptureSettings(previous, settings)) return this.audioUpdate;
+    const apply = async () => {
+      if (this.stopped || !this.local || !this.peer) return;
+      const replacement = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: voiceAudioConstraints(settings), video: false}) as MediaStream;
+      const next = replacement.getAudioTracks()[0], current = this.local.getAudioTracks()[0];
+      if (!next || this.stopped || !this.peer) { this.release(replacement); return; }
+      const sender = this.peer.getSenders().find(item => item.track?.kind === 'audio');
+      if (!sender) { this.release(replacement); throw new Error('The active microphone sender is unavailable. Rejoin to apply processing changes.'); }
+      next.enabled = !this.manuallyMuted; setTrackVolume(next, settings.inputGain);
+      await sender.replaceTrack(next);
+      if (current) { this.local.removeTrack(current); current.stop(); }
+      this.local.addTrack(next);
+    };
+    this.audioUpdate = this.audioUpdate.catch(() => {}).then(apply);
+    return this.audioUpdate;
   }
   setScreenVisible(visible: boolean): void { this.screenVisible = visible; this.send({type: 'screen-visibility', visible}); }
   playSound(soundID: string): void { this.send({type: 'soundboard-play', sound_id: soundID}); }
@@ -207,6 +224,10 @@ export class MediaSession {
 
 function setTrackVolume(track: unknown, volume: number) {
   (track as {_setVolume?(value: number): void} | undefined)?._setVolume?.(volume);
+}
+
+function sameCaptureSettings(left: VoiceVideoSettings, right: VoiceVideoSettings) {
+  return left.microphoneID === right.microphoneID && left.echoCancellation === right.echoCancellation && left.noiseSuppression === right.noiseSuppression && left.noiseSuppressionMode === right.noiseSuppressionMode && left.autoGainControl === right.autoGainControl;
 }
 
 function nativeSocket(url: string, token: string) { return new WebSocket(url, null, {headers: {Authorization: `Bearer ${token}`}}) as unknown as SocketLike; }

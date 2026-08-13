@@ -617,6 +617,8 @@
   installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
   const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
   installVoiceSettingsLink(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettingsLink(event.detail?.root||document));
+  const installVoiceSettings=root=>{if(!root.querySelector?.("[data-voice-settings]"))return;import("/assets/voice-settings-page.js").then(()=>window.installAllChatVoiceSettings?.(root)).catch(()=>{})};
+  installVoiceSettings(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettings(event.detail?.root||document));
 
   const installSoundboard = root => {
     if (!root.querySelector?.("#sound-upload")) return;

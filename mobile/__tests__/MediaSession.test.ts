@@ -10,7 +10,7 @@ function harness(settings = DEFAULT_VOICE_VIDEO_SETTINGS) {
   const screenStream = {getTracks: () => [screenTrack], getAudioTracks: () => [], getVideoTracks: () => [screenTrack]};
   const senders: Array<{track: typeof cameraTrack | typeof screenTrack}> = [];
   const peer: any = {
-    addTrack: jest.fn(), addTransceiver: jest.fn((source: string | typeof cameraTrack | typeof screenTrack) => { const sender = {track: typeof source === 'string' ? undefined : source, replaceTrack: jest.fn(async (next: typeof cameraTrack | typeof screenTrack | null) => { sender.track = next || undefined; })}; if (sender.track) senders.push(sender as never); return {sender, direction: typeof source === 'string' ? 'recvonly' : 'sendonly', setCodecPreferences: jest.fn()}; }), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
+    addTrack: jest.fn((source: any) => { const sender = {track: source, replaceTrack: jest.fn(async (next: any) => { sender.track = next; })}; senders.push(sender as never); return sender; }), addTransceiver: jest.fn((source: string | typeof cameraTrack | typeof screenTrack) => { const sender = {track: typeof source === 'string' ? undefined : source, replaceTrack: jest.fn(async (next: typeof cameraTrack | typeof screenTrack | null) => { sender.track = next || undefined; })}; if (sender.track) senders.push(sender as never); return {sender, direction: typeof source === 'string' ? 'recvonly' : 'sendonly', setCodecPreferences: jest.fn()}; }), createOffer: jest.fn(async () => ({type: 'offer', sdp: 'offer'})),
     setLocalDescription: jest.fn(async () => {}), setRemoteDescription: jest.fn(async () => {}), addIceCandidate: jest.fn(async () => {}),
     createAnswer: jest.fn(async () => ({type: 'answer', sdp: 'answer'})), getSenders: () => senders, removeTrack: jest.fn((sender: never) => { const index = senders.indexOf(sender); if (index >= 0) senders.splice(index, 1); }), getStats: jest.fn(async () => new Map()), close: jest.fn(),
     localDescription: {type: 'offer', sdp: 'offer'}, remoteDescription: null, connectionState: 'new', iceConnectionState: 'new', signalingState: 'have-local-offer', ontrack: null, onicecandidate: null, onconnectionstatechange: null,
@@ -33,11 +33,27 @@ describe('MediaSession', () => {
     const {peer, session, socket, track} = harness(settings);
     const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
     await session.start(); socket.onopen?.();
-    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, echoCancellation: true, noiseSuppression: true, autoGainControl: false}, video: false});
+    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: false}, video: false});
     expect(track._setVolume).toHaveBeenCalledWith(1.4);
     const remoteTrack = {id: 'audio-member-2', kind: 'audio', _setVolume: jest.fn()};
     peer.ontrack({streams: [{id: 'member-member-2', getTracks: () => [remoteTrack]}], track: remoteTrack});
     expect(remoteTrack._setVolume).toHaveBeenCalledWith(0.7);
+    session.stop();
+  });
+
+  it('recaptures and replaces live microphone audio when processing settings change', async () => {
+    const {peer, session, track} = harness();
+    const replacementTrack = {id: 'audio-2', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    const replacement = {getTracks: () => [replacementTrack], getAudioTracks: () => [replacementTrack], getVideoTracks: () => []};
+    const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
+    await session.start();
+    getUserMedia.mockResolvedValueOnce(replacement);
+
+    await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+
+    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAutoGainControl: true}, video: false});
+    expect(peer.getSenders().find((sender: {track?: {kind?: string}}) => sender.track?.kind === 'audio')?.track).toBe(replacementTrack);
+    expect(track.stop).toHaveBeenCalled();
     session.stop();
   });
 

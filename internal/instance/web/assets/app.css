@@ -115,3 +115,4 @@
 .composer-wrap { background: linear-gradient(transparent,var(--bg-main) 26%); }
 .composer { background: #222329; }
 .sidebar-footer { background: #0e0f12; }
+a[href="/search"] { display: none; }

@@ -19,7 +19,8 @@
     for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});
   };
-  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();document.addEventListener("allchat:view-swapped",event=>installIcons(event.detail?.root||document));
+  const removeDuplicateSearchEntries=(root=document)=>root.querySelectorAll?.('a[href="/search"]').forEach(link=>link.remove());
+  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root)});
   if (window.__allchatWebSocketBatches) return;
   window.__allchatWebSocketBatches = true;
   const NativeWebSocket = window.WebSocket;

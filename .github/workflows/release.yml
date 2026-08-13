@@ -191,8 +191,36 @@ jobs:
           name: bootstrap-${{ matrix.platform }}-${{ matrix.goarch }}
           path: dist/*
 
+  android-apk:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: npm ci --prefix mobile
+      - name: Build universal standalone APK
+        run: cd mobile/android && ./gradlew assembleStandalone --no-daemon
+      - name: Name release APK
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          cp mobile/android/app/build/outputs/apk/standalone/app-standalone.apk "dist/allchat_${version}_android_universal.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: dist/*
+
   publish:
-    needs: [linux-binaries, bootstrapper]
+    needs: [linux-binaries, bootstrapper, android-apk]
     runs-on: ubuntu-latest
     permissions:
       contents: write

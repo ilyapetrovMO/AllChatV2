@@ -587,6 +587,20 @@ test('composer aligns controls, fills the member rail, and previews removable at
   expect(attachmentUploads).toBe(1);
 });
 
+test('composer reports the attachment limit before starting an oversized upload', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  let attachmentUploads = 0;
+  page.on('request', request => { if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/v1/attachments') attachmentUploads++; });
+  const notice = new Promise(resolve => page.once('dialog', dialog => { const message = dialog.message(); dialog.dismiss(); resolve(message); }));
+
+  await page.locator('#attachment').setInputFiles({name: 'oversized.apk', mimeType: 'application/vnd.android.package-archive', buffer: Buffer.alloc(10 * 1024 * 1024 + 1)});
+
+  await expect(notice).resolves.toContain('oversized.apk is 10.0 MiB. This Instance allows attachments up to 10 MiB.');
+  await expect(page.locator('[data-attachment-preview]')).toHaveCount(0);
+  expect(attachmentUploads).toBe(0);
+});
+
 test('composer accepts pasted files without intercepting ordinary text paste', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

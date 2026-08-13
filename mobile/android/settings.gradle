@@ -1,5 +1,19 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
+
+def mobileRoot = settingsDir.parentFile
+def patchPackageEntry = new File(mobileRoot, "node_modules/patch-package/index.js")
+if (!patchPackageEntry.isFile()) {
+    throw new GradleException("Android dependencies are not prepared. Run `npm install` in mobile, then rebuild.")
+}
+
+def patchResult = providers.exec {
+    workingDir mobileRoot
+    commandLine "node", patchPackageEntry.absolutePath, "--error-on-fail"
+}.result.get()
+if (patchResult.exitValue != 0) {
+    throw new GradleException("Failed to apply the AllChat react-native-webrtc patch. Run `npm install` in mobile and inspect the patch-package output.")
+}
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'org.allchat.mobile'
 include ':app'

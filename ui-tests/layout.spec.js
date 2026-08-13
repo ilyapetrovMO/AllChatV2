@@ -92,6 +92,14 @@ test('Voice and Video settings persist processing and volume preferences per Mem
   await page.goto('/voice-video');
   await expect.poll(() => page.evaluate(() => Boolean(window.AllChatRNNoise))).toBe(true);
   await expect(page.getByRole('heading', {name: 'Voice & Video'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Voice', exact: true})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Input processing'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Camera'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Advanced'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Mic Test'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Test Video'})).toBeVisible();
+  await stabilize(page);
+  await expect(page).toHaveScreenshot('voice-video-settings.png', {animations: 'disabled', caret: 'hide', fullPage: true});
   await page.getByLabel('Automatic gain control').check();
   await page.locator('input[name="inputGain"]').fill('1.5');
   await page.reload();

@@ -768,7 +768,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   await mute.click();
   expect(await page.evaluate(() => window.voiceMuteFrame)).toMatchObject({type: 'mute-state', muted: true});
   const hangup = page.locator('[data-voice-leave]');
-  await expect(hangup).toHaveText('☎');
+  await expect(hangup.locator('svg')).toHaveAttribute('data-lucide', 'phone');
   await expect(hangup).toHaveCSS('color', 'rgb(255, 93, 98)');
   await hangup.click();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toHaveCount(0);

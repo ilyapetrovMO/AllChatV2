@@ -570,7 +570,7 @@ test('composer aligns controls, fills the member rail, and previews removable at
   const previews = page.locator('[data-attachment-preview]');
   await expect(previews).toHaveCount(2);
   await expect(previews.filter({hasText: 'example-image.png'}).locator('img')).toBeVisible();
-  await expect(previews.filter({hasText: 'example-notes.txt'}).locator('.attachment-file-icon')).toHaveText('📄');
+  await expect(previews.filter({hasText: 'example-notes.txt'}).locator('.attachment-file-icon svg')).toHaveAttribute('data-lucide', 'file');
   await previews.filter({hasText: 'example-notes.txt'}).getByRole('button', {name: 'Remove attachment'}).click();
   await expect(previews).toHaveCount(1);
   await expect(previews).not.toContainText('example-notes.txt');
@@ -653,7 +653,7 @@ test('composer accepts pasted files without intercepting ordinary text paste', a
   const previews = page.locator('[data-attachment-preview]');
   await expect(previews).toHaveCount(2);
   await expect(previews.filter({hasText: 'clipboard-image.png'}).locator('img')).toBeVisible();
-  await expect(previews.filter({hasText: 'clipboard-song.ogg'}).locator('.attachment-file-icon')).toHaveText('🎵');
+  await expect(previews.filter({hasText: 'clipboard-song.ogg'}).locator('.attachment-file-icon svg')).toHaveAttribute('data-lucide', 'music');
 });
 
 test('incoming audio and video attachments render as players and survive reload', async ({page}) => {

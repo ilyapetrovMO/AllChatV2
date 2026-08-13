@@ -155,7 +155,7 @@
       const wrap = document.createElement("div"), bell = document.createElement("button");
       wrap.className = "notification-center";
       bell.type = "button"; bell.className = "notification-bell button-ghost"; bell.dataset.notificationBell = "";
-      bell.setAttribute("aria-label", "Notifications"); bell.setAttribute("aria-expanded", "false"); bell.textContent = "🔔";
+      bell.setAttribute("aria-label", "Notifications"); bell.setAttribute("aria-expanded", "false"); window.allchatSetIcon?.(bell, "bell");
       const installedPopover = popover = document.createElement("section"); installedPopover.className = "notification-popover"; installedPopover.hidden = true;
       const heading = document.createElement("h2"); heading.textContent = "Notifications";
       const settingsStatus = document.createElement("p"); settingsStatus.className = "muted notification-settings-status"; settingsStatus.textContent = "Saved notification settings are temporarily unavailable; defaults are shown."; settingsStatus.hidden = settingsAvailable;

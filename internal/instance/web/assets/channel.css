@@ -64,7 +64,7 @@
 .community-menu[hidden] { display: none; }
 .community-menu a { padding: 8px 10px; border-radius: 4px; color: var(--text); font-size: .85rem; font-weight: 600; }
 .community-menu a:hover { background: var(--brand); text-decoration: none; }
-.message-attachment { display: block; width: max-content; max-width: 100%; margin-top: 6px; }
+.message-attachment { display: flex; align-items: center; gap: 6px; width: max-content; max-width: 100%; margin-top: 6px; }
 .link-preview-card { display: flex; width: min(100%, 520px); min-height: 92px; margin-top: 8px; overflow: hidden; border: 1px solid var(--border); border-left: 4px solid var(--brand); border-radius: 5px; background: var(--bg-sidebar); color: var(--text); text-decoration: none; }
 .link-preview-card:hover { border-color: var(--brand); text-decoration: none; }
 .link-preview-content { display: grid; align-content: center; flex: 1 1 auto; min-width: 0; gap: 5px; padding: 10px 12px; }
@@ -138,7 +138,7 @@
 .dm-profile-card p { margin: 2px 0 14px; color: var(--muted); }
 .dm-home { display: grid; place-items: center; min-height: calc(100vh - 48px); padding: 32px; text-align: center; }
 .dm-home > div { width: min(100%, 560px); }
-.channel-link.voice-link::before { content: "🔊"; font-size: .9rem; }
+.channel-link.voice-link::before { content: ""; width: 1rem; height: 1rem; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4Z'/%3E%3Cpath d='M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14'/%3E%3C/svg%3E") center/contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 5 6 9H2v6h4l5 4Z'/%3E%3Cpath d='M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14'/%3E%3C/svg%3E") center/contain no-repeat; }
 .voice-room { min-height: calc(100vh - 48px); display: grid; grid-template-rows: minmax(0,1fr) auto; padding: 24px; }
 .voice-stage { display: grid; align-content: center; justify-items: center; text-align: center; }
 .voice-participants { width: min(100%, 560px); display: grid; gap: 8px; margin: 20px 0; padding: 0; list-style: none; }

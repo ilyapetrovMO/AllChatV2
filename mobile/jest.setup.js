@@ -1,4 +1,10 @@
 /* global jest */
+jest.mock('lucide-react-native', () => {
+  const React = require('react');
+  const {View} = require('react-native');
+  const Icon = props => React.createElement(View, {...props, testID: props.testID || 'lucide-icon'});
+  return new Proxy({}, {get: () => Icon});
+});
 jest.mock('react-native-webrtc', () => {
   const React = require('react');
   const {View} = require('react-native');

@@ -83,3 +83,5 @@
 .voice-section-links a { padding-block: 5px; font-size: .82rem; }
 @media(max-width:760px){.voice-device-grid,.setting-row,.setting-slider{grid-template-columns:1fr}.setting-row{gap:10px}.setting-toggle{grid-template-columns:minmax(0,1fr) auto}.mic-test{grid-template-columns:1fr}.voice-section-links{display:none}.voice-settings{padding-bottom:72px}}
 .voice-compatibility-notice{position:fixed;right:16px;bottom:16px;z-index:1000;max-width:min(420px,calc(100vw - 32px));padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elevated);color:var(--text);box-shadow:0 12px 32px #0005}
+.lucide-icon { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mobile-menu .lucide-icon, .member-settings .lucide-icon, .notification-bell .lucide-icon, .mobile-members .lucide-icon { display: block; margin: auto; }

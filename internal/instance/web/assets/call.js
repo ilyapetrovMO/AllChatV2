@@ -246,7 +246,7 @@
     if(incoming)startRinging();else stopRinging();
     if (!next) {if (!connection) panel.hidden = true; return;}
     panel.hidden = false; attachPanel();
-    if (next.state === "accepted") {connect(next).catch(error => {panel.hidden=false;panel.textContent=error.message||"Direct Call failed";attachPanel();});return;}
+    if (next.state === "accepted") {(async()=>{if(currentDM()!==next.direct_message_id){const target=`/channels/${next.direct_message_id}`;if(!window.allchatNavigate){location.assign(target);return}await window.allchatNavigate(target)}await connect(next)})().catch(error => {panel.hidden=false;panel.textContent=error.message||"Direct Call failed";attachPanel();});return;}
     if (next.state !== "ringing") {cleanupMedia();panel.textContent=`Direct Call ${next.state}`;return;}
     panel.replaceChildren();
     const label = document.createElement("strong"); label.textContent = incoming ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);

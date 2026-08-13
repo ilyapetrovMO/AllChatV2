@@ -111,14 +111,35 @@ describe('MediaSession', () => {
     expect(socket.close).toHaveBeenCalled();
   });
 
-  it('updates microphone state and informs the server', async () => {
-    const {session, socket, track} = harness();
+  it('detaches and restores the outbound microphone when muted', async () => {
+    const {peer, session, socket, track} = harness();
     await session.start(); socket.onopen?.(); socket.send.mockClear();
+    const sender = peer.getSenders().find((item: {track?: {kind?: string}}) => item.track?.kind === 'audio');
 
-    session.setMuted(true);
+    await session.setMuted(true);
 
     expect(track.enabled).toBe(false);
+    expect(sender.replaceTrack).toHaveBeenLastCalledWith(null);
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({type: 'mute-state', muted: true});
+    await session.setMuted(false);
+    expect(track.enabled).toBe(true);
+    expect(sender.replaceTrack).toHaveBeenLastCalledWith(track);
+    session.stop();
+  });
+
+  it('keeps the outbound sender detached when audio settings change while muted', async () => {
+    const {peer, session} = harness();
+    const replacementTrack = {id: 'audio-2', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
+    await session.start();
+    const sender = peer.getSenders().find((item: {track?: {kind?: string}}) => item.track?.kind === 'audio');
+    await session.setMuted(true);
+    getUserMedia.mockResolvedValueOnce({getTracks: () => [replacementTrack], getAudioTracks: () => [replacementTrack], getVideoTracks: () => [], addTrack: jest.fn(), removeTrack: jest.fn()});
+
+    await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+
+    expect(sender.replaceTrack).toHaveBeenLastCalledWith(null);
+    expect(replacementTrack.enabled).toBe(false);
     session.stop();
   });
 

@@ -768,6 +768,22 @@ test('incoming one-to-one calls surface outside the DM and can be declined', asy
   await owner.dispose();
 });
 
+test('accepting an incoming Direct Call outside its DM opens the call workspace', async ({page}) => {
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  await page.context().addCookies(fixture.secondState.cookies);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const started = await post(owner, `/api/v1/dms/${fixture.dm.id}/calls`, {});
+  const banner = page.locator('.call-banner');
+  await expect(banner).toContainText('Incoming Direct Call', {timeout: 3000});
+
+  await banner.getByRole('button', {name: 'Accept'}).click();
+
+  await expect(page).toHaveURL(new RegExp(`/channels/${fixture.dm.id}$`));
+  await expect(page.locator('.channel-topic')).toHaveText('Direct Message');
+  await post(owner, `/api/v1/calls/${started.id}/end`, {});
+  await owner.dispose();
+});
+
 test('Direct Call caller connects after the recipient accepts', async ({browser}) => {
   const callerContext = await browser.newContext({storageState: fixture.ownerState, permissions: ['microphone']});
   const recipientContext = await browser.newContext({storageState: fixture.secondState});

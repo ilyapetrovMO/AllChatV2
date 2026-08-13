@@ -36,6 +36,7 @@ export type MediaSessionOptions = {
 
 export class MediaSession {
   private peer?: RTCPeerConnection; private socket?: SocketLike; private local?: MediaStream;
+  private outgoingAudio?: RTCRtpSender;
   private outgoingVideo?: ReturnType<RTCPeerConnection['addTransceiver']>;
   private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private suspendedRemote = new Map<string, RemoteMedia>(); private resumeToken = '';
   private screenVisible = false;
@@ -54,10 +55,18 @@ export class MediaSession {
   stop(explicit = true): void {
     if (explicit && this.socket?.readyState === 1) this.send({type: 'leave'});
     this.stopped = true; this.generation += 1; this.clearTimers(); this.socket?.close(); this.peer?.close();
-    this.socket = undefined; this.peer = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.suspendedRemote.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
+    this.socket = undefined; this.peer = undefined; this.outgoingAudio = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.suspendedRemote.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
   }
 
-  setMuted(muted: boolean): void { this.manuallyMuted = muted; this.local?.getAudioTracks().forEach(track => { track.enabled = !muted; }); this.send({type: 'mute-state', muted}); }
+  setMuted(muted: boolean): Promise<void> {
+    this.manuallyMuted = muted;
+    const track = this.local?.getAudioTracks()[0];
+    if (track) track.enabled = !muted;
+    this.send({type: 'mute-state', muted});
+    const apply = async () => { if (this.outgoingAudio) await this.outgoingAudio.replaceTrack(muted ? null : track || null); };
+    this.audioUpdate = this.audioUpdate.catch(() => {}).then(apply);
+    return this.audioUpdate;
+  }
   updateAudioSettings(settings: VoiceVideoSettings): Promise<void> {
     const previous = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS;
     this.options.settings = settings;
@@ -69,10 +78,10 @@ export class MediaSession {
       const replacement = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: voiceAudioConstraints(settings), video: false}) as MediaStream;
       const next = replacement.getAudioTracks()[0], current = this.local.getAudioTracks()[0];
       if (!next || this.stopped || !this.peer) { this.release(replacement); return; }
-      const sender = this.peer.getSenders().find(item => item.track?.kind === 'audio');
+      const sender = this.outgoingAudio;
       if (!sender) { this.release(replacement); throw new Error('The active microphone sender is unavailable. Rejoin to apply processing changes.'); }
       next.enabled = !this.manuallyMuted; setTrackVolume(next, settings.inputGain);
-      await sender.replaceTrack(next);
+      await sender.replaceTrack(this.manuallyMuted ? null : next);
       if (current) { this.local.removeTrack(current); current.stop(); }
       this.local.addTrack(next);
     };
@@ -111,7 +120,7 @@ export class MediaSession {
   screenStream(): MediaStream | undefined { return this.screen; }
 
   private async connect(takeover: boolean): Promise<void> {
-    const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close(); this.outgoingVideo = undefined;
+    const generation = ++this.generation; this.clearTimers(); this.socket?.close(); this.peer?.close(); this.outgoingAudio = undefined; this.outgoingVideo = undefined;
     this.options.onProgress?.('Fetching relay configuration…');
     const iceServers = this.options.fetchICE ? await this.options.fetchICE() : await this.fetchICE();
     if (this.stopped || generation !== this.generation) return;
@@ -119,7 +128,7 @@ export class MediaSession {
     const pendingLocal: object[] = []; const pendingRemote: object[] = [];
     let frameQueue = Promise.resolve();
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
-    this.local?.getTracks().forEach(track => peer.addTrack(track, this.local!)); peer.addTransceiver('audio', {direction: 'sendrecv'}); peer.addTransceiver('video', {direction: 'recvonly'});
+    for(const track of this.local?.getTracks()||[]){const sender=peer.addTrack(track,this.local!);if(track.kind==='audio'){this.outgoingAudio=sender;if(this.manuallyMuted)await sender.replaceTrack(null)}} peer.addTransceiver('audio', {direction: 'sendrecv'}); peer.addTransceiver('video', {direction: 'recvonly'});
     peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; muted?: boolean; onended?: () => void; onmute?: () => void; onunmute?: () => void}}) => {
       const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'};
       const remove = () => { if (this.remote.get(id) === item) this.remote.delete(id); if (this.suspendedRemote.get(id) === item) this.suspendedRemote.delete(id); this.options.onRemote?.([...this.remote.values()]); };

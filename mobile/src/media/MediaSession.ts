@@ -1,6 +1,5 @@
 import {mediaDevices, MediaStream, RTCPeerConnection, RTCRtpSender, RTCSessionDescription} from 'react-native-webrtc';
 import {DEFAULT_VOICE_VIDEO_SETTINGS, voiceAudioConstraints, type VoiceVideoSettings} from './VoiceVideoSettings';
-import {AudioGate} from './AudioGate';
 
 export type MediaStatus = 'idle' | 'connecting' | 'connected' | 'recovering' | 'failed';
 export type MediaDiagnostics = {
@@ -43,7 +42,7 @@ export class MediaSession {
   private negotiation = Promise.resolve();
   private audioUpdate = Promise.resolve();
   private audioSettingsRevision = 0;
-  private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private diagnostics?: ReturnType<typeof setInterval>; private gateTimer?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0; private manuallyMuted = false;
+  private stopped = true; private generation = 0; private heartbeat?: ReturnType<typeof setInterval>; private diagnostics?: ReturnType<typeof setInterval>; private reconnect?: ReturnType<typeof setTimeout>; private retry = 0; private manuallyMuted = false;
   constructor(private readonly options: MediaSessionOptions) {}
 
   async start(): Promise<void> {
@@ -142,7 +141,6 @@ export class MediaSession {
     };
     peer.onicecandidate = (event: {candidate?: {toJSON(): object}}) => { if (!event.candidate) return; const frame = {type: 'candidate', candidate: event.candidate.toJSON()}; if (this.socket?.readyState === 1) this.send(frame); else pendingLocal.push(frame); };
     peer.onconnectionstatechange = () => { if (peer.connectionState === 'connected') { this.retry = 0; this.options.onStatus?.('connected'); this.startDiagnostics(peer, generation); } else if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') this.recover(new Error(`WebRTC ${peer.connectionState}`)); };
-    this.startNoiseGate(peer, generation);
     const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
     this.options.onProgress?.('Opening media signaling…');
     const socket = (this.options.createSocket || nativeSocket)(this.mediaURL(), this.options.token); this.socket = socket;
@@ -204,23 +202,7 @@ export class MediaSession {
     };
     collect(); this.diagnostics = setInterval(collect, 1000);
   }
-  private startNoiseGate(peer: RTCPeerConnection, generation: number) {
-    if (this.gateTimer) clearInterval(this.gateTimer);
-    let threshold = (this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS).noiseGateThresholdDB, gate = new AudioGate(threshold), running = false;
-    this.gateTimer = setInterval(async () => {
-      const settings = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS, track = this.local?.getAudioTracks()[0];
-      if (!track || this.stopped || generation !== this.generation || running) return;
-      if (!settings.noiseGate) { if (!this.manuallyMuted) track.enabled = true; return; }
-      if (threshold !== settings.noiseGateThresholdDB) { threshold = settings.noiseGateThresholdDB; gate = new AudioGate(threshold); }
-      running = true;
-      try {
-        const reports = await peer.getStats(); let level: number | undefined;
-        reports.forEach((report: {type?: string; kind?: string; audioLevel?: number}) => { if ((report.type === 'media-source' || report.type === 'track') && report.kind === 'audio' && typeof report.audioLevel === 'number') level = report.audioLevel; });
-        if (level !== undefined && !this.manuallyMuted) track.enabled = gate.observe(level > 0 ? 20 * Math.log10(level) : -100, Date.now());
-      } catch {} finally { running = false; }
-    }, 100);
-  }
-  private clearTimers() { if (this.heartbeat) clearInterval(this.heartbeat); if (this.diagnostics) clearInterval(this.diagnostics); if (this.gateTimer) clearInterval(this.gateTimer); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.diagnostics = undefined; this.gateTimer = undefined; this.reconnect = undefined; }
+  private clearTimers() { if (this.heartbeat) clearInterval(this.heartbeat); if (this.diagnostics) clearInterval(this.diagnostics); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.diagnostics = undefined; this.reconnect = undefined; }
   private release(stream?: MediaStream) { stream?.getTracks().forEach(track => track.stop()); }
   private mediaURL() { const url = new URL(this.options.instanceURL); return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/api/v1/media`; }
   private async fetchICE(): Promise<IceServer[]> {
@@ -238,7 +220,7 @@ function setTrackVolume(track: unknown, volume: number) {
 }
 
 function sameCaptureSettings(left: VoiceVideoSettings, right: VoiceVideoSettings) {
-  return left.microphoneID === right.microphoneID && left.echoCancellation === right.echoCancellation && left.noiseSuppression === right.noiseSuppression && left.noiseSuppressionMode === right.noiseSuppressionMode && left.autoGainControl === right.autoGainControl;
+  return left.microphoneID === right.microphoneID && left.echoCancellation === right.echoCancellation && left.noiseSuppression === right.noiseSuppression && left.noiseSuppressionMode === right.noiseSuppressionMode && left.autoGainControl === right.autoGainControl && left.noiseGate === right.noiseGate && left.noiseGateThresholdDB === right.noiseGateThresholdDB;
 }
 
 function nativeSocket(url: string, token: string) { return new WebSocket(url, null, {headers: {Authorization: `Bearer ${token}`}}) as unknown as SocketLike; }

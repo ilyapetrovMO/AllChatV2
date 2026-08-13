@@ -49,6 +49,8 @@ export function voiceAudioConstraints(settings: VoiceVideoSettings) {
     // RNNoise state is ready, so an unsupported wrapper always fails open.
     googNoiseSuppression: settings.noiseSuppressionMode !== 'off' && settings.noiseSuppression,
     googAllChatRNNoise: settings.noiseSuppressionMode === 'enhanced' && settings.noiseSuppression,
+    googAllChatNoiseGate: settings.noiseGate,
+    googAllChatNoiseGateThresholdDB: settings.noiseGateThresholdDB,
     googAutoGainControl: settings.autoGainControl,
   };
 }

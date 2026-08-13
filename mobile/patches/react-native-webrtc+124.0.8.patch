@@ -14,13 +14,19 @@ diff --git a/node_modules/react-native-webrtc/android/src/main/java/com/oney/Web
 index e15cdb8..3a3afea 100644
 --- a/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java
 +++ b/node_modules/react-native-webrtc/android/src/main/java/com/oney/WebRTCModule/GetUserMediaImpl.java
-@@ -110,6 +110,14 @@ class GetUserMediaImpl {
+@@ -110,6 +110,20 @@ class GetUserMediaImpl {
          PeerConnectionFactory pcFactory = webRTCModule.mFactory;
          MediaConstraints peerConstraints = webRTCModule.constraintsForOptions(audioConstraintsMap);
  
 +        boolean allChatRnnoise = audioConstraintsMap.hasKey("googAllChatRNNoise")
 +            && audioConstraintsMap.getBoolean("googAllChatRNNoise");
 +        PeerConnectionFactory.setAllChatRnnoiseEnabled(allChatRnnoise);
++        boolean allChatNoiseGate = audioConstraintsMap.hasKey("googAllChatNoiseGate")
++            && audioConstraintsMap.getBoolean("googAllChatNoiseGate");
++        double allChatNoiseGateThreshold = audioConstraintsMap.hasKey("googAllChatNoiseGateThresholdDB")
++            ? audioConstraintsMap.getDouble("googAllChatNoiseGateThresholdDB")
++            : -50.0;
++        PeerConnectionFactory.setAllChatNoiseGate(allChatNoiseGate, allChatNoiseGateThreshold);
 +        if (allChatRnnoise) {
 +            disableConstraint(peerConstraints.mandatory, "googNoiseSuppression");
 +            disableConstraint(peerConstraints.optional, "googNoiseSuppression");
@@ -29,7 +35,7 @@ index e15cdb8..3a3afea 100644
          // PeerConnectionFactory.createAudioSource will throw an error when mandatory constraints contain nulls.
          // so, let's check for nulls
          checkMandatoryConstraints(peerConstraints);
-@@ -123,6 +131,14 @@ class GetUserMediaImpl {
+@@ -123,6 +137,14 @@ class GetUserMediaImpl {
          return track;
      }
  

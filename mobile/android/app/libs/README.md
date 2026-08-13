@@ -12,7 +12,7 @@ Pinned inputs:
 - RNNoise model version: `0b50c45`
 - RNNoise model archive SHA-256: `4ac81c5c0884ec4bd5907026aaae16209b7b76cd9d7f71af582094a2f98f4b43`
 - RNNoise generated model data SHA-256: `522b6a64fded05bf85e58c06206eafe57ce7d94f3af58c725b17628b481d7890`
-- AAR SHA-256: `307a4f0c4e5a72f5d29c9b10c10709ea2605ebfa066c95b73f3bc1f76a1e0e47`
+- AAR SHA-256: `1f951a5cac643ebbdb89c2917f889fdd05db3c8bb4e620eb2a2b393e8d75c3d4`
 
 The processor is installed as WebRTC capture post-processing, after AEC and
 before encoding. Enhanced mode enables it atomically on the native audio
@@ -24,6 +24,11 @@ remains independently controlled by the existing setting.
 WebRTC capture formats that are not 48 kHz are resampled on the native audio
 thread into RNNoise's required 480-sample/48-kHz frames and back. Resampler
 state and scratch buffers are allocated during initialization, never per frame.
+
+The mobile noise gate runs in that same native capture callback and applies a
+smoothed PCM gain below the configured threshold. It never toggles or replaces
+the WebRTC track per audio frame, so enabling it cannot create another sender
+or repeatedly restart WebRTC's echo-control state.
 
 The AAR contains `armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64` libraries.
 RNNoise is BSD-3-Clause licensed; its notice and the other bundled notices are

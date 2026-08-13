@@ -33,7 +33,7 @@ describe('MediaSession', () => {
     const {peer, session, socket, track} = harness(settings);
     const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
     await session.start(); socket.onopen?.();
-    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAutoGainControl: false}, video: false});
+    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAllChatNoiseGate: true, googAllChatNoiseGateThresholdDB: -50, googAutoGainControl: false}, video: false});
     expect(track._setVolume).toHaveBeenCalledWith(1.4);
     const remoteTrack = {id: 'audio-member-2', kind: 'audio', _setVolume: jest.fn()};
     peer.ontrack({streams: [{id: 'member-member-2', getTracks: () => [remoteTrack]}], track: remoteTrack});
@@ -51,9 +51,26 @@ describe('MediaSession', () => {
 
     await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
 
-    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAutoGainControl: true}, video: false});
+    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAllChatNoiseGate: true, googAllChatNoiseGateThresholdDB: -50, googAutoGainControl: true}, video: false});
     expect(peer.getSenders().find((sender: {track?: {kind?: string}}) => sender.track?.kind === 'audio')?.track).toBe(replacementTrack);
     expect(track.stop).toHaveBeenCalled();
+    session.stop();
+  });
+
+  it('recaptures once for native noise-gate changes without adding another audio sender', async () => {
+    const {peer, session} = harness();
+    const replacementTrack = {id: 'audio-gated', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    const replacement = {getTracks: () => [replacementTrack], getAudioTracks: () => [replacementTrack], getVideoTracks: () => []};
+    const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
+    await session.start();
+    getUserMedia.mockResolvedValueOnce(replacement);
+
+    await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, noiseGate: false});
+
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(getUserMedia).toHaveBeenLastCalledWith({audio: {googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAllChatNoiseGate: false, googAllChatNoiseGateThresholdDB: -50, googAutoGainControl: false}, video: false});
+    expect(peer.addTrack).toHaveBeenCalledTimes(1);
+    expect(peer.getSenders().filter((sender: {track?: {kind?: string}}) => sender.track?.kind === 'audio')).toHaveLength(1);
     session.stop();
   });
 

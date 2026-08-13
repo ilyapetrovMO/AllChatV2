@@ -14,7 +14,7 @@ describe('Voice & Video settings', () => {
   });
 
   it('generates settings-driven microphone constraints', () => {
-    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, microphoneID: 'mic-2'})).toEqual({deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAutoGainControl: false});
+    expect(voiceAudioConstraints({...DEFAULT_VOICE_VIDEO_SETTINGS, microphoneID: 'mic-2'})).toEqual({deviceId: {ideal: 'mic-2'}, googEchoCancellation: true, googNoiseSuppression: true, googAllChatRNNoise: false, googAllChatNoiseGate: true, googAllChatNoiseGateThresholdDB: -50, googAutoGainControl: false});
   });
 
   it('preserves enhanced intent while failing open to standard suppression', () => {

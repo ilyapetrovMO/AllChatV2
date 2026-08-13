@@ -48,7 +48,11 @@ var attachmentPreviewLock sync.Mutex
 func newServiceWithAttachmentLimits(db *sql.DB, dataDir string) *Service {
 	perFile := configuredLimit("ALLCHAT_MAX_ATTACHMENT_BYTES", defaultAttachmentBytes, hardAttachmentBytes)
 	total := configuredLimit("ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES", defaultStorageBytes, hardStorageBytes)
-	service := &Service{db: db, dataDir: dataDir, maxAttachmentBytes: perFile, maxStorageBytes: total, messageRequests: make(chan messagePublishRequest, 1024), messageStop: make(chan struct{}), messageDone: make(chan struct{})}
+	service := &Service{db: db, dataDir: dataDir, maxStorageBytes: total, messageRequests: make(chan messagePublishRequest, 1024), messageStop: make(chan struct{}), messageDone: make(chan struct{})}
+	if _, err := db.Exec(`INSERT OR IGNORE INTO attachment_settings(id,max_file_bytes) VALUES(1,?)`, perFile); err == nil {
+		_ = db.QueryRow(`SELECT max_file_bytes FROM attachment_settings WHERE id=1`).Scan(&perFile)
+	}
+	service.maxAttachmentBytes.Store(perFile)
 	go service.runMessageWriter()
 	return service
 }
@@ -64,11 +68,26 @@ func configuredLimit(name string, fallback, ceiling int64) int64 {
 	return value
 }
 
+func (s *Service) UpdateMaxAttachmentBytes(ctx context.Context, actor identity.Member, maximum int64) error {
+	if !actor.Owner {
+		return ErrForbidden
+	}
+	if maximum < 1<<20 || maximum > hardAttachmentBytes {
+		return fmt.Errorf("%w: attachment limit must be between 1 and 25 MiB", ErrInvalidInput)
+	}
+	if _, err := s.db.ExecContext(ctx, `UPDATE attachment_settings SET max_file_bytes=? WHERE id=1`, maximum); err != nil {
+		return err
+	}
+	s.maxAttachmentBytes.Store(maximum)
+	return nil
+}
+
 func (s *Service) UploadAttachment(ctx context.Context, member identity.Member, originalName, contentType string, source io.Reader) (Attachment, error) {
 	if s.dataDir == "" {
 		return Attachment{}, fmt.Errorf("Attachment storage is unavailable")
 	}
-	if err := requireStorageReserve(s.dataDir, s.maxAttachmentBytes); err != nil {
+	maximum := s.MaxAttachmentBytes()
+	if err := requireStorageReserve(s.dataDir, maximum); err != nil {
 		return Attachment{}, err
 	}
 	name := safeAttachmentName(originalName)
@@ -103,9 +122,9 @@ func (s *Service) UploadAttachment(ctx context.Context, member identity.Member, 
 	if err != nil {
 		return Attachment{}, err
 	}
-	size, copyErr := io.Copy(file, io.LimitReader(source, s.maxAttachmentBytes+1))
+	size, copyErr := io.Copy(file, io.LimitReader(source, maximum+1))
 	closeErr := file.Close()
-	if copyErr != nil || closeErr != nil || size < 1 || size > s.maxAttachmentBytes || used+size > s.maxStorageBytes {
+	if copyErr != nil || closeErr != nil || size < 1 || size > maximum || used+size > s.maxStorageBytes {
 		_ = os.Remove(temporary)
 		return Attachment{}, fmt.Errorf("%w: Attachment exceeds configured limits", ErrInvalidInput)
 	}

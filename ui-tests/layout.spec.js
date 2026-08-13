@@ -601,6 +601,20 @@ test('composer reports the attachment limit before starting an oversized upload'
   expect(attachmentUploads).toBe(0);
 });
 
+test('composer accepts files dropped onto it', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('#composer').evaluate(composer => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['dropped attachment'], 'dropped-notes.txt', {type: 'text/plain'}));
+    composer.dispatchEvent(new DragEvent('dragenter', {bubbles: true, cancelable: true, dataTransfer: transfer}));
+    composer.dispatchEvent(new DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer: transfer}));
+  });
+  await expect(page.locator('[data-attachment-preview]')).toHaveCount(1);
+  await expect(page.locator('[data-attachment-preview]')).toContainText('dropped-notes.txt');
+  await expect(page.locator('#composer')).not.toHaveClass(/file-drag-active/);
+});
+
 test('composer accepts pasted files without intercepting ordinary text paste', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

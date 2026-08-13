@@ -51,7 +51,7 @@ var validPermissions = map[string]bool{
 type Service struct {
 	db                  *sql.DB
 	dataDir             string
-	maxAttachmentBytes  int64
+	maxAttachmentBytes  atomic.Int64
 	maxStorageBytes     int64
 	messageRequests     chan messagePublishRequest
 	messageStop         chan struct{}
@@ -70,7 +70,7 @@ func New(db *sql.DB, dataDir ...string) *Service {
 	return newServiceWithAttachmentLimits(db, directory)
 }
 
-func (s *Service) MaxAttachmentBytes() int64 { return s.maxAttachmentBytes }
+func (s *Service) MaxAttachmentBytes() int64 { return s.maxAttachmentBytes.Load() }
 
 func (s *Service) MessagingMetrics() (transactions, committed, queueHigh int64) {
 	return s.messageTransactions.Load(), s.messageCommitted.Load(), s.messageQueueHigh.Load()

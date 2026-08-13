@@ -34,7 +34,7 @@ make android
 
 From the Android emulator, enter `http://10.0.2.2:8080` to reach the default development Instance. Production builds require HTTPS with an Android-trusted certificate. Use `make test-mobile`, `make lint-mobile`, and `make build-mobile` for local verification. The native client currently contains secure multiple-Instance and Session management; synchronization, messaging, encrypted push, and native media are being implemented in subsequent milestones.
 
-Attachment uploads default to 10 MiB per file and 1 GiB total. Operators may lower or raise these within the built-in hard ceilings using `ALLCHAT_MAX_ATTACHMENT_BYTES` and `ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES`.
+Attachment uploads default to 10 MiB per file and 1 GiB total. The Community Owner can change the per-file limit at runtime at `/admin/settings`; `ALLCHAT_MAX_ATTACHMENT_BYTES` supplies the initial value for a new Instance. Operators may configure total storage with `ALLCHAT_MAX_ATTACHMENT_STORAGE_BYTES`. All values remain bounded by the built-in hard ceilings.
 
 AllChat retains at least 256 MiB of free filesystem space before accepting new Attachment or soundboard uploads. `ALLCHAT_STORAGE_RESERVE_BYTES` may increase this margin up to 10 GiB but cannot reduce or disable the built-in reserve.
 

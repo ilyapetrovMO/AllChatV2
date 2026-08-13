@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 20
+const schemaVersion = 21
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -732,6 +732,19 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record incremental unread schema: %w", err)
 		}
 	}
+	if currentVersion < 21 {
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS attachment_settings (
+				id INTEGER PRIMARY KEY CHECK(id=1),
+				max_file_bytes INTEGER NOT NULL CHECK(max_file_bytes BETWEEN 1048576 AND 26214400)
+			);
+		`); err != nil {
+			return fmt.Errorf("create Attachment settings schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 21, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Attachment settings schema: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -871,6 +884,8 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /admin/invitations", i.createInvitationWeb)
 	mux.HandleFunc("POST /admin/invitations/{invitationID}/revoke", i.revokeInvitationWeb)
 	mux.HandleFunc("GET /admin/channels", i.channelsAdminPage)
+	mux.HandleFunc("GET /admin/settings", i.communitySettingsPage)
+	mux.HandleFunc("POST /admin/settings", i.updateCommunitySettingsWeb)
 	mux.HandleFunc("POST /admin/categories", i.createCategoryWeb)
 	mux.HandleFunc("POST /admin/channels", i.createChannelWeb)
 	mux.HandleFunc("POST /admin/channels/{channelID}/archive", i.archiveChannelWeb)

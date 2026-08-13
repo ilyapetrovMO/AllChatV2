@@ -159,6 +159,40 @@ func TestStalePeerLeaseCannotDisconnectReplacement(t *testing.T) {
 	}
 }
 
+func TestDisconnectBroadcastsAuthoritativeParticipantsToRemainingPeer(t *testing.T) {
+	manager := NewManager(30 * time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("web", "voice-one"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.Join("mobile", "voice-one"); err != nil {
+		t.Fatal(err)
+	}
+	connection, err := manager.api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	updates := make(chan Signal, 1)
+	manager.mu.Lock()
+	manager.peers["web"] = &Peer{memberID: "web", roomID: "voice-one", lease: 1, connection: connection}
+	manager.peers["mobile"] = &Peer{memberID: "mobile", roomID: "voice-one", lease: 2, signal: func(signal Signal) { updates <- signal }}
+	manager.mu.Unlock()
+
+	manager.DisconnectPeer("web", 1)
+
+	select {
+	case update := <-updates:
+		if update.Type != "participants" || len(update.Participants) != 2 || update.Participants[0].Connected {
+			t.Fatalf("participant update = %+v", update)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("remaining mobile peer received no participant update")
+	}
+	manager.mu.Lock()
+	delete(manager.peers, "mobile")
+	manager.mu.Unlock()
+}
+
 func TestManagerNeverHidesParticipantsAndRestartClearsSessions(t *testing.T) {
 	manager := NewManager(time.Second)
 	if _, err := manager.Join("one", "room"); err != nil {

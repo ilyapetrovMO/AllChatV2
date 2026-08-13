@@ -84,6 +84,12 @@
   // Keep user-facing strings and instant formatting behind one small seam so
   // later locale packs do not need to rewrite feature code.
   window.allchatText ||= Object.freeze({screenUnavailable: "Screen sharing is unavailable on this browser.", microphoneUnavailable: "Microphone access is unavailable on this browser."});
+  window.addEventListener("allchat:voice-compatibility", event => {
+    const message=event.detail?.message;if(!message)return;
+    let notice=document.querySelector("[data-voice-compatibility]");
+    if(!notice){notice=document.createElement("div");notice.className="voice-compatibility-notice";notice.dataset.voiceCompatibility="";notice.setAttribute("role","status");notice.setAttribute("aria-live","polite");document.body.append(notice)}
+    notice.textContent=message;notice.hidden=false;clearTimeout(notice.dismissTimer);notice.dismissTimer=setTimeout(()=>{notice.hidden=true},8000);
+  });
   window.allchatFormatInstant ||= value => new Intl.DateTimeFormat(undefined, {dateStyle: "medium", timeStyle: "short"}).format(new Date(value));
   const localizeInstants = root => root.querySelectorAll?.("time[data-utc]").forEach(node => { try { node.textContent = window.allchatFormatInstant(node.dataset.utc); } catch (_) {} });
   localizeInstants(document);
@@ -448,7 +454,7 @@
 	  const refresh=async({channel,list})=>{try{const result=await fetch(`/api/v1/voice/${channel.id}/participants`);if(!result.ok)return;const state=await result.json(),profiles=state.members||{},participants=[...(state.participants||[])],connected=new Set(participants.filter(item=>item.connected).map(item=>item.member_id)),previous=participantSnapshots.get(channel.id),pending=window.allchatVoicePending.get(channel.id);participantSnapshots.set(channel.id,connected);if(previous&&window.allchatActiveVoiceRoom===channel.id){const self=document.body.dataset.memberId,joined=[...connected].some(id=>id!==self&&!previous.has(id)),left=[...previous].some(id=>id!==self&&!connected.has(id));if(joined)window.allchatVoiceEarcon?.("join");if(left)window.allchatVoiceEarcon?.("leave")}if(pending){profiles[pending.member_id]=pending.profile||profiles[pending.member_id]||{};const existing=participants.find(item=>item.member_id===pending.member_id);if(existing)existing.pending_status=pending.status;else participants.push({member_id:pending.member_id,connected:false,server_muted:false,speaking:false,pending_status:pending.status})}list.replaceChildren();participants.forEach(participant=>{const profile=profiles[participant.member_id]||{},item=document.createElement("li"),avatar=document.createElement(profile.avatar_url?"img":"span"),name=document.createElement("span");item.dataset.participantId=participant.member_id;item.dataset.voiceRoom=channel.id;item.dataset.serverMuted=String(!!participant.server_muted);item.classList.toggle("reconnecting",!participant.connected);item.classList.toggle("speaking",!!participant.speaking);if(profile.avatar_url){avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.textContent=Array.from(profile.username||state.names?.[participant.member_id]||"?")[0].toUpperCase();avatar.className="voice-member-fallback"}name.textContent=profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";item.append(avatar,name);if(participant.screen_sharing){const sharing=document.createElement("span");sharing.className="voice-member-screen";sharing.textContent="▣";sharing.title="Sharing screen";sharing.setAttribute("aria-label",sharing.title);item.append(sharing)}if(participant.pending_status){const pendingState=document.createElement("small");pendingState.className="voice-member-state";pendingState.textContent=participant.pending_status;item.append(pendingState)}if(participant.server_muted||participant.muted){const muted=document.createElement("span");muted.className="voice-member-muted";muted.textContent="⌁";muted.title=participant.server_muted?"Server muted":"Muted";muted.setAttribute("aria-label",muted.title);item.append(muted)}list.append(item)})}catch(_){}};
 	  const refreshAll=()=>discover().forEach(refresh);document.addEventListener("allchat:voice-pending",refreshAll);document.addEventListener("allchat:view-swapped",refreshAll);await Promise.all(discover().map(refresh));setInterval(()=>{if(!document.hidden)refreshAll()},2000);
 	};
-	if(document.querySelector(".channel-nav"))installVoiceChannelPresence().catch(()=>{}).finally(()=>import("/assets/voice-connection.js").then(()=>import("/assets/voice-sidebar.js")).catch(()=>{}));
+	if(document.querySelector(".channel-nav"))installVoiceChannelPresence().catch(()=>{}).finally(()=>import("/assets/rnnoise.js").then(()=>import("/assets/voice-settings.js")).then(()=>import("/assets/voice-connection.js")).then(()=>import("/assets/voice-sidebar.js")).catch(()=>{}));
 	if(document.querySelector(".channel-nav"))import("/assets/channel-navigation.js").catch(()=>{});
 
   const conversation = document.querySelector(".conversation-layout");
@@ -609,6 +615,8 @@
     control.querySelector("[data-avatar-remove]").onclick=async()=>{const response=await fetch("/api/v1/profile/avatar",{method:"DELETE",headers:{"X-CSRF-Token":csrf}});status.textContent=response.ok?"Avatar removed.":"Could not remove avatar.";if(response.ok){image.hidden=true;fallback.hidden=false}};
   };
   installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
+  const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
+  installVoiceSettingsLink(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettingsLink(event.detail?.root||document));
 
   const installSoundboard = root => {
     if (!root.querySelector?.("#sound-upload")) return;

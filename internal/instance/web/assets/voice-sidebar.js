@@ -117,6 +117,7 @@
     session.screenStream?.getTracks().forEach(track => track.stop());
     session.remoteVideos?.forEach(video => video.remove());
     session.remoteAudios?.forEach(audio => audio.remove());
+    session.microphoneCapture?.stop?.();
     if (removePanel) session.panel.remove();
 	setTimeout(()=>{const pending=window.allchatVoicePending?.get(session.roomID);if(pending?.member_id===session.profile.id&&pending.status==="Disconnecting"){window.allchatVoicePending.delete(session.roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"))}},650);
     if (changeView) leaveVoiceView(session);
@@ -132,7 +133,7 @@
     const soundboard = panel.querySelector("[data-voice-soundboard]");
     const retry = panel.querySelector("[data-voice-retry]");
     const leave = panel.querySelector("[data-voice-leave]");
-    const session = {roomID, name, panel, connection: null, stream: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), stoppedVideoMembers: new Set(), profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
+    const session = {roomID, name, panel, connection: null, stream: null, microphoneCapture: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), stoppedVideoMembers: new Set(), profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
 	prepareEarcons();
 	setPending(session, "Connecting");
@@ -153,7 +154,7 @@
     });
     try {
       status.textContent = "Requesting microphone";
-      session.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false});
+      session.microphoneCapture = await window.AllChatVoiceSettings.capture(); session.stream = session.microphoneCapture.stream;
       if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
       session.mediaConfig = await fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig);
       const resumeKey = `allchat-media-resume:${roomID}`;
@@ -172,7 +173,7 @@
         }
         let audio = session.remoteAudios.get(event.track);
         if (!audio) {
-          audio = document.createElement("audio"); audio.autoplay = true;
+          audio = document.createElement("audio"); audio.autoplay = true; window.AllChatVoiceSettings.applyOutput(audio,(event.track.id||event.streams[0]?.id||"").replace(/^(?:audio|member)-/,""));
           session.remoteAudios.set(event.track, audio); document.body.append(audio);
           event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
         }
@@ -221,7 +222,7 @@
       const connectionProgress = message => { if(active===session && session.connection?.state!=="connected"){status.textContent=message;setPending(session,message.replace(/…$/, ""));} };
       const recordDiagnostics = sample => {
 		const audio=[...session.remoteAudios.entries()].map(([track,element])=>({track_id:track.id,track_state:track.readyState,track_muted:track.muted,element_paused:element.paused,element_ready_state:element.readyState,element_current_time:element.currentTime}));
-		const value={...sample,audio};let history=[];try{history=JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){history=[]}
+		const value={...sample,audio,processing:{requested:session.microphoneCapture?.settings||{},applied:session.microphoneCapture?.applied||{}}};let history=[];try{history=JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){history=[]}
 		history.push(value);if(history.length>600)history=history.slice(-600);try{localStorage.setItem("allchat:voice-diagnostics",JSON.stringify(history))}catch(_){}
 	  };
 	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};

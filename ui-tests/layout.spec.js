@@ -87,6 +87,54 @@ async function openCommunity(page, mobile) {
   if (mobile) await page.locator('[data-sidebar-toggle]').click();
 }
 
+test('Voice and Video settings persist processing and volume preferences per Member', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/voice-video');
+  await expect.poll(() => page.evaluate(() => Boolean(window.AllChatRNNoise))).toBe(true);
+  await expect(page.getByRole('heading', {name: 'Voice & Video'})).toBeVisible();
+  await page.getByLabel('Automatic gain control').check();
+  await page.locator('input[name="inputGain"]').fill('1.5');
+  await page.reload();
+  await expect(page.getByLabel('Automatic gain control')).toBeChecked();
+  await expect(page.locator('input[name="inputGain"]')).toHaveValue('1.5');
+  await expect(page.getByLabel('Noise gate')).toBeChecked();
+});
+
+test('enhanced suppression initializes the local RNNoise AudioWorklet', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/voice-video');
+  await expect.poll(() => page.evaluate(() => Boolean(window.AllChatRNNoise))).toBe(true);
+  const result = await page.evaluate(async () => {
+    const context = new AudioContext();
+    try {
+      const node = await window.AllChatRNNoise.createNode(context);
+      node.port.postMessage({type: 'destroy'});
+      return {ready: true, state: context.state};
+    } finally { await context.close(); }
+  });
+  expect(result.ready).toBe(true);
+});
+
+test('enhanced suppression keeps echo cancellation but does not stack browser suppression', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/voice-video');
+  await expect.poll(() => page.evaluate(() => Boolean(window.AllChatVoiceSettings))).toBe(true);
+  const constraints = await page.evaluate(() => window.AllChatVoiceSettings.constraints({
+    ...window.AllChatVoiceSettings.defaults,
+    noiseSuppressionMode: 'enhanced',
+  }));
+  expect(constraints.echoCancellation).toBe(true);
+  expect(constraints.noiseSuppression).toBe(false);
+});
+
+test('voice processing fallback is announced without interrupting the call', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/voice-video');
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('allchat:voice-compatibility', {detail: {message: 'Enhanced suppression is unavailable; standard suppression is active.'}})));
+  await expect(page.locator('[data-voice-compatibility]')).toHaveText('Enhanced suppression is unavailable; standard suppression is active.');
+  await expect(page.locator('[data-voice-compatibility]')).toHaveAttribute('role', 'status');
+});
+
 test('browser interaction reports presence activity over realtime', async ({page}) => {
   await page.addInitScript(() => {
     window.realtimeFrames = [];

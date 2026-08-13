@@ -20,9 +20,12 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {AllChatClient} from './src/client/AllChatClient';
 import {normalizeInstanceURL} from './src/domain/instance';
 import {CommunityScreen} from './src/screens/CommunityScreen';
+import {VoiceVideoSettingsScreen} from './src/screens/VoiceVideoSettingsScreen';
 import {InstanceAccount, KeychainSessionVault, SessionVault} from './src/session/SessionVault';
+import {DEFAULT_VOICE_VIDEO_SETTINGS, KeychainVoiceVideoSettingsStore, type VoiceVideoSettings} from './src/media/VoiceVideoSettings';
 
 const defaultVault = new KeychainSessionVault();
+const voiceSettingsStore = new KeychainVoiceVideoSettingsStore();
 
 export type AppProps = {vault?: SessionVault};
 
@@ -41,6 +44,8 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
   const [active, setActive] = useState<InstanceAccount>();
   const [adding, setAdding] = useState(false);
   const [managing, setManaging] = useState(false);
+  const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceVideoSettings>(DEFAULT_VOICE_VIDEO_SETTINGS);
   const [instanceInput, setInstanceInput] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -62,6 +67,8 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
     });
     return () => { mounted = false; };
   }, [vault]);
+
+  useEffect(() => { if (active) voiceSettingsStore.load(active.instance_url, active.member.id).then(setVoiceSettings); }, [active]);
 
   async function signIn() {
     setSubmitting(true);
@@ -109,8 +116,12 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
     return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><View style={styles.centered}><ActivityIndicator color={palette.accent} /></View></SafeAreaView>;
   }
 
+  if (active && voiceSettingsOpen) {
+    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><VoiceVideoSettingsScreen initial={voiceSettings} onBack={() => setVoiceSettingsOpen(false)} onChange={next => { setVoiceSettings(next); voiceSettingsStore.save(active.instance_url, active.member.id, next).catch(() => {}); }} palette={palette} /></SafeAreaView>;
+  }
+
   if (active && !adding && !managing) {
-    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><CommunityScreen account={active} onManage={() => setManaging(true)} palette={palette} /></SafeAreaView>;
+    return <SafeAreaView style={shellStyle}><StatusBar barStyle={dark ? 'light-content' : 'dark-content'} /><CommunityScreen account={active} onManage={() => setManaging(true)} onVoiceSettingsChange={next => { setVoiceSettings(next); voiceSettingsStore.save(active.instance_url, active.member.id, next).catch(() => {}); }} palette={palette} voiceSettings={voiceSettings} /></SafeAreaView>;
   }
 
   if (active && managing && !adding) {
@@ -138,6 +149,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
           ))}
           {status ? <Text style={[styles.notice, {color: palette.muted}]}>{status}</Text> : null}
           <TouchableOpacity accessibilityRole="button" onPress={() => setManaging(false)} style={[styles.button, {backgroundColor: palette.accent}]}><Text style={styles.buttonText}>Open Community</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={() => setVoiceSettingsOpen(true)} style={[styles.button, styles.secondaryButton, {backgroundColor: palette.field, borderColor: palette.border}]}><Text style={[styles.secondaryButtonText, {color: palette.text}]}>Voice & Video Settings</Text></TouchableOpacity>
           <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={() => signOut(active)} style={styles.dangerButton}>
             <Text style={styles.dangerText}>{submitting ? 'Signing out…' : 'Sign out of this Instance'}</Text>
           </TouchableOpacity>
@@ -183,6 +195,7 @@ const styles = StyleSheet.create({
   copy: {fontSize: 16, lineHeight: 23, marginBottom: 10}, notice: {fontSize: 14, lineHeight: 20},
   input: {borderRadius: 10, borderWidth: 1, fontSize: 16, minHeight: 52, paddingHorizontal: 16},
   button: {alignItems: 'center', borderRadius: 10, justifyContent: 'center', minHeight: 52, marginTop: 4},
+  secondaryButton: {borderWidth: 1}, secondaryButtonText: {fontWeight: '700'},
   smallButton: {borderRadius: 8, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9},
   account: {borderRadius: 10, borderWidth: 1, padding: 16}, accountName: {fontSize: 16, fontWeight: '700', marginBottom: 3},
   buttonText: {color: '#ffffff', fontSize: 16, fontWeight: '700'}, disabled: {opacity: 0.65}, error: {color: '#ed4245', fontSize: 14},

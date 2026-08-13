@@ -2,6 +2,8 @@
   "name": "allchat-ui-tests",
   "private": true,
   "scripts": {
+    "prepare:rnnoise": "node scripts/prepare-rnnoise.mjs",
+    "postinstall": "npm run prepare:rnnoise",
     "test:ui": "playwright test",
     "test:ui:update": "playwright test --update-snapshots",
     "test:media:manifest": "node media-tests/validate-scenarios.js",
@@ -9,6 +11,7 @@
     "test:media:soak": "node media-tests/soak.js"
   },
   "devDependencies": {
+    "@shiguredo/rnnoise-wasm": "2025.1.5",
     "@playwright/test": "latest"
   }
 }

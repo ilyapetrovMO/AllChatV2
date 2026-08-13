@@ -174,7 +174,8 @@ The following example installs one Instance on a Linux VPS. Commands assume a ch
 Build a static application binary, create a dedicated unprivileged account, and prepare persistent storage:
 
 ```sh
-go build -trimpath -ldflags='-s -w' -o allchat ./cmd/allchat
+npm install
+make build
 sudo install -o root -g root -m 0755 allchat /usr/local/bin/allchat
 sudo useradd --system --home-dir /var/lib/allchat --create-home --shell /usr/sbin/nologin allchat
 sudo install -d -o allchat -g allchat -m 0700 /var/lib/allchat
@@ -327,7 +328,7 @@ npx playwright install chromium
 make test-ui
 ```
 
-Node and Playwright are test dependencies only; the AllChat binary continues to embed every runtime frontend asset.
+The Node install also prepares the pinned RNNoise WebAssembly module. The AllChat binary embeds that generated runtime frontend asset, so deployments do not require Node.
 
 WebRTC reliability has deterministic Pion, real-browser, Android lifecycle, and soak tiers. After installing the Playwright browsers, run:
 

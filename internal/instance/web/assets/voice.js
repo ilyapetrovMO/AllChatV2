@@ -10,7 +10,7 @@
   const participantList = document.getElementById("voice-participants");
   const remoteAudio = document.getElementById("remote-audio");
   const resumeKey=`allchat-media-resume:${roomID}`;
-  let socket, peer, microphone, polling, heartbeat, screenStream, screenSender, canModerate=false, mediaConfig={audio_bitrate:64000,screen_bitrate:2500000};
+  let socket, peer, microphone, microphoneCapture, polling, heartbeat, screenStream, screenSender, canModerate=false, mediaConfig={audio_bitrate:64000,screen_bitrate:2500000};
   fetch("/api/v1/media/config").then(response=>response.json()).then(value=>mediaConfig=value);
   fetch("/api/v1/moderation-records").then(response=>{canModerate=response.ok;refreshParticipants()});
   const screen=document.createElement("button");screen.type="button";screen.className="button-secondary";screen.textContent="Share Screen";screen.disabled=true;mute.after(screen);
@@ -39,7 +39,7 @@
     if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({version: 1, type: "leave"}));
     socket?.close();
     peer?.close();
-    microphone?.getTracks().forEach(track => track.stop());
+    microphoneCapture?.stop?.(); microphoneCapture=null; microphone?.getTracks().forEach(track => track.stop());
     socket = peer = microphone = null;
     remoteAudio.replaceChildren();
     join.disabled = false;
@@ -51,7 +51,7 @@
     join.disabled = true;
     status.textContent = "Requesting microphone access…";
     try {
-      microphone = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false});
+      if(!window.AllChatRNNoise)await import("/assets/rnnoise.js");if(!window.AllChatVoiceSettings)await import("/assets/voice-settings.js");microphoneCapture=await window.AllChatVoiceSettings.capture();microphone=microphoneCapture.stream;
 	  const ice=await fetch("/api/v1/turn-credentials").then(response=>response.json());
       peer = new RTCPeerConnection({iceServers:ice.ice_servers||[]});
       microphone.getTracks().forEach(track => {const sender=peer.addTrack(track, microphone),parameters=sender.getParameters();parameters.encodings=parameters.encodings?.length?parameters.encodings:[{}];parameters.encodings[0].maxBitrate=mediaConfig.audio_bitrate;sender.setParameters(parameters).catch(()=>{});});
@@ -60,7 +60,7 @@
         const media = document.createElement(event.track.kind === "video" ? "video" : "audio");
         media.autoplay = true;
         if (event.track.kind === "video") { media.className = "shared-screen"; media.playsInline = true; }
-        media.srcObject = event.streams[0] || new MediaStream([event.track]);
+        media.srcObject = event.streams[0] || new MediaStream([event.track]);if(event.track.kind==="audio")window.AllChatVoiceSettings.applyOutput(media);
         (event.track.kind === "video" ? document.querySelector(".voice-stage") : remoteAudio).append(media);
       };
       const offer = await peer.createOffer();

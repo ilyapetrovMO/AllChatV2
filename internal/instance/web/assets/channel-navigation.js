@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const isOverlayPath = path => path === "/profile" || path === "/sessions" || path === "/search" || path.startsWith("/admin/");
+  const isOverlayPath = path => path === "/profile" || path === "/voice-video" || path === "/sessions" || path === "/search" || path.startsWith("/admin/");
   const style = document.createElement("style");
   style.textContent = `.app-overlay{position:fixed;inset:0;z-index:100;background:var(--bg-main);overflow:auto}.app-overlay>.app-shell{min-height:100vh}.app-overlay-close{position:fixed;top:18px;right:22px;z-index:102;width:40px;height:40px;min-height:40px;padding:0;border:1px solid var(--border);border-radius:50%;background:var(--bg-active);color:var(--muted);font-size:1.8rem;line-height:1}.app-overlay-close:hover{color:var(--text);background:var(--bg-hover)}body.app-overlay-open{overflow:hidden}`;
   document.head.append(style);

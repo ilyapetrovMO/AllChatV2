@@ -3,7 +3,7 @@
   if (window.__allchatCallRuntime) return;
   window.__allchatCallRuntime = true;
 
-  let call = null, connection = null, microphone = null, screenStream = null;
+  let call = null, connection = null, microphone = null, microphoneCapture = null, screenStream = null;
   let localScreenVideo = null, screenSender = null;
   let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0, mediaPreparation = null;
   let ringContext = null, ringTimer = null;
@@ -151,7 +151,7 @@
     stopRinging();
     generation++;
     connection?.stop({explicit}); connection = null;
-    microphone?.getTracks().forEach(track => track.stop()); microphone = null;
+    microphoneCapture?.stop?.(); microphoneCapture = null; microphone?.getTracks().forEach(track => track.stop()); microphone = null;
     stopScreen({renegotiate: false}).catch(() => {});
     clearRemoteMedia(); restoreConversation();
   };
@@ -176,7 +176,7 @@
       event.track.addEventListener("ended",remove);event.track.addEventListener("mute",remove);event.track.addEventListener("unmute",publish);
       if(!event.track.muted)publish();return;
     }
-    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;
+    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream; window.AllChatVoiceSettings?.applyOutput(audio,(event.track.id||stream.id||"").replace(/^(?:audio|member)-/,""));
     remoteAudio.set(event.track, audio); document.body.append(audio);
     audio.play().catch(() => {});
     event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});
@@ -226,13 +226,15 @@
     if (!mediaPreparation) {
       mediaPreparation = (async () => {
         panel.hidden=false;panel.innerHTML='<span class="call-progress">Requesting microphone permission…</span>';attachPanel();
+        if (!window.AllChatRNNoise) await import("/assets/rnnoise.js");
+        if (!window.AllChatVoiceSettings) await import("/assets/voice-settings.js");
         if (!window.AllChatVoiceConnection) await import("/assets/voice-connection.js");
-        const [stream, config] = await Promise.all([
-          navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}, video: false}),
+        const [capture, config] = await Promise.all([
+          window.AllChatVoiceSettings.capture(),
           fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
         ]);
-        if (expectedGeneration !== generation) { stream.getTracks().forEach(track => track.stop()); throw new Error("Direct Call preparation cancelled"); }
-        microphone=stream;mediaConfig=config;
+        if (expectedGeneration !== generation) { capture.stop(); throw new Error("Direct Call preparation cancelled"); }
+        microphoneCapture=capture;microphone=capture.stream;mediaConfig=config;
       })().finally(() => { mediaPreparation=null; });
     }
     await mediaPreparation;

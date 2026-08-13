@@ -2,13 +2,19 @@ import React from 'react';
 import {FlatList, Image, Modal} from 'react-native';
 import renderer, {act} from 'react-test-renderer';
 
-import {ConversationTimeline, formatMessageTime, IncomingCallChime, loadAuthenticatedImage, mergeMessagePage, MessageRow, trimMessageWindow} from '../src/screens/CommunityScreen';
+import {activeMediaParticipantIDs, ConversationTimeline, formatMessageTime, IncomingCallChime, loadAuthenticatedImage, mergeMessagePage, MessageRow, trimMessageWindow} from '../src/screens/CommunityScreen';
 import type {Message} from '../src/client/bootstrap';
 
 const palette = {background: '#111111', field: '#222222', border: '#333333', text: '#ffffff', muted: '#aaaaaa', placeholder: '#777777', accent: '#5555ff'};
 const message: Message = {id: 'message-1', channel_id: 'channel-1', author_id: 'member-2', author_name: 'Member', sequence: 1, body: 'Hello', created_at: '2030-01-01T00:00:00Z', deleted: false};
 
 describe('native conversation timeline', () => {
+  it('removes disconnected remote participants from the active media grid', () => {
+    expect(activeMediaParticipantIDs('mobile', [
+      {member_id: 'web', connected: false},
+      {member_id: 'mobile', connected: true},
+    ])).toEqual(['mobile']);
+  });
   it('mounts the incoming-call chime only while a call is ringing', () => {
     let tree!: renderer.ReactTestRenderer;
     act(() => { tree = renderer.create(<IncomingCallChime active={false} />); });

@@ -88,7 +88,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	var token string
 	var peerLease uint64
 	forward := func(signal media.Signal) {
-		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate}
+		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate, Participants: signal.Participants}
 		if signal.SoundID != "" {
 			frame.Sound = &community.SoundboardSound{ID: signal.SoundID, Name: signal.SoundName, Emoji: signal.SoundEmoji, AudioURL: signal.SoundURL}
 		}
@@ -125,6 +125,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	i.media.Renegotiate(member.ID)
+	i.media.BroadcastParticipants(mediaRoomID)
 	for {
 		_, encoded, err = connection.Read(r.Context())
 		if err != nil {

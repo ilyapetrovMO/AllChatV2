@@ -1,7 +1,8 @@
 import {MediaSession, mediaOwnerID} from '../src/media/MediaSession';
+import {DEFAULT_VOICE_VIDEO_SETTINGS} from '../src/media/VoiceVideoSettings';
 
-function harness() {
-  const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn()};
+function harness(settings = DEFAULT_VOICE_VIDEO_SETTINGS) {
+  const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
   const cameraTrack = {id: 'camera-1', kind: 'video', enabled: true, stop: jest.fn(), _switchCamera: jest.fn()}; const screenTrack = {id: 'screen-1', kind: 'video', enabled: true, stop: jest.fn()};
   const videoTracks: typeof cameraTrack[] = [];
   const local = {getTracks: () => [track, ...videoTracks], getAudioTracks: () => [track], getVideoTracks: () => videoTracks, addTrack: jest.fn((item: typeof cameraTrack) => videoTracks.push(item)), removeTrack: jest.fn((item: typeof cameraTrack) => { const index = videoTracks.indexOf(item); if (index >= 0) videoTracks.splice(index, 1); })};
@@ -17,16 +18,29 @@ function harness() {
   peer.setRemoteDescription.mockImplementation(async (description: {type?: string}) => { peer.remoteDescription = description; peer.signalingState = description.type === 'offer' ? 'have-remote-offer' : 'stable'; });
   peer.setLocalDescription.mockImplementation(async (description: {type?: string}) => { peer.localDescription = description; peer.signalingState = description.type === 'rollback' ? 'stable' : description.type === 'answer' ? 'stable' : 'have-local-offer'; });
   const socket: any = {readyState: 1, onopen: null, onmessage: null, onerror: null, onclose: null, send: jest.fn(), close: jest.fn()};
-  const statuses: string[] = []; const participants: string[][] = []; const progress: string[] = []; const remotes: Array<Array<{id: string; ownerID: string}>> = []; const diagnostics: object[] = [];
+  const statuses: string[] = []; const participants: string[][] = []; const participantStates: Array<Array<{member_id: string; connected?: boolean}>> = []; const progress: string[] = []; const remotes: Array<Array<{id: string; ownerID: string}>> = []; const diagnostics: object[] = [];
   const session = new MediaSession({
-    instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1',
+    instanceURL: 'https://chat.example.test', token: 'session-token', roomID: 'voice-1', settings,
     getUserMedia: jest.fn(async constraints => ((constraints as {video?: unknown}).video ? cameraStream : local) as never), getDisplayMedia: jest.fn(async () => screenStream as never), fetchICE: jest.fn(async () => []),
-    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onProgress: value => progress.push(value), onRemote: values => remotes.push(values.map(value => ({id: value.id, ownerID: value.ownerID}))), onParticipants: values => participants.push(values.map(value => value.member_id)), onDiagnostics: value => diagnostics.push(value),
+    createPeer: () => peer as never, createSocket: () => socket as never, onStatus: status => statuses.push(status), onProgress: value => progress.push(value), onRemote: values => remotes.push(values.map(value => ({id: value.id, ownerID: value.ownerID}))), onParticipants: values => { participants.push(values.map(value => value.member_id)); participantStates.push(values); }, onDiagnostics: value => diagnostics.push(value),
   });
-  return {cameraTrack, diagnostics, local, participants, peer, progress, remotes, screenTrack, session, socket, statuses, track};
+  return {cameraTrack, diagnostics, local, participants, participantStates, peer, progress, remotes, screenTrack, session, socket, statuses, track};
 }
 
 describe('MediaSession', () => {
+  it('captures and volumes audio using the selected voice settings', async () => {
+    const settings = {...DEFAULT_VOICE_VIDEO_SETTINGS, microphoneID: 'mic-2', inputGain: 1.4, outputVolume: 0.7};
+    const {peer, session, socket, track} = harness(settings);
+    const getUserMedia = (session as any).options.getUserMedia as jest.Mock;
+    await session.start(); socket.onopen?.();
+    expect(getUserMedia).toHaveBeenCalledWith({audio: {deviceId: {ideal: 'mic-2'}, echoCancellation: true, noiseSuppression: true, autoGainControl: false}, video: false});
+    expect(track._setVolume).toHaveBeenCalledWith(1.4);
+    const remoteTrack = {id: 'audio-member-2', kind: 'audio', _setVolume: jest.fn()};
+    peer.ontrack({streams: [{id: 'member-member-2', getTracks: () => [remoteTrack]}], track: remoteTrack});
+    expect(remoteTrack._setVolume).toHaveBeenCalledWith(0.7);
+    session.stop();
+  });
+
   it('uses SFU stream identity instead of rewritten native track IDs', () => {
     expect(mediaOwnerID('native-random-track', 'member-member-1')).toBe('member-1');
     expect(mediaOwnerID('native-random-track', 'screen-member-2')).toBe('member-2');
@@ -45,6 +59,17 @@ describe('MediaSession', () => {
     expect(peer.addTransceiver).toHaveBeenCalledWith('video', {direction: 'recvonly'});
     expect(statuses).toEqual(['connecting', 'connected']);
     expect(participants).toEqual([['member-1']]);
+    session.stop();
+  });
+
+  it('replaces participant state when another endpoint disconnects', async () => {
+    const {participantStates, session, socket} = harness();
+    await session.start(); socket.onopen?.();
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, participants: [{member_id: 'web', connected: true}, {member_id: 'mobile', connected: true}]})});
+
+    await socket.onmessage?.({data: JSON.stringify({version: 1, type: 'participants', participants: [{member_id: 'web', connected: false}, {member_id: 'mobile', connected: true}]})});
+
+    expect(participantStates.at(-1)).toEqual([{member_id: 'web', connected: false}, {member_id: 'mobile', connected: true}]);
     session.stop();
   });
 

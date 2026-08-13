@@ -12,14 +12,19 @@ import (
 )
 
 type Signal struct {
-	Type       string                     `json:"type"`
-	SDP        *webrtc.SessionDescription `json:"sdp,omitempty"`
-	MemberID   string                     `json:"member_id,omitempty"`
-	SoundID    string                     `json:"sound_id,omitempty"`
-	SoundName  string                     `json:"sound_name,omitempty"`
-	SoundEmoji string                     `json:"sound_emoji,omitempty"`
-	SoundURL   string                     `json:"sound_url,omitempty"`
-	Candidate  *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
+	Type         string                     `json:"type"`
+	SDP          *webrtc.SessionDescription `json:"sdp,omitempty"`
+	MemberID     string                     `json:"member_id,omitempty"`
+	SoundID      string                     `json:"sound_id,omitempty"`
+	SoundName    string                     `json:"sound_name,omitempty"`
+	SoundEmoji   string                     `json:"sound_emoji,omitempty"`
+	SoundURL     string                     `json:"sound_url,omitempty"`
+	Candidate    *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
+	Participants []Participant              `json:"participants,omitempty"`
+}
+
+func (m *Manager) BroadcastParticipants(roomID string) {
+	m.Broadcast(roomID, Signal{Type: "participants", Participants: m.Participants(roomID)})
 }
 
 type Peer struct {
@@ -418,8 +423,10 @@ func (m *Manager) detachPeer(memberID string, lease uint64, removeSession, force
 		}
 	}
 	delete(m.screenTracks[peer.roomID], memberID)
+	roomID := peer.roomID
 	m.mu.Unlock()
 	_ = peer.connection.Close()
+	m.BroadcastParticipants(roomID)
 }
 
 func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {

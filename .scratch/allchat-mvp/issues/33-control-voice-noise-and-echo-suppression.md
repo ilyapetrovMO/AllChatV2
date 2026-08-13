@@ -1,7 +1,7 @@
 # Control Voice noise and echo suppression
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 ## Goal
 
@@ -30,7 +30,7 @@ Centralize microphone capture for Voice Channels and Direct Calls, and give Memb
 
 ## Implementation notes
 
-- Use the WebRTC processing supplied by the browser or native WebRTC implementation; do not add custom DSP or a new media dependency.
+- Keep WebRTC echo cancellation as the baseline. Web enhanced mode may add the pinned RNNoise 0.2-compatible WASM processor with browser suppression disabled so the two suppressors are never stacked.
 - Add a shared browser microphone-capture module backed by `localStorage` and a mobile settings store backed by the existing keychain adapter.
 - Existing users receive enabled defaults when no valid stored preferences exist.
 - Web delivery requires rebuilding/redeploying the server; mobile delivery requires rebuilding the application. No database migration is needed.
@@ -38,3 +38,8 @@ Centralize microphone capture for Voice Channels and Direct Calls, and give Memb
 ## Comments
 
 - The current clients already request all three processing constraints directly in each microphone capture path. This task consolidates that behavior, makes it configurable and observable, and verifies it across Voice Channels and Direct Calls.
+- Expanded to cover device-local microphone/audio-route/camera selection, 0–200% outgoing gain, 0–100% master and per-Member incoming volume, and a configurable noise gate. Defaults are echo/noise suppression on, AGC off, gate on at -50 dBFS, and 100% volume.
+- Implemented scoped web localStorage and Android keychain settings, settings pages, centralized web capture, Web Audio gain/gating with compatibility fallback, Android native communication-route selection, native WebRTC track volume, stats-driven Android gating, applied/requested diagnostics, and settings use across Voice Rooms and Direct Calls.
+- Automated verification passes: full Go/acceptance/TURN, 77 mobile unit tests, TypeScript and ESLint, Android debug APK, 125 Playwright tests (one benchmark skipped), and Chromium media interoperability.
+- Remaining before resolution: physical Android speaker/wired/Bluetooth acoustic qualification, including quiet speech, double-talk, route changes, and measured gate attenuation. The planned PCM-level owned WebRTC fork was not needed for the current implementation; revisit it if device testing shows stats-driven gating is too coarse or unavailable on supported handsets.
+- Added the first enhanced-suppression slice on web: a local AudioWorklet buffers 48 kHz mono capture into RNNoise's 480-sample frames, preserves WebRTC echo cancellation, fails open to standard browser suppression, and is embedded into release binaries after the pinned npm preparation step. Android enhanced processing still requires a native PCM hook and remains follow-up work.

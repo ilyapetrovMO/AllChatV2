@@ -85,3 +85,33 @@
 .voice-compatibility-notice{position:fixed;right:16px;bottom:16px;z-index:1000;max-width:min(420px,calc(100vw - 32px));padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elevated);color:var(--text);box-shadow:0 12px 32px #0005}
 .lucide-icon { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .mobile-menu .lucide-icon, .member-settings .lucide-icon, .notification-bell .lucide-icon, .mobile-members .lucide-icon { display: block; margin: auto; }
+
+/* AllChat graphite palette: deep navigation chrome and a quieter conversation canvas. */
+:root {
+  --bg-rail: #0d0e11;
+  --bg-sidebar: #111216;
+  --bg-main: #18191e;
+  --bg-elevated: #202127;
+  --bg-input: #202127;
+  --bg-hover: #26282f;
+  --bg-active: #30323a;
+  --text: #f0f1f5;
+  --muted: #a4a8b3;
+  --faint: #727784;
+  --brand: #6d75e8;
+  --brand-hover: #5962d6;
+  --green: #35b978;
+  --red: #e85561;
+  --yellow: #d9a441;
+  --border: rgba(255,255,255,.065);
+  --shadow: 0 12px 32px rgba(0,0,0,.46);
+}
+.channel-sidebar { border-right: 1px solid rgba(255,255,255,.035); }
+.content-header { background: #16171b; border-bottom-color: rgba(255,255,255,.06); box-shadow: none; }
+.community-header { background: #101115; border-bottom-color: rgba(255,255,255,.06); box-shadow: none; }
+.card, .list-item { background: #1d1e24; }
+.message .body { color: #d9dbe2; }
+.message:hover { background: rgba(255,255,255,.022); }
+.composer-wrap { background: linear-gradient(transparent,var(--bg-main) 26%); }
+.composer { background: #222329; }
+.sidebar-footer { background: #0e0f12; }

@@ -129,6 +129,17 @@ export function activeMediaParticipantIDs(
   ];
 }
 
+export function homeDirectMessages(items: DirectMessage[], limit = 3) {
+  const seen = new Set<string>();
+  return items
+    .filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    })
+    .slice(0, limit);
+}
+
 export function CommunityScreen({
   account,
   palette,
@@ -1021,14 +1032,19 @@ export function CommunityScreen({
                     <Text style={{ color: palette.accent }}>All DMs ›</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.compactConversationList}>
-                  {community.direct_messages.slice(0, 3).map(dmRow)}
+                <ScrollView
+                  contentContainerStyle={styles.compactConversationList}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={false}
+                  style={styles.compactConversationScroller}
+                >
+                  {homeDirectMessages(community.direct_messages).map(dmRow)}
                   {!community.direct_messages.length ? (
                     <Text style={{ color: palette.muted }}>
                       No Direct Messages yet.
                     </Text>
                   ) : null}
-                </View>
+                </ScrollView>
               </View>
               <View style={styles.channelBrowserSection}>
                 <Text style={[styles.section, { color: palette.muted }]}>
@@ -4148,6 +4164,8 @@ const styles = StyleSheet.create({
     flexBasis: '33%',
     maxHeight: '33%',
     minHeight: 116,
+    overflow: 'hidden',
+    paddingBottom: 8,
     paddingHorizontal: 12,
     paddingTop: 10,
   },
@@ -4163,6 +4181,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   compactConversationList: { gap: 5 },
+  compactConversationScroller: { flex: 1, minHeight: 0 },
   channelList: { gap: 7, paddingBottom: 16 },
   browserAvatar: {
     borderRadius: 15,

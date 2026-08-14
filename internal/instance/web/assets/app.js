@@ -9,6 +9,8 @@
     messages: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
     settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/>',
     phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.33 1.85.56 2.81.69A2 2 0 0 1 22 16.92Z"/>',
+    plus: '<path d="M5 12h14M12 5v14"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
     paperclip: '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
     volume: '<path d="M11 5 6 9H2v6h4l5 4Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>'
@@ -16,7 +18,7 @@
   const icon=(name, className="")=>{const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");svg.setAttribute("data-lucide",name);svg.setAttribute("class",`lucide-icon ${className}`.trim());svg.innerHTML=iconPaths[name]||"";return svg};
   const setIcon=(element,name)=>{if(!element)return;element.replaceChildren(icon(name))};
   const installIcons=(root=document)=>{
-    for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
+    for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"],[".attachment-button","plus"],["#composer-submit","send"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});
   };
   const removeDuplicateSearchEntries=(root=document)=>root.querySelectorAll?.('a[href="/search"]').forEach(link=>link.remove());

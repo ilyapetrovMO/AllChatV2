@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   AppState,
   FlatList,
   Image,
@@ -82,6 +83,7 @@ import {
   startCallAudioSession,
   stopCallAudioSession,
 } from '../media/CallAudioSession';
+import { saveMedia } from '../media/MediaSaver';
 import {
   startCallForegroundService,
   stopCallForegroundService,
@@ -2696,12 +2698,33 @@ function AttachmentView({
     ),
     headers: { Authorization: `Bearer ${token}` },
   };
+  const save = async () => {
+    try {
+      const action = await saveMedia(
+        source.uri,
+        token,
+        attachment.name,
+        attachment.content_type,
+      );
+      if (action === 'download')
+        Alert.alert(
+          'Download started',
+          `${attachment.name} will be saved to Downloads/AllChat.`,
+        );
+    } catch (saveError) {
+      Alert.alert(
+        'Could not save media',
+        saveError instanceof Error ? saveError.message : 'Please try again.',
+      );
+    }
+  };
   if (attachment.content_type.startsWith('image/'))
     return (
       <AuthenticatedImage
         accessibilityLabel={attachment.name}
         loader={imageLoader}
         originalURL={source.uri}
+        onLongPress={save}
         palette={palette}
         previewURL={attachmentURL(
           instanceURL,
@@ -2718,7 +2741,12 @@ function AttachmentView({
     attachment.content_type.startsWith('video/')
   )
     return (
-      <InlineMedia attachment={attachment} palette={palette} source={source} />
+      <InlineMedia
+        attachment={attachment}
+        onLongPress={save}
+        palette={palette}
+        source={source}
+      />
     );
   return (
     <View
@@ -2751,6 +2779,7 @@ function AuthenticatedImage({
   accessibilityLabel,
   loader = loadAuthenticatedImage,
   originalURL,
+  onLongPress,
   palette,
   previewURL,
   token,
@@ -2758,6 +2787,7 @@ function AuthenticatedImage({
   accessibilityLabel: string;
   loader?: ImageLoader;
   originalURL: string;
+  onLongPress(): void;
   palette: Palette;
   previewURL: string;
   token: string;
@@ -2814,9 +2844,11 @@ function AuthenticatedImage({
     <>
       <TouchableOpacity
         accessibilityLabel={`Open ${accessibilityLabel}`}
+        accessibilityHint="Long press to save"
         accessibilityRole="imagebutton"
         activeOpacity={0.85}
         onPress={expand}
+        onLongPress={onLongPress}
       >
         <Image
           accessibilityLabel={accessibilityLabel}
@@ -4011,10 +4043,12 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function InlineMedia({
   attachment,
+  onLongPress,
   palette,
   source,
 }: {
   attachment: NonNullable<Message['attachments']>[number];
+  onLongPress(): void;
   palette: Palette;
   source: { uri: string; headers: { Authorization: string } };
 }) {
@@ -4022,20 +4056,29 @@ function InlineMedia({
   const video = attachment.content_type.startsWith('video/');
   if (started)
     return (
-      <Video
-        controls
-        paused={false}
-        resizeMode="contain"
-        source={source}
-        style={[
-          video ? styles.video : styles.audio,
-          { backgroundColor: palette.field },
-        ]}
-      />
+      <TouchableOpacity
+        accessibilityHint="Long press to save"
+        accessibilityLabel={attachment.name}
+        activeOpacity={1}
+        onLongPress={onLongPress}
+      >
+        <Video
+          controls
+          paused={false}
+          resizeMode="contain"
+          source={source}
+          style={[
+            video ? styles.video : styles.audio,
+            { backgroundColor: palette.field },
+          ]}
+        />
+      </TouchableOpacity>
     );
   return (
     <TouchableOpacity
       accessibilityLabel={`Play ${attachment.name}`}
+      accessibilityHint="Long press to save"
+      onLongPress={onLongPress}
       onPress={() => setStarted(true)}
       style={[
         styles.attachment,

@@ -35,19 +35,49 @@ const (
 
 type bootstrapTheme struct{ fyne.Theme }
 
+var (
+	graphiteSidebar = color.NRGBA{R: 43, G: 45, B: 49, A: 255} // #2b2d31
+	graphiteMain    = color.NRGBA{R: 49, G: 51, B: 56, A: 255} // #313338
+	graphiteCard    = color.NRGBA{R: 29, G: 30, B: 36, A: 255} // #1d1e24
+	graphiteInput   = color.NRGBA{R: 30, G: 31, B: 34, A: 255} // #1e1f22
+	graphiteHover   = color.NRGBA{R: 53, G: 55, B: 60, A: 255} // #35373c
+	graphiteActive  = color.NRGBA{R: 64, G: 66, B: 73, A: 255} // #404249
+	graphiteText    = color.NRGBA{R: 242, G: 243, B: 245, A: 255}
+	graphiteMuted   = color.NRGBA{R: 181, G: 186, B: 193, A: 255}
+	graphiteFaint   = color.NRGBA{R: 148, G: 155, B: 164, A: 255}
+	graphiteBrand   = color.NRGBA{R: 88, G: 101, B: 242, A: 255}
+)
+
 func (bootstrapTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	colors := map[fyne.ThemeColorName]color.Color{
-		theme.ColorNameBackground:      color.NRGBA{R: 10, G: 15, B: 24, A: 255},
-		theme.ColorNameButton:          color.NRGBA{R: 30, G: 38, B: 52, A: 255},
-		theme.ColorNameDisabledButton:  color.NRGBA{R: 24, G: 31, B: 43, A: 255},
-		theme.ColorNameInputBackground: color.NRGBA{R: 19, G: 27, B: 40, A: 255},
-		theme.ColorNameInputBorder:     color.NRGBA{R: 45, G: 56, B: 74, A: 255},
-		theme.ColorNameForeground:      color.NRGBA{R: 236, G: 240, B: 248, A: 255},
-		theme.ColorNamePlaceHolder:     color.NRGBA{R: 119, G: 132, B: 153, A: 255},
-		theme.ColorNamePrimary:         color.NRGBA{R: 88, G: 101, B: 242, A: 255},
-		theme.ColorNameHover:           color.NRGBA{R: 40, G: 50, B: 68, A: 255},
-		theme.ColorNameFocus:           color.NRGBA{R: 108, G: 92, B: 231, A: 255},
-		theme.ColorNameSeparator:       color.NRGBA{R: 37, G: 47, B: 64, A: 255},
+		theme.ColorNameBackground:          graphiteMain,
+		theme.ColorNameButton:              graphiteActive,
+		theme.ColorNameDisabledButton:      graphiteSidebar,
+		theme.ColorNameInputBackground:     graphiteInput,
+		theme.ColorNameInputBorder:         color.NRGBA{R: 30, G: 31, B: 34, A: 255},
+		theme.ColorNameForeground:          graphiteText,
+		theme.ColorNameDisabled:            graphiteFaint,
+		theme.ColorNamePlaceHolder:         graphiteFaint,
+		theme.ColorNamePrimary:             graphiteBrand,
+		theme.ColorNameHyperlink:           graphiteBrand,
+		theme.ColorNameHover:               graphiteHover,
+		theme.ColorNamePressed:             color.NRGBA{R: 0, G: 0, B: 0, A: 45},
+		theme.ColorNameFocus:               graphiteBrand,
+		theme.ColorNameSelection:           color.NRGBA{R: 88, G: 101, B: 242, A: 110},
+		theme.ColorNameSeparator:           color.NRGBA{R: 255, G: 255, B: 255, A: 20},
+		theme.ColorNameHeaderBackground:    graphiteSidebar,
+		theme.ColorNameMenuBackground:      graphiteCard,
+		theme.ColorNameOverlayBackground:   graphiteCard,
+		theme.ColorNameScrollBar:           graphiteFaint,
+		theme.ColorNameScrollBarBackground: color.Transparent,
+		theme.ColorNameShadow:              color.NRGBA{A: 90},
+		theme.ColorNameSuccess:             color.NRGBA{R: 35, G: 165, B: 89, A: 255},
+		theme.ColorNameWarning:             color.NRGBA{R: 240, G: 178, B: 50, A: 255},
+		theme.ColorNameError:               color.NRGBA{R: 242, G: 63, B: 66, A: 255},
+		theme.ColorNameForegroundOnPrimary: graphiteText,
+		theme.ColorNameForegroundOnSuccess: graphiteText,
+		theme.ColorNameForegroundOnError:   graphiteText,
+		theme.ColorNameForegroundOnWarning: graphiteCard,
 	}
 	if value, ok := colors[name]; ok {
 		return value
@@ -65,22 +95,36 @@ func (bootstrapTheme) Size(name fyne.ThemeSizeName) float32 {
 		return 14
 	}
 	if name == theme.SizeNamePadding {
-		return 10
+		return 12
+	}
+	if name == theme.SizeNameInputRadius {
+		return 4
+	}
+	if name == theme.SizeNameHeadingText {
+		return 24
+	}
+	if name == theme.SizeNameSubHeadingText {
+		return 16
 	}
 	return theme.DefaultTheme().Size(name)
 }
 
 func surface(object fyne.CanvasObject, background color.Color) fyne.CanvasObject {
 	panel := canvas.NewRectangle(background)
-	panel.CornerRadius = 10
+	panel.CornerRadius = 8
 	return container.NewStack(panel, container.NewPadded(object))
+}
+
+func featureRow(text string) fyne.CanvasObject {
+	icon := widget.NewIcon(theme.NewColoredResource(theme.ConfirmIcon(), theme.ColorNameSuccess))
+	return container.NewHBox(icon, widget.NewLabel(text))
 }
 
 func main() {
 	a := app.NewWithID("org.allchat.bootstrap")
 	a.Settings().SetTheme(bootstrapTheme{})
-	w := a.NewWindow("AllChat Instance Bootstrapper")
-	w.Resize(fyne.NewSize(940, 650))
+	w := a.NewWindow("AllChat Setup")
+	w.Resize(fyne.NewSize(980, 680))
 
 	user := widget.NewEntry()
 	user.SetText("root")
@@ -143,11 +187,15 @@ func main() {
 	releaseMode.SetSelected(releaseLatest)
 
 	stepHeading := widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	stepHeading.SizeName = theme.SizeNameHeadingText
 	stepProgress := widget.NewLabel("")
+	stepProgress.Importance = widget.LowImportance
 	errorLabel := widget.NewLabel("")
 	errorLabel.Wrapping = fyne.TextWrapWord
+	errorLabel.Importance = widget.DangerImportance
 	status := widget.NewLabel("")
 	status.Wrapping = fyne.TextWrapWord
+	status.Selectable = true
 	statusScroll := container.NewVScroll(status)
 	statusScroll.SetMinSize(fyne.NewSize(0, 160))
 	statusScroll.Hide()
@@ -159,17 +207,20 @@ func main() {
 	successCard.Hide()
 	review := widget.NewLabel("")
 	review.Wrapping = fyne.TextWrapWord
+	review.Selectable = true
 
 	page := func(title, description string, body ...fyne.CanvasObject) fyne.CanvasObject {
 		detail := widget.NewLabel(description)
 		detail.Wrapping = fyne.TextWrapWord
+		detail.Importance = widget.LowImportance
 		heading := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		heading.SizeName = theme.SizeNameHeadingText
 		items := []fyne.CanvasObject{heading, detail, widget.NewSeparator()}
-		return surface(container.NewVBox(append(items, body...)...), color.NRGBA{R: 14, G: 21, B: 32, A: 255})
+		return surface(container.NewVBox(append(items, body...)...), graphiteMain)
 	}
 	pages := []fyne.CanvasObject{
 		page("Welcome to the AllChat setup wizard", "This wizard installs or safely upgrades AllChat on your VPS. You will need an SSH account and either a password or private key.",
-			widget.NewLabel("✓  Secure SSH connection"), widget.NewLabel("✓  Automatic server configuration"), widget.NewLabel("✓  Firewall, TLS, and voice setup"), widget.NewLabel("✓  Ready in minutes")),
+			featureRow("Secure SSH connection"), featureRow("Automatic server configuration"), featureRow("Firewall, TLS, and voice setup"), featureRow("Ready in minutes")),
 		page("How do you sign in to the VPS?", "Use the same account and authentication method you use when connecting to the server with SSH.",
 			widget.NewForm(widget.NewFormItem("Username", user)), authMode, passwordFields, keyFields,
 			widget.NewSeparator(), widget.NewLabel("Privilege escalation"), widget.NewForm(widget.NewFormItem("Sudo password", sudoPassword))),
@@ -178,7 +229,7 @@ func main() {
 			widget.NewLabel("Supported servers: Debian 12+ and Ubuntu 22.04+. SSH, HTTP, HTTPS, and media ports must be reachable.")),
 		page("Which AllChat version should be installed?", "The latest stable release is the best choice for most installations. Choose a tag only when you need a particular version.",
 			releaseMode, releaseFields),
-		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", surface(review, color.NRGBA{R: 18, G: 26, B: 39, A: 255}), installProgress, successCard, statusScroll),
+		page("Review and install", "Check the destination below. Credentials remain in this process and are never saved.", surface(review, graphiteCard), installProgress, successCard, statusScroll),
 	}
 	stack := container.NewStack(pages...)
 	for index := 1; index < len(pages); index++ {
@@ -187,14 +238,14 @@ func main() {
 	stepNames := []string{"Welcome", "SSH / Password", "Hostname", "Server Version", "Review & Install"}
 	stepRows := make([]*widget.Label, len(stepNames))
 	stepObjects := make([]fyne.CanvasObject, 0, len(stepNames)+2)
-	brand := widget.NewLabelWithStyle("ALLCHAT", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	brand := widget.NewLabelWithStyle("ALLCHAT  SETUP", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	stepObjects = append(stepObjects, brand, widget.NewSeparator())
 	for index, name := range stepNames {
 		label := widget.NewLabel(fmt.Sprintf("  %d   %s", index+1, name))
 		stepRows[index] = label
 		stepObjects = append(stepObjects, label)
 	}
-	sidebar := surface(container.NewVBox(stepObjects...), color.NRGBA{R: 12, G: 18, B: 28, A: 255})
+	sidebar := surface(container.NewVBox(stepObjects...), graphiteSidebar)
 
 	config := func() (bootstrap.Config, error) {
 		sshPort, err := strconv.Atoi(strings.TrimSpace(port.Text))
@@ -245,6 +296,9 @@ func main() {
 	back := widget.NewButton("Back", nil)
 	next := widget.NewButton("Continue", nil)
 	install := widget.NewButton("Install or safely upgrade", nil)
+	back.Importance = widget.LowImportance
+	next.Importance = widget.HighImportance
+	install.Importance = widget.HighImportance
 	install.Hide()
 	showStep := func(index int) {
 		pages[current].Hide()
@@ -429,10 +483,11 @@ func main() {
 	showStep(0)
 	version := widget.NewLabel("Bootstrapper " + buildinfo.String())
 	version.Alignment = fyne.TextAlignTrailing
+	version.Importance = widget.LowImportance
 	footer := container.NewVBox(errorLabel, container.NewBorder(nil, nil, back, container.NewHBox(next, install)), version)
 	header := container.NewVBox(stepProgress, stepHeading, widget.NewSeparator())
 	content := container.NewBorder(header, footer, nil, nil, container.NewVScroll(stack))
-	sidebarBox := container.NewGridWrap(fyne.NewSize(220, 610), sidebar)
+	sidebarBox := container.NewGridWrap(fyne.NewSize(232, 640), sidebar)
 	w.SetContent(container.NewPadded(container.NewBorder(nil, nil, sidebarBox, nil, content)))
 	w.ShowAndRun()
 }

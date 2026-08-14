@@ -16,6 +16,8 @@ export type NativeSession = {
   expires_at: string;
 };
 
+export type InstanceVersion = {version: string; build_id: string; apk_available: boolean};
+
 export type LocalAttachment = {uri: string; name: string; type: string; size?: number | null};
 export type LinkPreview = {url: string; site_name?: string; title?: string; description?: string; image_url?: string};
 export type Report = {id: string; reporter_id: string; target_member_id?: string; target_message_id?: string; reason: string; status: string; created_at: string; outcome?: string};
@@ -71,6 +73,11 @@ export class AllChatClient {
       throw new Error(`Unsupported mobile protocol version: ${bootstrap.version}`);
     }
     return bootstrap;
+  }
+
+  async instanceVersion(): Promise<InstanceVersion> {
+    const response = await this.request(`${this.instanceURL}/api/v1/version`);
+    return this.decode<InstanceVersion>(response, 'Could not check for updates.');
   }
 
   async listMessages(token: string, conversationID: string, direct = false, before = 0, limit = 50): Promise<MessagePage> {

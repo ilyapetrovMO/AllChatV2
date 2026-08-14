@@ -208,7 +208,7 @@ jobs:
           cache: gradle
       - run: npm ci --prefix mobile
       - name: Build universal standalone APK
-        run: cd mobile/android && ./gradlew assembleStandalone --no-daemon
+        run: cd mobile/android && ./gradlew assembleStandalone --no-daemon -PallchatVersionName="${GITHUB_REF_NAME#v}" -PallchatVersionCode="${GITHUB_RUN_NUMBER}"
       - name: Name release APK
         run: |
           version="${GITHUB_REF_NAME#v}"

@@ -193,4 +193,6 @@ a[href="/search"] { display: none; }
 .community-markdown .syntax-key { color:#79c0ff; }.community-markdown .syntax-string { color:#a5d6ff; }.community-markdown .syntax-literal { color:#ff7b72; }.community-markdown .syntax-keyword { color:#d2a8ff; font-weight:700; }
 .community-markdown li:has(> input[type="checkbox"]) { list-style:none; }.community-markdown li > input[type="checkbox"] { width:auto; margin-right:.5rem; }
 .app-overlay .content-header .header-actions { margin-right: 52px; }
+.client-update-notice { position:fixed; z-index:100; right:20px; bottom:20px; display:flex; align-items:center; gap:16px; max-width:min(430px,calc(100vw - 40px)); padding:14px 16px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elevated); box-shadow:var(--shadow); color:var(--text); }
+.client-update-notice button { flex:none; min-height:36px; padding:7px 14px; }
 @media(max-width:760px) { .header-search input { width: min(34vw,160px); } }

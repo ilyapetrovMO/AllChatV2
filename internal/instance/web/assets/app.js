@@ -701,4 +701,11 @@
   const installAdminDashboard=root=>{if(!root.querySelector?.("[data-admin-dashboard]"))return;import("/assets/admin-dashboard.js").then(()=>window.installAllChatAdminDashboard?.(root)).catch(()=>{})};
   installAdminDashboard(document);
   document.addEventListener("allchat:view-swapped",event=>installAdminDashboard(event.detail?.root||document));
+
+  const installVersionWatcher=()=>{
+    let loadedBuild="",prompted=false;
+    const check=async()=>{try{const response=await fetch("/api/v1/version",{cache:"no-store"});if(!response.ok)return;const value=await response.json();if(!loadedBuild){loadedBuild=value.build_id;return}if(!prompted&&value.build_id&&value.build_id!==loadedBuild){prompted=true;const notice=document.createElement("aside");notice.className="client-update-notice";notice.setAttribute("role","status");const copy=document.createElement("span");copy.textContent="AllChat was updated. Reload to use the new version.";const reload=document.createElement("button");reload.type="button";reload.textContent="Reload";reload.onclick=()=>location.reload();notice.append(copy,reload);document.body.append(notice)}}catch{}};
+    check();setInterval(()=>{if(!document.hidden)check()},60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)check()});
+  };
+  installVersionWatcher();
 })();

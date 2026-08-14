@@ -19,6 +19,10 @@ func InstanceAsset(version, arch string) string {
 	return fmt.Sprintf("allchat_%s_linux_%s", strings.TrimPrefix(version, "v"), arch)
 }
 
+func AndroidAsset(version string) string {
+	return fmt.Sprintf("allchat_%s_android_universal.apk", strings.TrimPrefix(version, "v"))
+}
+
 func DownloadVerified(ctx context.Context, client *http.Client, version, asset string) ([]byte, error) {
 	if client == nil {
 		client = http.DefaultClient

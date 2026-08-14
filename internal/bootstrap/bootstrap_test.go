@@ -45,6 +45,12 @@ func TestConfigDefaultsToLatestRelease(t *testing.T) {
 	}
 }
 
+func TestAndroidAssetUsesReleaseVersion(t *testing.T) {
+	if got := AndroidAsset("v1.2.3"); got != "allchat_1.2.3_android_universal.apk" {
+		t.Fatalf("Android asset=%q", got)
+	}
+}
+
 func TestResolvePublicIPUsesLiteralAddress(t *testing.T) {
 	got, err := ResolvePublicIP(context.Background(), "192.0.2.20")
 	if err != nil || got != "192.0.2.20" {

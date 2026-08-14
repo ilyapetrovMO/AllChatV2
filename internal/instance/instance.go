@@ -828,6 +828,8 @@ func initializeSchema(db *sql.DB) error {
 func (i *Instance) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", i.health)
+	mux.HandleFunc("GET /api/v1/version", i.versionAPI)
+	mux.HandleFunc("GET /api/v1/updates/android.apk", i.androidUpdateAPI)
 	mux.HandleFunc("GET /api/v1/admin/diagnostics", i.diagnosticsAPI)
 	mux.HandleFunc("GET /api/v1/admin/dashboard", i.adminDashboardAPI)
 	if i.config.MetricsEnabled {

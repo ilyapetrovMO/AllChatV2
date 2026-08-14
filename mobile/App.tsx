@@ -7,6 +7,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Modal,
   StatusBar,
   StyleSheet,
@@ -24,6 +25,7 @@ import {CommunityScreen} from './src/screens/CommunityScreen';
 import {VoiceVideoSettingsScreen} from './src/screens/VoiceVideoSettingsScreen';
 import {InstanceAccount, KeychainSessionVault, SessionVault} from './src/session/SessionVault';
 import {DEFAULT_VOICE_VIDEO_SETTINGS, KeychainVoiceVideoSettingsStore, type VoiceVideoSettings} from './src/media/VoiceVideoSettings';
+import {APP_VERSION, downloadUpdate, isNewerVersion} from './src/updates/AppUpdater';
 
 const defaultVault = new KeychainSessionVault();
 const voiceSettingsStore = new KeychainVoiceVideoSettingsStore();
@@ -154,6 +156,7 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   return <SafeAreaView style={shellStyle}>
     <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
     <CommunityScreen account={account} onManage={onManage} onVoiceSettingsChange={onVoiceSettingsChange} palette={palette} voiceSettings={voiceSettings} />
+    <UpdatePrompt account={account} palette={palette} />
     <Modal animationType="slide" onRequestClose={voiceSettingsOpen ? onCloseSettings : onOpenCommunity} visible={managing}>
       {voiceSettingsOpen ? <SafeAreaView style={shellStyle}><VoiceVideoSettingsScreen initial={voiceSettings} onBack={onCloseSettings} onChange={onVoiceSettingsChange} palette={palette} /></SafeAreaView> : <SafeAreaView style={shellStyle}>
         <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
@@ -178,6 +181,53 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   </SafeAreaView>;
 }
 
+function UpdatePrompt({account, palette}: {account: InstanceAccount; palette: Palette}) {
+  const [version, setVersion] = useState('');
+  const [dismissed, setDismissed] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      try {
+        const current = await new AllChatClient(account.instance_url).instanceVersion();
+        if (mounted && current.apk_available && isNewerVersion(current.version)) setVersion(current.version);
+      } catch {}
+    };
+    check();
+    const timer = setInterval(check, 5 * 60 * 1000);
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') check(); });
+    return () => { mounted = false; clearInterval(timer); subscription.remove(); };
+  }, [account.instance_url]);
+
+  if (!version || dismissed === version) return null;
+  const start = async () => {
+    setBusy(true);
+    setMessage('');
+    try {
+      setMessage(await downloadUpdate(account.instance_url, account.session_token, version));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not download the update.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <Modal animationType="fade" transparent visible>
+    <View style={styles.updateBackdrop}>
+      <View style={[styles.updateCard, {backgroundColor: palette.field, borderColor: palette.border}]}>
+        <Text style={[styles.sectionTitle, {color: palette.text}]}>AllChat {version} is available</Text>
+        <Text style={[styles.copy, {color: palette.muted}]}>This Instance is newer than your mobile app ({APP_VERSION}). Download the matching APK through this Instance.</Text>
+        {message ? <Text style={[styles.notice, {color: palette.muted}]}>{message}</Text> : null}
+        <TouchableOpacity disabled={busy} onPress={start} style={[styles.button, {backgroundColor: palette.accent}, busy && styles.disabled]}>
+          {busy ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.buttonText}>Download update</Text>}
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setDismissed(version)} style={styles.cancelButton}><Text style={{color: palette.muted}}>Later</Text></TouchableOpacity>
+      </View>
+    </View>
+  </Modal>;
+}
+
 function instanceName(instanceURL: string): string {
   return new URL(instanceURL).host;
 }
@@ -200,6 +250,8 @@ const styles = StyleSheet.create({
   account: {borderRadius: 10, borderWidth: 1, padding: 16}, accountName: {fontSize: 16, fontWeight: '700', marginBottom: 3},
   buttonText: {color: '#ffffff', fontSize: 16, fontWeight: '700'}, disabled: {opacity: 0.65}, error: {color: '#ed4245', fontSize: 14},
   dangerButton: {paddingVertical: 14}, dangerText: {color: '#ed4245', fontSize: 15, fontWeight: '600'}, cancelButton: {alignItems: 'center', padding: 10},
+  updateBackdrop: {alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.68)', flex: 1, justifyContent: 'center', padding: 24},
+  updateCard: {borderRadius: 14, borderWidth: 1, maxWidth: 430, padding: 22, width: '100%'},
 });
 
 export default App;

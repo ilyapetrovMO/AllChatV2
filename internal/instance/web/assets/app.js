@@ -30,6 +30,12 @@
 		nav.replaceChildren(...[["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
 	});
   };
+	const installMarkdownCodeHighlighting=(root=document)=>root.querySelectorAll?.('.community-markdown pre code:not([data-highlighted])').forEach(code=>{
+		code.dataset.highlighted="true";const language=[...code.classList].find(name=>name.startsWith("language-"))?.slice(9)||"";
+		const span=(kind,value)=>{const node=document.createElement("span");node.className="syntax-"+kind;node.textContent=value;return node};
+		if(language==="json"){try{const value=JSON.parse(code.textContent),fragment=document.createDocumentFragment();const write=(item,depth=0)=>{if(item===null){fragment.append(span("literal","null"));return}if(typeof item==="string"){fragment.append(span("string",JSON.stringify(item)));return}if(typeof item==="number"||typeof item==="boolean"){fragment.append(span("literal",String(item)));return}const array=Array.isArray(item),entries=array?item:Object.entries(item);fragment.append(document.createTextNode(array?"[":"{"));if(entries.length)fragment.append(document.createTextNode("\n"));entries.forEach((entry,index)=>{fragment.append(document.createTextNode("  ".repeat(depth+1)));if(!array){fragment.append(span("key",JSON.stringify(entry[0])),document.createTextNode(": "));write(entry[1],depth+1)}else write(entry,depth+1);fragment.append(document.createTextNode(index<entries.length-1?",\n":"\n"))});fragment.append(document.createTextNode("  ".repeat(depth)+(array?"]":"}")))};write(value);code.replaceChildren(fragment)}catch(_){}}
+		else if(language==="bash"||language==="sh"||language==="shell"){const fragment=document.createDocumentFragment();code.textContent.split(/(\s+|"[^"]*"|'[^']*')/).filter(Boolean).forEach(token=>fragment.append(/^['"]/.test(token)?span("string",token):/^(echo|cd|curl|go|npm|npx|git|sudo)$/.test(token)?span("keyword",token):document.createTextNode(token)));code.replaceChildren(fragment)}
+	});
   const installGlobalSearch=(root=document)=>{
     root.querySelectorAll?.('.content > form[action="/search"]').forEach(form=>form.remove());
     root.querySelectorAll?.(".content-header").forEach((header,index)=>{
@@ -50,7 +56,7 @@
 	const settingsForm=root.querySelector?.('form[action="/admin/settings"]');
 	if(settingsForm&&!settingsForm.querySelector('[name="home_markdown"]')){const label=document.createElement("label"),textarea=document.createElement("textarea"),hint=document.createElement("p");label.textContent="Community home (Markdown)";textarea.name="home_markdown";textarea.rows=12;textarea.maxLength=100000;textarea.disabled=true;hint.className="muted";hint.textContent="Rules, greetings, and links shown on Community Home. Markdown formatting is supported.";label.append(textarea);settingsForm.querySelector("button")?.before(label,hint);fetch("/api/v1/community-home").then(response=>response.ok?response.json():null).then(value=>{textarea.value=value?.markdown||""}).catch(()=>{}).finally(()=>textarea.disabled=false)}
   };
-  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();normalizeSettingsNavigation();installGlobalSearch();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);normalizeSettingsNavigation(root);installGlobalSearch(root)});
+  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();normalizeSettingsNavigation();installGlobalSearch();installMarkdownCodeHighlighting();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);normalizeSettingsNavigation(root);installGlobalSearch(root);installMarkdownCodeHighlighting(root)});
   if (window.__allchatWebSocketBatches) return;
   window.__allchatWebSocketBatches = true;
   const NativeWebSocket = window.WebSocket;

@@ -11,7 +11,10 @@ import (
 	"allchat/internal/community"
 	"allchat/internal/identity"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
+
+var communityMarkdown = goldmark.New(goldmark.WithExtensions(extension.GFM))
 
 func (i *Instance) channelsAPI(response http.ResponseWriter, request *http.Request) {
 	member, _, ok := i.authenticated(response, request)
@@ -187,7 +190,7 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 	members, _ := i.identity.ListMembers(r.Context())
 	homeMarkdown, _ := i.community.CommunityHomeMarkdown(r.Context())
 	var rendered bytes.Buffer
-	_ = goldmark.Convert([]byte(homeMarkdown), &rendered)
+	_ = communityMarkdown.Convert([]byte(homeMarkdown), &rendered)
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var page bytes.Buffer

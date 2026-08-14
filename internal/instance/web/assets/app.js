@@ -456,6 +456,7 @@
       window.allchatDirectMessageIDs = new Set(directMessages.keys());
       unread = [...directMessages.values()].reduce((total, item) => total + Number(item.unread || 0), 0);
       renderShortlist(items);
+      directMessages.forEach((item,channelID)=>setConversationUnread(channelID,Number(item.unread||0)>0));
       channelStates.forEach((state,channelID)=>setConversationUnread(channelID,Number(state.unread||0)>0));
       renderUnread();
     };

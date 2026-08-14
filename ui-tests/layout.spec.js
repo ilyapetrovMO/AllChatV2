@@ -851,6 +851,15 @@ test('text channels and Direct Messages use red unread dots without bold labels'
   await expect(dm.locator('.conversation-unread-dot')).toBeVisible({timeout: 5000});
   expect(await channel.evaluate(element => getComputedStyle(element).fontWeight)).toBe('500');
   expect(await dm.evaluate(element => getComputedStyle(element).fontWeight)).toBe('500');
+  await page.goto('/dms');
+  expect(await page.evaluate(async dmID => {
+    const items = (await (await fetch('/api/v1/dms')).json()).direct_messages;
+    return items.find(item => item.id === dmID)?.unread || 0;
+  }, fixture.dm.id)).toBeGreaterThan(0);
+  await expect(page.locator('.community-switcher')).toHaveCount(0);
+  const inboxDM = page.locator(`.dm-link[href="/channels/${fixture.dm.id}"]`);
+  await expect(inboxDM.locator('.conversation-unread-dot')).toBeVisible();
+  expect(await inboxDM.evaluate(element => getComputedStyle(element).fontWeight)).toBe('500');
   await page.goto(`/channels/${fixture.textChannel.id}`);
   await page.goto(`/channels/${fixture.dm.id}`);
   await second.dispose();

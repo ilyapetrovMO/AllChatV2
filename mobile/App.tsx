@@ -26,6 +26,7 @@ import {VoiceVideoSettingsScreen} from './src/screens/VoiceVideoSettingsScreen';
 import {InstanceAccount, KeychainSessionVault, SessionVault} from './src/session/SessionVault';
 import {DEFAULT_VOICE_VIDEO_SETTINGS, KeychainVoiceVideoSettingsStore, type VoiceVideoSettings} from './src/media/VoiceVideoSettings';
 import {APP_VERSION, downloadUpdate, isNewerVersion} from './src/updates/AppUpdater';
+import {removeMobilePush, syncMobilePush} from './src/notifications/MobilePush';
 
 const defaultVault = new KeychainSessionVault();
 const voiceSettingsStore = new KeychainVoiceVideoSettingsStore();
@@ -97,6 +98,7 @@ function AppContent({vault}: {vault: SessionVault}): React.JSX.Element {
     setStatus('');
     let revokeError = '';
     try {
+      await removeMobilePush(account).catch(() => {});
       await new AllChatClient(account.instance_url).logout(account.session_token);
     } catch {
       revokeError = 'The account was removed from this device, but its remote Session could not be revoked. Revoke it from Member Settings when online.';
@@ -151,6 +153,13 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   onSelectAccount(account: InstanceAccount): void; onSignOut(): void; onVoiceSettingsChange(settings: VoiceVideoSettings): void;
   palette: Palette; status: string; submitting: boolean; voiceSettings: VoiceVideoSettings; voiceSettingsOpen: boolean;
 }) {
+  useEffect(() => {
+    syncMobilePush(account).catch(() => {});
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') syncMobilePush(account).catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [account]);
   const name = account.member.display_name || account.member.username;
   const shellStyle = [styles.screen, {backgroundColor: palette.background}];
   return <SafeAreaView style={shellStyle}>

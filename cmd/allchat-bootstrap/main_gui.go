@@ -175,6 +175,8 @@ func main() {
 	port.SetText("22")
 	email := widget.NewEntry()
 	email.SetPlaceHolder("Optional certificate expiry contact")
+	pushRelay := widget.NewEntry()
+	pushRelay.SetText(bootstrap.DefaultPushRelayURL)
 
 	releaseMode := widget.NewRadioGroup([]string{releaseLatest, releaseExact}, nil)
 	release := widget.NewEntry()
@@ -228,7 +230,7 @@ func main() {
 			widget.NewForm(widget.NewFormItem("Username", user)), authMode, passwordFields, keyFields,
 			widget.NewSeparator(), widget.NewLabel("Privilege escalation"), widget.NewForm(widget.NewFormItem("Sudo password", sudoPassword))),
 		page("Which server should AllChat use?", "Enter the VPS address supplied by your hosting provider. AllChat will automatically resolve its public IP for voice traffic and firewall configuration.",
-			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Certificate email", email)),
+			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Certificate email", email), widget.NewFormItem("Mobile push relay", pushRelay)),
 			widget.NewLabel("Supported servers: Debian 12+ and Ubuntu 22.04+. SSH, HTTP, HTTPS, and media ports must be reachable.")),
 		page("Which AllChat version should be installed?", "The latest stable release is the best choice for most installations. Choose a tag only when you need a particular version.",
 			releaseMode, releaseFields),
@@ -267,7 +269,7 @@ func main() {
 		cfg := bootstrap.Config{
 			SSHHost: serverAddress, SSHPort: sshPort, SSHUser: strings.TrimSpace(user.Text),
 			SudoPassword: sudoPassword.Text, TLSMode: tlsMode,
-			ACMEEmail: strings.TrimSpace(email.Text), Release: releaseTag,
+			ACMEEmail: strings.TrimSpace(email.Text), Release: releaseTag, PushRelayURL: strings.TrimSpace(pushRelay.Text),
 		}
 		if tlsMode == bootstrap.TLSHostname {
 			cfg.Hostname = serverAddress

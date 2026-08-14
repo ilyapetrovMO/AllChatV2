@@ -73,6 +73,7 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 def allChatVersionName = project.findProperty("allchatVersionName") ?: "dev"
 def allChatVersionCode = (project.findProperty("allchatVersionCode") ?: "1").toInteger()
+def firebaseValue = { String name -> (System.getenv(name) ?: project.findProperty(name) ?: "").toString().replace("\\", "\\\\").replace('"', '\\"') }
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -86,7 +87,12 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode allChatVersionCode
         versionName allChatVersionName
+        buildConfigField "String", "ALLCHAT_FIREBASE_API_KEY", "\"${firebaseValue('ALLCHAT_FIREBASE_API_KEY')}\""
+        buildConfigField "String", "ALLCHAT_FIREBASE_APP_ID", "\"${firebaseValue('ALLCHAT_FIREBASE_APP_ID')}\""
+        buildConfigField "String", "ALLCHAT_FIREBASE_PROJECT_ID", "\"${firebaseValue('ALLCHAT_FIREBASE_PROJECT_ID')}\""
+        buildConfigField "String", "ALLCHAT_FIREBASE_SENDER_ID", "\"${firebaseValue('ALLCHAT_FIREBASE_SENDER_ID')}\""
     }
+    buildFeatures { buildConfig true }
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -118,6 +124,9 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("androidx.core:core-ktx:1.17.0")
 
     // React Native leaves animated WebP decoding optional. Keep this version in
     // sync with node_modules/react-native/gradle/libs.versions.toml.

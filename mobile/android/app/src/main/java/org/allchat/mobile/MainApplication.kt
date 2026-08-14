@@ -20,12 +20,14 @@ class MainApplication : Application(), ReactApplication {
           add(AllChatAudioPackage())
           add(AllChatMediaSaverPackage())
           add(AllChatUpdaterPackage())
+          add(AllChatPushPackage())
         },
     )
   }
 
   override fun onCreate() {
     super.onCreate()
+    AllChatPushModule.initializeFirebase(this)
     WebRTCModuleOptions.getInstance().enableMediaProjectionService = true
     // OEM hardware audio effects vary significantly and some devices couple
     // AcousticEchoCanceler with aggressive, undocumented input gain. Keep AEC

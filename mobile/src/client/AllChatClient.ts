@@ -17,6 +17,7 @@ export type NativeSession = {
 };
 
 export type InstanceVersion = {version: string; build_id: string; apk_available: boolean};
+export type MobilePushRegistration = {platform: 'android' | 'ios'; token: string; public_key: string; instance_url: string};
 
 export type LocalAttachment = {uri: string; name: string; type: string; size?: number | null};
 export type LinkPreview = {url: string; site_name?: string; title?: string; description?: string; image_url?: string};
@@ -219,6 +220,18 @@ export class AllChatClient {
 
   async updateChannelNotificationSettings(token: string, channelID: string, setting: NotificationSetting): Promise<void> {
     await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/channels/${encodeURIComponent(channelID)}/notification-settings`, {method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify(setting)}), 'Could not update Channel notification settings.');
+  }
+
+  async registerMobilePush(token: string, registration: MobilePushRegistration): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/mobile-push/subscription`, {
+      method: 'PUT', headers: this.jsonHeaders(token), body: JSON.stringify(registration),
+    }), 'Could not enable mobile push notifications.');
+  }
+
+  async unregisterMobilePush(token: string, deviceToken: string): Promise<void> {
+    await this.ensureOK(await this.request(`${this.instanceURL}/api/v1/mobile-push/subscription`, {
+      method: 'DELETE', headers: this.jsonHeaders(token), body: JSON.stringify({token: deviceToken}),
+    }), 'Could not disable mobile push notifications.');
   }
 
   async linkPreview(token: string, url: string): Promise<LinkPreview> {

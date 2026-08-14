@@ -640,7 +640,7 @@ func (s *Service) AnonymizeMember(ctx context.Context, member Member, password, 
 	if _, err = tx.ExecContext(ctx, `UPDATE members SET username=?,username_key=?,display_name=NULL,avatar=NULL,avatar_content_type=NULL,banner=NULL,banner_content_type=NULL,password_hash=?,presence_mode='available',suspended_until=NULL,timed_out_until=NULL WHERE id=?`, username, username, "account-deleted", member.ID); err != nil {
 		return err
 	}
-	for _, statement := range []string{`UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL`, `DELETE FROM member_roles WHERE member_id=?`, `DELETE FROM read_positions WHERE member_id=?`, `DELETE FROM message_reactions WHERE member_id=?`, `DELETE FROM message_mentions WHERE member_id=?`, `DELETE FROM channel_notification_settings WHERE member_id=?`, `DELETE FROM member_notification_settings WHERE member_id=?`, `DELETE FROM web_push_subscriptions WHERE member_id=?`, `DELETE FROM member_blocks WHERE blocker_id=? OR blocked_id=?`} {
+	for _, statement := range []string{`UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL`, `DELETE FROM member_roles WHERE member_id=?`, `DELETE FROM read_positions WHERE member_id=?`, `DELETE FROM message_reactions WHERE member_id=?`, `DELETE FROM message_mentions WHERE member_id=?`, `DELETE FROM channel_notification_settings WHERE member_id=?`, `DELETE FROM member_notification_settings WHERE member_id=?`, `DELETE FROM web_push_subscriptions WHERE member_id=?`, `DELETE FROM mobile_push_subscriptions WHERE member_id=?`, `DELETE FROM member_blocks WHERE blocker_id=? OR blocked_id=?`} {
 		args := []any{member.ID}
 		if strings.Contains(statement, "revoked_at") {
 			args = []any{now, member.ID}

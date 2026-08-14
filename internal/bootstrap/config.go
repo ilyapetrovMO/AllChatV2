@@ -31,7 +31,10 @@ type Config struct {
 	DuckSubdomain string
 	DuckToken     string
 	Release       string
+	PushRelayURL  string
 }
+
+const DefaultPushRelayURL = "https://push.elitedarklord.com"
 
 var dnsLabel = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
 var releaseTag = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
@@ -58,6 +61,12 @@ func (c Config) ValidateBeforePublicIP() error {
 	}
 	if c.Release != "" && !releaseTag.MatchString(c.Release) {
 		return fmt.Errorf("release must be a semantic tag such as v1.2.3")
+	}
+	if c.PushRelayURL != "" {
+		parsed, err := url.Parse(c.PushRelayURL)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return fmt.Errorf("push relay URL must be an absolute HTTPS URL")
+		}
 	}
 	if c.ACMEEmail != "" {
 		address, err := mail.ParseAddress(c.ACMEEmail)

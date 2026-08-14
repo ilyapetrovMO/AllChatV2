@@ -90,6 +90,7 @@ func (i *Instance) publishMessageAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	i.webPush.Enqueue(message)
+	i.mobilePush.EnqueueMessage(message)
 	writeJSON(w, 201, message)
 }
 
@@ -228,6 +229,7 @@ func (i *Instance) publishMessageWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	i.webPush.Enqueue(message)
+	i.mobilePush.EnqueueMessage(message)
 	http.Redirect(w, r, "/channels/"+r.PathValue("channelID"), 303)
 }
 func (i *Instance) editMessageWeb(w http.ResponseWriter, r *http.Request) {

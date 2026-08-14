@@ -54,6 +54,7 @@ func (i *Instance) startDirectCallAPI(w http.ResponseWriter, r *http.Request) {
 		writeMediaError(w, err)
 		return
 	}
+	i.mobilePush.EnqueueCall(call.ID, dm.ID, member.ID, member.DisplayName, member.Username, dm.Other.ID)
 	writeJSON(w, http.StatusCreated, call)
 }
 func (i *Instance) acceptDirectCallAPI(w http.ResponseWriter, r *http.Request) {

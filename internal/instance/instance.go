@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 25
+const schemaVersion = 26
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -55,6 +55,7 @@ type Instance struct {
 	turnIssued     map[string][]time.Time
 	startedAt      time.Time
 	webPush        *webPushService
+	mobilePush     *mobilePushService
 
 	closeOnce sync.Once
 	closeErr  error
@@ -95,6 +96,9 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 	}
 	if err := initializeSchema(db); err != nil {
 		return nil, err
+	}
+	if _, err := db.Exec(`INSERT OR IGNORE INTO mobile_push_settings(id,relay_url) VALUES(1,?)`, config.PushRelayURL); err != nil {
+		return nil, fmt.Errorf("initialize mobile push settings: %w", err)
 	}
 	identityService, err := identity.New(db, config.DataDir)
 	if err != nil {
@@ -147,7 +151,16 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 			webPush.Close()
 		}
 	}()
-	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC(), webPush: webPush}
+	mobilePush, err := newMobilePushService(db, communityService, config.DataDir, logger)
+	if err != nil {
+		return nil, fmt.Errorf("initialize mobile push: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			mobilePush.Close()
+		}
+	}()
+	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC(), webPush: webPush, mobilePush: mobilePush}
 	if config.TURNPublicIP != "" {
 		secret, secretErr := loadOrCreateSecret(filepath.Join(config.DataDir, "turn-secret"))
 		if secretErr != nil {
@@ -265,6 +278,7 @@ func (i *Instance) Close() error {
 	i.closeOnce.Do(func() {
 		i.media.Close()
 		i.webPush.Close()
+		i.mobilePush.Close()
 		i.community.Close()
 		if i.relay != nil {
 			_ = i.relay.Close()
@@ -846,6 +860,26 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Web Push subscription schema: %w", err)
 		}
 	}
+	if currentVersion < 26 {
+		if _, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS mobile_push_settings (
+			id INTEGER PRIMARY KEY CHECK(id=1), relay_url TEXT NOT NULL DEFAULT ''
+		);
+		CREATE TABLE IF NOT EXISTS mobile_push_subscriptions (
+			token TEXT PRIMARY KEY,
+			member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+			session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
+			platform TEXT NOT NULL CHECK(platform IN ('android','ios')),
+			public_key TEXT NOT NULL,
+			instance_url TEXT NOT NULL,
+			created_at TEXT NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS mobile_push_subscriptions_member ON mobile_push_subscriptions(member_id);`); err != nil {
+			return fmt.Errorf("create mobile push settings schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 26, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record mobile push settings schema: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -941,6 +975,9 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/web-push/config", i.webPushConfigAPI)
 	mux.HandleFunc("PUT /api/v1/web-push/subscription", i.webPushSubscriptionAPI)
 	mux.HandleFunc("DELETE /api/v1/web-push/subscription", i.deleteWebPushSubscriptionAPI)
+	mux.HandleFunc("GET /api/v1/mobile-push/config", i.mobilePushConfigAPI)
+	mux.HandleFunc("PUT /api/v1/mobile-push/subscription", i.mobilePushSubscriptionAPI)
+	mux.HandleFunc("DELETE /api/v1/mobile-push/subscription", i.deleteMobilePushSubscriptionAPI)
 	mux.HandleFunc("PUT /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("DELETE /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("GET /api/v1/reports", i.reportsAPI)

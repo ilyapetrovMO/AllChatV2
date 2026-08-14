@@ -62,6 +62,7 @@ func run(args []string) int {
 	mediaAudioBitrate := flags.Int("media-audio-bitrate", 64000, "maximum sender audio bitrate in bits per second")
 	mediaScreenBitrate := flags.Int("media-screen-bitrate", 2500000, "maximum sender screen bitrate in bits per second")
 	metrics := flags.Bool("metrics", false, "enable the unlabeled Prometheus endpoint at /metrics")
+	pushRelay := flags.String("push-relay", os.Getenv("ALLCHAT_PUSH_RELAY_URL"), "default hosted mobile push relay URL")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -97,6 +98,10 @@ func run(args []string) int {
 	}
 	if err := config.ConfigureMediaBitrates(*mediaAudioBitrate, *mediaScreenBitrate); err != nil {
 		fmt.Fprintf(os.Stderr, "invalid media bitrate configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigurePushRelay(*pushRelay); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid push relay configuration: %v\n", err)
 		return 2
 	}
 	config.MetricsEnabled = *metrics

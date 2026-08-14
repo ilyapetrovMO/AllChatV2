@@ -114,6 +114,10 @@ func installScript(cfg Config) string {
 	if cfg.ACMEEmail != "" {
 		acmeEmailOption = " --acme-email " + cfg.ACMEEmail
 	}
+	pushRelayOption := ""
+	if cfg.PushRelayURL != "" {
+		pushRelayOption = " --push-relay " + cfg.PushRelayURL
+	}
 	duck := ""
 	if cfg.TLSMode == TLSDuckDNS {
 		duck = fmt.Sprintf(`install -d -m 0700 /etc/allchat
@@ -206,7 +210,7 @@ User=allchat
 Group=allchat
 WorkingDirectory=/var/lib/allchat
 EnvironmentFile=-/etc/allchat/public-ip.env
-ExecStart=/usr/local/bin/allchat --data-dir /var/lib/allchat --acme %s%s --turn-public-ip ${ALLCHAT_PUBLIC_IP}
+ExecStart=/usr/local/bin/allchat --data-dir /var/lib/allchat --acme %s%s --turn-public-ip ${ALLCHAT_PUBLIC_IP}%s
 Restart=on-failure
 RestartSec=5s
 NoNewPrivileges=true
@@ -247,7 +251,7 @@ if ! systemctl restart allchat.service; then
   exit 21
 fi
 %s
-`, shellQuote(remoteStage), cfg.PublicIP, duck, identifier, acmeEmailOption, func() string {
+`, shellQuote(remoteStage), cfg.PublicIP, duck, identifier, acmeEmailOption, pushRelayOption, func() string {
 		if cfg.TLSMode == TLSDuckDNS {
 			return "/usr/local/sbin/allchat-duckdns-update"
 		}

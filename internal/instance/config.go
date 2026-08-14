@@ -4,6 +4,7 @@ package instance
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -30,6 +31,22 @@ type Config struct {
 	MediaAudioBitrate    int
 	MediaScreenBitrate   int
 	MetricsEnabled       bool
+	PushRelayURL         string
+}
+
+func (c *Config) ConfigurePushRelay(rawURL string) error {
+	value := strings.TrimSpace(rawURL)
+	if value == "" {
+		c.PushRelayURL = ""
+		return nil
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return fmt.Errorf("push relay URL must be an absolute HTTPS URL without credentials, query, or fragment")
+	}
+	parsed.Path = strings.TrimRight(parsed.Path, "/")
+	c.PushRelayURL = parsed.String()
+	return nil
 }
 
 // ConfigureExternalTURN disables the embedded listener and uses an operator's

@@ -157,6 +157,7 @@ func (i *Instance) publishDirectMessageAPI(response http.ResponseWriter, request
 		return
 	}
 	i.webPush.Enqueue(message)
+	i.mobilePush.EnqueueMessage(message)
 	writeJSON(response, http.StatusCreated, message)
 }
 

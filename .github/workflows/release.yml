@@ -195,6 +195,11 @@ jobs:
   android-apk:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      ALLCHAT_FIREBASE_API_KEY: ${{ secrets.ALLCHAT_FIREBASE_API_KEY }}
+      ALLCHAT_FIREBASE_APP_ID: ${{ secrets.ALLCHAT_FIREBASE_APP_ID }}
+      ALLCHAT_FIREBASE_PROJECT_ID: ${{ secrets.ALLCHAT_FIREBASE_PROJECT_ID }}
+      ALLCHAT_FIREBASE_SENDER_ID: ${{ secrets.ALLCHAT_FIREBASE_SENDER_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

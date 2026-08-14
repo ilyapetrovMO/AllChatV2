@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,6 +33,13 @@ type config struct {
 	apnsTopic       string
 	apnsVOIPTopic   string
 	apnsProduction  bool
+	public          bool
+	globalRate      float64
+	globalBurst     int
+	ipRate          float64
+	ipBurst         int
+	tokenRate       float64
+	tokenBurst      int
 }
 
 func main() {
@@ -47,9 +55,18 @@ func run(ctx context.Context, args []string, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	keys, err := pushrelay.ParsePublicKeys(cfg.publicKeys)
-	if err != nil {
-		return fmt.Errorf("ALLCHAT_RELAY_PUBLIC_KEYS: %w", err)
+	var authorization interface {
+		Middleware(http.Handler) http.Handler
+	}
+	if cfg.public {
+		authorization = pushrelay.NewPublicGate(pushrelay.PublicGateConfig{GlobalRate: cfg.globalRate, GlobalBurst: cfg.globalBurst, IPRate: cfg.ipRate, IPBurst: cfg.ipBurst, TokenRate: cfg.tokenRate, TokenBurst: cfg.tokenBurst})
+		logger.Warn("public relay mode enabled; accepting all Instances with rate limits")
+	} else {
+		keys, err := pushrelay.ParsePublicKeys(cfg.publicKeys)
+		if err != nil {
+			return fmt.Errorf("ALLCHAT_RELAY_PUBLIC_KEYS: %w", err)
+		}
+		authorization = pushrelay.Verifier{Keys: keys, MaxSkew: 5 * time.Minute}
 	}
 
 	// Provider clients are constructed exactly once and shared by every worker.
@@ -88,7 +105,7 @@ func run(ctx context.Context, args []string, logger *slog.Logger) error {
 	}
 	server := &http.Server{
 		Addr:              cfg.listen,
-		Handler:           relay.Handler(pushrelay.Verifier{Keys: keys, MaxSkew: 5 * time.Minute}),
+		Handler:           relay.Handler(authorization),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -138,20 +155,31 @@ func parseConfig(args []string) (config, error) {
 		apnsTopic:       os.Getenv("ALLCHAT_APNS_TOPIC"),
 		apnsVOIPTopic:   os.Getenv("ALLCHAT_APNS_VOIP_TOPIC"),
 		apnsProduction:  envBool("ALLCHAT_APNS_PRODUCTION", true),
+		public:          envBool("ALLCHAT_RELAY_PUBLIC", false),
 	}
 	flags := flag.NewFlagSet("allchat-push-relay", flag.ContinueOnError)
 	flags.StringVar(&cfg.listen, "listen", ":8090", "HTTP listen address")
 	flags.IntVar(&cfg.workers, "workers", 100, "push delivery worker count")
 	flags.IntVar(&cfg.queueCapacity, "queue-capacity", 10000, "maximum queued pushes")
 	flags.DurationVar(&cfg.shutdownTimeout, "shutdown-timeout", 15*time.Second, "HTTP shutdown timeout")
+	flags.BoolVar(&cfg.public, "public", cfg.public, "accept all Instances with stateless rate limiting")
+	flags.Float64Var(&cfg.globalRate, "public-global-rate", 500, "public-mode total requests per second")
+	flags.IntVar(&cfg.globalBurst, "public-global-burst", 1000, "public-mode total request burst")
+	flags.Float64Var(&cfg.ipRate, "public-ip-rate", 20, "public-mode requests per second per source IP")
+	flags.IntVar(&cfg.ipBurst, "public-ip-burst", 100, "public-mode source IP burst")
+	flags.Float64Var(&cfg.tokenRate, "public-token-rate", 1, "public-mode requests per second per device token")
+	flags.IntVar(&cfg.tokenBurst, "public-token-burst", 20, "public-mode device token burst")
 	if err := flags.Parse(args); err != nil {
 		return config{}, err
 	}
 	if flags.NArg() != 0 {
 		return config{}, fmt.Errorf("unexpected arguments: %v", flags.Args())
 	}
-	if cfg.workers < 1 || cfg.queueCapacity < 1 || cfg.shutdownTimeout <= 0 {
+	if cfg.workers < 1 || cfg.queueCapacity < 1 || cfg.shutdownTimeout <= 0 || cfg.globalRate <= 0 || cfg.ipRate <= 0 || cfg.tokenRate <= 0 || cfg.globalBurst < 1 || cfg.ipBurst < 1 || cfg.tokenBurst < 1 {
 		return config{}, fmt.Errorf("workers, queue-capacity, and shutdown-timeout must be positive")
+	}
+	if !cfg.public && strings.TrimSpace(cfg.publicKeys) == "" {
+		return config{}, fmt.Errorf("ALLCHAT_RELAY_PUBLIC_KEYS is required unless public mode is enabled")
 	}
 	if cfg.firebaseProject == "" {
 		return config{}, fmt.Errorf("ALLCHAT_FIREBASE_PROJECT_ID is required")

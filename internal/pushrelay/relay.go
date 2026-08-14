@@ -52,9 +52,13 @@ func New(sender Sender, logger *slog.Logger, workers, queueCapacity int) (*Relay
 	return relay, nil
 }
 
-func (r *Relay) Handler(verifier Verifier) http.Handler {
+type Middleware interface {
+	Middleware(http.Handler) http.Handler
+}
+
+func (r *Relay) Handler(authorization Middleware) http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("POST /api/v1/push", verifier.Middleware(http.HandlerFunc(r.push)))
+	mux.Handle("POST /api/v1/push", authorization.Middleware(http.HandlerFunc(r.push)))
 	mux.HandleFunc("GET /healthz", r.health)
 	return mux
 }

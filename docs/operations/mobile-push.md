@@ -2,6 +2,8 @@
 
 AllChat instances send encrypted notification envelopes through a stateless push relay. New bootstrap installations default to `https://push.elitedarklord.com`; owners can change or disable the relay under **Community Settings → General → Mobile push relay**.
 
+The project-operated relay runs in public shared mode, so independently bootstrapped Instances can use that default without registration or manual key approval. Provider device tokens are unguessable capabilities, and the relay bounds abuse with in-memory limits per source IP and hashed device token. A privately bootstrapped relay remains signature-protected and authorizes only its local Instance.
+
 For hostname and DuckDNS installations, bootstrap can instead deploy a private Android relay on the same VPS. Select **Deploy a private Android push relay on this VPS** and choose the Firebase service-account JSON belonging to the Firebase project compiled into your APK. Bootstrap installs Caddy and exposes the relay at the Community origin's `/api/v1/push` path, so no additional hostname or DNS record is required. Direct-IP installations cannot use this mode because Caddy cannot guarantee a publicly trusted IP certificate.
 
 The relay never receives message text in plaintext. Each Android installation creates a non-exportable RSA key in Android Keystore. The instance encrypts every notification with a fresh AES-256-GCM key and wraps that key for the device with RSA-OAEP-SHA256. Subscriptions are bound to active login sessions and are ignored after logout, expiry, or revocation.

@@ -58,10 +58,20 @@ five-minute window are rejected.
 
 This time window limits stale requests, but a completely stateless service
 cannot remember nonces and therefore cannot guarantee one-time replay
-protection. TLS is mandatory. A dynamic, unlimited zero-config instance trust
-model is also incompatible with abuse prevention: trusted instance keys must be
-provisioned or certified by an authority. Never distribute a shared private key
-in public server builds.
+protection. TLS is mandatory. Private mode deliberately requires provisioned
+Instance keys. Never distribute a shared private key in public server builds.
+
+### Public shared mode
+
+To operate a zero-configuration shared relay for every Instance using the same official mobile application/Firebase project, enable public mode:
+
+```text
+ALLCHAT_RELAY_PUBLIC=true
+```
+
+or pass `--public`. Public mode does not require `ALLCHAT_RELAY_PUBLIC_KEYS` and accepts unsigned Instance requests, like the Matrix Push Gateway API. Device provider tokens act as unguessable capabilities. The relay applies bounded in-memory token buckets globally, per source IP, and per SHA-256-hashed device token; raw tokens and payloads are never used as rate-limit keys in logs. Defaults are 500 requests/second globally with a burst of 1,000, 20 requests/second with a burst of 100 per source IP, and 1 request/second with a burst of 20 per device. Override them with the corresponding `--public-global-*`, `--public-ip-*`, and `--public-token-*` flags.
+
+Public mode is intended for the project-operated shared relay. Bootstrap-deployed private relays remain in signed allowlist mode by default.
 
 ## Run
 
@@ -93,11 +103,12 @@ depth and aggregate counters without exposing tokens or payloads.
 `kind` defaults to `message`; `call` selects short-lived high-priority APNs
 VoIP delivery. The encrypted payload is opaque to the relay. APNs and FCM must
 ultimately receive their provider-issued routing token, so the `token` field is
-opaque but usable by that provider. TLS and request signing protect it in
-transit; merely base64-encoding a token is not encryption. End-to-end token
+opaque but usable by that provider. TLS protects it in transit, while private
+mode additionally authenticates the Instance request; merely base64-encoding a token is not encryption. End-to-end token
 encryption would require an additional relay decryption-key protocol.
 
 The relay returns `202` after enqueueing, not after provider delivery. A full
-queue returns `503` immediately so instances can retry with jitter. Malformed,
-oversized, or unsigned requests never enter the queue. Delivery logs include
+queue returns `503` immediately so instances can retry with jitter. Malformed
+and oversized requests never enter the queue; unsigned requests are accepted
+only in explicitly enabled public mode. Delivery logs include
 only platform, notification kind, and a normalized provider error category.

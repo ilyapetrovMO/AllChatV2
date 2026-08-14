@@ -153,7 +153,7 @@ func (f roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) 
 func TestInstallScriptPreservesSSHAndProvidesRollback(t *testing.T) {
 	cfg := Config{SSHHost: "host.example.test", SSHPort: 2200, SSHUser: "operator", PublicIP: "192.0.2.30", TLSMode: TLSHostname, Hostname: "chat.example.test", ACMEEmail: "admin@example.test", Release: "v1.0.0", PushRelayURL: DefaultPushRelayURL}
 	script := installScript(cfg)
-	for _, expected := range []string{"ufw allow 2200/tcp", "bootstrap-managed", "allchat.previous", "allchat.failed-", "allchat restore", "chown -R allchat:allchat /var/lib/allchat", "required_kb", "systemctl start allchat.service", "--acme chat.example.test", "--push-relay https://push.elitedarklord.com"} {
+	for _, expected := range []string{"ufw allow 2200/tcp", "bootstrap-managed", "allchat.previous", "allchat.failed-", "allchat restore", "chown -R allchat:allchat /var/lib/allchat", "required_kb", "systemctl start allchat.service", "--acme chat.example.test", "--push-relay https://ru.elitedarklord.com"} {
 		if !strings.Contains(script, expected) {
 			t.Errorf("script missing %q", expected)
 		}

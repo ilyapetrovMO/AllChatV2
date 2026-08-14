@@ -1,6 +1,6 @@
 # Mobile push notifications
 
-AllChat instances send encrypted notification envelopes through a stateless push relay. New bootstrap installations default to `https://push.elitedarklord.com`; owners can change or disable the relay under **Community Settings → General → Mobile push relay**.
+AllChat instances send encrypted notification envelopes through a stateless push relay. New bootstrap installations default to `https://ru.elitedarklord.com`; owners can change or disable the relay under **Community Settings → General → Mobile push relay**.
 
 The project-operated relay runs in public shared mode, so independently bootstrapped Instances can use that default without registration or manual key approval. Provider device tokens are unguessable capabilities, and the relay bounds abuse with in-memory limits per source IP and hashed device token. A privately bootstrapped relay remains signature-protected and authorizes only its local Instance.
 

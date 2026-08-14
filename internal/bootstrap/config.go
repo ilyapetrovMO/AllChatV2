@@ -58,7 +58,7 @@ func (c *Config) ConfigureFirebaseServiceAccount(content []byte) error {
 	return nil
 }
 
-const DefaultPushRelayURL = "https://push.elitedarklord.com"
+const DefaultPushRelayURL = "https://ru.elitedarklord.com"
 
 var dnsLabel = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
 var releaseTag = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)

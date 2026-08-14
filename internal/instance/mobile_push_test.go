@@ -97,7 +97,7 @@ func TestMobilePushNotificationPolicy(t *testing.T) {
 
 func TestPushRelayConfigurationRequiresHTTPS(t *testing.T) {
 	var config Config
-	if err := config.ConfigurePushRelay("https://push.elitedarklord.com/"); err != nil || config.PushRelayURL != "https://push.elitedarklord.com" {
+	if err := config.ConfigurePushRelay("https://ru.elitedarklord.com/"); err != nil || config.PushRelayURL != "https://ru.elitedarklord.com" {
 		t.Fatalf("valid relay = %q, err=%v", config.PushRelayURL, err)
 	}
 	if err := config.ConfigurePushRelay("http://127.0.0.1:8090"); err == nil {

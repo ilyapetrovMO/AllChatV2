@@ -942,6 +942,8 @@ test('returning from a directly opened settings page installs Community styles',
   await authenticate(page);
   await page.goto('/profile');
   await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(0);
+  await expect(page.locator('.community-mark[href="/"]')).toHaveAttribute('aria-label', 'AllChat home');
+  await expect(page.locator('.community-mark[href="/"] [data-lucide="home"]')).toBeVisible();
   await page.locator('.community-mark[href="/"]').click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(1);

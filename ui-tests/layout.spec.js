@@ -840,6 +840,22 @@ test('ArrowUp in an empty focused composer edits the latest own Message', async 
   await expect(page.locator('#editing-banner')).toBeVisible();
 });
 
+test('text channels and Direct Messages use red unread dots without bold labels', async ({page}) => {
+  const second = await request.newContext({baseURL, storageState: fixture.secondState});
+  await authenticate(page);
+  await page.goto('/');
+  await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: `Unread channel ${Date.now()}`});
+  await post(second, `/api/v1/dms/${fixture.dm.id}/messages`, {body: `Unread DM ${Date.now()}`});
+  const channel = page.locator(`.channel-link[href="/channels/${fixture.textChannel.id}"]`), dm = page.locator(`.dm-link[href="/channels/${fixture.dm.id}"]`);
+  await expect(channel.locator('.conversation-unread-dot')).toBeVisible({timeout: 5000});
+  await expect(dm.locator('.conversation-unread-dot')).toBeVisible({timeout: 5000});
+  expect(await channel.evaluate(element => getComputedStyle(element).fontWeight)).toBe('500');
+  expect(await dm.evaluate(element => getComputedStyle(element).fontWeight)).toBe('500');
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.goto(`/channels/${fixture.dm.id}`);
+  await second.dispose();
+});
+
 test('voice sidebar participants support profile and context interactions', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

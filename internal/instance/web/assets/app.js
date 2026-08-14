@@ -407,6 +407,7 @@
         else { avatar.className = "dm-avatar-fallback"; avatar.textContent = Array.from(item.other.username || "?")[0].toUpperCase(); }
         name.textContent = item.other.display_name || item.other.username;
         link.append(avatar, name);
+        if (Number(item.unread || 0) > 0) link.append(unreadIndicator());
         fragment.append(link);
       });
       nav.insertBefore(fragment, nav.firstElementChild);
@@ -428,7 +429,14 @@
       }
       return button;
     };
-    let directMessages = new Map(), channels = new Map(), unread = 0;
+    const unreadIndicator = () => { const dot=document.createElement("span");dot.className="conversation-unread-dot";dot.setAttribute("aria-label","Unread Messages");return dot; };
+    const setConversationUnread = (channelID, value) => {
+      const link=document.querySelector(`.channel-nav a[href="/channels/${CSS.escape(channelID)}"]`);if(!link)return;
+      link.classList.toggle("unread",value);
+      const dot=link.querySelector(".conversation-unread-dot");
+      if(value&&!dot)link.append(unreadIndicator());else if(!value)dot?.remove();
+    };
+    let directMessages = new Map(), channels = new Map(), channelStates = new Map(), unread = 0;
     const renderUnread = () => {
       const dot = ensureButton()?.querySelector("[data-dm-unread]");
       if (!dot) return;
@@ -436,15 +444,17 @@
       dot.setAttribute("aria-label", unread === 1 ? "1 unread Direct Message" : `${unread} unread Direct Messages`);
     };
     const refresh = async () => {
-      const [response, channelResponse] = await Promise.all([fetch("/api/v1/dms"), fetch("/api/v1/channels")]);
+      const [response, channelResponse, stateResponse] = await Promise.all([fetch("/api/v1/dms"), fetch("/api/v1/channels"), fetch("/api/v1/state/channels")]);
       if (!response.ok) return;
       const value = await response.json(), overview = channelResponse.ok ? await channelResponse.json() : {channels: []};
       const items = value.direct_messages || [];
       directMessages = new Map(items.map(item => [item.id, item]));
       channels = new Map((overview.channels || []).map(item => [item.id, item]));
+      const stateValue=stateResponse.ok?await stateResponse.json():{channels:[]};channelStates=new Map((stateValue.channels||[]).map(item=>[item.channel_id,item]));
       window.allchatDirectMessageIDs = new Set(directMessages.keys());
       unread = [...directMessages.values()].reduce((total, item) => total + Number(item.unread || 0), 0);
       renderShortlist(items);
+      channelStates.forEach((state,channelID)=>setConversationUnread(channelID,Number(state.unread||0)>0));
       renderUnread();
     };
     cleanCommunityNavigation();
@@ -490,7 +500,7 @@
           updateUnread: () => {
             if (viewing && focused) return;
             if (direct) { unread++; renderUnread(); }
-            document.querySelector(`a[href="/channels/${CSS.escape(frame.payload.channel_id)}"]`)?.classList.add("unread");
+            setConversationUnread(frame.payload.channel_id,true);
           },
           notify: message => {
             if (center) return center.handleMessage(message, {directMessage: direct, channelName: direct ? "" : channel.name});

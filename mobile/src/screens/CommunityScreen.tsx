@@ -917,7 +917,7 @@ export function CommunityScreen({
           {displayName(item)}
         </Text>
         {unreadFor(community, item.id) > 0 ? (
-          <Text style={styles.badge}>{unreadFor(community, item.id)}</Text>
+          <View accessibilityLabel="Unread Messages" style={styles.unreadDot} />
         ) : null}
       </TouchableOpacity>
     );
@@ -1099,9 +1099,10 @@ export function CommunityScreen({
                             {item.name}
                           </Text>
                           {unreadFor(community, item.id) > 0 ? (
-                            <Text style={styles.badge}>
-                              {unreadFor(community, item.id)}
-                            </Text>
+                            <View
+                              accessibilityLabel="Unread Messages"
+                              style={styles.unreadDot}
+                            />
                           ) : null}
                         </TouchableOpacity>
                         {participants.length ? (
@@ -4150,17 +4151,12 @@ const styles = StyleSheet.create({
   },
   compactConversation: { gap: 10, minHeight: 42, paddingHorizontal: 10 },
   conversationName: { flex: 1, fontSize: 16, fontWeight: '600' },
-  badge: {
+  unreadDot: {
     backgroundColor: '#ed4245',
-    borderRadius: 12,
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
-    minWidth: 24,
-    overflow: 'hidden',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    textAlign: 'center',
+    borderRadius: 4,
+    height: 8,
+    marginLeft: 8,
+    width: 8,
   },
   channelBrowser: { flex: 1, minHeight: 0 },
   dmBrowserSection: {

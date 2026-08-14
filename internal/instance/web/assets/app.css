@@ -116,6 +116,7 @@
 .composer { background: #222329; }
 .sidebar-footer { background: #0e0f12; }
 a[href="/search"] { display: none; }
+.settings-nav > a[href="/"], [data-community-return] { display:none!important; }
 .header-search { display: block; margin: 0; }
 .header-search { position: relative; }
 .header-search input { width: min(220px,24vw); height: 30px; padding: 4px 10px; border-color: var(--border); background: var(--bg-input); font-size: .82rem; }

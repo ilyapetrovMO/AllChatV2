@@ -20,6 +20,16 @@
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});
   };
   const removeDuplicateSearchEntries=(root=document)=>root.querySelectorAll?.('a[href="/search"]').forEach(link=>link.remove());
+  const normalizeSettingsNavigation=(root=document)=>{
+	root.querySelectorAll?.('.settings-nav > a[href="/"], [data-community-return]').forEach(link=>link.remove());
+	root.querySelectorAll?.('.channel-sidebar').forEach(sidebar=>{
+		if(sidebar.querySelector('.community-header')?.textContent.trim()!=="Community Settings")return;
+		const nav=sidebar.querySelector('.settings-nav');if(!nav)return;
+		const title=root.querySelector('.content-header h1')?.textContent.trim()||"";
+		const active={"Community Settings":"/admin/settings","Channels":"/admin/channels","Roles":"/admin/roles","Invitations":"/admin/invitations","Soundboard":"/admin/soundboard"}[title];
+		nav.replaceChildren(...[["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
+	});
+  };
   const installGlobalSearch=(root=document)=>{
     root.querySelectorAll?.('.content > form[action="/search"]').forEach(form=>form.remove());
     root.querySelectorAll?.(".content-header").forEach((header,index)=>{
@@ -40,7 +50,7 @@
 	const settingsForm=root.querySelector?.('form[action="/admin/settings"]');
 	if(settingsForm&&!settingsForm.querySelector('[name="home_markdown"]')){const label=document.createElement("label"),textarea=document.createElement("textarea"),hint=document.createElement("p");label.textContent="Community home (Markdown)";textarea.name="home_markdown";textarea.rows=12;textarea.maxLength=100000;textarea.disabled=true;hint.className="muted";hint.textContent="Rules, greetings, and links shown on Community Home. Markdown formatting is supported.";label.append(textarea);settingsForm.querySelector("button")?.before(label,hint);fetch("/api/v1/community-home").then(response=>response.ok?response.json():null).then(value=>{textarea.value=value?.markdown||""}).catch(()=>{}).finally(()=>textarea.disabled=false)}
   };
-  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();installGlobalSearch();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);installGlobalSearch(root)});
+  window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();normalizeSettingsNavigation();installGlobalSearch();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);normalizeSettingsNavigation(root);installGlobalSearch(root)});
   if (window.__allchatWebSocketBatches) return;
   window.__allchatWebSocketBatches = true;
   const NativeWebSocket = window.WebSocket;
@@ -283,6 +293,7 @@
   };
   const completeCommunityMenu = () => document.querySelectorAll("[data-community-menu]").forEach(menu => {
     if (!menu.querySelector('a[href="/admin/channels"]')) return;
+	const settings=[...menu.querySelectorAll('a')].find(link=>link.textContent.trim()==="Community Settings");if(settings)settings.href="/admin/settings";
     const before = menu.querySelector('a[href="/profile"]');
     for (const [href, label] of [["/admin/invitations", "Invitations"], ["/admin/roles", "Roles"], ["/admin/soundboard", "Soundboard"]]) {
       if (menu.querySelector(`a[href="${href}"]`)) continue;
@@ -657,7 +668,7 @@
     control.querySelector("[data-avatar-remove]").onclick=async()=>{const response=await fetch("/api/v1/profile/avatar",{method:"DELETE",headers:{"X-CSRF-Token":csrf}});status.textContent=response.ok?"Avatar removed.":"Could not remove avatar.";if(response.ok){image.hidden=true;fallback.hidden=false}};
   };
   installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
-  const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
+  const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.closest(".channel-sidebar")?.querySelector(".community-header")?.textContent.trim()!=="Member Settings"||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
   installVoiceSettingsLink(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettingsLink(event.detail?.root||document));
   const installVoiceSettings=root=>{if(!root.querySelector?.("[data-voice-settings]"))return;import("/assets/voice-settings-page.js").then(()=>window.installAllChatVoiceSettings?.(root)).catch(()=>{})};
   installVoiceSettings(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettings(event.detail?.root||document));

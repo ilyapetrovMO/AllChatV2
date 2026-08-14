@@ -139,6 +139,20 @@ test('owner-configured Markdown is rendered on Community Home', async ({page}) =
   await expect(page).toHaveURL(/\/admin\/settings\?saved=1$/);
 });
 
+test('owner sees complete Community Settings navigation without redundant return links', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-community-menu-toggle]').click();
+  await expect(page.getByRole('menuitem', {name: 'Community Settings'})).toHaveAttribute('href', '/admin/settings');
+  await page.getByRole('menuitem', {name: 'Community Settings'}).click();
+  const overlay = page.locator('[data-app-overlay]');
+  await expect(overlay.locator('.settings-nav a')).toHaveText(['General', 'Channels', 'Roles', 'Invitations', 'Soundboard']);
+  await expect(overlay.getByRole('link', {name: /Back to Community|Community$/i})).toHaveCount(0);
+  await overlay.getByRole('link', {name: 'Channels'}).click();
+  await expect(overlay.locator('.settings-nav a')).toHaveText(['General', 'Channels', 'Roles', 'Invitations', 'Soundboard']);
+  await expect(overlay.getByRole('link', {name: /Back to Community|Community$/i})).toHaveCount(0);
+});
+
 test('Voice and Video settings persist processing and volume preferences per Member', async ({page}) => {
   await authenticate(page);
   await page.goto('/voice-video');
@@ -540,17 +554,13 @@ test('notification bell opens with defaults when settings are temporarily unavai
   await expect(page.locator('.notification-popover')).toBeVisible();
 });
 
-test('mobile Direct Messages always provide a route back to the Community', async ({page}) => {
+test('Direct Messages do not duplicate the Community rail return action', async ({page}) => {
   await page.setViewportSize({width: 412, height: 915});
   await authenticate(page);
   await page.goto('/dms');
-  const headerReturn = page.locator('.content-header [data-community-return]');
-  await expect(headerReturn).toBeVisible();
-  await expect(headerReturn).toHaveAttribute('href', '/');
+  await expect(page.locator('.content-header [data-community-return]')).toHaveCount(0);
   await page.locator('[data-sidebar-toggle]').click();
-  const drawerReturn = page.locator('.channel-sidebar [data-community-return]');
-  await expect(drawerReturn).toBeVisible();
-  await expect(drawerReturn).toHaveAttribute('href', '/');
+  await expect(page.locator('.channel-sidebar [data-community-return]')).toHaveCount(0);
 });
 
 test('notification bell remains interactive after in-app Direct Message navigation', async ({page}) => {
@@ -826,7 +836,7 @@ test('returning from a directly opened settings page installs Community styles',
   await authenticate(page);
   await page.goto('/profile');
   await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(0);
-  await page.locator('.settings-nav a[href="/"]').click();
+  await page.locator('.community-mark[href="/"]').click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(1);
   await expect(page.locator('.channel-link').first()).toHaveCSS('display', 'flex');

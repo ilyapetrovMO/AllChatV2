@@ -139,6 +139,15 @@ test('owner-configured Markdown is rendered on Community Home', async ({page}) =
   await expect(page).toHaveURL(/\/admin\/settings\?saved=1$/);
 });
 
+test('Community Guide contains admin-authored content without utility cards', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/');
+  await expect(page.locator('.content-header h1')).toHaveText('Community Guide');
+  await expect(page.locator('form[action="/dms"]')).toHaveCount(0);
+  await expect(page.getByText('Instance status')).toHaveCount(0);
+  await expect(page.locator('#health')).toHaveCount(0);
+});
+
 test('owner sees complete Community Settings navigation without redundant return links', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);
@@ -797,6 +806,21 @@ test('composer autocompletes an @username and records a Mention without creating
   expect(message.reply).toBeUndefined();
   expect(message.mentions).toEqual([expect.objectContaining({member_id: fixture.secondMember.id, username: 'visual-member'})]);
   await expect(page.locator(`#message-${message.id} .body .mention`)).toHaveText('@visual-member');
+});
+
+test('ArrowUp in an empty focused composer edits the latest own Message', async ({page}) => {
+  const owner = await request.newContext({baseURL, storageState: fixture.ownerState});
+  const second = await request.newContext({baseURL, storageState: fixture.secondState});
+  const body = `Quick edit fixture ${Date.now()}`;
+  await post(owner, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body});
+  await post(second, `/api/v1/channels/${fixture.textChannel.id}/messages`, {body: 'Newer Message from someone else'});
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const input = page.locator('#message-body');
+  await input.focus();
+  await input.press('ArrowUp');
+  await expect(input).toHaveValue(body);
+  await expect(page.locator('#editing-banner')).toBeVisible();
 });
 
 test('voice sidebar participants support profile and context interactions', async ({page}) => {

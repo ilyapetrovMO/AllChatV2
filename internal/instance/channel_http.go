@@ -192,17 +192,29 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var page bytes.Buffer
 	_ = homeTemplate.Execute(&page, map[string]any{"Member": member, "Members": members, "Overview": overview, "DirectMessages": directMessages, "CSRF": csrfCookieValue(r)})
+	body := strings.Replace(page.String(), `<h1>Home</h1>`, `<h1>Community Guide</h1>`, 1)
 	if rendered.Len() > 0 {
 		start := `<p class="eyebrow">AllChat Community</p>`
 		end := `<form class="card form-row"`
-		body := page.String()
 		if left, right := strings.Index(body, start), strings.Index(body, end); left >= 0 && right > left {
 			body = body[:left] + `<article class="community-markdown">` + rendered.String() + `</article>` + body[right:]
 		}
-		_, _ = w.Write([]byte(body))
-		return
 	}
-	_, _ = w.Write(page.Bytes())
+	body = removeHomeBlock(body, `<form class="card form-row" method="post" action="/dms">`, `</form>`)
+	body = removeHomeBlock(body, `<div class="card"><h3>Instance status</h3>`, `</div>`)
+	_, _ = w.Write([]byte(body))
+}
+
+func removeHomeBlock(body, start, end string) string {
+	left := strings.Index(body, start)
+	if left < 0 {
+		return body
+	}
+	right := strings.Index(body[left:], end)
+	if right < 0 {
+		return body
+	}
+	return body[:left] + body[left+right+len(end):]
 }
 func (i *Instance) channelsAdminPage(w http.ResponseWriter, r *http.Request) {
 	m, _, ok := i.authenticated(w, r)

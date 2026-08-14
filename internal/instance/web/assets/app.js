@@ -213,13 +213,13 @@
 	};
   const installCommunityHomeMembers = async () => {
     const main = document.querySelector(".content-shell");
-    if (!main || main.querySelector(".content-header h1")?.textContent.trim() !== "Home" || main.dataset.communityMembersInstalled) return;
+    if (!main || main.querySelector(".content-header h1")?.textContent.trim() !== "Community Guide" || main.dataset.communityMembersInstalled) return;
     main.dataset.communityMembersInstalled = "pending";
     try {
       const [membersResponse, presenceResponse] = await Promise.all([fetch("/api/v1/members"), fetch("/api/v1/presence")]);
       if (!membersResponse.ok) throw new Error("Members unavailable");
       const members = (await membersResponse.json()).members || [], presence = presenceResponse.ok ? (await presenceResponse.json()).presence : {};
-      if (!main.isConnected || main.querySelector(".content-header h1")?.textContent.trim() !== "Home") return;
+      if (!main.isConnected || main.querySelector(".content-header h1")?.textContent.trim() !== "Community Guide") return;
       const aside = document.createElement("aside"), heading = document.createElement("h2"), list = document.createElement("ul");
       aside.className = "participant-sidebar"; aside.setAttribute("aria-label", "Community Members");
       heading.className = "participant-heading"; heading.textContent = `Members — ${members.length}`;

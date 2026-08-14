@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 24
+const schemaVersion = 25
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -54,6 +54,7 @@ type Instance struct {
 	turnMu         sync.Mutex
 	turnIssued     map[string][]time.Time
 	startedAt      time.Time
+	webPush        *webPushService
 
 	closeOnce sync.Once
 	closeErr  error
@@ -137,7 +138,16 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 	if mediaErr != nil {
 		return nil, fmt.Errorf("configure media limits: %w", mediaErr)
 	}
-	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC()}
+	webPush, err := newWebPushService(db, communityService, config.DataDir, logger)
+	if err != nil {
+		return nil, fmt.Errorf("initialize Web Push: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			webPush.Close()
+		}
+	}()
+	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC(), webPush: webPush}
 	if config.TURNPublicIP != "" {
 		secret, secretErr := loadOrCreateSecret(filepath.Join(config.DataDir, "turn-secret"))
 		if secretErr != nil {
@@ -254,6 +264,7 @@ func (i *Instance) runAttachmentCleanup(ctx context.Context) {
 func (i *Instance) Close() error {
 	i.closeOnce.Do(func() {
 		i.media.Close()
+		i.webPush.Close()
 		i.community.Close()
 		if i.relay != nil {
 			_ = i.relay.Close()
@@ -819,6 +830,22 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Member banner migration: %w", err)
 		}
 	}
+	if currentVersion < 25 {
+		if _, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS web_push_subscriptions (
+			endpoint TEXT PRIMARY KEY,
+			member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+			session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
+			p256dh TEXT NOT NULL,
+			auth TEXT NOT NULL,
+			created_at TEXT NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS web_push_subscriptions_member ON web_push_subscriptions(member_id);`); err != nil {
+			return fmt.Errorf("create Web Push subscription schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 25, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Web Push subscription schema: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -911,6 +938,9 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/notification-settings", i.notificationSettingsAPI)
 	mux.HandleFunc("PUT /api/v1/notification-settings", i.updateNotificationSettingsAPI)
 	mux.HandleFunc("PUT /api/v1/channels/{channelID}/notification-settings", i.updateChannelNotificationSettingsAPI)
+	mux.HandleFunc("GET /api/v1/web-push/config", i.webPushConfigAPI)
+	mux.HandleFunc("PUT /api/v1/web-push/subscription", i.webPushSubscriptionAPI)
+	mux.HandleFunc("DELETE /api/v1/web-push/subscription", i.deleteWebPushSubscriptionAPI)
 	mux.HandleFunc("PUT /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("DELETE /api/v1/channels/{channelID}/mute", i.setChannelMuteAPI)
 	mux.HandleFunc("GET /api/v1/reports", i.reportsAPI)
@@ -989,6 +1019,22 @@ func (i *Instance) routes() http.Handler {
 		response.Header().Set("Content-Type", "image/svg+xml")
 		response.Header().Set("Cache-Control", "public, max-age=86400")
 		_, _ = response.Write(icon)
+	})
+	mux.HandleFunc("GET /push-service-worker.js", func(response http.ResponseWriter, _ *http.Request) {
+		source, err := embeddedWeb.ReadFile("web/assets/push-service-worker.js")
+		if err != nil {
+			http.Error(response, "service worker unavailable", http.StatusInternalServerError)
+			return
+		}
+		response.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		response.Header().Set("Cache-Control", "no-cache")
+		response.Header().Set("Service-Worker-Allowed", "/")
+		_, _ = response.Write(source)
+	})
+	mux.HandleFunc("GET /manifest.webmanifest", func(response http.ResponseWriter, _ *http.Request) {
+		response.Header().Set("Content-Type", "application/manifest+json")
+		response.Header().Set("Cache-Control", "public, max-age=3600")
+		_, _ = response.Write([]byte(`{"id":"/","name":"AllChat","short_name":"AllChat","start_url":"/","scope":"/","display":"standalone","background_color":"#111214","theme_color":"#111214","icons":[{"src":"/favicon.ico","sizes":"any","type":"image/svg+xml"}]}`))
 	})
 	mux.Handle("GET /assets/", http.StripPrefix("/assets/", noCache(http.FileServerFS(mustSub(embeddedWeb, "web/assets")))))
 	mux.HandleFunc("GET /", i.homePage)

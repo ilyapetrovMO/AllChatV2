@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 24 {
-		t.Fatalf("health = %+v, want status ok at schema version 24", health)
+	if health.Status != "ok" || health.SchemaVersion != 25 {
+		t.Fatalf("health = %+v, want status ok at schema version 25", health)
 	}
 
 	client := newClient(t)
@@ -307,7 +307,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(24) {
+	if health["status"] != "ok" || health["schema_version"] != float64(25) {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }
@@ -1184,7 +1184,14 @@ func TestPresenceReadPositionsAndTypingSynchronize(t *testing.T) {
 	notificationAsset := getWithClient(t, ownerClient, app.url("/assets/notification-service.js"))
 	notificationSource := readAll(t, notificationAsset.Body)
 	notificationAsset.Body.Close()
-	if !strings.Contains(pageBody, `aria-label="Notifications"`) || !strings.Contains(notificationSource, "Notification?.requestPermission") {
+	pushWorker := getWithClient(t, ownerClient, app.url("/push-service-worker.js"))
+	pushWorkerSource := readAll(t, pushWorker.Body)
+	pushWorker.Body.Close()
+	pushConfig := getWithClient(t, ownerClient, app.url("/api/v1/web-push/config"))
+	var config map[string]string
+	configErr := json.NewDecoder(pushConfig.Body).Decode(&config)
+	pushConfig.Body.Close()
+	if !strings.Contains(pageBody, `aria-label="Notifications"`) || !strings.Contains(notificationSource, "Notification.requestPermission") || !strings.Contains(notificationSource, "pushManager.subscribe") || !strings.Contains(pushWorkerSource, "showNotification") || configErr != nil || config["public_key"] == "" {
 		t.Fatal("embedded client lacks deliberate browser-notification control")
 	}
 }

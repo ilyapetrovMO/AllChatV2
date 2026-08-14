@@ -7,6 +7,7 @@ require modernc.org/sqlite v1.54.0
 require (
 	firebase.google.com/go/v4 v4.19.0
 	fyne.io/fyne/v2 v2.7.1
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/coder/websocket v1.8.14
 	github.com/go-acme/lego/v4 v4.31.0
 	github.com/pion/interceptor v0.1.45
@@ -63,6 +64,7 @@ require (
 	github.com/go-text/typesetting v0.2.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect

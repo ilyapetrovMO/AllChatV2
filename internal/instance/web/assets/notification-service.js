@@ -3,6 +3,10 @@
   const TOAST_COOLDOWN_MS = 1500;
   const SOUND_COOLDOWN_MS = 1000;
 
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const manifest = document.createElement("link"); manifest.rel = "manifest"; manifest.href = "/manifest.webmanifest"; document.head.append(manifest);
+  }
+
   const normalizedLevel = value => {
     const level = String(value || "default").toLowerCase().replaceAll("-", "_");
     return ["default", "all_messages", "mentions_only", "nothing"].includes(level) ? level : "default";
@@ -105,6 +109,29 @@
   const csrfToken = () => document.querySelector('[name="csrf_token"]')?.value || "";
   const option = (value, label) => { const item = document.createElement("option"); item.value = value; item.textContent = label; return item; };
 
+  const applicationServerKey = value => {
+    const padding = "=".repeat((4 - value.length % 4) % 4);
+    const decoded = atob((value + padding).replaceAll("-", "+").replaceAll("_", "/"));
+    return Uint8Array.from(decoded, character => character.charCodeAt(0));
+  };
+
+  const syncWebPushSubscription = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in global) || global.Notification?.permission !== "granted") return false;
+    const [registration, configResponse] = await Promise.all([
+      navigator.serviceWorker.register("/push-service-worker.js", {scope: "/"}),
+      fetch("/api/v1/web-push/config"),
+    ]);
+    if (!configResponse.ok) throw new Error("Web Push configuration unavailable");
+    const config = await configResponse.json();
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: applicationServerKey(config.public_key)});
+    const response = await fetch("/api/v1/web-push/subscription", {
+      method: "PUT", headers: {"Content-Type": "application/json", "X-CSRF-Token": csrfToken()}, body: JSON.stringify(subscription),
+    });
+    if (!response.ok) throw new Error("Could not enable background notifications");
+    return true;
+  };
+
   const installNotificationCenter = async () => {
     if (global.allchatNotifications) return global.allchatNotifications;
     let settings = {community: {level: "all_messages", muted: false, sound_enabled: true}, channels: {}};
@@ -160,8 +187,13 @@
       const heading = document.createElement("h2"); heading.textContent = "Notifications";
       const settingsStatus = document.createElement("p"); settingsStatus.className = "muted notification-settings-status"; settingsStatus.textContent = "Saved notification settings are temporarily unavailable; defaults are shown."; settingsStatus.hidden = settingsAvailable;
       const permission = document.createElement("button"); permission.type = "button"; permission.className = "button-secondary notification-permission";
-      const updatePermission = () => { permission.textContent = !("Notification" in global) ? "Desktop notifications unavailable" : global.Notification.permission === "granted" ? "Desktop notifications enabled" : "Enable desktop notifications"; permission.disabled = !("Notification" in global) || global.Notification.permission === "granted"; };
-      updatePermission(); permission.onclick = async () => { await global.Notification?.requestPermission(); updatePermission(); };
+      const pushAvailable = "Notification" in global && "serviceWorker" in navigator && "PushManager" in global;
+      const updatePermission = () => { permission.textContent = !pushAvailable ? "Background notifications unavailable" : global.Notification.permission === "granted" ? "Background notifications enabled" : "Enable background notifications"; permission.disabled = !pushAvailable || global.Notification.permission === "granted"; };
+      updatePermission(); permission.onclick = async () => {
+        try { await global.Notification.requestPermission(); if (global.Notification.permission === "granted") await syncWebPushSubscription(); }
+        catch (error) { global.alert(error.message); }
+        updatePermission();
+      };
       const communityLabel = document.createElement("label"), communitySelect = document.createElement("select");
       communityLabel.append("Community", communitySelect); communitySelect.append(option("all_messages", "All Messages"), option("mentions_only", "Mentions Only"), option("nothing", "Nothing")); communitySelect.value = settings.community.level;
       const communityMute = document.createElement("label"), communityMuteInput = document.createElement("input"); communityMute.className = "notification-check"; communityMuteInput.type = "checkbox"; communityMuteInput.checked = settings.community.muted; communityMute.append(communityMuteInput, "Mute Community");
@@ -187,6 +219,7 @@
       wrap.append(bell, installedPopover); actions.prepend(wrap);
     };
     installBell(); document.addEventListener("allchat:view-swapped", installBell);
+    if (global.Notification?.permission === "granted") syncWebPushSubscription().catch(() => {});
     return center;
   };
 

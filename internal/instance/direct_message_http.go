@@ -156,6 +156,7 @@ func (i *Instance) publishDirectMessageAPI(response http.ResponseWriter, request
 		writeCommunityError(response, err)
 		return
 	}
+	i.webPush.Enqueue(message)
 	writeJSON(response, http.StatusCreated, message)
 }
 

@@ -89,6 +89,7 @@ func (i *Instance) publishMessageAPI(w http.ResponseWriter, r *http.Request) {
 		writeCommunityError(w, err)
 		return
 	}
+	i.webPush.Enqueue(message)
 	writeJSON(w, 201, message)
 }
 
@@ -221,10 +222,12 @@ func (i *Instance) publishMessageWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = r.ParseForm()
-	if _, err := i.community.PublishRichMessage(r.Context(), m, r.PathValue("channelID"), community.MessageInput{Body: r.FormValue("body"), AttachmentIDs: r.Form["attachment_id"]}); err != nil {
+	message, err := i.community.PublishRichMessage(r.Context(), m, r.PathValue("channelID"), community.MessageInput{Body: r.FormValue("body"), AttachmentIDs: r.Form["attachment_id"]})
+	if err != nil {
 		http.Error(w, err.Error(), communityStatus(err))
 		return
 	}
+	i.webPush.Enqueue(message)
 	http.Redirect(w, r, "/channels/"+r.PathValue("channelID"), 303)
 }
 func (i *Instance) editMessageWeb(w http.ResponseWriter, r *http.Request) {

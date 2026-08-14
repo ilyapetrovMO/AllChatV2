@@ -130,6 +130,8 @@ test('owner-configured Markdown is rendered on Community Home', async ({page}) =
   await expect(page).toHaveURL(/\/admin\/settings\?saved=1$/);
   await page.goto('/');
   await expect(page.locator('.community-markdown h1')).toHaveText('Welcome');
+  await expect(page.locator('.community-markdown')).toHaveClass(/card/);
+  await expect(page.locator('.community-markdown')).toHaveCSS('border-radius', '8px');
   await expect(page.locator('.community-markdown strong')).toHaveText('rules');
   await expect(page.locator('.community-markdown a')).toHaveAttribute('href', 'https://example.test');
   await expect(page.locator('.community-markdown ul ul li')).toHaveText('Nested');
@@ -780,6 +782,9 @@ test('message authors open the member popover and replies retain their target', 
   await page.goto(`/channels/${fixture.textChannel.id}`);
 
   const message = page.locator('#messages .message').first();
+  const authorStyle = await message.locator('strong').evaluate(node => ({color: getComputedStyle(node).color, fontWeight: getComputedStyle(node).fontWeight}));
+  const memberStyle = await page.locator('.participant-sidebar [data-participant-id] > span:last-child').first().evaluate(node => ({color: getComputedStyle(node).color, fontWeight: getComputedStyle(node).fontWeight}));
+  expect(authorStyle).toEqual(memberStyle);
   await message.locator('strong').click();
   await expect(page.locator('.member-popover')).toBeVisible();
 

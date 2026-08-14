@@ -45,8 +45,8 @@
 .message-audio { display: block; width: min(100%, 480px); height: 44px; margin-top: 8px; }
 .message-avatar { object-fit: cover; }
 .message-avatar-fallback { display: grid; place-items: center; }
-.message > strong { cursor: pointer; }
-.message > strong:hover { text-decoration: underline; }
+.message > strong { color:var(--muted); font-size:.95rem; font-weight:500; cursor:pointer; }
+.message > strong:hover { color:var(--text); text-decoration:underline; }
 .dm-link { display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 4px; color: var(--muted); font-weight: 500; }
 .dm-link:hover, .dm-link[aria-current="page"] { background: var(--bg-hover); color: var(--text); text-decoration: none; }
 .dm-link.unread { color: var(--text); font-weight: 700; }
@@ -127,7 +127,7 @@
 .participant-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .participant-list li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 8px; border-radius: 4px; color: var(--muted); cursor: pointer; }
 .participant-list li:hover { background: var(--bg-hover); color: var(--text); }
-.participant-list li > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.participant-list li > span:last-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
 .participant-list small { color: var(--faint); font-size: .65rem; }
 .participant-avatar-wrap { position: relative; flex: 0 0 auto; }
 .participant-avatar-wrap img, .participant-avatar-fallback { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }

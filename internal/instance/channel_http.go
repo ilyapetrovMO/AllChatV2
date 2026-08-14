@@ -196,12 +196,14 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 	var page bytes.Buffer
 	_ = homeTemplate.Execute(&page, map[string]any{"Member": member, "Members": members, "Overview": overview, "DirectMessages": directMessages, "CSRF": csrfCookieValue(r)})
 	body := strings.Replace(page.String(), `<h1>Home</h1>`, `<h1>Community Guide</h1>`, 1)
-	if rendered.Len() > 0 {
-		start := `<p class="eyebrow">AllChat Community</p>`
-		end := `<form class="card form-row"`
-		if left, right := strings.Index(body, start), strings.Index(body, end); left >= 0 && right > left {
-			body = body[:left] + `<article class="community-markdown">` + rendered.String() + `</article>` + body[right:]
+	start := `<p class="eyebrow">AllChat Community</p>`
+	end := `<form class="card form-row"`
+	if left, right := strings.Index(body, start), strings.Index(body, end); left >= 0 && right > left {
+		content := body[left:right]
+		if rendered.Len() > 0 {
+			content = rendered.String()
 		}
+		body = body[:left] + `<article class="card community-markdown">` + content + `</article>` + body[right:]
 	}
 	body = removeHomeBlock(body, `<form class="card form-row" method="post" action="/dms">`, `</form>`)
 	body = removeHomeBlock(body, `<div class="card"><h3>Instance status</h3>`, `</div>`)

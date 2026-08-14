@@ -1207,6 +1207,7 @@ export function CommunityScreen({
             <MembersPanel
               busy={panelBusy}
               currentMemberID={community.member.id}
+              instanceURL={account.instance_url}
               members={community.members}
               onClose={() => setMembersOpen(false)}
               onOpenProfile={member => {
@@ -1216,6 +1217,7 @@ export function CommunityScreen({
               open={membersOpen}
               palette={palette}
               presence={community.presence}
+              token={account.session_token}
             />
             <MemberProfile
               client={client}
@@ -3252,21 +3254,25 @@ function ConversationPanel({
 function MembersPanel({
   busy,
   currentMemberID,
+  instanceURL,
   members,
   onClose,
   onOpenProfile,
   open,
   palette,
   presence,
+  token,
 }: {
   busy: boolean;
   currentMemberID: string;
+  instanceURL: string;
   members: Member[];
   onClose(): void;
   onOpenProfile(member: Member): void;
   open: boolean;
   palette: Palette;
   presence: CommunityState['presence'];
+  token: string;
 }) {
   const sorted = [...members].sort(
     (left, right) =>
@@ -3301,14 +3307,12 @@ function MembersPanel({
                 onPress={() => onOpenProfile(item)}
                 style={[styles.memberRow, { backgroundColor: palette.field }]}
               >
-                <Text
-                  style={[
-                    styles.memberAvatar,
-                    { backgroundColor: palette.border, color: palette.text },
-                  ]}
-                >
-                  {memberName(item).slice(0, 1).toUpperCase()}
-                </Text>
+                <MemberListAvatar
+                  instanceURL={instanceURL}
+                  member={item}
+                  palette={palette}
+                  token={token}
+                />
                 <View style={styles.grow}>
                   <Text style={[styles.memberName, { color: palette.text }]}>
                     {memberName(item)}
@@ -3494,6 +3498,11 @@ function MemberProfile({
           ]}
           keyboardShouldPersistTaps="handled"
         >
+          <ProfileBanner
+            instanceURL={instanceURL}
+            member={member}
+            token={token}
+          />
           <ProfileAvatar
             instanceURL={instanceURL}
             member={member}
@@ -3501,13 +3510,22 @@ function MemberProfile({
             token={token}
             version={avatarVersion}
           />
-          <Text style={[styles.profileName, { color: palette.text }]}>
+          <Text
+            style={[styles.profileName, { color: palette.text }]}
+          >
             {memberName(member)}
           </Text>
-          <Text style={{ color: palette.muted }}>
-            @{member.username}
-            {member.owner ? ' · Owner' : ''}
-          </Text>
+          <Text style={{ color: palette.muted }}>@{member.username}</Text>
+          {member.owner ? (
+            <Text
+              style={[
+                styles.profileRole,
+                { backgroundColor: palette.field, color: palette.text },
+              ]}
+            >
+              Community Owner
+            </Text>
+          ) : null}
           {status ? (
             <Text style={[styles.profileStatus, { color: palette.muted }]}>
               {status}
@@ -3695,25 +3713,20 @@ function ProfileAvatar({
   token: string;
   version: number;
 }) {
-  const [source, setSource] = useState('');
-  useEffect(() => {
-    let mounted = true;
-    setSource('');
-    if (member.avatar_url)
-      loadAuthenticatedImage(
-        `${attachmentURL(instanceURL, member.avatar_url)}?v=${version}`,
-        token,
-      )
-        .then(value => {
-          if (mounted) setSource(value);
-        })
-        .catch(() => {});
-    return () => {
-      mounted = false;
-    };
-  }, [instanceURL, member.avatar_url, token, version]);
+  const source = useProfileImage(
+    instanceURL,
+    member.avatar_url,
+    token,
+    version,
+  );
   return source ? (
-    <Image source={{ uri: source }} style={styles.profileAvatarImage} />
+    <Image
+      source={{ uri: source }}
+      style={[
+        styles.profileAvatarImage,
+        { backgroundColor: palette.background, borderColor: palette.background },
+      ]}
+    />
   ) : (
     <Text
       style={[
@@ -3724,6 +3737,83 @@ function ProfileAvatar({
       {memberName(member).slice(0, 1).toUpperCase()}
     </Text>
   );
+}
+
+function MemberListAvatar({
+  instanceURL,
+  member,
+  palette,
+  token,
+}: {
+  instanceURL: string;
+  member: Member;
+  palette: Palette;
+  token: string;
+}) {
+  const source = useProfileImage(instanceURL, member.avatar_url, token);
+  return source ? (
+    <Image source={{ uri: source }} style={styles.memberAvatarImage} />
+  ) : (
+    <Text
+      style={[
+        styles.memberAvatar,
+        { backgroundColor: palette.border, color: palette.text },
+      ]}
+    >
+      {memberName(member).slice(0, 1).toUpperCase()}
+    </Text>
+  );
+}
+
+function ProfileBanner({
+  instanceURL,
+  member,
+  token,
+}: {
+  instanceURL: string;
+  member: Member;
+  token: string;
+}) {
+  const source = useProfileImage(instanceURL, member.banner_url, token);
+  return (
+    <View style={styles.profileBanner}>
+      {source ? (
+        <Image
+          resizeMode="cover"
+          source={{ uri: source }}
+          style={styles.profileBannerImage}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function useProfileImage(
+  instanceURL: string,
+  path: string | undefined,
+  token: string,
+  version = 0,
+) {
+  const [source, setSource] = useState('');
+  useEffect(() => {
+    let mounted = true;
+    setSource('');
+    if (path) {
+      const url = attachmentURL(instanceURL, path);
+      loadAuthenticatedImage(
+        `${url}${url.includes('?') ? '&' : '?'}v=${version}`,
+        token,
+      )
+        .then(value => {
+          if (mounted) setSource(value);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [instanceURL, path, token, version]);
+  return source;
 }
 
 function ModerationPanel({
@@ -4473,6 +4563,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: 44,
   },
+  memberAvatarImage: {
+    borderRadius: 22,
+    height: 44,
+    width: 44,
+  },
   memberName: { fontSize: 16, fontWeight: '700' },
   profileBackdrop: {
     alignItems: 'center',
@@ -4481,7 +4576,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  profileCard: { borderRadius: 16, maxWidth: 420, padding: 20, width: '100%' },
+  profileCard: {
+    borderRadius: 16,
+    maxWidth: 420,
+    overflow: 'hidden',
+    padding: 20,
+    width: '100%',
+  },
+  profileBanner: {
+    backgroundColor: '#7d2940',
+    height: 104,
+    marginHorizontal: -20,
+    marginTop: -20,
+  },
+  profileBannerImage: { height: '100%', width: '100%' },
   profileAvatar: {
     borderRadius: 38,
     fontSize: 30,
@@ -4489,17 +4597,29 @@ const styles = StyleSheet.create({
     height: 76,
     lineHeight: 76,
     marginBottom: 12,
+    marginTop: -38,
     overflow: 'hidden',
     textAlign: 'center',
     width: 76,
   },
   profileAvatarImage: {
     borderRadius: 38,
+    borderWidth: 5,
     height: 76,
     marginBottom: 12,
+    marginTop: -38,
     width: 76,
   },
   profileName: { fontSize: 22, fontWeight: '800' },
+  profileRole: {
+    alignSelf: 'flex-start',
+    borderRadius: 5,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   profileStatus: { marginTop: 10 },
   profileInput: {
     borderRadius: 10,

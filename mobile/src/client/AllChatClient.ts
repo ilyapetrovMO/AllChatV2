@@ -5,6 +5,7 @@ export type Member = {
   username: string;
   display_name?: string;
   avatar_url?: string;
+  banner_url?: string;
   owner: boolean;
 };
 

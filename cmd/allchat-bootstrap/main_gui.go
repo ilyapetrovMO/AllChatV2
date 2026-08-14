@@ -95,13 +95,16 @@ func (bootstrapTheme) Size(name fyne.ThemeSizeName) float32 {
 		return 14
 	}
 	if name == theme.SizeNamePadding {
-		return 12
+		return 6
+	}
+	if name == theme.SizeNameInnerPadding {
+		return 6
 	}
 	if name == theme.SizeNameInputRadius {
 		return 4
 	}
 	if name == theme.SizeNameHeadingText {
-		return 24
+		return 22
 	}
 	if name == theme.SizeNameSubHeadingText {
 		return 16

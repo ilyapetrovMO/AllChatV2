@@ -41,7 +41,10 @@ func TestBootstrapThemeUsesCompactApplicationGeometry(t *testing.T) {
 	if got := bootstrap.Size(theme.SizeNameInputRadius); got != 4 {
 		t.Fatalf("input radius = %v, want 4", got)
 	}
-	if got := bootstrap.Size(theme.SizeNamePadding); got != 12 {
-		t.Fatalf("padding = %v, want 12", got)
+	if got := bootstrap.Size(theme.SizeNamePadding); got != 6 {
+		t.Fatalf("padding = %v, want 6", got)
+	}
+	if got := bootstrap.Size(theme.SizeNameInnerPadding); got != 6 {
+		t.Fatalf("inner padding = %v, want 6", got)
 	}
 }

@@ -125,7 +125,7 @@ a[href="/search"] { display: none; }
 .search-filter-menu button { display:grid; width:100%; min-height:0; padding:9px 10px; text-align:left; background:transparent; color:var(--text); }
 .search-filter-menu button:hover { background:var(--bg-hover); }
 .search-filter-menu small { color:var(--muted); font-weight:500; }
-.community-markdown { max-width:760px; margin-bottom:24px; padding:24px 28px; border-radius:var(--radius); background:#1d1e24; line-height:1.55; }
+.community-markdown { width:100%; max-width:760px; margin:0 auto 24px; padding:24px 28px; border-radius:var(--radius); background:#1d1e24; line-height:1.55; }
 .community-markdown > :first-child { margin-top:0; }.community-markdown > :last-child { margin-bottom:0; }
 .community-markdown h1,.community-markdown h2,.community-markdown h3 { margin:1.2em 0 .45em; }
 .community-markdown img { max-width:100%; }

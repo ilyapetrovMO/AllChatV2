@@ -155,6 +155,11 @@ test('Community Guide contains admin-authored content without utility cards', as
   await expect(page.locator('form[action="/dms"]')).toHaveCount(0);
   await expect(page.getByText('Instance status')).toHaveCount(0);
   await expect(page.locator('#health')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => {
+    const content=document.querySelector('.community-home > .content'),card=document.querySelector('.community-markdown');if(!content||!card)return false;
+    const contentStyle=getComputedStyle(content),bounds=content.getBoundingClientRect(),cardBounds=card.getBoundingClientRect(),left=bounds.left+parseFloat(contentStyle.paddingLeft),right=bounds.right-parseFloat(contentStyle.paddingRight);
+    return cardBounds.width<=760&&Math.abs((cardBounds.left-left)-(right-cardBounds.right))<=1;
+  })).toBe(true);
 });
 
 test('owner sees complete Community Settings navigation without redundant return links', async ({page}) => {

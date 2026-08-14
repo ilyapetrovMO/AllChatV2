@@ -135,7 +135,7 @@ func (i *Instance) updateAvatarAPI(response http.ResponseWriter, request *http.R
 	if !ok {
 		return
 	}
-	data, err := io.ReadAll(io.LimitReader(request.Body, (2<<20)+1))
+	data, err := io.ReadAll(io.LimitReader(request.Body, (8<<20)+1))
 	if err != nil {
 		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid avatar"})
 		return
@@ -180,7 +180,7 @@ func (i *Instance) updateBannerAPI(response http.ResponseWriter, request *http.R
 	if !ok {
 		return
 	}
-	data, err := io.ReadAll(io.LimitReader(request.Body, (2<<20)+1))
+	data, err := io.ReadAll(io.LimitReader(request.Body, (8<<20)+1))
 	if err != nil {
 		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid banner"})
 		return

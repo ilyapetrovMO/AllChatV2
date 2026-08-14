@@ -899,12 +899,24 @@ test('member settings crop and upload a profile banner', async ({page}) => {
   await authenticate(page);
   await page.goto('/profile');
   await expect(page.locator('[data-banner-control]')).toBeVisible();
-  await page.locator('[data-banner-control] input[type="file"]').setInputFiles({name: 'banner.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')});
+	  await page.locator('[data-banner-control] input[type="file"]').evaluate(async input => {
+	    const {encodeAnimation} = await import('/assets/vendor/webp.js');
+	    const red = new Uint8Array([255, 0, 0, 255]), blue = new Uint8Array([0, 0, 255, 255]);
+	    const encoded = await encodeAnimation(1, 1, true, [{data: red, duration: 120}, {data: blue, duration: 180}]);
+	    const transfer = new DataTransfer();
+	    transfer.items.add(new File([encoded], 'animated-banner.webp', {type: 'image/webp'}));
+	    input.files = transfer.files;
+	    input.dispatchEvent(new Event('change', {bubbles: true}));
+	  });
   await expect(page.locator('.image-crop-banner')).toBeVisible();
   await page.locator('.image-crop-dialog input[type="range"]').fill('1.5');
   await page.locator('.image-crop-dialog button[value="apply"]').click();
   await page.locator('[data-banner-save]').click();
   await expect(page.locator('[data-banner-status]')).toHaveText('Profile banner updated.');
+	  expect(await page.evaluate(async memberID => {
+	    const response = await fetch(`/api/v1/members/${memberID}/banner`), bytes = new Uint8Array(await response.arrayBuffer());
+	    return new TextDecoder('latin1').decode(bytes).includes('ANIM');
+	  }, fixture.ownerMember.id)).toBe(true);
   await page.goto(`/channels/${fixture.textChannel.id}`);
   await page.locator('[data-participant-id]').filter({hasText: fixture.ownerMember.username}).first().click();
   await expect(page.locator('.member-popover-banner')).toHaveCSS('background-image', /members\/.+\/banner/);

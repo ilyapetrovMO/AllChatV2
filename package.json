@@ -11,7 +11,8 @@
     "test:media:soak": "node media-tests/soak.js"
   },
   "devDependencies": {
+    "@playwright/test": "latest",
     "@shiguredo/rnnoise-wasm": "2025.1.5",
-    "@playwright/test": "latest"
+    "wasm-webp": "0.1.0"
   }
 }

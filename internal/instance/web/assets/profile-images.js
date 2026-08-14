@@ -10,6 +10,17 @@ const imageFromFile = file => new Promise((resolve, reject) => {
   image.src = url;
 });
 
+const animatedWebP = async file => {
+  if (file.type !== "image/webp") return false;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  for (let index = 12; index + 8 <= bytes.length;) {
+    const type = String.fromCharCode(...bytes.subarray(index, index + 4)), size = bytes[index + 4] | bytes[index + 5] << 8 | bytes[index + 6] << 16 | bytes[index + 7] << 24;
+    if (type === "ANIM") return true;
+    index += 8 + size + (size & 1);
+  }
+  return false;
+};
+
 async function cropImage(file, kind) {
   const config = imageKinds[kind], loaded = await imageFromFile(file);
   const dialog = document.createElement("dialog"), canvas = document.createElement("canvas"), zoom = document.createElement("input");
@@ -27,21 +38,36 @@ async function cropImage(file, kind) {
     offsetX = Math.max((config.width - width) / 2, Math.min((width - config.width) / 2, offsetX));
     offsetY = Math.max((config.height - height) / 2, Math.min((height - config.height) / 2, offsetY));
   };
-  const draw = () => {
+  const drawSource = (source, sourceWidth = loaded.image.naturalWidth, sourceHeight = loaded.image.naturalHeight) => {
     clamp(); const scale = cover * Number(zoom.value), width = loaded.image.naturalWidth * scale, height = loaded.image.naturalHeight * scale;
     context.clearRect(0, 0, config.width, config.height);
-    context.drawImage(loaded.image, (config.width - width) / 2 + offsetX, (config.height - height) / 2 + offsetY, width, height);
+    context.drawImage(source, 0, 0, sourceWidth, sourceHeight, (config.width - width) / 2 + offsetX, (config.height - height) / 2 + offsetY, width, height);
   };
+  const draw = () => drawSource(loaded.image);
   zoom.oninput = draw;
   canvas.onpointerdown = event => { dragging = true; lastX = event.clientX; lastY = event.clientY; canvas.setPointerCapture(event.pointerId); };
   canvas.onpointermove = event => { if (!dragging) return; const scaleX = canvas.width / canvas.clientWidth, scaleY = canvas.height / canvas.clientHeight; offsetX += (event.clientX - lastX) * scaleX; offsetY += (event.clientY - lastY) * scaleY; lastX = event.clientX; lastY = event.clientY; draw(); };
   canvas.onpointerup = canvas.onpointercancel = () => { dragging = false; };
   canvas.onwheel = event => { event.preventDefault(); zoom.value = String(Math.max(1, Math.min(3, Number(zoom.value) - event.deltaY * .002))); draw(); };
   draw(); dialog.showModal();
-  return new Promise(resolve => dialog.addEventListener("close", () => {
+  return new Promise(resolve => dialog.addEventListener("close", async () => {
     const apply = dialog.returnValue === "apply";
     const finish = blob => { URL.revokeObjectURL(loaded.url); dialog.remove(); resolve(blob); };
-    apply ? canvas.toBlob(finish, "image/webp", .9) : finish(null);
+    if (!apply) { finish(null); return; }
+    if (await animatedWebP(file)) {
+      const webp = await import("/assets/vendor/webp.js"), decoded = await webp.decodeAnimation(new Uint8Array(await file.arrayBuffer()), true), source = document.createElement("canvas"), sourceContext = source.getContext("2d"), frames = [];
+      if (!decoded?.length) { finish(null); return; }
+      source.width = decoded[0].width; source.height = decoded[0].height;
+      for (const frame of decoded) {
+        sourceContext.putImageData(new ImageData(new Uint8ClampedArray(frame.data), frame.width, frame.height), 0, 0);
+        drawSource(source, frame.width, frame.height);
+        frames.push({data: context.getImageData(0, 0, config.width, config.height).data, duration: frame.duration, config: {lossless: 0, quality: 85}});
+      }
+      const encoded = await webp.encodeAnimation(config.width, config.height, true, frames);
+      finish(encoded ? new Blob([encoded], {type: "image/webp"}) : null);
+      return;
+    }
+    canvas.toBlob(finish, "image/webp", .9);
   }, {once: true}));
 }
 

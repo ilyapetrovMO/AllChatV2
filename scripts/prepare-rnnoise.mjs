@@ -5,6 +5,8 @@ import {fileURLToPath} from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = resolve(root, 'node_modules/@shiguredo/rnnoise-wasm/dist/rnnoise.js');
 const license = resolve(root, 'node_modules/@shiguredo/rnnoise-wasm/LICENSE');
+const webpDirectory = resolve(root, 'node_modules/wasm-webp/dist/esm');
+const webpLicense = resolve(root, 'node_modules/wasm-webp/LICENSE');
 const targetDirectory = resolve(root, 'internal/instance/web/assets/vendor');
 
 await mkdir(targetDirectory, {recursive: true});
@@ -18,8 +20,14 @@ if (!sourceCode.includes(environmentCheck)) {
 // `WorkerGlobalScope`. The runtime otherwise only needs standard globals that
 // AudioWorklet provides, and embeds its Wasm payload in this module.
 const workletCompatibleSource = sourceCode.replace(environmentCheck, 'typeof globalThis == "object"');
+const webpIndex = (await readFile(resolve(webpDirectory, 'index.js'), 'utf8'))
+  .replace("from './webp-wasm'", "from './webp-wasm.js'");
 
 await Promise.all([
   writeFile(resolve(targetDirectory, 'rnnoise.js'), workletCompatibleSource),
   copyFile(license, resolve(targetDirectory, 'RNNOISE-WASM-LICENSE.txt')),
+  writeFile(resolve(targetDirectory, 'webp.js'), webpIndex),
+  copyFile(resolve(webpDirectory, 'webp-wasm.js'), resolve(targetDirectory, 'webp-wasm.js')),
+  copyFile(resolve(webpDirectory, 'webp-wasm.wasm'), resolve(targetDirectory, 'webp-wasm.wasm')),
+  copyFile(webpLicense, resolve(targetDirectory, 'WEBP-WASM-LICENSE.txt')),
 ]);

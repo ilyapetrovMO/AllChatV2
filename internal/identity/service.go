@@ -384,8 +384,8 @@ func (s *Service) UpdateProfile(ctx context.Context, memberID, username, display
 }
 
 func (s *Service) SetAvatar(ctx context.Context, memberID, contentType string, data []byte) error {
-	if len(data) == 0 || len(data) > 2<<20 {
-		return fmt.Errorf("avatar must be between 1 byte and 2 MiB")
+	if len(data) == 0 || len(data) > 8<<20 {
+		return fmt.Errorf("avatar must be between 1 byte and 8 MiB")
 	}
 	if contentType != "image/png" && contentType != "image/jpeg" && contentType != "image/webp" {
 		return fmt.Errorf("avatar must be PNG, JPEG, or WebP")
@@ -409,8 +409,8 @@ func (s *Service) Avatar(ctx context.Context, memberID string) ([]byte, string, 
 }
 
 func (s *Service) SetBanner(ctx context.Context, memberID, contentType string, data []byte) error {
-	if len(data) == 0 || len(data) > 2<<20 {
-		return fmt.Errorf("banner must be between 1 byte and 2 MiB")
+	if len(data) == 0 || len(data) > 8<<20 {
+		return fmt.Errorf("banner must be between 1 byte and 8 MiB")
 	}
 	if contentType != "image/png" && contentType != "image/jpeg" && contentType != "image/webp" {
 		return fmt.Errorf("banner must be PNG, JPEG, or WebP")

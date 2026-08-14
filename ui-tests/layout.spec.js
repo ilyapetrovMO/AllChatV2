@@ -105,6 +105,32 @@ test('community search stays in the top-right header across web screens', async 
   await expect(page.locator('[data-app-overlay] .content > form[action="/search"]')).toHaveCount(0);
 });
 
+test('owner dashboard reports health, storage, resources, and Message rate', async ({page}) => {
+  const nonOwner = await request.newContext({baseURL, storageState: fixture.secondState});
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-community-menu-toggle]').click();
+  await page.getByRole('menuitem', {name: 'Community Settings'}).click();
+  const overlay = page.locator('[data-app-overlay]');
+  await overlay.getByRole('link', {name: 'Dashboard'}).click();
+  await expect(overlay.locator('[data-admin-dashboard]')).toHaveAttribute('data-dashboard-ready', 'true');
+  await expect(overlay.locator('[data-dashboard-updated]')).toContainText('Updated');
+  await expect(overlay.locator('.dashboard-stat')).toHaveCount(8);
+  await expect(overlay.locator('.dashboard-stat').filter({hasText: 'Members'})).toContainText('2');
+  await expect(overlay.locator('[data-resource-chart] svg')).toHaveCount(2);
+  await expect(overlay.locator('[data-message-chart] svg')).toHaveCount(1);
+  await expect(overlay.locator('[data-dashboard-storage]')).toContainText('Messages');
+  await expect(overlay.locator('[data-dashboard-storage]')).toContainText('Attachments');
+  const snapshot = await page.evaluate(async () => (await (await fetch('/api/v1/admin/dashboard')).json()));
+  expect(snapshot.counts.members).toBe(2);
+  expect(snapshot.message_rate.buckets).toHaveLength(30);
+  expect(snapshot.resources.cpu_cores).toBeGreaterThan(0);
+  expect(snapshot.storage_sources.map(item => item.name)).toEqual(expect.arrayContaining(['Messages', 'Attachments', 'Database and indexes']));
+  expect((await nonOwner.get('/api/v1/admin/dashboard')).status()).toBe(404);
+  expect((await nonOwner.get('/admin/dashboard')).status()).toBe(404);
+  await nonOwner.dispose();
+});
+
 test('search exposes filters and text-channel Members open their profile', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

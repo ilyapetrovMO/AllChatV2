@@ -53,6 +53,7 @@ type Instance struct {
 	turnSecret     string
 	turnMu         sync.Mutex
 	turnIssued     map[string][]time.Time
+	startedAt      time.Time
 
 	closeOnce sync.Once
 	closeErr  error
@@ -136,7 +137,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 	if mediaErr != nil {
 		return nil, fmt.Errorf("configure media limits: %w", mediaErr)
 	}
-	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}}
+	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC()}
 	if config.TURNPublicIP != "" {
 		secret, secretErr := loadOrCreateSecret(filepath.Join(config.DataDir, "turn-secret"))
 		if secretErr != nil {
@@ -828,6 +829,7 @@ func (i *Instance) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", i.health)
 	mux.HandleFunc("GET /api/v1/admin/diagnostics", i.diagnosticsAPI)
+	mux.HandleFunc("GET /api/v1/admin/dashboard", i.adminDashboardAPI)
 	if i.config.MetricsEnabled {
 		mux.HandleFunc("GET /metrics", i.metrics)
 	}
@@ -962,6 +964,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /admin/invitations/{invitationID}/revoke", i.revokeInvitationWeb)
 	mux.HandleFunc("GET /admin/channels", i.channelsAdminPage)
 	mux.HandleFunc("GET /admin/settings", i.communitySettingsPage)
+	mux.HandleFunc("GET /admin/dashboard", i.adminDashboardPage)
 	mux.HandleFunc("POST /admin/settings", i.updateCommunitySettingsWeb)
 	mux.HandleFunc("POST /admin/categories", i.createCategoryWeb)
 	mux.HandleFunc("POST /admin/channels", i.createChannelWeb)

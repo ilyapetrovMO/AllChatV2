@@ -30,8 +30,8 @@
 		if(sidebar.querySelector('.community-header')?.textContent.trim()!=="Community Settings")return;
 		const nav=sidebar.querySelector('.settings-nav');if(!nav)return;
 		const title=root.querySelector('.content-header h1')?.textContent.trim()||"";
-		const active={"Community Settings":"/admin/settings","Channels":"/admin/channels","Roles":"/admin/roles","Invitations":"/admin/invitations","Soundboard":"/admin/soundboard"}[title];
-		nav.replaceChildren(...[["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
+		const active={"Admin Dashboard":"/admin/dashboard","Community Settings":"/admin/settings","Channels":"/admin/channels","Roles":"/admin/roles","Invitations":"/admin/invitations","Soundboard":"/admin/soundboard"}[title];
+		nav.replaceChildren(...[["/admin/dashboard","Dashboard"],["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
 	});
   };
 	const installMarkdownCodeHighlighting=(root=document)=>root.querySelectorAll?.('.community-markdown pre code:not([data-highlighted])').forEach(code=>{
@@ -305,7 +305,7 @@
     if (!menu.querySelector('a[href="/admin/channels"]')) return;
 	const settings=[...menu.querySelectorAll('a')].find(link=>link.textContent.trim()==="Community Settings");if(settings)settings.href="/admin/settings";
     const before = menu.querySelector('a[href="/profile"]');
-    for (const [href, label] of [["/admin/invitations", "Invitations"], ["/admin/roles", "Roles"], ["/admin/soundboard", "Soundboard"]]) {
+    for (const [href, label] of [["/admin/dashboard", "Dashboard"], ["/admin/invitations", "Invitations"], ["/admin/roles", "Roles"], ["/admin/soundboard", "Soundboard"]]) {
       if (menu.querySelector(`a[href="${href}"]`)) continue;
       const link = document.createElement("a");
       link.href = href;
@@ -698,4 +698,7 @@
   };
   installSoundboard(document);
   document.addEventListener("allchat:view-swapped", event => installSoundboard(event.detail?.root || document));
+  const installAdminDashboard=root=>{if(!root.querySelector?.("[data-admin-dashboard]"))return;import("/assets/admin-dashboard.js").then(()=>window.installAllChatAdminDashboard?.(root)).catch(()=>{})};
+  installAdminDashboard(document);
+  document.addEventListener("allchat:view-swapped",event=>installAdminDashboard(event.detail?.root||document));
 })();

@@ -172,7 +172,7 @@
 .direct-call-chat > .composer-wrap { grid-row: 2; margin-right: 0; }
 .member-popover { position: fixed; z-index: 20; width: min(300px, calc(100vw - 16px)); overflow: visible; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-sidebar); box-shadow: var(--shadow); }
 .member-popover[hidden] { display: none; }
-.member-popover-banner { position: relative; height: 86px; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, #7d2940, #a43b55); }
+.member-popover-banner { position: relative; height: 86px; border-radius: 9px 9px 0 0; background: linear-gradient(135deg, #7d2940, #a43b55) center/cover no-repeat; }
 .member-popover-more { position: absolute; top: 10px; right: 10px; width: 38px; min-height: 38px; padding: 0; border-radius: 50%; background: rgba(17,18,20,.86); }
 .member-popover-body { position: relative; padding: 48px 16px 16px; }
 .member-popover-avatar { position: absolute; top: -38px; left: 16px; width: 76px; height: 76px; padding: 5px; border-radius: 50%; background: var(--bg-sidebar); }

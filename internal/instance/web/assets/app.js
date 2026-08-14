@@ -562,7 +562,9 @@
       setActionsOpen(false);
       popover.querySelector("h2").textContent = member.display_name || member.username;
       popover.querySelector(".member-popover-username").textContent = `@${member.username}`;
-      popover.querySelector(".member-popover-role").hidden = !member.owner;
+	      popover.querySelector(".member-popover-role").hidden = !member.owner;
+	      const banner = popover.querySelector(".member-popover-banner");
+	      banner.style.backgroundImage = member.banner_url ? `url(${JSON.stringify(member.banner_url)})` : "";
       const avatar = popover.querySelector(".member-popover-avatar");
       avatar.replaceChildren();
       if (member.avatar_url) {
@@ -667,15 +669,8 @@
   }
 
   if (document.body.dataset.memberId) import("/assets/call.js");
-  const installAvatarControls=root=>{
-    const profileForm=root.querySelector?.('form[action="/profile"]');if(!profileForm||profileForm.querySelector("[data-avatar-control]"))return;
-    const control=document.createElement("fieldset");control.dataset.avatarControl="";control.innerHTML='<legend>Avatar</legend><div class="profile-avatar-editor"><div class="profile-avatar-preview"><img alt="Current avatar" hidden><span class="member-avatar-fallback">?</span></div><label>Choose image<input type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label><div class="profile-avatar-actions"><button type="button" data-avatar-save>Upload avatar</button><button type="button" class="button-ghost danger-text" data-avatar-remove>Remove avatar</button></div></div><p class="muted" data-avatar-status aria-live="polite"></p>';
-    profileForm.insertBefore(control,profileForm.firstElementChild?.nextElementSibling||profileForm.firstElementChild);const file=control.querySelector('input[type="file"]'),image=control.querySelector("img"),fallback=control.querySelector("span"),status=control.querySelector("[data-avatar-status]"),csrf=profileForm.querySelector('[name="csrf_token"]').value,avatarURL=profileForm.dataset.avatarUrl||document.querySelector('.member-summary img')?.src;
-    if(avatarURL){image.src=avatarURL;image.hidden=false;fallback.hidden=true}
-    control.querySelector("[data-avatar-save]").onclick=async()=>{if(!file.files[0]){status.textContent="Choose an image first.";return}const response=await fetch("/api/v1/profile/avatar",{method:"PUT",headers:{"X-CSRF-Token":csrf,"Content-Type":file.files[0].type||"application/octet-stream"},body:file.files[0]});status.textContent=response.ok?"Avatar updated.":"Could not update avatar.";if(response.ok){image.src=URL.createObjectURL(file.files[0]);image.hidden=false;fallback.hidden=true}};
-    control.querySelector("[data-avatar-remove]").onclick=async()=>{const response=await fetch("/api/v1/profile/avatar",{method:"DELETE",headers:{"X-CSRF-Token":csrf}});status.textContent=response.ok?"Avatar removed.":"Could not remove avatar.";if(response.ok){image.hidden=true;fallback.hidden=false}};
-  };
-  installAvatarControls(document);document.addEventListener("allchat:view-swapped",event=>installAvatarControls(event.detail?.root||document));
+  const installProfileImages=root=>import("/assets/profile-images.js").then(module=>module.installProfileImageControls(root)).catch(()=>{});
+  installProfileImages(document);document.addEventListener("allchat:view-swapped",event=>installProfileImages(event.detail?.root||document));
   const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.closest(".channel-sidebar")?.querySelector(".community-header")?.textContent.trim()!=="Member Settings"||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
   installVoiceSettingsLink(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettingsLink(event.detail?.root||document));
   const installVoiceSettings=root=>{if(!root.querySelector?.("[data-voice-settings]"))return;import("/assets/voice-settings-page.js").then(()=>window.installAllChatVoiceSettings?.(root)).catch(()=>{})};

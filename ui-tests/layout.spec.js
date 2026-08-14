@@ -866,6 +866,10 @@ test('member settings expose avatar upload and removal', async ({page}) => {
   await expect(page.locator('[data-avatar-save]')).toHaveText('Upload avatar');
   await expect(page.locator('[data-avatar-remove]')).toHaveText('Remove avatar');
   await page.locator('[data-avatar-control] input[type="file"]').setInputFiles({name: 'avatar.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')});
+  await expect(page.locator('.image-crop-dialog')).toBeVisible();
+  await expect(page.locator('.image-crop-dialog input[type="range"]')).toBeVisible();
+  await page.locator('.image-crop-dialog button[value="apply"]').click();
+  await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar crop ready to upload.');
   await page.locator('[data-avatar-save]').click();
   await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar updated.');
   await expect(page.locator('[data-avatar-control] img')).toBeVisible();
@@ -889,6 +893,21 @@ test('member settings expose avatar upload and removal', async ({page}) => {
   await expect(page.locator('[data-avatar-status]')).toHaveText('Avatar removed.');
   await expect(page.locator('[data-avatar-control] img')).toBeHidden();
   await expect(page.locator('[data-avatar-control] .member-avatar-fallback')).toBeVisible();
+});
+
+test('member settings crop and upload a profile banner', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/profile');
+  await expect(page.locator('[data-banner-control]')).toBeVisible();
+  await page.locator('[data-banner-control] input[type="file"]').setInputFiles({name: 'banner.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')});
+  await expect(page.locator('.image-crop-banner')).toBeVisible();
+  await page.locator('.image-crop-dialog input[type="range"]').fill('1.5');
+  await page.locator('.image-crop-dialog button[value="apply"]').click();
+  await page.locator('[data-banner-save]').click();
+  await expect(page.locator('[data-banner-status]')).toHaveText('Profile banner updated.');
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await page.locator('[data-participant-id]').filter({hasText: fixture.ownerMember.username}).first().click();
+  await expect(page.locator('.member-popover-banner')).toHaveCSS('background-image', /members\/.+\/banner/);
 });
 
 test('returning from a directly opened settings page installs Community styles', async ({page}) => {

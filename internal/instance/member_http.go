@@ -175,6 +175,51 @@ func (i *Instance) memberAvatarAPI(response http.ResponseWriter, request *http.R
 	_, _ = response.Write(data)
 }
 
+func (i *Instance) updateBannerAPI(response http.ResponseWriter, request *http.Request) {
+	member, _, ok := i.authenticatedCSRF(response, request)
+	if !ok {
+		return
+	}
+	data, err := io.ReadAll(io.LimitReader(request.Body, (2<<20)+1))
+	if err != nil {
+		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid banner"})
+		return
+	}
+	contentType := http.DetectContentType(data)
+	if err := i.identity.SetBanner(request.Context(), member.ID, contentType, data); err != nil {
+		writeJSON(response, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (i *Instance) removeBannerAPI(response http.ResponseWriter, request *http.Request) {
+	member, _, ok := i.authenticatedCSRF(response, request)
+	if !ok {
+		return
+	}
+	if err := i.identity.RemoveBanner(request.Context(), member.ID); err != nil {
+		writeJSON(response, http.StatusInternalServerError, map[string]string{"error": "unable to remove banner"})
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (i *Instance) memberBannerAPI(response http.ResponseWriter, request *http.Request) {
+	if _, _, ok := i.authenticated(response, request); !ok {
+		return
+	}
+	data, contentType, err := i.identity.Banner(request.Context(), request.PathValue("memberID"))
+	if err != nil {
+		http.NotFound(response, request)
+		return
+	}
+	response.Header().Set("Content-Type", contentType)
+	response.Header().Set("Cache-Control", "private, no-cache")
+	response.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = response.Write(data)
+}
+
 func (i *Instance) joinPage(response http.ResponseWriter, request *http.Request) {
 	serveJoinPage(response, request.URL.Query().Get("token"))
 }
@@ -276,6 +321,6 @@ func serveJoinPage(response http.ResponseWriter, token string) {
 	_ = joinTemplate.Execute(response, token)
 }
 
-var profileTemplate = template.Must(template.New("profile").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profile — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script></head><body><div class="app-shell"><aside class="community-rail"><a class="community-mark" href="/" aria-label="AllChat home">AC</a></aside><aside class="channel-sidebar"><div class="community-header">Member Settings</div><nav class="channel-nav settings-nav"><a href="/profile" aria-current="page">My Account</a><a href="/sessions">Sessions</a><a href="/search">Search</a><a href="/">Back to Community</a></nav></aside><main class="content-shell"><header class="content-header"><button class="mobile-menu" type="button" data-sidebar-toggle aria-label="Open settings navigation" aria-expanded="false">☰</button><h1>My Account</h1></header><section class="content"><h2 class="page-title">Profile</h2><p class="page-description">Control how other Members recognize you.</p><form class="card" method="post" action="/profile" data-avatar-url="{{.Profile.AvatarURL}}"><input type="hidden" name="csrf_token" value="{{.CSRF}}"><label>Username<input name="username" value="{{.Profile.Username}}" required></label><label>Display Name<input name="display_name" value="{{.Profile.DisplayName}}" placeholder="Optional"></label><button>Save changes</button></form></section></main></div></body></html>`))
+var profileTemplate = template.Must(template.New("profile").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profile — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script></head><body><div class="app-shell"><aside class="community-rail"><a class="community-mark" href="/" aria-label="AllChat home">AC</a></aside><aside class="channel-sidebar"><div class="community-header">Member Settings</div><nav class="channel-nav settings-nav"><a href="/profile" aria-current="page">My Account</a><a href="/sessions">Sessions</a><a href="/search">Search</a><a href="/">Back to Community</a></nav></aside><main class="content-shell"><header class="content-header"><button class="mobile-menu" type="button" data-sidebar-toggle aria-label="Open settings navigation" aria-expanded="false">☰</button><h1>My Account</h1></header><section class="content"><h2 class="page-title">Profile</h2><p class="page-description">Control how other Members recognize you.</p><form class="card" method="post" action="/profile" data-avatar-url="{{.Profile.AvatarURL}}" data-banner-url="{{.Profile.BannerURL}}"><input type="hidden" name="csrf_token" value="{{.CSRF}}"><label>Username<input name="username" value="{{.Profile.Username}}" required></label><label>Display Name<input name="display_name" value="{{.Profile.DisplayName}}" placeholder="Optional"></label><button>Save changes</button></form></section></main></div></body></html>`))
 
 var invitationsTemplate = template.Must(template.New("invitations").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Invitations — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script></head><body><div class="app-shell"><aside class="community-rail"><a class="community-mark" href="/">AC</a></aside><aside class="channel-sidebar"><div class="community-header">Community Settings</div><nav class="channel-nav settings-nav"><a href="/admin/channels">Channels</a><a href="/admin/roles">Roles</a><a href="/admin/invitations" aria-current="page">Invitations</a><a href="/">Back to Community</a></nav></aside><main class="content-shell"><header class="content-header"><button class="mobile-menu" type="button" data-sidebar-toggle aria-label="Open settings navigation" aria-expanded="false">☰</button><h1>Invitations</h1></header><section class="content"><h2 class="page-title">Invite Members</h2><p class="page-description">Create controlled, expiring access to your Community.</p>{{if .Created}}<div class="notice"><strong>Invitation created</strong><p>Share this join URL: <code>/join?token={{.Created}}</code></p></div>{{end}}<div class="card"><h3>Active and recent Invitations</h3><ul class="list">{{range .Invitations}}<li class="list-item"><span class="list-item-main"><strong>{{.UseCount}} / {{.MaxUses}} uses</strong><br><span class="muted">Expires {{.ExpiresAt}}</span></span>{{if .Revoked}}<span class="badge badge-danger">Revoked</span>{{else}}<form method="post" action="/admin/invitations/{{.ID}}/revoke"><input type="hidden" name="csrf_token" value="{{$.CSRF}}"><button class="button-danger" data-confirm="Revoke this Invitation?">Revoke</button></form>{{end}}</li>{{else}}<li class="muted">No Invitations yet.</li>{{end}}</ul></div><form class="card" method="post" action="/admin/invitations"><h3>Create Invitation</h3><input type="hidden" name="csrf_token" value="{{.CSRF}}"><label>Expires in minutes<input type="number" name="expires_in_minutes" value="1440" min="1"></label><label>Maximum uses<input type="number" name="max_uses" value="1" min="1"></label><button>Create Invitation</button></form></section></main></div></body></html>`))

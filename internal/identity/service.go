@@ -49,6 +49,7 @@ type Member struct {
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name,omitempty"`
 	AvatarURL   string `json:"avatar_url,omitempty"`
+	BannerURL   string `json:"banner_url,omitempty"`
 	Owner       bool   `json:"owner"`
 }
 
@@ -195,13 +196,13 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 
 	var member Member
 	var passwordHash string
-	var hasAvatar bool
+	var hasAvatar, hasBanner bool
 	var suspendedUntil sql.NullString
 	err := s.db.QueryRowContext(ctx, `
-		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.password_hash,
+		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL, m.password_hash,
 		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id), m.suspended_until
 		FROM members m WHERE m.username_key = ?`, usernameKey(username)).
-		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &passwordHash, &member.Owner, &suspendedUntil)
+		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &passwordHash, &member.Owner, &suspendedUntil)
 	if errors.Is(err, sql.ErrNoRows) {
 		passwordHash = s.dummyHash
 	} else if err != nil {
@@ -216,6 +217,9 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 	s.limiter.Success(key)
 	if hasAvatar {
 		member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
+	}
+	if hasBanner {
+		member.BannerURL = "/api/v1/members/" + member.ID + "/banner"
 	}
 
 	now := s.now().UTC()
@@ -232,15 +236,15 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 func (s *Service) MemberForSession(ctx context.Context, token string) (Member, error) {
 	hash := tokenHash(token)
 	var member Member
-	var hasAvatar bool
+	var hasAvatar, hasBanner bool
 	err := s.db.QueryRowContext(ctx, `
-		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL,
+		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL,
 		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id)
 		FROM sessions s JOIN members m ON m.id = s.member_id
 		WHERE s.token_hash = ? AND s.csrf_token_hash IS NOT NULL
 		  AND s.revoked_at IS NULL AND s.expires_at > ?
 		  AND (m.suspended_until IS NULL OR m.suspended_until <= ?)`,
-		hash[:], databaseTime(s.now()), databaseTime(s.now())).Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &member.Owner)
+		hash[:], databaseTime(s.now()), databaseTime(s.now())).Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Owner)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Member{}, ErrInvalidCredentials
 	}
@@ -251,6 +255,9 @@ func (s *Service) MemberForSession(ctx context.Context, token string) (Member, e
 		databaseTime(s.now()), hash[:])
 	if hasAvatar {
 		member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
+	}
+	if hasBanner {
+		member.BannerURL = "/api/v1/members/" + member.ID + "/banner"
 	}
 	return member, nil
 }
@@ -313,10 +320,10 @@ func (s *Service) Register(ctx context.Context, invitationToken, username, passw
 
 func (s *Service) MemberProfile(ctx context.Context, memberID string) (Member, error) {
 	var member Member
-	var hasAvatar bool
-	err := s.db.QueryRowContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL,
+	var hasAvatar, hasBanner bool
+	err := s.db.QueryRowContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL,
 		EXISTS(SELECT 1 FROM community c WHERE c.owner_member_id = m.id) FROM members m WHERE m.id = ?`, memberID).
-		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &member.Owner)
+		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Owner)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Member{}, ErrInvalidCredentials
 	}
@@ -326,11 +333,14 @@ func (s *Service) MemberProfile(ctx context.Context, memberID string) (Member, e
 	if hasAvatar {
 		member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
 	}
+	if hasBanner {
+		member.BannerURL = "/api/v1/members/" + member.ID + "/banner"
+	}
 	return member, nil
 }
 
 func (s *Service) ListMembers(ctx context.Context) ([]Member, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL,
+	rows, err := s.db.QueryContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL,
 		EXISTS(SELECT 1 FROM community c WHERE c.owner_member_id = m.id)
 		FROM members m ORDER BY m.username_key`)
 	if err != nil {
@@ -340,12 +350,15 @@ func (s *Service) ListMembers(ctx context.Context) ([]Member, error) {
 	var members []Member
 	for rows.Next() {
 		var member Member
-		var hasAvatar bool
-		if err := rows.Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &member.Owner); err != nil {
+		var hasAvatar, hasBanner bool
+		if err := rows.Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Owner); err != nil {
 			return nil, err
 		}
 		if hasAvatar {
 			member.AvatarURL = "/api/v1/members/" + member.ID + "/avatar"
+		}
+		if hasBanner {
+			member.BannerURL = "/api/v1/members/" + member.ID + "/banner"
 		}
 		members = append(members, member)
 	}
@@ -390,6 +403,31 @@ func (s *Service) Avatar(ctx context.Context, memberID string) ([]byte, string, 
 	var data []byte
 	var contentType string
 	if err := s.db.QueryRowContext(ctx, "SELECT avatar, avatar_content_type FROM members WHERE id = ? AND avatar IS NOT NULL", memberID).Scan(&data, &contentType); err != nil {
+		return nil, "", err
+	}
+	return data, contentType, nil
+}
+
+func (s *Service) SetBanner(ctx context.Context, memberID, contentType string, data []byte) error {
+	if len(data) == 0 || len(data) > 2<<20 {
+		return fmt.Errorf("banner must be between 1 byte and 2 MiB")
+	}
+	if contentType != "image/png" && contentType != "image/jpeg" && contentType != "image/webp" {
+		return fmt.Errorf("banner must be PNG, JPEG, or WebP")
+	}
+	_, err := s.db.ExecContext(ctx, "UPDATE members SET banner = ?, banner_content_type = ? WHERE id = ?", data, contentType, memberID)
+	return err
+}
+
+func (s *Service) RemoveBanner(ctx context.Context, memberID string) error {
+	_, err := s.db.ExecContext(ctx, "UPDATE members SET banner = NULL, banner_content_type = NULL WHERE id = ?", memberID)
+	return err
+}
+
+func (s *Service) Banner(ctx context.Context, memberID string) ([]byte, string, error) {
+	var data []byte
+	var contentType string
+	if err := s.db.QueryRowContext(ctx, "SELECT banner, banner_content_type FROM members WHERE id = ? AND banner IS NOT NULL", memberID).Scan(&data, &contentType); err != nil {
 		return nil, "", err
 	}
 	return data, contentType, nil
@@ -599,7 +637,7 @@ func (s *Service) AnonymizeMember(ctx context.Context, member Member, password, 
 	if len(username) > 64 {
 		username = username[:64]
 	}
-	if _, err = tx.ExecContext(ctx, `UPDATE members SET username=?,username_key=?,display_name=NULL,avatar=NULL,avatar_content_type=NULL,password_hash=?,presence_mode='available',suspended_until=NULL,timed_out_until=NULL WHERE id=?`, username, username, "account-deleted", member.ID); err != nil {
+	if _, err = tx.ExecContext(ctx, `UPDATE members SET username=?,username_key=?,display_name=NULL,avatar=NULL,avatar_content_type=NULL,banner=NULL,banner_content_type=NULL,password_hash=?,presence_mode='available',suspended_until=NULL,timed_out_until=NULL WHERE id=?`, username, username, "account-deleted", member.ID); err != nil {
 		return err
 	}
 	for _, statement := range []string{`UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL`, `DELETE FROM member_roles WHERE member_id=?`, `DELETE FROM read_positions WHERE member_id=?`, `DELETE FROM message_reactions WHERE member_id=?`, `DELETE FROM message_mentions WHERE member_id=?`, `DELETE FROM channel_notification_settings WHERE member_id=?`, `DELETE FROM member_notification_settings WHERE member_id=?`, `DELETE FROM member_blocks WHERE blocker_id=? OR blocked_id=?`} {

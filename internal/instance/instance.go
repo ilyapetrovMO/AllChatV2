@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 23
+const schemaVersion = 24
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -787,6 +787,37 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Community home migration: %w", err)
 		}
 	}
+	if currentVersion < 24 {
+		rows, err := tx.QueryContext(ctx, "PRAGMA table_info(members)")
+		if err != nil {
+			return fmt.Errorf("inspect Member schema: %w", err)
+		}
+		columns := map[string]bool{}
+		for rows.Next() {
+			var cid, notNull, primaryKey int
+			var name, kind string
+			var defaultValue any
+			if scanErr := rows.Scan(&cid, &name, &kind, &notNull, &defaultValue, &primaryKey); scanErr != nil {
+				rows.Close()
+				return scanErr
+			}
+			columns[name] = true
+		}
+		rows.Close()
+		if !columns["banner"] {
+			if _, err := tx.ExecContext(ctx, "ALTER TABLE members ADD COLUMN banner BLOB"); err != nil {
+				return fmt.Errorf("add Member banner image: %w", err)
+			}
+		}
+		if !columns["banner_content_type"] {
+			if _, err := tx.ExecContext(ctx, "ALTER TABLE members ADD COLUMN banner_content_type TEXT"); err != nil {
+				return fmt.Errorf("add Member banner content type: %w", err)
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 24, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Member banner migration: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -825,9 +856,12 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/members/{memberID}", i.memberProfileAPI)
 	mux.HandleFunc("GET /api/v1/members", i.membersAPI)
 	mux.HandleFunc("GET /api/v1/members/{memberID}/avatar", i.memberAvatarAPI)
+	mux.HandleFunc("GET /api/v1/members/{memberID}/banner", i.memberBannerAPI)
 	mux.HandleFunc("PATCH /api/v1/profile", i.updateProfileAPI)
 	mux.HandleFunc("PUT /api/v1/profile/avatar", i.updateAvatarAPI)
 	mux.HandleFunc("DELETE /api/v1/profile/avatar", i.removeAvatarAPI)
+	mux.HandleFunc("PUT /api/v1/profile/banner", i.updateBannerAPI)
+	mux.HandleFunc("DELETE /api/v1/profile/banner", i.removeBannerAPI)
 	mux.HandleFunc("GET /api/v1/channels", i.channelsAPI)
 	mux.HandleFunc("POST /api/v1/categories", i.createCategoryAPI)
 	mux.HandleFunc("PATCH /api/v1/categories/{categoryID}", i.updateCategoryAPI)

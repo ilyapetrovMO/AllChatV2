@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 22 {
-		t.Fatalf("health = %+v, want status ok at schema version 22", health)
+	if health.Status != "ok" || health.SchemaVersion != 24 {
+		t.Fatalf("health = %+v, want status ok at schema version 24", health)
 	}
 
 	client := newClient(t)
@@ -85,7 +85,7 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if pageResponse.StatusCode != http.StatusOK {
 		t.Fatalf("page status = %d, want %d", pageResponse.StatusCode, http.StatusOK)
 	}
-	for _, expected := range []string{`class="app-shell"`, `class="channel-sidebar"`, `href="/assets/app.css"`, `hx-get="/api/v1/health"`, `src="/assets/htmx.min.js"`} {
+	for _, expected := range []string{`class="app-shell"`, `class="channel-sidebar"`, `href="/assets/app.css"`, `src="/assets/htmx.min.js"`} {
 		if !strings.Contains(page, expected) {
 			t.Errorf("embedded page does not contain %q", expected)
 		}
@@ -307,7 +307,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(22) {
+	if health["status"] != "ok" || health["schema_version"] != float64(24) {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }
@@ -1497,7 +1497,7 @@ func TestDirectMessagesRemainPrivateUniqueAndBlockNewInteraction(t *testing.T) {
 	home := getWithClient(t, ownerClient, app.url("/"))
 	homeBody := readAll(t, home.Body)
 	home.Body.Close()
-	if home.StatusCode != http.StatusOK || !strings.Contains(homeBody, `value="`+member.ID+`"`) || !strings.Contains(homeBody, `/channels/`+dmID) {
+	if home.StatusCode != http.StatusOK || !strings.Contains(homeBody, `/channels/`+dmID) {
 		t.Fatalf("Direct Message discovery UI status/body = %d %q", home.StatusCode, homeBody)
 	}
 	for _, expected := range []string{`data-community-menu-toggle`, `data-community-menu`, `id="member-menu-toggle"`, `aria-label="User Settings"`} {

@@ -75,7 +75,12 @@ func (s *Service) UpdateReadPosition(ctx context.Context, member identity.Member
 			return ChannelState{}, err
 		}
 	}
-	state := ChannelState{ChannelID: channelID, ReadSequence: stored, LastSequence: last, Unread: max(0, last-stored)}
+	var unread int64
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM messages
+		WHERE channel_id = ? AND author_id != ? AND sequence > ?`, channelID, member.ID, stored).Scan(&unread); err != nil {
+		return ChannelState{}, err
+	}
+	state := ChannelState{ChannelID: channelID, ReadSequence: stored, LastSequence: last, Unread: unread}
 	if err := appendRealtimeEvent(ctx, tx, "read.updated", channelID, map[string]any{"member_id": member.ID, "state": state}); err != nil {
 		return ChannelState{}, err
 	}
@@ -95,17 +100,20 @@ func (s *Service) ChannelStates(ctx context.Context, member identity.Member) ([]
 		if channel.Type != "text" {
 			continue
 		}
-		var read, last int64
+		var read, last, unread int64
 		err := s.db.QueryRowContext(ctx, `SELECT
 			COALESCE((SELECT sequence FROM read_positions WHERE member_id = ? AND channel_id = ?), 0),
-			COALESCE((SELECT MAX(sequence) FROM messages WHERE channel_id = ?), 0)`, member.ID, channel.ID, channel.ID).Scan(&read, &last)
+			COALESCE((SELECT MAX(sequence) FROM messages WHERE channel_id = ?), 0),
+			COALESCE((SELECT COUNT(*) FROM messages WHERE channel_id = ? AND author_id != ?
+				AND sequence > COALESCE((SELECT sequence FROM read_positions WHERE member_id = ? AND channel_id = ?), 0)), 0)`,
+			member.ID, channel.ID, channel.ID, channel.ID, member.ID, member.ID, channel.ID).Scan(&read, &last, &unread)
 		if errors.Is(err, sql.ErrNoRows) {
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
-		states = append(states, ChannelState{ChannelID: channel.ID, ReadSequence: read, LastSequence: last, Unread: max(0, last-read)})
+		states = append(states, ChannelState{ChannelID: channel.ID, ReadSequence: read, LastSequence: last, Unread: unread})
 	}
 	return states, nil
 }

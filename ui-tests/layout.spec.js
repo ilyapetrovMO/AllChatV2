@@ -865,6 +865,31 @@ test('text channels and Direct Messages use red unread dots without bold labels'
   await second.dispose();
 });
 
+test('sending a Message does not mark the sender\'s Text Channel unread', async ({page}) => {
+  const sameMemberSession = await request.newContext({baseURL, storageState: fixture.ownerState});
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  await expect.poll(() => page.evaluate(async channelID => {
+    const states = (await (await fetch('/api/v1/state/channels')).json()).channels;
+    return states.find(item => item.channel_id === channelID)?.unread || 0;
+  }, fixture.textChannel.id)).toBe(0);
+  await page.goto('/');
+  expect(await page.locator('body').getAttribute('data-member-id')).toBe(fixture.ownerMember.id);
+  const sent = await post(sameMemberSession, `/api/v1/channels/${fixture.textChannel.id}/messages`, {
+    body: `Own unread regression ${Date.now()}`,
+  });
+  expect(sent.author_id).toBe(fixture.ownerMember.id);
+  expect(await page.evaluate(async channelID => {
+    const states = (await (await fetch('/api/v1/state/channels')).json()).channels;
+    return states.find(item => item.channel_id === channelID)?.unread || 0;
+  }, fixture.textChannel.id)).toBe(0);
+  await page.waitForTimeout(1200);
+  await expect(
+    page.locator(`.channel-link[href="/channels/${fixture.textChannel.id}"] .conversation-unread-dot`),
+  ).toHaveCount(0);
+  await sameMemberSession.dispose();
+});
+
 test('voice sidebar participants support profile and context interactions', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

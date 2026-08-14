@@ -2,12 +2,15 @@
 package instance
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"allchat/internal/community"
 	"allchat/internal/identity"
+	"github.com/yuin/goldmark"
 )
 
 func (i *Instance) channelsAPI(response http.ResponseWriter, request *http.Request) {
@@ -182,9 +185,24 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 	directMessages, _ := i.community.ListDirectMessages(r.Context(), member)
 	directMessages = directMessageShortlist(directMessages)
 	members, _ := i.identity.ListMembers(r.Context())
+	homeMarkdown, _ := i.community.CommunityHomeMarkdown(r.Context())
+	var rendered bytes.Buffer
+	_ = goldmark.Convert([]byte(homeMarkdown), &rendered)
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = homeTemplate.Execute(w, map[string]any{"Member": member, "Members": members, "Overview": overview, "DirectMessages": directMessages, "CSRF": csrfCookieValue(r)})
+	var page bytes.Buffer
+	_ = homeTemplate.Execute(&page, map[string]any{"Member": member, "Members": members, "Overview": overview, "DirectMessages": directMessages, "CSRF": csrfCookieValue(r)})
+	if rendered.Len() > 0 {
+		start := `<p class="eyebrow">AllChat Community</p>`
+		end := `<form class="card form-row"`
+		body := page.String()
+		if left, right := strings.Index(body, start), strings.Index(body, end); left >= 0 && right > left {
+			body = body[:left] + `<article class="community-markdown">` + rendered.String() + `</article>` + body[right:]
+		}
+		_, _ = w.Write([]byte(body))
+		return
+	}
+	_, _ = w.Write(page.Bytes())
 }
 func (i *Instance) channelsAdminPage(w http.ResponseWriter, r *http.Request) {
 	m, _, ok := i.authenticated(w, r)

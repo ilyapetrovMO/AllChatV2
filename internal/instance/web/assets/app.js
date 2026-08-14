@@ -31,6 +31,14 @@
       if(location.pathname==="/search")input.value=new URLSearchParams(location.search).get("q")||"";
       form.append(label,input);let actions=header.querySelector(".header-actions");if(!actions){actions=document.createElement("div");actions.className="header-actions";header.append(actions)}actions.append(form);
     });
+	root.querySelectorAll?.('.header-search:not([data-filters-ready])').forEach(form=>{
+		form.dataset.filtersReady="true";const input=form.querySelector('input[name="q"]');if(!input)return;
+		const menu=document.createElement("div");menu.className="search-filter-menu";menu.hidden=true;
+		[["from:","From a specific user"],["in:","Sent in a specific channel"],["has:file","Includes a file"],["has:image","Includes an image"],["has:link","Includes a link"],["mentions:","Mentions a specific user"],["before:","Sent before a date"],["after:","Sent after a date"]].forEach(([token,title])=>{const button=document.createElement("button");button.type="button";button.dataset.searchToken=token;button.innerHTML=`<strong>${title}</strong><small>${token}${token.endsWith(":")?"…":""}</small>`;menu.append(button)});
+		form.append(menu);input.addEventListener("focus",()=>menu.hidden=false);input.addEventListener("input",()=>menu.hidden=false);input.addEventListener("keydown",event=>{if(event.key==="Escape"){menu.hidden=true;input.blur()}});menu.addEventListener("pointerdown",event=>event.preventDefault());menu.addEventListener("click",event=>{const token=event.target.closest("[data-search-token]")?.dataset.searchToken;if(!token)return;const space=input.value&& !input.value.endsWith(" ")?" ":"";input.value+=space+token+(token.includes(":")&&!token.endsWith(":")?" ":"");input.focus()});form.addEventListener("focusout",()=>setTimeout(()=>menu.hidden=true,120));
+	});
+	const settingsForm=root.querySelector?.('form[action="/admin/settings"]');
+	if(settingsForm&&!settingsForm.querySelector('[name="home_markdown"]')){const label=document.createElement("label"),textarea=document.createElement("textarea"),hint=document.createElement("p");label.textContent="Community home (Markdown)";textarea.name="home_markdown";textarea.rows=12;textarea.maxLength=100000;textarea.disabled=true;hint.className="muted";hint.textContent="Rules, greetings, and links shown on Community Home. Markdown formatting is supported.";label.append(textarea);settingsForm.querySelector("button")?.before(label,hint);fetch("/api/v1/community-home").then(response=>response.ok?response.json():null).then(value=>{textarea.value=value?.markdown||""}).catch(()=>{}).finally(()=>textarea.disabled=false)}
   };
   window.allchatIcon=icon;window.allchatSetIcon=setIcon;installIcons();removeDuplicateSearchEntries();installGlobalSearch();document.addEventListener("allchat:view-swapped",event=>{const root=event.detail?.root||document;installIcons(root);removeDuplicateSearchEntries(root);installGlobalSearch(root)});
   if (window.__allchatWebSocketBatches) return;
@@ -141,7 +149,7 @@
     }
     const buckets = {owner: [], online: [], offline: []};
     items.forEach(item => { const owner=item.querySelector("small")?.textContent.trim()==="Owner",dot=item.querySelector(".participant-presence"),connected=["online","dnd","idle","mobile"].some(state=>dot?.classList.contains(state)),key=owner?"owner":connected?"online":"offline";buckets[key].push(item); });
-    const labels = {owner: "OWNER", online: "ONLINE + DND", offline: "OFFLINE"};
+    const labels = {owner: "OWNER", online: "ONLINE", offline: "OFFLINE"};
     Object.entries(buckets).forEach(([key,members]) => { const section=groups.querySelector(`[data-member-group="${key}"]`),list=section.querySelector(".participant-list");section.querySelector(".participant-heading").textContent=`${labels[key]} — ${members.length}`;list.append(...members); });
   };
   const groupAllMemberSidebars = () => document.querySelectorAll(".participant-sidebar").forEach(groupMemberSidebar);

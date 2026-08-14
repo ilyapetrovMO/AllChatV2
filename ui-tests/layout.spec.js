@@ -105,6 +105,40 @@ test('community search stays in the top-right header across web screens', async 
   await expect(page.locator('[data-app-overlay] .content > form[action="/search"]')).toHaveCount(0);
 });
 
+test('search exposes filters and text-channel Members open their profile', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const search = page.locator('.content-header [role="search"] input');
+  await search.focus();
+  await expect(page.locator('.search-filter-menu')).toBeVisible();
+  await page.getByRole('button', {name: /From a specific user/}).click();
+  await expect(search).toHaveValue('from:');
+  await search.press('Escape');
+  const member = page.locator('.participant-sidebar [data-participant-id]').first();
+  await member.click();
+  await expect(page.locator('.member-popover')).toBeVisible();
+});
+
+test('owner-configured Markdown is rendered on Community Home', async ({page}) => {
+  await authenticate(page);
+  await page.goto('/admin/settings');
+  const editor = page.locator('[name="home_markdown"]');
+  await expect(editor).toBeVisible();
+  await expect(editor).toBeEnabled();
+  await editor.fill('# Welcome\n\nRead the **rules** and visit [AllChat](https://example.test).');
+  await page.getByRole('button', {name: 'Save settings'}).click();
+  await expect(page).toHaveURL(/\/admin\/settings\?saved=1$/);
+  await page.goto('/');
+  await expect(page.locator('.community-markdown h1')).toHaveText('Welcome');
+  await expect(page.locator('.community-markdown strong')).toHaveText('rules');
+  await expect(page.locator('.community-markdown a')).toHaveAttribute('href', 'https://example.test');
+  await page.goto('/admin/settings');
+  await expect(page.locator('[name="home_markdown"]')).toBeEnabled();
+  await page.locator('[name="home_markdown"]').fill('');
+  await page.getByRole('button', {name: 'Save settings'}).click();
+  await expect(page).toHaveURL(/\/admin\/settings\?saved=1$/);
+});
+
 test('Voice and Video settings persist processing and volume preferences per Member', async ({page}) => {
   await authenticate(page);
   await page.goto('/voice-video');

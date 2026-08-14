@@ -29,7 +29,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 22
+const schemaVersion = 23
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -761,6 +761,32 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Attachment ceiling migration: %w", err)
 		}
 	}
+	if currentVersion < 23 {
+		rows, err := tx.QueryContext(ctx, "PRAGMA table_info(community)")
+		if err != nil {
+			return fmt.Errorf("inspect Community schema: %w", err)
+		}
+		hasHome := false
+		for rows.Next() {
+			var cid, notNull, primaryKey int
+			var name, kind string
+			var defaultValue any
+			if scanErr := rows.Scan(&cid, &name, &kind, &notNull, &defaultValue, &primaryKey); scanErr != nil {
+				rows.Close()
+				return scanErr
+			}
+			hasHome = hasHome || name == "home_markdown"
+		}
+		rows.Close()
+		if !hasHome {
+			if _, err := tx.ExecContext(ctx, `ALTER TABLE community ADD COLUMN home_markdown TEXT NOT NULL DEFAULT '';`); err != nil {
+				return fmt.Errorf("add Community home content: %w", err)
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 23, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Community home migration: %w", err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -827,6 +853,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentID}", i.downloadAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentID}/preview", i.previewAttachmentAPI)
 	mux.HandleFunc("GET /api/v1/search", i.searchMessagesAPI)
+	mux.HandleFunc("GET /api/v1/community-home", i.communityHomeAPI)
 	mux.HandleFunc("GET /api/v1/link-preview", i.linkPreviewAPI)
 	mux.HandleFunc("GET /api/v1/link-preview/image", i.linkPreviewImageAPI)
 	mux.HandleFunc("GET /api/v1/dms", i.directMessagesAPI)

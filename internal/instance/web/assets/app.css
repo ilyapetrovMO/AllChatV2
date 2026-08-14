@@ -117,6 +117,15 @@
 .sidebar-footer { background: #0e0f12; }
 a[href="/search"] { display: none; }
 .header-search { display: block; margin: 0; }
+.header-search { position: relative; }
 .header-search input { width: min(220px,24vw); height: 30px; padding: 4px 10px; border-color: var(--border); background: var(--bg-input); font-size: .82rem; }
+.search-filter-menu { position:absolute; z-index:30; top:36px; right:0; width:min(360px,calc(100vw - 24px)); padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-elevated); box-shadow:var(--shadow); }
+.search-filter-menu[hidden] { display:none; }
+.search-filter-menu button { display:grid; width:100%; min-height:0; padding:9px 10px; text-align:left; background:transparent; color:var(--text); }
+.search-filter-menu button:hover { background:var(--bg-hover); }
+.search-filter-menu small { color:var(--muted); font-weight:500; }
+.community-markdown { max-width:760px; margin-bottom:24px; line-height:1.55; }
+.community-markdown h1,.community-markdown h2,.community-markdown h3 { margin:1.2em 0 .45em; }
+.community-markdown img { max-width:100%; }
 .app-overlay .content-header .header-actions { margin-right: 52px; }
 @media(max-width:760px) { .header-search input { width: min(34vw,160px); } }

@@ -8,6 +8,7 @@ require (
 	fyne.io/fyne/v2 v2.7.1
 	github.com/coder/websocket v1.8.14
 	github.com/go-acme/lego/v4 v4.31.0
+	github.com/yuin/goldmark v1.7.8
 	github.com/pion/interceptor v0.1.45
 	github.com/pion/logging v0.2.4
 	github.com/pion/rtcp v1.2.16
@@ -64,7 +65,6 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
-	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect

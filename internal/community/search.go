@@ -30,15 +30,22 @@ type searchCursor struct {
 	MessageID string `json:"message_id"`
 }
 
+type searchFilters struct {
+	Text, Author, Channel, Has, Mentions, Before, After string
+}
+
 func (s *Service) SearchMessages(ctx context.Context, member identity.Member, query string, limit int) ([]SearchResult, error) {
 	page, err := s.SearchMessagePage(ctx, member, query, "", limit)
 	return page.Results, err
 }
 
 func (s *Service) SearchMessagePage(ctx context.Context, member identity.Member, query, cursor string, limit int) (SearchPage, error) {
-	match, err := searchMatchQuery(query)
+	filters := parseSearchFilters(query)
+	match, err := searchMatchQuery(filters.Text)
 	if err != nil {
-		return SearchPage{}, err
+		if filters.Text != "" || (filters.Author == "" && filters.Channel == "" && filters.Has == "" && filters.Mentions == "" && filters.Before == "" && filters.After == "") {
+			return SearchPage{}, err
+		}
 	}
 	if limit < 1 || limit > 50 {
 		limit = 20
@@ -64,11 +71,44 @@ func (s *Service) SearchMessagePage(ctx context.Context, member identity.Member,
 		JOIN members author ON author.id = msg.author_id
 		JOIN channels ch ON ch.id = msg.channel_id
 		JOIN categories cat ON cat.id = ch.category_id
-		WHERE message_search MATCH ? AND msg.deleted_at IS NULL AND msg.channel_id IN (` + placeholders + `)`
+		WHERE msg.deleted_at IS NULL AND msg.channel_id IN (` + placeholders + `)`
 	arguments := make([]any, 0, len(channelIDs)+4)
-	arguments = append(arguments, match)
 	for _, channelID := range channelIDs {
 		arguments = append(arguments, channelID)
+	}
+	if match != "" {
+		statement += " AND message_search MATCH ?"
+		arguments = append(arguments, match)
+	}
+	if filters.Author != "" {
+		statement += " AND (author.username_key = lower(?) OR lower(author.display_name) = lower(?))"
+		arguments = append(arguments, filters.Author, filters.Author)
+	}
+	if filters.Channel != "" {
+		statement += " AND lower(ch.name) = lower(?)"
+		arguments = append(arguments, strings.TrimPrefix(filters.Channel, "#"))
+	}
+	if filters.Mentions != "" {
+		statement += " AND EXISTS (SELECT 1 FROM message_mentions mm JOIN members mentioned ON mentioned.id=mm.member_id WHERE mm.message_id=msg.id AND (mentioned.username_key=lower(?) OR lower(mentioned.display_name)=lower(?)))"
+		arguments = append(arguments, filters.Mentions, filters.Mentions)
+	}
+	if filters.Before != "" {
+		statement += " AND msg.created_at < ?"
+		arguments = append(arguments, filters.Before+"T23:59:59Z")
+	}
+	if filters.After != "" {
+		statement += " AND msg.created_at >= ?"
+		arguments = append(arguments, filters.After+"T00:00:00Z")
+	}
+	if filters.Has != "" {
+		switch filters.Has {
+		case "file":
+			statement += " AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id=msg.id AND a.state='published')"
+		case "image":
+			statement += " AND EXISTS (SELECT 1 FROM attachments a WHERE a.message_id=msg.id AND a.state='published' AND a.content_type LIKE 'image/%')"
+		case "link":
+			statement += " AND (msg.body LIKE '%http://%' OR msg.body LIKE '%https://%')"
+		}
 	}
 	if position.CreatedAt != "" {
 		statement += " AND (msg.created_at < ? OR (msg.created_at = ? AND msg.id < ?))"
@@ -111,6 +151,37 @@ func (s *Service) SearchMessagePage(ctx context.Context, member identity.Member,
 		result.URL = "/channels/" + result.Message.ChannelID + "#message-" + result.Message.ID
 	}
 	return page, nil
+}
+
+func parseSearchFilters(query string) searchFilters {
+	var filters searchFilters
+	var text []string
+	for _, term := range strings.Fields(strings.TrimSpace(query)) {
+		parts := strings.SplitN(term, ":", 2)
+		if len(parts) != 2 || parts[1] == "" {
+			text = append(text, term)
+			continue
+		}
+		value := strings.Trim(parts[1], `"`)
+		switch strings.ToLower(parts[0]) {
+		case "from":
+			filters.Author = value
+		case "in":
+			filters.Channel = value
+		case "has":
+			filters.Has = strings.ToLower(value)
+		case "mentions":
+			filters.Mentions = value
+		case "before":
+			filters.Before = value
+		case "after":
+			filters.After = value
+		default:
+			text = append(text, term)
+		}
+	}
+	filters.Text = strings.Join(text, " ")
+	return filters
 }
 
 func (s *Service) searchableChannelIDs(ctx context.Context, member identity.Member) ([]string, error) {

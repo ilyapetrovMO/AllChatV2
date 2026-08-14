@@ -177,6 +177,33 @@ func main() {
 	email.SetPlaceHolder("Optional certificate expiry contact")
 	pushRelay := widget.NewEntry()
 	pushRelay.SetText(bootstrap.DefaultPushRelayURL)
+	deployRelay := widget.NewCheck("Deploy a private Android push relay on this VPS", nil)
+	firebasePath := widget.NewEntry()
+	firebasePath.SetPlaceHolder("Firebase service-account JSON")
+	chooseFirebase := widget.NewButton("Choose JSON…", func() {
+		dialog.NewFileOpen(func(file fyne.URIReadCloser, err error) {
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+			if file == nil {
+				return
+			}
+			firebasePath.SetText(file.URI().Path())
+			_ = file.Close()
+		}, w).Show()
+	})
+	firebaseFields := container.NewVBox(container.NewBorder(nil, nil, nil, chooseFirebase, firebasePath), widget.NewLabel("The service account must match the Firebase project compiled into your APK."))
+	firebaseFields.Hide()
+	deployRelay.OnChanged = func(enabled bool) {
+		if enabled {
+			firebaseFields.Show()
+			pushRelay.Disable()
+		} else {
+			firebaseFields.Hide()
+			pushRelay.Enable()
+		}
+	}
 
 	releaseMode := widget.NewRadioGroup([]string{releaseLatest, releaseExact}, nil)
 	release := widget.NewEntry()
@@ -230,7 +257,7 @@ func main() {
 			widget.NewForm(widget.NewFormItem("Username", user)), authMode, passwordFields, keyFields,
 			widget.NewSeparator(), widget.NewLabel("Privilege escalation"), widget.NewForm(widget.NewFormItem("Sudo password", sudoPassword))),
 		page("Which server should AllChat use?", "Enter the VPS address supplied by your hosting provider. AllChat will automatically resolve its public IP for voice traffic and firewall configuration.",
-			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Certificate email", email), widget.NewFormItem("Mobile push relay", pushRelay)),
+			widget.NewForm(widget.NewFormItem("Server address", host), widget.NewFormItem("SSH port", port), widget.NewFormItem("Certificate email", email), widget.NewFormItem("Mobile push relay", pushRelay)), deployRelay, firebaseFields,
 			widget.NewLabel("Supported servers: Debian 12+ and Ubuntu 22.04+. SSH, HTTP, HTTPS, and media ports must be reachable.")),
 		page("Which AllChat version should be installed?", "The latest stable release is the best choice for most installations. Choose a tag only when you need a particular version.",
 			releaseMode, releaseFields),
@@ -273,6 +300,17 @@ func main() {
 		}
 		if tlsMode == bootstrap.TLSHostname {
 			cfg.Hostname = serverAddress
+		}
+		if deployRelay.Checked {
+			cfg.DeployRelay = true
+			cfg.PushRelayURL = cfg.BaseURL()
+			content, readErr := os.ReadFile(strings.TrimSpace(firebasePath.Text))
+			if readErr != nil {
+				return bootstrap.Config{}, fmt.Errorf("read Firebase service account: %w", readErr)
+			}
+			if configureErr := cfg.ConfigureFirebaseServiceAccount(content); configureErr != nil {
+				return bootstrap.Config{}, configureErr
+			}
 		}
 		return cfg, nil
 	}
@@ -335,7 +373,11 @@ func main() {
 			if cfg.TLSMode == bootstrap.TLSDirectIP {
 				publicURL = "Derived from the server IP during installation"
 			}
-			review.SetText(fmt.Sprintf("Server: %s@%s:%d\nPublic URL: %s\nVersion: %s", cfg.SSHUser, cfg.SSHHost, cfg.SSHPort, publicURL, version))
+			pushMode := cfg.PushRelayURL
+			if cfg.DeployRelay {
+				pushMode = "Private relay on this VPS"
+			}
+			review.SetText(fmt.Sprintf("Server: %s@%s:%d\nPublic URL: %s\nVersion: %s\nMobile push: %s", cfg.SSHUser, cfg.SSHHost, cfg.SSHPort, publicURL, version, pushMode))
 			next.Hide()
 			install.Show()
 		} else {
@@ -461,8 +503,18 @@ func main() {
 				appendStatus("Error: " + err.Error())
 				return
 			}
+			var relayBinary []byte
+			if cfg.DeployRelay {
+				relayAsset, downloaded, downloadErr := bootstrap.DownloadRelayVerified(context.Background(), nil, cfg.Release, platform.Architecture)
+				if downloadErr != nil {
+					appendStatus("Error: " + downloadErr.Error())
+					return
+				}
+				relayBinary = downloaded
+				appendStatus("Verified " + relayAsset)
+			}
 			appendStatus("Installing " + asset + "…")
-			link, err := (bootstrap.Installer{Log: appendStatus}).Install(context.Background(), remote, bytes.NewReader(binary), cfg)
+			link, err := (bootstrap.Installer{Log: appendStatus}).InstallBundle(context.Background(), remote, bytes.NewReader(binary), bytes.NewReader(relayBinary), cfg)
 			if err != nil {
 				appendStatus("Error: " + err.Error())
 				return

@@ -51,6 +51,27 @@ func TestAndroidAssetUsesReleaseVersion(t *testing.T) {
 	}
 }
 
+func TestRelayAssetUsesReleaseVersion(t *testing.T) {
+	if got := RelayAsset("v1.2.3", "arm64"); got != "allchat-push-relay_1.2.3_linux_arm64" {
+		t.Fatalf("Relay asset=%q", got)
+	}
+}
+
+func TestPrivateRelayConfigRequiresDomainAndFirebaseServiceAccount(t *testing.T) {
+	credentials := []byte(`{"type":"service_account","project_id":"allchat-mobile","client_email":"relay@example.test","private_key":"-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n"}`)
+	cfg := Config{SSHHost: "host.example.test", SSHPort: 22, SSHUser: "root", PublicIP: "192.0.2.20", TLSMode: TLSHostname, Hostname: "chat.example.test", DeployRelay: true, PushRelayURL: "https://chat.example.test"}
+	if err := cfg.ConfigureFirebaseServiceAccount(credentials); err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	cfg.TLSMode, cfg.Hostname = TLSDirectIP, ""
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("private relay accepted for direct-IP TLS")
+	}
+}
+
 func TestResolvePublicIPUsesLiteralAddress(t *testing.T) {
 	got, err := ResolvePublicIP(context.Background(), "192.0.2.20")
 	if err != nil || got != "192.0.2.20" {
@@ -152,20 +173,64 @@ func TestInstallScriptOmitsEmptyACMEEmailOption(t *testing.T) {
 	}
 }
 
-type fakeRemote struct {
-	commands []string
-	upload   bool
+func TestPrivateRelayInstallScriptUsesCaddyAndKeepsSecretsOutOfCommands(t *testing.T) {
+	credentials := []byte(`{"type":"service_account","project_id":"allchat-mobile","client_email":"relay@example.test","private_key":"-----BEGIN PRIVATE KEY-----\nsecret-material\n-----END PRIVATE KEY-----\n"}`)
+	cfg := Config{SSHHost: "chat.example.test", SSHPort: 22, SSHUser: "root", PublicIP: "192.0.2.30", TLSMode: TLSHostname, Hostname: "chat.example.test", DeployRelay: true, PushRelayURL: "https://chat.example.test"}
+	if err := cfg.ConfigureFirebaseServiceAccount(credentials); err != nil {
+		t.Fatal(err)
+	}
+	script := installScript(cfg)
+	for _, expected := range []string{"reverse_proxy 127.0.0.1:8090", "reverse_proxy 127.0.0.1:8080", "--external-url 'https://chat.example.test'", "push-relay-identity", "sync-caddy-certificate", "existing Caddy installation is not bootstrap-managed"} {
+		if !strings.Contains(script, expected) {
+			t.Errorf("script missing %q", expected)
+		}
+	}
+	if strings.Contains(script, "secret-material") {
+		t.Fatal("Firebase private key leaked into install script")
+	}
+	command := exec.Command("sh", "-n")
+	command.Stdin = strings.NewReader(script)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("invalid private relay script: %v: %s", err, output)
+	}
 }
 
-func (f *fakeRemote) Run(_ context.Context, command string, _ io.Reader) (string, error) {
+type fakeRemote struct {
+	commands     []string
+	upload       bool
+	managedCaddy bool
+	script       string
+}
+
+func (f *fakeRemote) Run(_ context.Context, command string, input io.Reader) (string, error) {
 	f.commands = append(f.commands, command)
+	if input != nil {
+		content, _ := io.ReadAll(input)
+		if strings.Contains(command, "/bin/sh -s") {
+			f.script = string(content)
+		}
+	}
 	if strings.HasPrefix(command, "cat /etc/os-release") {
 		return "ID=debian\nVERSION_ID=12\n---ALLCHAT-ARCH---\nx86_64", nil
 	}
 	if strings.Contains(command, "setup-link") {
 		return "https://chat.example.test/setup?token=test\n", nil
 	}
+	if strings.Contains(command, "caddy-bootstrap-managed") && f.managedCaddy {
+		return "managed", nil
+	}
 	return "", nil
+}
+
+func TestInstallerPreservesManagedPrivateRelayTopology(t *testing.T) {
+	remote := &fakeRemote{managedCaddy: true}
+	cfg := Config{SSHHost: "host.example.test", SSHPort: 22, SSHUser: "root", PublicIP: "192.0.2.30", TLSMode: TLSHostname, Hostname: "chat.example.test", PushRelayURL: DefaultPushRelayURL}
+	if _, err := (Installer{}).Install(context.Background(), remote, strings.NewReader("binary"), cfg); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(remote.script, "reverse_proxy 127.0.0.1:8090") || strings.Contains(remote.script, "install -o allchat-push -g allchat-push -m 0400") {
+		t.Fatalf("managed topology was not preserved:\n%s", remote.script)
+	}
 }
 func (f *fakeRemote) Upload(_ context.Context, _ string, _ io.Reader, _ uint32) error {
 	f.upload = true

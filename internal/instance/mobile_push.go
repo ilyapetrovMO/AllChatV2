@@ -32,6 +32,15 @@ import (
 
 const mobilePushQueueCapacity = 256
 
+func MobilePushRelayIdentity(dataDir string) (string, error) {
+	publicKey, _, err := loadOrCreateMobilePushSigningKey(filepath.Join(dataDir, "mobile-push-signing.json"))
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(publicKey)
+	return "instance-" + base64.RawURLEncoding.EncodeToString(digest[:12]) + "=" + base64.RawURLEncoding.EncodeToString(publicKey), nil
+}
+
 type mobilePushSigningKeys struct {
 	Public  string `json:"public_key"`
 	Private string `json:"private_key"`

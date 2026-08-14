@@ -69,6 +69,8 @@ in public server builds.
 ./allchat-push-relay -listen :8090 -workers 100 -queue-capacity 10000
 ```
 
+The bootstrapper can automate an Android-only deployment for hostname and DuckDNS Communities. It binds the relay to `127.0.0.1:8090`, routes only `POST /api/v1/push` through Caddy, derives the Firebase project ID from the selected service-account JSON, and authorizes the local Instance automatically. The remaining Community routes are proxied to AllChat on `127.0.0.1:8080` under the same hostname and certificate.
+
 Terminate with SIGINT or SIGTERM. The server first stops HTTP intake, waits for
 active handlers, closes the job queue, and drains every accepted job before
 exiting. Put the relay behind a TLS reverse proxy. `GET /healthz` reports queue

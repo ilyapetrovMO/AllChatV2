@@ -3,6 +3,7 @@ package bootstrap
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/mail"
@@ -20,18 +21,41 @@ const (
 )
 
 type Config struct {
-	SSHHost       string
-	SSHPort       int
-	SSHUser       string
-	SudoPassword  string
-	PublicIP      string
-	TLSMode       TLSMode
-	Hostname      string
-	ACMEEmail     string
-	DuckSubdomain string
-	DuckToken     string
-	Release       string
-	PushRelayURL  string
+	SSHHost           string
+	SSHPort           int
+	SSHUser           string
+	SudoPassword      string
+	PublicIP          string
+	TLSMode           TLSMode
+	Hostname          string
+	ACMEEmail         string
+	DuckSubdomain     string
+	DuckToken         string
+	Release           string
+	PushRelayURL      string
+	DeployRelay       bool
+	PreserveRelay     bool
+	FirebaseJSON      []byte
+	FirebaseProjectID string
+}
+
+func (c *Config) ConfigureFirebaseServiceAccount(content []byte) error {
+	if len(content) == 0 {
+		c.FirebaseJSON, c.FirebaseProjectID = nil, ""
+		return nil
+	}
+	var credentials struct {
+		Type        string `json:"type"`
+		ProjectID   string `json:"project_id"`
+		ClientEmail string `json:"client_email"`
+		PrivateKey  string `json:"private_key"`
+	}
+	if err := json.Unmarshal(content, &credentials); err != nil || credentials.Type != "service_account" || !firebaseProjectID.MatchString(credentials.ProjectID) || credentials.ClientEmail == "" || !strings.Contains(credentials.PrivateKey, "BEGIN PRIVATE KEY") {
+		return fmt.Errorf("Firebase credentials must be a valid service-account JSON file")
+	}
+	c.FirebaseJSON = append([]byte(nil), content...)
+	c.FirebaseProjectID = credentials.ProjectID
+	return nil
 }
 
 const DefaultPushRelayURL = "https://push.elitedarklord.com"
@@ -39,6 +63,7 @@ const DefaultPushRelayURL = "https://push.elitedarklord.com"
 var dnsLabel = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
 var releaseTag = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
 var duckToken = regexp.MustCompile(`^[A-Za-z0-9-]{16,128}$`)
+var firebaseProjectID = regexp.MustCompile(`^[a-z][a-z0-9-]{4,61}[a-z0-9]$`)
 
 func (c Config) Validate() error {
 	if err := c.ValidateBeforePublicIP(); err != nil {
@@ -66,6 +91,17 @@ func (c Config) ValidateBeforePublicIP() error {
 		parsed, err := url.Parse(c.PushRelayURL)
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
 			return fmt.Errorf("push relay URL must be an absolute HTTPS URL")
+		}
+	}
+	if c.DeployRelay {
+		if c.TLSMode == TLSDirectIP {
+			return fmt.Errorf("private push relay deployment requires a public hostname or DuckDNS")
+		}
+		if c.PushRelayURL != c.BaseURL() {
+			return fmt.Errorf("private push relay URL must use the Community base URL")
+		}
+		if len(c.FirebaseJSON) == 0 || strings.TrimSpace(c.FirebaseProjectID) == "" {
+			return fmt.Errorf("a Firebase service-account JSON file is required")
 		}
 	}
 	if c.ACMEEmail != "" {

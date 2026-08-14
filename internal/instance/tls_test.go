@@ -80,6 +80,62 @@ func TestSuppliedTLSServesHTTPSWithSecureSessionPolicy(t *testing.T) {
 		t.Fatalf("HTTPS health response = %d TLS=%+v", response.StatusCode, response.TLS)
 	}
 }
+
+func TestExternalURLValidation(t *testing.T) {
+	config, err := NewConfig(t.TempDir(), "127.0.0.1:8080")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := config.ConfigureExternalURL("https://chat.example.test/"); err != nil || config.ExternalURL != "https://chat.example.test" {
+		t.Fatalf("external URL=%q err=%v", config.ExternalURL, err)
+	}
+	if config.ConfigureExternalURL("http://chat.example.test") == nil {
+		t.Fatal("accepted insecure external URL")
+	}
+}
+
+func TestExternalHTTPSTrustsForwardingOnlyFromLoopbackProxy(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
+	request.Header.Set("X-Forwarded-For", "198.51.100.20")
+	markTrustedExternalHTTPS(request)
+	if request.TLS == nil || request.RemoteAddr != "198.51.100.20:0" {
+		t.Fatalf("trusted request=%+v", request)
+	}
+	untrusted := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
+	untrusted.RemoteAddr = "198.51.100.30:1234"
+	untrusted.Header.Set("X-Forwarded-For", "192.0.2.99")
+	markTrustedExternalHTTPS(untrusted)
+	if untrusted.RemoteAddr != "198.51.100.30:1234" {
+		t.Fatalf("trusted spoofed forwarding: %s", untrusted.RemoteAddr)
+	}
+}
+
+func TestSyncCaddyCertificateValidatesAndCopiesMatchingPair(t *testing.T) {
+	root := t.TempDir()
+	certificate, key := writeTestCertificate(t, root, time.Now().Add(-time.Hour), time.Now().Add(time.Hour))
+	storage := filepath.Join(root, "storage")
+	if err := os.MkdirAll(storage, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	certificateBytes, _ := os.ReadFile(certificate)
+	keyBytes, _ := os.ReadFile(key)
+	if err := os.WriteFile(filepath.Join(storage, "chat.example.test.crt"), certificateBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(storage, "chat.example.test.key"), keyBytes, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	destination := filepath.Join(root, "deployed")
+	changed, err := SyncCaddyCertificate(storage, "localhost", filepath.Join(destination, "certificate.pem"), filepath.Join(destination, "certificate.key"))
+	if err != nil || !changed {
+		t.Fatalf("changed=%v err=%v", changed, err)
+	}
+	changed, err = SyncCaddyCertificate(storage, "localhost", filepath.Join(destination, "certificate.pem"), filepath.Join(destination, "certificate.key"))
+	if err != nil || changed {
+		t.Fatalf("second sync changed=%v err=%v", changed, err)
+	}
+}
 func TestTLSModesRejectAmbiguousOrInvalidConfiguration(t *testing.T) {
 	config, err := NewConfig(t.TempDir(), "127.0.0.1:0")
 	if err != nil {

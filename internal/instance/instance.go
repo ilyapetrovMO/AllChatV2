@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -176,12 +177,31 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		app.turnURLs = append([]string(nil), config.ExternalTURNURLs...)
 		app.turnSecret = config.ExternalTURNSecret
 	}
+	handler := app.routes()
+	if config.ExternalURL != "" {
+		next := handler
+		handler = http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+			markTrustedExternalHTTPS(request)
+			next.ServeHTTP(response, request)
+		})
+	}
 	app.server = &http.Server{
-		Handler:           app.routes(),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 	return app, nil
+}
+
+func markTrustedExternalHTTPS(request *http.Request) {
+	host, _, err := net.SplitHostPort(request.RemoteAddr)
+	if err == nil && net.ParseIP(host).IsLoopback() {
+		forwarded := strings.Split(request.Header.Get("X-Forwarded-For"), ",")
+		if candidate := strings.TrimSpace(forwarded[len(forwarded)-1]); net.ParseIP(candidate) != nil {
+			request.RemoteAddr = net.JoinHostPort(candidate, "0")
+		}
+	}
+	request.TLS = &tls.ConnectionState{}
 }
 
 func backupBeforeMigration(ctx context.Context, db *sql.DB, dataDir string) error {
@@ -215,16 +235,18 @@ func (i *Instance) Run(ctx context.Context) error {
 		_ = i.Close()
 		return fmt.Errorf("listen: %w", err)
 	}
-	if i.tlsConfig != nil {
+	if i.tlsConfig != nil && i.config.ExternalURL == "" {
 		listener = tls.NewListener(listener, i.tlsConfig)
 	}
 	logArguments := []any{"event", "listening", "address", listener.Addr().String()}
 	if i.bootstrapToken != "" {
-		scheme := "http"
-		if i.tlsConfig != nil {
-			scheme = "https"
+		baseURL := "http://" + listener.Addr().String()
+		if i.config.ExternalURL != "" {
+			baseURL = i.config.ExternalURL
+		} else if i.tlsConfig != nil {
+			baseURL = "https://" + listener.Addr().String()
 		}
-		setupURL := scheme + "://" + listener.Addr().String() + "/setup?token=" + url.QueryEscape(i.bootstrapToken)
+		setupURL := baseURL + "/setup?token=" + url.QueryEscape(i.bootstrapToken)
 		logArguments = append(logArguments, "setup_url", setupURL)
 	}
 	i.logger.Info("Instance listening", logArguments...)

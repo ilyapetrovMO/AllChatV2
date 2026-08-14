@@ -32,6 +32,21 @@ type Config struct {
 	MediaScreenBitrate   int
 	MetricsEnabled       bool
 	PushRelayURL         string
+	ExternalURL          string
+}
+
+func (c *Config) ConfigureExternalURL(rawURL string) error {
+	value := strings.TrimRight(strings.TrimSpace(rawURL), "/")
+	if value == "" {
+		c.ExternalURL = ""
+		return nil
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "" {
+		return fmt.Errorf("external URL must be an HTTPS origin without credentials, path, query, or fragment")
+	}
+	c.ExternalURL = parsed.String()
+	return nil
 }
 
 func (c *Config) ConfigurePushRelay(rawURL string) error {

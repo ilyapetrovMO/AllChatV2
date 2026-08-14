@@ -42,6 +42,39 @@ func run(args []string) int {
 	if len(args) > 0 && args[0] == "restore" {
 		return runRestore(args[1:])
 	}
+	if len(args) > 0 && args[0] == "push-relay-identity" {
+		flags := flag.NewFlagSet("push-relay-identity", flag.ContinueOnError)
+		dataDir := flags.String("data-dir", "", "directory containing Instance data")
+		if flags.Parse(args[1:]) != nil || *dataDir == "" {
+			return 2
+		}
+		identity, err := instance.MobilePushRelayIdentity(*dataDir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Fprintln(os.Stdout, identity)
+		return 0
+	}
+	if len(args) > 0 && args[0] == "sync-caddy-certificate" {
+		flags := flag.NewFlagSet("sync-caddy-certificate", flag.ContinueOnError)
+		storage := flags.String("storage", "/var/lib/caddy/.local/share/caddy", "Caddy storage directory")
+		identifier := flags.String("identifier", "", "certificate DNS identifier")
+		cert := flags.String("cert", "", "certificate destination")
+		key := flags.String("key", "", "private key destination")
+		if flags.Parse(args[1:]) != nil || *identifier == "" || *cert == "" || *key == "" {
+			return 2
+		}
+		changed, err := instance.SyncCaddyCertificate(*storage, *identifier, *cert, *key)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		if changed {
+			return 10
+		}
+		return 0
+	}
 	flags := flag.NewFlagSet("allchat", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	dataDir := flags.String("data-dir", "", "directory containing Instance data")
@@ -63,6 +96,7 @@ func run(args []string) int {
 	mediaScreenBitrate := flags.Int("media-screen-bitrate", 2500000, "maximum sender screen bitrate in bits per second")
 	metrics := flags.Bool("metrics", false, "enable the unlabeled Prometheus endpoint at /metrics")
 	pushRelay := flags.String("push-relay", os.Getenv("ALLCHAT_PUSH_RELAY_URL"), "default hosted mobile push relay URL")
+	externalURL := flags.String("external-url", "", "public HTTPS origin when HTTP is behind a trusted local reverse proxy")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -102,6 +136,10 @@ func run(args []string) int {
 	}
 	if err := config.ConfigurePushRelay(*pushRelay); err != nil {
 		fmt.Fprintf(os.Stderr, "invalid push relay configuration: %v\n", err)
+		return 2
+	}
+	if err := config.ConfigureExternalURL(*externalURL); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid external URL: %v\n", err)
 		return 2
 	}
 	config.MetricsEnabled = *metrics

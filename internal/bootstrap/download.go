@@ -19,6 +19,10 @@ func InstanceAsset(version, arch string) string {
 	return fmt.Sprintf("allchat_%s_linux_%s", strings.TrimPrefix(version, "v"), arch)
 }
 
+func RelayAsset(version, arch string) string {
+	return fmt.Sprintf("allchat-push-relay_%s_linux_%s", strings.TrimPrefix(version, "v"), arch)
+}
+
 func AndroidAsset(version string) string {
 	return fmt.Sprintf("allchat_%s_android_universal.apk", strings.TrimPrefix(version, "v"))
 }
@@ -39,11 +43,19 @@ func DownloadVerified(ctx context.Context, client *http.Client, version, asset s
 // version selects the newest published release and discovers its versioned
 // asset name from the signed checksum manifest.
 func DownloadInstanceVerified(ctx context.Context, client *http.Client, version, arch string) (string, []byte, error) {
+	return downloadLatestVerified(ctx, client, version, arch, `allchat_[0-9]+\.[0-9]+\.[0-9]+_linux_`, InstanceAsset)
+}
+
+func DownloadRelayVerified(ctx context.Context, client *http.Client, version, arch string) (string, []byte, error) {
+	return downloadLatestVerified(ctx, client, version, arch, `allchat-push-relay_[0-9]+\.[0-9]+\.[0-9]+_linux_`, RelayAsset)
+}
+
+func downloadLatestVerified(ctx context.Context, client *http.Client, version, arch, prefix string, assetName func(string, string) string) (string, []byte, error) {
 	if client == nil {
 		client = http.DefaultClient
 	}
 	if strings.TrimSpace(version) != "" {
-		asset := InstanceAsset(version, arch)
+		asset := assetName(version, arch)
 		content, err := DownloadVerified(ctx, client, version, asset)
 		return asset, content, err
 	}
@@ -51,7 +63,7 @@ func DownloadInstanceVerified(ctx context.Context, client *http.Client, version,
 	if err != nil {
 		return "", nil, fmt.Errorf("download latest release checksums: %w", err)
 	}
-	pattern := regexp.MustCompile(`^allchat_[0-9]+\.[0-9]+\.[0-9]+_linux_` + regexp.QuoteMeta(arch) + `$`)
+	pattern := regexp.MustCompile(`^` + prefix + regexp.QuoteMeta(arch) + `$`)
 	asset := ""
 	scanner := bufio.NewScanner(strings.NewReader(string(checksums)))
 	for scanner.Scan() {

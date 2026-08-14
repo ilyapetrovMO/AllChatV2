@@ -957,6 +957,8 @@ test('returning from a directly opened settings page installs Community styles',
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator('link[href="/assets/channel.css"]')).toHaveCount(1);
   await expect(page.locator('.channel-link').first()).toHaveCSS('display', 'flex');
+  await page.locator('.participant-sidebar [data-participant-id]').first().click();
+  await expect(page.locator('.member-popover')).toBeVisible();
 });
 
 test('community mark closes settings without rebuilding the underlying conversation', async ({page}) => {
@@ -968,6 +970,8 @@ test('community mark closes settings without rebuilding the underlying conversat
   await expect(page.locator('[data-app-overlay]')).toHaveCount(0);
   await expect(page.locator('.channel-content')).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`/channels/${fixture.textChannel.id}$`));
+  await page.locator('#messages .message').first().locator('strong').click();
+  await expect(page.locator('.member-popover')).toBeVisible();
 });
 
 test('incoming one-to-one calls surface outside the DM and can be declined', async ({page}) => {

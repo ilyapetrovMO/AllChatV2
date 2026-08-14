@@ -532,7 +532,8 @@
 	if(document.querySelector(".channel-nav"))import("/assets/channel-navigation.js").catch(()=>{});
 
   const conversation = document.querySelector(".conversation-layout");
-  if (document.body.dataset.memberId) {
+  const installMemberInteractions = () => {
+    if (!document.body.dataset.memberId || document.querySelector(".member-popover")) return;
     const popover = document.createElement("section");
     popover.className = "member-popover";
     popover.hidden = true;
@@ -679,7 +680,9 @@
         setActionsOpen(false);
       }
     });
-  }
+  };
+  installMemberInteractions();
+  document.addEventListener("allchat:view-swapped", installMemberInteractions);
 
   if (document.body.dataset.memberId) import("/assets/call.js");
   const installProfileImages=root=>import("/assets/profile-images.js").then(module=>module.installProfileImageControls(root)).catch(()=>{});

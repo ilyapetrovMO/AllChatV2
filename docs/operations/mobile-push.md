@@ -13,7 +13,7 @@ The release workflow reads these GitHub Actions secrets:
 - `ALLCHAT_FIREBASE_PROJECT_ID`
 - `ALLCHAT_FIREBASE_SENDER_ID`
 
-The APK still builds when they are absent, but Firebase background push registration is disabled. The relay operator separately configures the matching Firebase service account through `ALLCHAT_FCM_CREDENTIALS_FILE`.
+The APK still builds when they are absent, but Firebase background push registration is disabled. The relay operator separately configures the matching Firebase service account through `GOOGLE_APPLICATION_CREDENTIALS`. Apple credentials are optional until iOS push delivery is enabled.
 
 ## Authorizing an instance
 

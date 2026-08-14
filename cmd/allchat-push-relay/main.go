@@ -52,7 +52,7 @@ func run(ctx context.Context, args []string, logger *slog.Logger) error {
 		return fmt.Errorf("ALLCHAT_RELAY_PUBLIC_KEYS: %w", err)
 	}
 
-	// Both provider clients are constructed exactly once and shared by every worker.
+	// Provider clients are constructed exactly once and shared by every worker.
 	firebaseApp, err := firebase.NewApp(ctx, &firebase.Config{ProjectID: cfg.firebaseProject})
 	if err != nil {
 		return fmt.Errorf("initialize Firebase: %w", err)
@@ -61,19 +61,21 @@ func run(ctx context.Context, args []string, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("initialize FCM: %w", err)
 	}
-	authKey, err := token.AuthKeyFromFile(cfg.apnsKeyFile)
-	if err != nil {
-		return fmt.Errorf("load APNs authentication key: %w", err)
-	}
-	apnsClient := apns2.NewTokenClient(&token.Token{
-		AuthKey: authKey,
-		KeyID:   cfg.apnsKeyID,
-		TeamID:  cfg.apnsTeamID,
-	})
-	if cfg.apnsProduction {
-		apnsClient = apnsClient.Production()
+	var apnsClient pushrelay.APNSClient
+	if cfg.apnsKeyFile != "" {
+		authKey, err := token.AuthKeyFromFile(cfg.apnsKeyFile)
+		if err != nil {
+			return fmt.Errorf("load APNs authentication key: %w", err)
+		}
+		client := apns2.NewTokenClient(&token.Token{AuthKey: authKey, KeyID: cfg.apnsKeyID, TeamID: cfg.apnsTeamID})
+		if cfg.apnsProduction {
+			client = client.Production()
+		} else {
+			client = client.Development()
+		}
+		apnsClient = client
 	} else {
-		apnsClient = apnsClient.Development()
+		logger.Info("APNs is disabled; iOS push jobs will fail delivery")
 	}
 
 	providers := pushrelay.Providers{
@@ -151,10 +153,20 @@ func parseConfig(args []string) (config, error) {
 	if cfg.workers < 1 || cfg.queueCapacity < 1 || cfg.shutdownTimeout <= 0 {
 		return config{}, fmt.Errorf("workers, queue-capacity, and shutdown-timeout must be positive")
 	}
-	if cfg.firebaseProject == "" || cfg.apnsKeyFile == "" || cfg.apnsKeyID == "" || cfg.apnsTeamID == "" || cfg.apnsTopic == "" {
-		return config{}, fmt.Errorf("Firebase project and all APNs credentials/topic environment variables are required")
+	if cfg.firebaseProject == "" {
+		return config{}, fmt.Errorf("ALLCHAT_FIREBASE_PROJECT_ID is required")
 	}
-	if cfg.apnsVOIPTopic == "" {
+	apnsValues := []string{cfg.apnsKeyFile, cfg.apnsKeyID, cfg.apnsTeamID, cfg.apnsTopic}
+	apnsConfigured := 0
+	for _, value := range apnsValues {
+		if value != "" {
+			apnsConfigured++
+		}
+	}
+	if apnsConfigured != 0 && apnsConfigured != len(apnsValues) {
+		return config{}, fmt.Errorf("APNs is optional, but ALLCHAT_APNS_KEY_FILE, ALLCHAT_APNS_KEY_ID, ALLCHAT_APNS_TEAM_ID, and ALLCHAT_APNS_TOPIC must all be set when enabled")
+	}
+	if apnsConfigured == len(apnsValues) && cfg.apnsVOIPTopic == "" {
 		cfg.apnsVOIPTopic = cfg.apnsTopic + ".voip"
 	}
 	return cfg, nil

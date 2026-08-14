@@ -7,11 +7,17 @@ jobs exist only in its bounded memory queue and are lost if the process exits.
 ## Provider credentials
 
 Create one Firebase service account with permission to send Firebase Cloud
-Messaging messages and one APNs token authentication key. Configure:
+Messaging messages and configure:
 
 ```text
 GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase-service-account.json
 ALLCHAT_FIREBASE_PROJECT_ID=allchat-mobile
+```
+
+APNs is optional. To enable iOS notifications, create an APNs token
+authentication key and configure all of these values together:
+
+```text
 ALLCHAT_APNS_KEY_FILE=/run/secrets/AuthKey_ABC123.p8
 ALLCHAT_APNS_KEY_ID=ABC123
 ALLCHAT_APNS_TEAM_ID=DEF456
@@ -20,8 +26,10 @@ ALLCHAT_APNS_VOIP_TOPIC=org.allchat.mobile.voip
 ALLCHAT_APNS_PRODUCTION=true
 ```
 
-The Firebase and APNs clients are each created once at startup. All delivery
-workers share those clients and their long-lived HTTP/2 connection pools.
+The configured provider clients are each created once at startup. All delivery
+workers share those clients and their long-lived HTTP/2 connection pools. With
+APNs disabled, Android delivery continues normally and any iOS jobs are logged
+as failed without exposing their token or payload.
 
 ## Authorize instances
 

@@ -36,9 +36,10 @@ type Reaction struct {
 }
 
 var (
-	markdownCode   = regexp.MustCompile("`([^`\\n]+)`")
-	markdownBold   = regexp.MustCompile(`\*\*([^*\n]+)\*\*`)
-	markdownItalic = regexp.MustCompile(`\*([^*\n]+)\*`)
+	markdownCode    = regexp.MustCompile("`([^`\\n]+)`")
+	markdownBold    = regexp.MustCompile(`\*\*([^*\n]+)\*\*`)
+	markdownItalic  = regexp.MustCompile(`\*([^*\n]+)\*`)
+	markdownMention = regexp.MustCompile(`(^|[^\pL\pN._-])@([\pL\pN._-]{3,32})`)
 )
 
 func renderMarkdown(body string) string {
@@ -46,7 +47,42 @@ func renderMarkdown(body string) string {
 	rendered = markdownCode.ReplaceAllString(rendered, "<code>$1</code>")
 	rendered = markdownBold.ReplaceAllString(rendered, "<strong>$1</strong>")
 	rendered = markdownItalic.ReplaceAllString(rendered, "<em>$1</em>")
+	rendered = markdownMention.ReplaceAllString(rendered, `$1<mark class="mention">@$2</mark>`)
 	return strings.ReplaceAll(rendered, "\n", "<br>")
+}
+
+func (s *Service) mentionIDsFromBody(ctx context.Context, body string) ([]string, error) {
+	seen := map[string]bool{}
+	var keys []string
+	for _, match := range markdownMention.FindAllStringSubmatch(body, -1) {
+		key := strings.ToLower(match[2])
+		if !seen[key] {
+			seen[key] = true
+			keys = append(keys, key)
+		}
+	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(keys)), ",")
+	args := make([]any, len(keys))
+	for index, key := range keys {
+		args[index] = key
+	}
+	rows, err := s.db.QueryContext(ctx, "SELECT id FROM members WHERE username_key IN ("+placeholders+")", args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func validateReply(ctx context.Context, tx *sql.Tx, channelID, replyID string) error {

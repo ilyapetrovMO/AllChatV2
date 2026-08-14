@@ -781,6 +781,24 @@ test('message authors open the member popover and replies retain their target', 
   await expect(page.locator('.composer-wrap .editing-banner[role="status"]')).toBeHidden();
 });
 
+test('composer autocompletes an @username and records a Mention without creating a reply', async ({page}) => {
+  await authenticate(page);
+  await page.goto(`/channels/${fixture.textChannel.id}`);
+  const input = page.locator('#message-body');
+  await input.fill('Hello @visual-m');
+  const suggestions = page.locator('.mention-suggestions');
+  await expect(suggestions).toBeVisible();
+  await expect(suggestions.getByRole('option')).toContainText(['visual-member']);
+  await input.press('Enter');
+  await expect(input).toHaveValue('Hello @visual-member ');
+  const published = page.waitForResponse(response => response.request().method() === 'POST' && response.url().endsWith(`/api/v1/channels/${fixture.textChannel.id}/messages`));
+  await page.locator('#composer-submit').click();
+  const message = await (await published).json();
+  expect(message.reply).toBeUndefined();
+  expect(message.mentions).toEqual([expect.objectContaining({member_id: fixture.secondMember.id, username: 'visual-member'})]);
+  await expect(page.locator(`#message-${message.id} .body .mention`)).toHaveText('@visual-member');
+});
+
 test('voice sidebar participants support profile and context interactions', async ({page}) => {
   await authenticate(page);
   await page.goto(`/channels/${fixture.textChannel.id}`);

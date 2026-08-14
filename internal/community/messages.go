@@ -72,6 +72,11 @@ func (s *Service) PublishRichMessage(ctx context.Context, member identity.Member
 	if active, err := s.memberMayWrite(ctx, member.ID); err != nil || !active {
 		return Message{}, ErrForbidden
 	}
+	derivedMentions, err := s.mentionIDsFromBody(ctx, body)
+	if err != nil {
+		return Message{}, err
+	}
+	input.MentionIDs = uniqueStrings(append(input.MentionIDs, derivedMentions...))
 	id, err := randomID()
 	if err != nil {
 		return Message{}, err
@@ -167,6 +172,10 @@ func (s *Service) EditMessage(ctx context.Context, member identity.Member, messa
 	if !allowed {
 		return Message{}, ErrForbidden
 	}
+	mentionIDs, err := s.mentionIDsFromBody(ctx, body)
+	if err != nil {
+		return Message{}, err
+	}
 	edited := databaseTime(time.Now())
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -182,6 +191,14 @@ func (s *Service) EditMessage(ctx context.Context, member identity.Member, messa
 	}
 	if _, err := tx.ExecContext(ctx, "INSERT INTO message_search(message_id, channel_id, body) VALUES (?, ?, ?)", messageID, message.ChannelID, body); err != nil {
 		return Message{}, err
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM message_mentions WHERE message_id = ?", messageID); err != nil {
+		return Message{}, err
+	}
+	for _, mentionedID := range mentionIDs {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO message_mentions(message_id, member_id) VALUES (?, ?)", messageID, mentionedID); err != nil {
+			return Message{}, err
+		}
 	}
 	message.Body, message.RenderedHTML, message.EditedAt, message.AuthorName = body, rendered, edited, nameForMember(member)
 	if err := s.decorateMessageWith(ctx, tx, member.ID, &message); err != nil {

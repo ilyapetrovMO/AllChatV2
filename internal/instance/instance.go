@@ -975,6 +975,16 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /dms", i.openDirectMessageWeb)
 	mux.HandleFunc("POST /dms/{dmID}/block", i.setDirectMessageBlockWeb)
 	mux.HandleFunc("POST /dms/{dmID}/unblock", i.setDirectMessageBlockWeb)
+	mux.HandleFunc("GET /favicon.ico", func(response http.ResponseWriter, _ *http.Request) {
+		icon, err := embeddedWeb.ReadFile("web/assets/favicon.svg")
+		if err != nil {
+			http.Error(response, "favicon unavailable", http.StatusInternalServerError)
+			return
+		}
+		response.Header().Set("Content-Type", "image/svg+xml")
+		response.Header().Set("Cache-Control", "public, max-age=86400")
+		_, _ = response.Write(icon)
+	})
 	mux.Handle("GET /assets/", http.StripPrefix("/assets/", noCache(http.FileServerFS(mustSub(embeddedWeb, "web/assets")))))
 	mux.HandleFunc("GET /", i.homePage)
 	return mux

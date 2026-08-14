@@ -1,5 +1,12 @@
 const { test, expect } = require('@playwright/test');
 
+test('web app exposes the chat bubble favicon', async ({request}) => {
+  const response = await request.get('/favicon.ico');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('image/svg+xml');
+  expect(await response.text()).toContain('stroke="#fff"');
+});
+
 test('terminal Voice Room failure releases the microphone', async ({ page }) => {
   await page.goto('/login');
   await page.addScriptTag({url: '/assets/voice-connection.js'});

@@ -8,17 +8,35 @@ import android.content.Intent
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
 class AllChatFirebaseMessagingService : FirebaseMessagingService() {
+  override fun onNewToken(token: String) {
+    Log.i(TAG, "FCM registration token refreshed")
+  }
+
   override fun onMessageReceived(message: RemoteMessage) {
     val process = ActivityManager.RunningAppProcessInfo()
     ActivityManager.getMyMemoryState(process)
-    if (process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) return
-    val encrypted = message.data["payload"] ?: return
-    val payload = try { AllChatPushModule.decryptPayload(encrypted) } catch (_: Exception) { return }
+    Log.i(TAG, "FCM message received; process_importance=${process.importance}")
+    if (process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+      Log.i(TAG, "FCM message suppressed because the app is foregrounded")
+      return
+    }
+    val encrypted = message.data["payload"]
+    if (encrypted == null) {
+      Log.w(TAG, "FCM message discarded because the encrypted payload is missing")
+      return
+    }
+    val payload = try {
+      AllChatPushModule.decryptPayload(encrypted)
+    } catch (error: Exception) {
+      Log.w(TAG, "FCM message discarded because payload decryption failed: ${error.javaClass.simpleName}")
+      return
+    }
     val kind = payload.optString("kind", "message")
     val calls = kind == "call"
     val sound = payload.optBoolean("sound", true)
@@ -31,6 +49,7 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       channel.enableVibration(true)
       manager.createNotificationChannel(channel)
     }
+    Log.i(TAG, "Posting notification; kind=$kind channel=$channelID notifications_enabled=${manager.areNotificationsEnabled()}")
     val intent = Intent(this, MainActivity::class.java).apply {
       flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
       putExtra("allchat_instance_url", payload.optString("instance_url"))
@@ -51,5 +70,10 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       .setFullScreenIntent(if (calls) pending else null, calls)
       .build()
     manager.notify(if (calls) payload.optString("call_id").hashCode() else payload.optString("conversation_id").hashCode(), notification)
+    Log.i(TAG, "Notification posted; kind=$kind channel=$channelID")
+  }
+
+  companion object {
+    private const val TAG = "AllChatPush"
   }
 }

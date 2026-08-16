@@ -6,7 +6,6 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.horcrux.svg.SvgPackage
 import com.oney.WebRTCModule.WebRTCModuleOptions
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.audio.JavaAudioDeviceModule
@@ -18,7 +17,6 @@ class MainApplication : Application(), ReactApplication {
       context = applicationContext,
       packageList =
         PackageList(this).packages.apply {
-          add(SvgPackage())
           add(AllChatAudioPackage())
           add(AllChatMediaSaverPackage())
           add(AllChatUpdaterPackage())

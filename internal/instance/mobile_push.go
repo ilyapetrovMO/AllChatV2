@@ -9,15 +9,18 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"net/url"
 	"os"
@@ -329,7 +332,7 @@ func encryptMobilePushPayload(encodedPublicKey string, payload any) (string, err
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", err
 	}
-	wrappedKey, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, aesKey, []byte("allchat-mobile-push-v1"))
+	wrappedKey, err := encryptAndroidOAEP(publicKey, aesKey)
 	if err != nil {
 		return "", err
 	}
@@ -337,6 +340,49 @@ func encryptMobilePushPayload(encodedPublicKey string, payload any) (string, err
 		"key": base64.RawURLEncoding.EncodeToString(wrappedKey), "nonce": base64.RawURLEncoding.EncodeToString(nonce), "ciphertext": base64.RawURLEncoding.EncodeToString(gcm.Seal(nil, nonce, plaintext, nil)),
 	})
 	return base64.RawURLEncoding.EncodeToString(envelope), nil
+}
+
+// encryptAndroidOAEP uses SHA-256 for OAEP and SHA-1 for MGF1. Android Keystore
+// requires that combination, with an empty label, on supported pre-API-35 devices.
+func encryptAndroidOAEP(publicKey *rsa.PublicKey, message []byte) ([]byte, error) {
+	const hashSize = sha256.Size
+	size := publicKey.Size()
+	if len(message) > size-2*hashSize-2 {
+		return nil, fmt.Errorf("message too long for RSA-OAEP")
+	}
+	encoded := make([]byte, size)
+	seed := encoded[1 : 1+hashSize]
+	database := encoded[1+hashSize:]
+	labelHash := sha256.Sum256(nil)
+	copy(database, labelHash[:])
+	database[len(database)-len(message)-1] = 1
+	copy(database[len(database)-len(message):], message)
+	if _, err := io.ReadFull(rand.Reader, seed); err != nil {
+		return nil, err
+	}
+	mgf1SHA1XOR(database, seed)
+	mgf1SHA1XOR(seed, database)
+
+	messageInteger := new(big.Int).SetBytes(encoded)
+	ciphertextInteger := new(big.Int).Exp(messageInteger, big.NewInt(int64(publicKey.E)), publicKey.N)
+	ciphertext := ciphertextInteger.Bytes()
+	result := make([]byte, size)
+	copy(result[size-len(ciphertext):], ciphertext)
+	return result, nil
+}
+
+func mgf1SHA1XOR(output, seed []byte) {
+	var counter [4]byte
+	for offset := 0; offset < len(output); offset += sha1.Size {
+		binary.BigEndian.PutUint32(counter[:], uint32(offset/sha1.Size))
+		digest := sha1.New()
+		_, _ = digest.Write(seed)
+		_, _ = digest.Write(counter[:])
+		mask := digest.Sum(nil)
+		for index := 0; index < len(mask) && offset+index < len(output); index++ {
+			output[offset+index] ^= mask[index]
+		}
+	}
 }
 
 func (service *mobilePushService) send(ctx context.Context, relayURL, requestID string, job pushrelay.PushJob) error {

@@ -1,11 +1,11 @@
 package instance
 
 import (
+	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -59,7 +59,7 @@ func TestMobilePushPayloadUsesHybridEncryption(t *testing.T) {
 		t.Fatal(err)
 	}
 	wrappedKey, _ := base64.RawURLEncoding.DecodeString(envelope["key"])
-	aesKey, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, wrappedKey, []byte("allchat-mobile-push-v1"))
+	aesKey, err := privateKey.Decrypt(rand.Reader, wrappedKey, &rsa.OAEPOptions{Hash: crypto.SHA256, MGFHash: crypto.SHA1})
 	if err != nil {
 		t.Fatal(err)
 	}

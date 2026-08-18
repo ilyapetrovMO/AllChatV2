@@ -55,7 +55,6 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
   companion object {
     private const val TAG = "AllChatPush"
     private const val KEY_ALIAS = "allchat_mobile_push_v1"
-    private const val LABEL = "allchat-mobile-push-v1"
 
     fun initializeFirebase(application: Application) {
       if (FirebaseApp.getApps(application).isNotEmpty() || BuildConfig.ALLCHAT_FIREBASE_API_KEY.isBlank() || BuildConfig.ALLCHAT_FIREBASE_APP_ID.isBlank() || BuildConfig.ALLCHAT_FIREBASE_PROJECT_ID.isBlank() || BuildConfig.ALLCHAT_FIREBASE_SENDER_ID.isBlank()) return
@@ -88,7 +87,7 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
       val envelope = JSONObject(String(decode(encodedEnvelope), Charsets.UTF_8))
       val privateKey = keyStore().getKey(KEY_ALIAS, null)
       val rsa = Cipher.getInstance("RSA/ECB/OAEPPadding")
-      rsa.init(Cipher.DECRYPT_MODE, privateKey, OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified(LABEL.toByteArray())))
+      rsa.init(Cipher.DECRYPT_MODE, privateKey, OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT))
       val aesKey = rsa.doFinal(decode(envelope.getString("key")))
       val nonce = decode(envelope.getString("nonce"))
       val aes = Cipher.getInstance("AES/GCM/NoPadding")

@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
 import type { DesktopBridge, ShellState } from '../shared/desktop-bridge';
-import type { InstanceViewState } from '../shared/instance-state';
-import type { InstanceAction } from '../shared/instance-actions';
+import type { Attachment, InstanceViewState } from '../shared/instance-state';
+import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
 
 export function App({ bridge }: { bridge: DesktopBridge }) {
   const [state, setState] = useState<ShellState | null>(null);
@@ -62,8 +62,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     }
   }
 
-  async function executeAction(action: InstanceAction): Promise<void> {
-    if (!active) return;
+  async function executeAction(action: InstanceAction): Promise<InstanceActionResult | undefined> {
+    if (!active) return undefined;
     const result = await bridge.executeInstance(active.id, action);
     if (result.type === 'message') {
       setInstanceState((current) => current ? {
@@ -78,8 +78,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
         ...current,
         messages: {
           ...current.messages,
-          [action.type === 'load_messages' ? action.conversationId : '']: mergeMessages(
-            action.type === 'load_messages' ? current.messages[action.conversationId] || [] : [],
+          [result.conversationId]: mergeMessages(
+            current.messages[result.conversationId] || [],
             result.page.messages,
           ),
         },
@@ -101,6 +101,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           : channel),
       } : current);
     }
+    return result;
   }
 
   return (
@@ -155,11 +156,15 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   );
 }
 
-function CommunityShell({ instanceId, state, onAction }: { instanceId: string; state: InstanceViewState; onAction(action: InstanceAction): Promise<void> }) {
+function CommunityShell({ instanceId, state, onAction }: { instanceId: string; state: InstanceViewState; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
   const [conversation, setConversation] = useState<{ id: string; name: string; type: 'text' | 'voice' | 'dm' } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [searchResults, setSearchResults] = useState<import('../shared/instance-state').SearchResult[] | null>(null);
+  const [showPins, setShowPins] = useState(false);
   const lastTypingAt = useRef(0);
   const categories = [...state.categories].filter(({ archived }) => !archived).sort(byPosition);
   const channels = [...state.channels].filter(({ archived }) => !archived);
@@ -175,13 +180,20 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
 
   async function sendMessage(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!conversation || conversation.type === 'voice' || !draft.trim()) return;
+    if (!conversation || conversation.type === 'voice' || (!draft.trim() && attachments.length === 0)) return;
     const body = draft;
+    const attachmentIds: string[] = [];
+    for (const file of attachments) {
+      const result = await onAction({ type: 'upload_attachment', name: file.name, contentType: file.type || 'application/octet-stream', data: new Uint8Array(await file.arrayBuffer()) });
+      if (result?.type === 'attachment') attachmentIds.push(result.attachment.id);
+    }
     await onAction(editingMessageId
       ? { type: 'edit_message', messageId: editingMessageId, body }
-      : { type: 'send_message', conversationId: conversation.id, direct: conversation.type === 'dm', body });
+      : { type: 'send_message', conversationId: conversation.id, direct: conversation.type === 'dm', body, attachmentIds, ...(replyTo ? { replyTo } : {}) });
     setDraft('');
     setEditingMessageId(null);
+    setReplyTo(null);
+    setAttachments([]);
     localStorage.removeItem(draftKey(instanceId, conversation.id));
   }
   return (
@@ -216,12 +228,14 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
         </footer>
       </aside>
       <section className="conversation-content">
-        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1>{state.connection === 'offline' && <span className="offline-badge">Offline</span>}</header>
+        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1>{conversation?.type === 'text' && <button className="header-button" type="button" onClick={() => setShowPins((value) => !value)}>Pinned Messages</button>}<form className="header-search" onSubmit={(event) => { event.preventDefault(); const query = String(new FormData(event.currentTarget).get('query') || ''); void onAction({ type: 'search_messages', query }).then((result) => { if (result?.type === 'search_results') setSearchResults(result.results); }); }}><input name="query" aria-label="Search Messages" placeholder="Search" /></form>{state.connection === 'offline' && <span className="offline-badge">Offline</span>}</header>
         {settingsOpen ? (
           <div className="settings-layout">
             <nav aria-label="User settings"><button aria-current="page">Profile</button><button>Voice &amp; Video</button><button>Notifications</button><button>Sessions</button></nav>
             <section><p className="eyebrow">Member settings</p><h2>Profile</h2><p>Signed in as @{state.member.username}</p></section>
           </div>
+        ) : searchResults ? (
+          <div className="search-results"><h2>Search Results</h2><button type="button" onClick={() => setSearchResults(null)}>Close Search</button>{searchResults.length ? searchResults.map((result) => <article key={result.message.id}><strong>#{result.channel_name} · {result.message.author_name}</strong><p>{result.snippet}</p></article>) : <p>No results found.</p>}</div>
         ) : conversation ? (
           conversation.type === 'voice' ? (
             <div className="welcome"><h2>{conversation.name}</h2><p>Join this Voice Room to talk with Members.</p></div>
@@ -231,13 +245,14 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
                 const first = state.messages[conversation.id]?.[0];
                 void onAction({ type: 'load_messages', conversationId: conversation.id, direct: conversation.type === 'dm', before: first?.sequence, limit: 50 });
               }}>Load older Messages</button>}
-              {(state.messages[conversation.id] || []).map((message) => (
+              {(state.messages[conversation.id] || []).filter((message) => !showPins || message.pinned).map((message) => (
                 <article className="message" key={message.id}>
                   <span className="avatar">{message.author_name.slice(0, 1).toUpperCase()}</span>
-                  <div><strong>{message.author_name}</strong><time dateTime={message.created_at}>{formatMessageTime(message.created_at)}</time><p>{message.deleted ? 'Message deleted' : message.body}</p>{message.author_id === state.member.id && !message.deleted && <span className="message-actions"><button type="button" onClick={() => { setDraft(message.body || ''); setEditingMessageId(message.id); }}>Edit</button><button type="button" onClick={() => void onAction({ type: 'delete_message', messageId: message.id, conversationId: conversation.id })}>Delete</button></span>}</div>
+                  <div><strong>{message.author_name}</strong><time dateTime={message.created_at}>{formatMessageTime(message.created_at)}</time>{message.reply && <blockquote>Replying to {message.reply.author_name}: {message.reply.deleted ? 'Message deleted' : message.reply.body}</blockquote>}<p>{message.deleted ? 'Message deleted' : message.body}</p>{message.body && <LinkPreview body={message.body} onAction={onAction} />}{message.attachments?.map((attachment) => <AttachmentView attachment={attachment} key={attachment.id} onAction={onAction} />)}{message.reactions?.map((reaction) => <button className="reaction" key={reaction.emoji} aria-pressed={reaction.me} onClick={() => void onAction({ type: 'set_reaction', messageId: message.id, emoji: reaction.emoji, active: !reaction.me })}>{reaction.emoji} {reaction.count}</button>)}{message.pinned && <span className="pinned">Pinned</span>}{!message.deleted && <span className="message-actions"><button type="button" onClick={() => setReplyTo(message.id)}>Reply</button><button type="button" onClick={() => void onAction({ type: 'set_reaction', messageId: message.id, emoji: '👍', active: true })}>React</button><button type="button" onClick={() => void onAction({ type: 'set_pinned', messageId: message.id, active: !message.pinned })}>{message.pinned ? 'Unpin' : 'Pin'}</button>{message.author_id === state.member.id && <><button type="button" onClick={() => { setDraft(message.body || ''); setEditingMessageId(message.id); }}>Edit</button><button type="button" onClick={() => void onAction({ type: 'delete_message', messageId: message.id, conversationId: conversation.id })}>Delete</button></>}</span>}</div>
                 </article>
               ))}
               <form className="message-composer" onSubmit={(event) => void sendMessage(event)}>
+                {replyTo && <div className="composer-context">Replying to a Message <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div>}
                 <textarea aria-label={`Message ${conversation.name}`} value={draft} onChange={(event) => {
                   setDraft(event.target.value);
                   localStorage.setItem(draftKey(instanceId, conversation.id), event.target.value);
@@ -246,7 +261,9 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
                     void onAction({ type: 'send_typing', conversationId: conversation.id });
                   }
                 }} />
+                <label className="attach-button">Attach<input type="file" multiple onChange={(event) => setAttachments([...event.target.files || []])} /></label>
                 <button type="submit" aria-label={editingMessageId ? 'Save Message' : 'Send Message'}>{editingMessageId ? 'Save' : 'Send'}</button>
+                {attachments.length > 0 && <small>{attachments.map(({ name }) => name).join(', ')}</small>}
               </form>
             </div>
           )
@@ -286,4 +303,48 @@ function mergeMessages(current: InstanceViewState['messages'][string], incoming:
   const messages = new Map(current.map((message) => [message.id, message]));
   incoming.forEach((message) => messages.set(message.id, message));
   return [...messages.values()].sort((left, right) => left.sequence - right.sequence);
+}
+
+function formatBytes(size: number): string {
+  return size < 1024 ? `${size} B` : `${Math.ceil(size / 1024)} KiB`;
+}
+
+function LinkPreview({ body, onAction }: { body: string; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
+  const [preview, setPreview] = useState<{ url: string; site_name?: string; title?: string; description?: string } | null>(null);
+  const url = body.match(/https?:\/\/[^\s<]+/)?.[0];
+  useEffect(() => {
+    if (!url) return;
+    let current = true;
+    void onAction({ type: 'link_preview', url }).then((result) => { if (current && result?.type === 'link_preview') setPreview(result.preview); }).catch(() => undefined);
+    return () => { current = false; };
+  }, [url]);
+  return preview ? <a className="link-preview" href={preview.url} target="_blank" rel="noreferrer"><small>{preview.site_name || new URL(preview.url).hostname}</small><strong>{preview.title || preview.url}</strong>{preview.description && <span>{preview.description}</span>}</a> : null;
+}
+
+function AttachmentView({ attachment, onAction }: { attachment: Attachment; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const path = attachment.preview_url || attachment.url || `/api/v1/attachments/${attachment.id}`;
+
+  useEffect(() => () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }, [objectUrl]);
+
+  async function load(): Promise<void> {
+    const result = await onAction({ type: 'load_asset', path });
+    if (result?.type !== 'asset') return;
+    const nextUrl = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
+    setObjectUrl(nextUrl);
+  }
+
+  const type = attachment.content_type;
+  return (
+    <figure className="attachment">
+      {objectUrl && type.startsWith('image/') && <img src={objectUrl} alt={attachment.name} />}
+      {objectUrl && type.startsWith('audio/') && <audio src={objectUrl} controls />}
+      {objectUrl && type.startsWith('video/') && <video src={objectUrl} controls />}
+      <figcaption><strong>{attachment.name}</strong><small>{formatBytes(attachment.size)}</small></figcaption>
+      <button type="button" onClick={() => void load()}>{objectUrl ? 'Reload' : 'Open'}</button>
+      {objectUrl && <a href={objectUrl} download={attachment.name}>Download</a>}
+    </figure>
+  );
 }

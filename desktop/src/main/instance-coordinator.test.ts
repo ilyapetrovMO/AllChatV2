@@ -90,5 +90,12 @@ describe('InstanceCoordinator', () => {
       headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
       body: JSON.stringify({ body: 'hello desktop' }),
     });
+
+    await coordinator.execute('home', { type: 'set_reaction', messageId: 'message-1', emoji: '👍', active: true });
+    expect(request).toHaveBeenLastCalledWith('https://chat.example/api/v1/messages/message-1/reactions', {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emoji: '👍' }),
+    });
   });
 });

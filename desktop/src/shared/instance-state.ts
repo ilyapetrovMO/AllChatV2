@@ -36,6 +36,30 @@ export interface Message {
   created_at: string;
   edited_at?: string;
   deleted: boolean;
+  rendered_html?: string;
+  reply?: { message_id: string; author_name: string; body?: string; deleted: boolean };
+  mentions?: Array<{ member_id: string; username: string; display_name?: string }>;
+  reactions?: Array<{ emoji: string; count: number; me: boolean }>;
+  pinned?: boolean;
+  attachments?: Attachment[];
+}
+
+export interface Attachment {
+  id: string;
+  message_id?: string;
+  name: string;
+  content_type: string;
+  size: number;
+  url?: string;
+  preview_url?: string;
+}
+
+export interface SearchResult {
+  message: Message;
+  channel_name: string;
+  category_name: string;
+  snippet: string;
+  url: string;
 }
 
 export interface ChannelState {

@@ -75,7 +75,7 @@ export class InstanceCoordinator {
       });
       const body: unknown = await response.json().catch(() => undefined);
       if (!response.ok || !isMessagePage(body)) throw new Error(readError(body, 'Could not load Messages.'));
-      return { type: 'messages', page: body };
+      return { type: 'messages', conversationId: action.conversationId, page: body };
     }
     if (action.type === 'send_message') {
       const kind = action.direct ? 'dms' : 'channels';
@@ -84,7 +84,11 @@ export class InstanceCoordinator {
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body: action.body }),
+          body: JSON.stringify({
+            body: action.body,
+            ...(action.attachmentIds?.length ? { attachment_ids: action.attachmentIds } : {}),
+            ...(action.replyTo ? { reply_to: action.replyTo } : {}),
+          }),
         },
       );
       const body: unknown = await response.json().catch(() => undefined);
@@ -117,6 +121,64 @@ export class InstanceCoordinator {
       });
       if (!response.ok) throw new Error('Could not update the Read Position.');
       return { type: 'read_position', conversationId: action.conversationId, sequence: action.sequence };
+    }
+    if (action.type === 'set_reaction') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/messages/${encodeURIComponent(action.messageId)}/reactions`, {
+        method: action.active ? 'PUT' : 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji: action.emoji }),
+      });
+      if (!response.ok) throw new Error('Could not update the Reaction.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'set_pinned') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/messages/${encodeURIComponent(action.messageId)}/pin`, {
+        method: action.active ? 'PUT' : 'DELETE', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Could not update the Pinned Message.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'list_pins') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/channels/${encodeURIComponent(action.channelId)}/pins`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const messages = body && typeof body === 'object' && 'messages' in body ? (body as { messages?: unknown }).messages : undefined;
+      if (!response.ok || !Array.isArray(messages) || !messages.every(isMessage)) throw new Error('Could not load Pinned Messages.');
+      return { type: 'messages', conversationId: action.channelId, page: { messages, has_more: false, next_before: 0 } };
+    }
+    if (action.type === 'search_messages') {
+      const query = new URLSearchParams({ q: action.query, limit: '25' });
+      if (action.cursor) query.set('cursor', action.cursor);
+      const response = await this.request(`${profile.baseUrl}/api/v1/search?${query}`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isSearchPage(body)) throw new Error(readError(body, 'Could not search Messages.'));
+      return { type: 'search_results', results: body.results, ...(body.next_cursor ? { nextCursor: body.next_cursor } : {}) };
+    }
+    if (action.type === 'upload_attachment') {
+      const query = new URLSearchParams({ filename: action.name });
+      const response = await this.request(`${profile.baseUrl}/api/v1/attachments?${query}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': action.contentType || 'application/octet-stream' }, body: Buffer.from(action.data) as unknown as BodyInit,
+      });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isAttachment(body)) throw new Error(readError(body, `Could not upload ${action.name}.`));
+      return { type: 'attachment', attachment: body };
+    }
+    if (action.type === 'link_preview') {
+      const query = new URLSearchParams({ url: action.url });
+      const response = await this.request(`${profile.baseUrl}/api/v1/link-preview?${query}`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isLinkPreview(body)) throw new Error('Link preview unavailable.');
+      return { type: 'link_preview', preview: body };
+    }
+    if (action.type === 'load_asset') {
+      const response = await this.request(new URL(action.path, profile.baseUrl), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Could not load the Attachment.');
+      return {
+        type: 'asset',
+        contentType: response.headers.get('Content-Type') || 'application/octet-stream',
+        data: new Uint8Array(await response.arrayBuffer()),
+      };
     }
     throw new Error('Unsupported Instance action.');
   }
@@ -193,6 +255,20 @@ function isMessagePage(value: unknown): value is import('../shared/instance-acti
   if (!value || typeof value !== 'object') return false;
   const page = value as Partial<import('../shared/instance-actions').MessagePage>;
   return Array.isArray(page.messages) && page.messages.every(isMessage) && typeof page.has_more === 'boolean' && typeof page.next_before === 'number';
+}
+
+function isAttachment(value: unknown): value is import('../shared/instance-state').Attachment {
+  if (!value || typeof value !== 'object') return false;
+  const attachment = value as Partial<import('../shared/instance-state').Attachment>;
+  return typeof attachment.id === 'string' && typeof attachment.name === 'string' && typeof attachment.content_type === 'string' && typeof attachment.size === 'number';
+}
+
+function isSearchPage(value: unknown): value is { results: import('../shared/instance-state').SearchResult[]; next_cursor?: string } {
+  return !!value && typeof value === 'object' && Array.isArray((value as { results?: unknown }).results);
+}
+
+function isLinkPreview(value: unknown): value is { url: string; site_name?: string; title?: string; description?: string; image_url?: string } {
+  return !!value && typeof value === 'object' && typeof (value as { url?: unknown }).url === 'string';
 }
 
 function isInstanceViewState(value: unknown): value is InstanceViewState {

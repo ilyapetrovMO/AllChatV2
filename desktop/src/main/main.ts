@@ -142,7 +142,15 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'send_message' || value.type === 'edit_message') {
     if (value.type === 'edit_message') assertString(value.messageId, 'Message identity');
     if (value.type === 'send_message' && typeof value.direct !== 'boolean') throw new Error('Conversation type is invalid');
-    if (typeof value.body !== 'string' || !value.body.trim() || value.body.length > 8_000) throw new Error('Message body is invalid');
+    if (typeof value.body !== 'string' || value.body.length > 8_000) throw new Error('Message body is invalid');
+    if (value.type === 'edit_message' && !value.body.trim()) throw new Error('Message body is invalid');
+    if (value.type === 'send_message') {
+      const attachmentIds = value.attachmentIds || [];
+      if (!Array.isArray(attachmentIds) || attachmentIds.length > 10) throw new Error('Attachments are invalid');
+      attachmentIds.forEach((id) => assertString(id, 'Attachment identity'));
+      if (!value.body.trim() && attachmentIds.length === 0) throw new Error('Message body is invalid');
+      if (value.replyTo !== undefined) assertString(value.replyTo, 'Reply identity');
+    }
     return;
   }
   if (value.type === 'delete_message') { assertString(value.messageId, 'Message identity'); return; }
@@ -155,6 +163,26 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
     return;
   }
   if (value.type === 'send_typing') return;
+  if (value.type === 'set_reaction') {
+    assertString(value.messageId, 'Message identity'); assertString(value.emoji, 'Reaction');
+    if (typeof value.active !== 'boolean' || value.emoji.length > 32) throw new Error('Reaction is invalid');
+    return;
+  }
+  if (value.type === 'set_pinned') { assertString(value.messageId, 'Message identity'); if (typeof value.active !== 'boolean') throw new Error('Pin state is invalid'); return; }
+  if (value.type === 'list_pins') { assertString(value.channelId, 'Channel identity'); return; }
+  if (value.type === 'search_messages') { assertString(value.query, 'Search query'); if (value.query.length > 500) throw new Error('Search query is invalid'); return; }
+  if (value.type === 'upload_attachment') {
+    assertString(value.name, 'Attachment name'); assertString(value.contentType, 'Attachment content type');
+    if (!(value.data instanceof Uint8Array) || value.data.byteLength > 25 * 1024 * 1024) throw new Error('Attachment is invalid');
+    return;
+  }
+  if (value.type === 'link_preview') { assertString(value.url, 'Preview URL'); if (!/^https?:\/\//.test(value.url)) throw new Error('Preview URL is invalid'); return; }
+  if (value.type === 'load_asset') {
+    assertString(value.path, 'Asset path');
+    const asset = new URL(value.path, 'https://allchat.invalid');
+    if (asset.origin !== 'https://allchat.invalid' || !asset.pathname.startsWith('/api/v1/attachments/')) throw new Error('Asset path is invalid');
+    return;
+  }
   throw new Error('Unsupported Instance action');
 }
 

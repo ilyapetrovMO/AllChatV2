@@ -14,6 +14,8 @@ describe('desktop renderer bootstrap', () => {
           loginInstance: async () => ({ instances: [], activeInstanceId: null }),
           logoutInstance: async () => ({ instances: [], activeInstanceId: null }),
           loadInstance: async () => { throw new Error('not authenticated'); },
+          watchInstance: () => () => undefined,
+          executeInstance: async () => { throw new Error('not authenticated'); },
         }}
       />,
     );
@@ -41,6 +43,7 @@ describe('desktop renderer bootstrap', () => {
         loginInstance: async () => { throw new Error('unused'); },
         logoutInstance: async () => { throw new Error('unused'); },
         loadInstance: async () => ({
+          connection: 'online',
           version: 1,
           community: { name: 'Nora Community' },
           member: { id: 'me', username: 'nora', owner: false },
@@ -61,6 +64,8 @@ describe('desktop renderer bootstrap', () => {
           },
           media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1,
         }),
+        watchInstance: () => () => undefined,
+        executeInstance: async () => { throw new Error('unused'); },
       }} />,
     );
 

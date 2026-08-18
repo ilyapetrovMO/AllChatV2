@@ -6,6 +6,7 @@ import { DesktopAccountManager } from './desktop-account-manager';
 import { EncryptedFileCredentialVault } from './desktop-credential-vault';
 import { SQLiteInstanceProfileStore } from './instance-profile-store';
 import { InstanceCoordinator } from './instance-coordinator';
+import { SQLiteInstanceStateCache } from './instance-state-cache';
 import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation } from './window-policy';
 import {
@@ -40,7 +41,7 @@ async function start(): Promise<void> {
     decrypt: async (value) => (await safeStorage.decryptStringAsync(value)).result,
   });
   accounts = new DesktopAccountManager(registry, vault);
-  coordinator = new InstanceCoordinator(registry, vault);
+  coordinator = new InstanceCoordinator(registry, vault, fetch, new SQLiteInstanceStateCache(path.join(dataPath, 'desktop.db')));
   void accounts.validateStoredSessions();
   registerIpc();
   lockPermissions();
@@ -68,6 +69,7 @@ async function createMainWindow(): Promise<BrowserWindow> {
 }
 
 function registerIpc(): void {
+  const realtimeListeners = new Map<string, (state: import('../shared/instance-state').InstanceViewState) => void>();
   ipcMain.handle(IPC_CHANNELS.getShellState, () => registry.state());
   ipcMain.handle(IPC_CHANNELS.addInstance, (_event, input: AddInstanceInput) => {
     assertAddInstanceInput(input);
@@ -91,6 +93,28 @@ function registerIpc(): void {
     assertString(id, 'Instance identity');
     return coordinator.load(id);
   });
+  ipcMain.on(IPC_CHANNELS.watchInstance, (event, id: string) => {
+    assertString(id, 'Instance identity');
+    const key = `${event.sender.id}:${id}`;
+    const previous = realtimeListeners.get(key);
+    if (previous) coordinator.unwatch(id, previous);
+    const listener = (state: import('../shared/instance-state').InstanceViewState) => {
+      if (!event.sender.isDestroyed()) event.sender.send(IPC_CHANNELS.instanceStateChanged, id, state);
+    };
+    realtimeListeners.set(key, listener);
+    coordinator.watch(id, listener);
+  });
+  ipcMain.on(IPC_CHANNELS.unwatchInstance, (event, id: string) => {
+    const key = `${event.sender.id}:${id}`;
+    const listener = realtimeListeners.get(key);
+    if (listener) coordinator.unwatch(id, listener);
+    realtimeListeners.delete(key);
+  });
+  ipcMain.handle(IPC_CHANNELS.executeInstance, (_event, id: string, action: import('../shared/instance-actions').InstanceAction) => {
+    assertString(id, 'Instance identity');
+    assertInstanceAction(action);
+    return coordinator.execute(id, action);
+  });
 }
 
 function assertAddInstanceInput(value: AddInstanceInput): void {
@@ -109,6 +133,14 @@ function assertLoginInput(value: LoginInstanceInput): void {
 function assertString(value: unknown, label: string): asserts value is string {
   if (typeof value !== 'string' || !value.trim() || value.length > 2_048) {
     throw new Error(`${label} is invalid`);
+  }
+}
+
+function assertInstanceAction(value: import('../shared/instance-actions').InstanceAction): void {
+  if (!value || typeof value !== 'object' || value.type !== 'send_message') throw new Error('Invalid Instance action');
+  assertString(value.conversationId, 'Conversation identity');
+  if (typeof value.direct !== 'boolean' || typeof value.body !== 'string' || !value.body.trim() || value.body.length > 8_000) {
+    throw new Error('Message body is invalid');
   }
 }
 

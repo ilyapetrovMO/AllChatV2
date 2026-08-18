@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 
 import type { DesktopBridge, ShellState } from '../shared/desktop-bridge';
 import type { InstanceViewState } from '../shared/instance-state';
+import type { InstanceAction } from '../shared/instance-actions';
 
 export function App({ bridge }: { bridge: DesktopBridge }) {
   const [state, setState] = useState<ShellState | null>(null);
@@ -25,6 +26,11 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     });
     return () => { current = false; };
   }, [active?.id, active?.session?.sessionId, bridge]);
+
+  useEffect(() => {
+    if (!active?.session || !instanceState) return;
+    return bridge.watchInstance(active.id, setInstanceState);
+  }, [active?.id, active?.session?.sessionId, bridge, !!instanceState]);
 
   async function addInstance(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -53,6 +59,20 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
       }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not sign in.');
+    }
+  }
+
+  async function executeAction(action: InstanceAction): Promise<void> {
+    if (!active) return;
+    const result = await bridge.executeInstance(active.id, action);
+    if (result.type === 'message') {
+      setInstanceState((current) => current ? {
+        ...current,
+        messages: {
+          ...current.messages,
+          [result.message.channel_id]: mergeMessage(current.messages[result.message.channel_id] || [], result.message),
+        },
+      } : current);
     }
   }
 
@@ -99,7 +119,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             {error && <p role="alert">{error}</p>}
           </div>
         ) : instanceState ? (
-          <CommunityShell state={instanceState} />
+          <CommunityShell instanceId={active!.id} state={instanceState} onAction={executeAction} />
         ) : (
           <div className="empty-state"><p>Synchronizing {active?.displayName}…</p>{error && <p role="alert">{error}</p>}</div>
         )}
@@ -108,11 +128,24 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   );
 }
 
-function CommunityShell({ state }: { state: InstanceViewState }) {
+function CommunityShell({ instanceId, state, onAction }: { instanceId: string; state: InstanceViewState; onAction(action: InstanceAction): Promise<void> }) {
   const [conversation, setConversation] = useState<{ id: string; name: string; type: 'text' | 'voice' | 'dm' } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [draft, setDraft] = useState('');
   const categories = [...state.categories].filter(({ archived }) => !archived).sort(byPosition);
   const channels = [...state.channels].filter(({ archived }) => !archived);
+  useEffect(() => {
+    setDraft(conversation ? localStorage.getItem(draftKey(instanceId, conversation.id)) || '' : '');
+  }, [conversation?.id, instanceId]);
+
+  async function sendMessage(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (!conversation || conversation.type === 'voice' || !draft.trim()) return;
+    const body = draft;
+    await onAction({ type: 'send_message', conversationId: conversation.id, direct: conversation.type === 'dm', body });
+    setDraft('');
+    localStorage.removeItem(draftKey(instanceId, conversation.id));
+  }
   return (
     <div className="community-shell">
       <aside className="conversation-sidebar">
@@ -145,7 +178,7 @@ function CommunityShell({ state }: { state: InstanceViewState }) {
         </footer>
       </aside>
       <section className="conversation-content">
-        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1></header>
+        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1>{state.connection === 'offline' && <span className="offline-badge">Offline</span>}</header>
         {settingsOpen ? (
           <div className="settings-layout">
             <nav aria-label="User settings"><button aria-current="page">Profile</button><button>Voice &amp; Video</button><button>Notifications</button><button>Sessions</button></nav>
@@ -162,6 +195,13 @@ function CommunityShell({ state }: { state: InstanceViewState }) {
                   <div><strong>{message.author_name}</strong><time dateTime={message.created_at}>{formatMessageTime(message.created_at)}</time><p>{message.deleted ? 'Message deleted' : message.body}</p></div>
                 </article>
               ))}
+              <form className="message-composer" onSubmit={(event) => void sendMessage(event)}>
+                <textarea aria-label={`Message ${conversation.name}`} value={draft} onChange={(event) => {
+                  setDraft(event.target.value);
+                  localStorage.setItem(draftKey(instanceId, conversation.id), event.target.value);
+                }} />
+                <button type="submit" aria-label="Send Message">Send</button>
+              </form>
             </div>
           )
         ) : (
@@ -186,4 +226,12 @@ function byPosition<T extends { position: number }>(left: T, right: T): number {
 
 function formatMessageTime(value: string): string {
   return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(value));
+}
+
+function draftKey(instanceId: string, conversationId: string): string {
+  return `allchat:draft:${instanceId}:${conversationId}`;
+}
+
+function mergeMessage(messages: InstanceViewState['messages'][string], incoming: InstanceViewState['messages'][string][number]) {
+  return [...messages.filter(({ id }) => id !== incoming.id), incoming].sort((left, right) => left.sequence - right.sequence);
 }

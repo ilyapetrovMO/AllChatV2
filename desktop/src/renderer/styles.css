@@ -73,14 +73,18 @@ button { font: inherit; }
 .conversation-content { display: grid; grid-template-rows: 57px 1fr; min-width: 0; }
 .conversation-content > header { display: flex; align-items: center; padding: 0 22px; border-bottom: 1px solid #25293a; box-shadow: 0 1px 4px rgb(0 0 0 / 20%); }
 .conversation-content h1 { font-size: 16px; }
+.offline-badge { margin-left: auto; padding: 4px 8px; border-radius: 10px; color: #f6c96f; background: #382f1e; font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .welcome { align-self: center; justify-self: center; padding: 48px; text-align: center; }
 .welcome h2 { margin: 8px 0; font-size: 30px; }
 .welcome p:last-child { color: #aeb4c8; }
-.message-list { align-self: end; overflow: auto; padding: 24px 0; }
+.message-list { display: flex; flex-direction: column; align-self: stretch; overflow: auto; padding: 24px 0 0; }
 .message { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 12px; padding: 9px 24px; }
 .message:hover { background: rgb(255 255 255 / 2.5%); }
 .message time { margin-left: 8px; color: #777f95; font-size: 11px; }
 .message p { margin: 4px 0 0; color: #d9dcea; line-height: 1.45; overflow-wrap: anywhere; }
+.message-composer { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: auto 20px 20px; padding-top: 18px; }
+.message-composer textarea { min-height: 46px; max-height: 180px; resize: vertical; padding: 12px 14px; border: 1px solid #34394f; border-radius: 10px; color: white; background: #202432; }
+.message-composer button { align-self: end; min-height: 46px; padding: 0 18px; border: 0; border-radius: 9px; color: white; background: #5965f2; font-weight: 800; }
 .settings-layout { display: grid; grid-template-columns: 190px minmax(0, 560px); gap: 48px; align-content: start; padding: 48px; }
 .settings-layout nav { display: grid; align-content: start; gap: 4px; }
 .settings-layout nav button { padding: 10px 12px; border: 0; border-radius: 7px; color: #aeb4c8; background: transparent; text-align: left; }

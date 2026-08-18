@@ -52,6 +52,7 @@ export interface NotificationSetting {
 }
 
 export interface InstanceViewState {
+  connection: 'online' | 'offline';
   version: 1;
   community: { name: string };
   member: MemberSummary;

@@ -44,6 +44,8 @@ export interface DesktopBridge {
   loginInstance(input: LoginInstanceInput): Promise<ShellState>;
   logoutInstance(instanceId: string): Promise<ShellState>;
   loadInstance(instanceId: string): Promise<import('./instance-state').InstanceViewState>;
+  watchInstance(instanceId: string, listener: (state: import('./instance-state').InstanceViewState) => void): () => void;
+  executeInstance(instanceId: string, action: import('./instance-actions').InstanceAction): Promise<import('./instance-actions').InstanceActionResult>;
 }
 
 export const DESKTOP_BRIDGE_METHODS = [
@@ -53,6 +55,8 @@ export const DESKTOP_BRIDGE_METHODS = [
   'loginInstance',
   'logoutInstance',
   'loadInstance',
+  'watchInstance',
+  'executeInstance',
 ] as const satisfies readonly (keyof DesktopBridge)[];
 
 export const IPC_CHANNELS = {
@@ -62,6 +66,10 @@ export const IPC_CHANNELS = {
   loginInstance: 'allchat:instance:login',
   logoutInstance: 'allchat:instance:logout',
   loadInstance: 'allchat:instance:load',
+  watchInstance: 'allchat:instance:watch',
+  unwatchInstance: 'allchat:instance:unwatch',
+  instanceStateChanged: 'allchat:instance:state-changed',
+  executeInstance: 'allchat:instance:execute',
 } as const;
 
 export function isDesktopBridge(value: unknown): value is DesktopBridge {

@@ -201,7 +201,9 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
               void bridge.selectInstance(instance.id).then(setState)
             }
             aria-label={instance.displayName}
-            aria-current={instance.id === state.activeInstanceId ? "page" : undefined}
+            aria-current={
+              instance.id === state.activeInstanceId ? "page" : undefined
+            }
           >
             {instance.displayName.slice(0, 1).toUpperCase()}
           </button>
@@ -305,7 +307,8 @@ function CommunityShell({
     import("../shared/instance-state").SearchResult[] | null
   >(null);
   const [showPins, setShowPins] = useState(false);
-  const [membersOpen, setMembersOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(true);
+  const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<
     import("../shared/instance-actions").SessionInfo[] | null
@@ -382,9 +385,70 @@ function CommunityShell({
   return (
     <div className="community-shell">
       <aside className="conversation-sidebar">
-        <header className="community-header">
-          <strong>{state.community.name}</strong>
-        </header>
+        <div className="community-switcher">
+          <button
+            className="community-header"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={communityMenuOpen}
+            onClick={() => setCommunityMenuOpen((value) => !value)}
+          >
+            <strong>{state.community.name}</strong>
+            <Icon name="chevron-down" />
+          </button>
+          {communityMenuOpen && (
+            <nav className="community-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setConversation(null);
+                  setSettingsOpen(false);
+                  setCommunityMenuOpen(false);
+                }}
+              >
+                <Icon name="home" />
+                Community Home
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setConversation(null);
+                  setSettingsOpen(false);
+                  setCommunityMenuOpen(false);
+                }}
+              >
+                <Icon name="messages" />
+                Direct Messages
+              </button>
+              {state.member.owner && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setSettingsOpen(true);
+                    setCommunityMenuOpen(false);
+                  }}
+                >
+                  <Icon name="settings" />
+                  Community Settings
+                </button>
+              )}
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setCommunityMenuOpen(false);
+                }}
+              >
+                <Icon name="user" />
+                My Account
+              </button>
+            </nav>
+          )}
+        </div>
         <nav className="conversation-nav" aria-label="Community conversations">
           {state.direct_messages.length > 0 && <h2>Direct Messages</h2>}
           {state.direct_messages.map((dm) => (
@@ -401,9 +465,13 @@ function CommunityShell({
                 })
               }
             >
-              <span className="avatar">
-                {memberName(dm.other).slice(0, 1).toUpperCase()}
-              </span>
+              <AuthenticatedImage
+                path={dm.other.avatarUrl}
+                alt=""
+                className="avatar"
+                fallback={memberName(dm.other).slice(0, 1).toUpperCase()}
+                onAction={onAction}
+              />
               <span>{memberName(dm.other)}</span>
               {dm.unread > 0 && <span className="unread">{dm.unread}</span>}
             </button>
@@ -419,7 +487,9 @@ function CommunityShell({
                     type="button"
                     key={channel.id}
                     aria-label={channel.name}
-                    aria-current={conversation?.id === channel.id ? "page" : undefined}
+                    aria-current={
+                      conversation?.id === channel.id ? "page" : undefined
+                    }
                     onClick={() =>
                       setConversation({
                         id: channel.id,
@@ -428,9 +498,7 @@ function CommunityShell({
                       })
                     }
                   >
-                    <span aria-hidden="true">
-                      {channel.type === "voice" ? "◉" : "#"}
-                    </span>
+                    <Icon name={channel.type === "voice" ? "volume" : "hash"} />
                     <span>{channel.name}</span>
                   </button>
                 ))}
@@ -438,9 +506,13 @@ function CommunityShell({
           ))}
         </nav>
         <footer className="member-panel">
-          <span className="avatar">
-            {memberName(state.member).slice(0, 1).toUpperCase()}
-          </span>
+          <AuthenticatedImage
+            path={state.member.avatarUrl}
+            alt=""
+            className="avatar"
+            fallback={memberName(state.member).slice(0, 1).toUpperCase()}
+            onAction={onAction}
+          />
           <span>
             <strong>{memberName(state.member)}</strong>
             <small>@{state.member.username}</small>
@@ -450,7 +522,7 @@ function CommunityShell({
             aria-label="User Settings"
             onClick={() => setSettingsOpen(true)}
           >
-            ⚙
+            <Icon name="settings" />
           </button>
         </footer>
       </aside>
@@ -459,46 +531,55 @@ function CommunityShell({
           <h1>
             {settingsOpen ? "User Settings" : conversation?.name || "Home"}
           </h1>
-          <button
-            className="header-button"
-            type="button"
-            onClick={() => setMembersOpen((value) => !value)}
-          >
-            Members
-          </button>
-          {conversation?.type === "text" && (
+          <div className="header-actions">
+            {state.connection === "offline" && (
+              <span className="offline-badge">Offline</span>
+            )}
+            {conversation?.type === "text" && (
+              <button
+                className="header-button icon-button"
+                type="button"
+                aria-label="Pinned Messages"
+                title="Pinned Messages"
+                onClick={() => setShowPins((value) => !value)}
+              >
+                <Icon name="pin" />
+              </button>
+            )}
             <button
-              className="header-button"
+              className="header-button icon-button"
               type="button"
-              onClick={() => setShowPins((value) => !value)}
+              aria-label={membersOpen ? "Hide Members" : "Show Members"}
+              title="Members"
+              aria-pressed={membersOpen}
+              onClick={() => setMembersOpen((value) => !value)}
             >
-              Pinned Messages
+              <Icon name="users" />
             </button>
-          )}
-          <form
-            className="header-search"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const query = String(
-                new FormData(event.currentTarget).get("query") || "",
-              );
-              void onAction({ type: "search_messages", query }).then(
-                (result) => {
-                  if (result?.type === "search_results")
-                    setSearchResults(result.results);
-                },
-              );
-            }}
-          >
-            <input
-              name="query"
-              aria-label="Search Messages"
-              placeholder="Search"
-            />
-          </form>
-          {state.connection === "offline" && (
-            <span className="offline-badge">Offline</span>
-          )}
+            <form
+              className="header-search"
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const query = String(
+                  new FormData(event.currentTarget).get("query") || "",
+                );
+                void onAction({ type: "search_messages", query }).then(
+                  (result) => {
+                    if (result?.type === "search_results")
+                      setSearchResults(result.results);
+                  },
+                );
+              }}
+            >
+              <Icon name="search" />
+              <input
+                name="query"
+                aria-label="Search Messages"
+                placeholder="Search"
+              />
+            </form>
+          </div>
         </header>
         {settingsOpen ? (
           <div className="settings-layout">
@@ -687,9 +768,13 @@ function CommunityShell({
                 .filter((message) => !showPins || message.pinned)
                 .map((message) => (
                   <article className="message" key={message.id}>
-                    <span className="avatar">
-                      {message.author_name.slice(0, 1).toUpperCase()}
-                    </span>
+                    <AuthenticatedImage
+                      path={message.author_avatar_url}
+                      alt=""
+                      className="avatar"
+                      fallback={message.author_name.slice(0, 1).toUpperCase()}
+                      onAction={onAction}
+                    />
                     <div>
                       <strong>{message.author_name}</strong>
                       <time dateTime={message.created_at}>
@@ -846,7 +931,8 @@ function CommunityShell({
                   }}
                 />
                 <label className="attach-button">
-                  Attach
+                  <Icon name="paperclip" />
+                  <span className="sr-only">Attach</span>
                   <input
                     type="file"
                     multiple
@@ -861,7 +947,10 @@ function CommunityShell({
                     editingMessageId ? "Save Message" : "Send Message"
                   }
                 >
-                  {editingMessageId ? "Save" : "Send"}
+                  <Icon name="send" />
+                  <span className="sr-only">
+                    {editingMessageId ? "Save" : "Send"}
+                  </span>
                 </button>
                 {attachments.length > 0 && (
                   <small>
@@ -888,10 +977,19 @@ function CommunityShell({
               key={member.id}
               onClick={() => setSelectedMemberId(member.id)}
             >
-              <span
-                className={`presence-dot ${state.presence[member.id] || "offline"}`}
-              />
-              {memberName(member)}
+              <span className="member-directory-avatar">
+                <AuthenticatedImage
+                  path={member.avatarUrl}
+                  alt=""
+                  className="avatar"
+                  fallback={memberName(member).slice(0, 1).toUpperCase()}
+                  onAction={onAction}
+                />
+                <span
+                  className={`presence-dot ${state.presence[member.id] || "offline"}`}
+                />
+              </span>
+              <span>{memberName(member)}</span>
               <small>@{member.username}</small>
             </button>
           ))}
@@ -1107,15 +1205,106 @@ function AttachmentView({
   );
 }
 
+type IconName =
+  | "chevron-down"
+  | "hash"
+  | "home"
+  | "messages"
+  | "paperclip"
+  | "pin"
+  | "search"
+  | "send"
+  | "settings"
+  | "user"
+  | "users"
+  | "volume";
+
+function Icon({ name }: { name: IconName }) {
+  const paths = {
+    "chevron-down": <path d="m6 9 6 6 6-6" />,
+    hash: (
+      <>
+        <line x1="4" x2="20" y1="9" y2="9" />
+        <line x1="4" x2="20" y1="15" y2="15" />
+        <line x1="10" x2="8" y1="3" y2="21" />
+        <line x1="16" x2="14" y1="3" y2="21" />
+      </>
+    ),
+    home: (
+      <>
+        <path d="m3 11 9-8 9 8" />
+        <path d="M5 10v10h14V10" />
+        <path d="M9 20v-6h6v6" />
+      </>
+    ),
+    messages: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
+    paperclip: (
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    ),
+    pin: (
+      <>
+        <path d="M12 17v5" />
+        <path d="M5 17h14" />
+        <path d="m7 10 1-7h8l1 7" />
+        <path d="M5 17c0-3 2-5 2-7h10c0 2 2 4 2 7Z" />
+      </>
+    ),
+    search: (
+      <>
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </>
+    ),
+    send: (
+      <>
+        <path d="m22 2-7 20-4-9-9-4Z" />
+        <path d="M22 2 11 13" />
+      </>
+    ),
+    settings: (
+      <>
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    ),
+    user: (
+      <>
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </>
+    ),
+    users: (
+      <>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    ),
+    volume: (
+      <>
+        <path d="M11 5 6 9H2v6h4l5 4Z" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+      </>
+    ),
+  };
+  return (
+    <svg className="lucide-icon" data-lucide={name} viewBox="0 0 24 24" aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
+}
+
 function AuthenticatedImage({
   path,
   alt,
   className,
+  fallback,
   onAction,
 }: {
   path?: string;
   alt: string;
   className: string;
+  fallback?: string;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
 }) {
   const [source, setSource] = useState<string | null>(null);
@@ -1141,7 +1330,9 @@ function AuthenticatedImage({
   return source ? (
     <img src={source} alt={alt} className={className} />
   ) : (
-    <span className={className} aria-hidden="true" />
+    <span className={className} aria-hidden="true">
+      {fallback}
+    </span>
   );
 }
 

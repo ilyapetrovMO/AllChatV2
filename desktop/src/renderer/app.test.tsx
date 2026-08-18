@@ -73,6 +73,12 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.getAllByText('Nora Community')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'lobby' })).toBeVisible();
     expect(screen.getByText('@nora')).toBeVisible();
+    expect(screen.getByRole('complementary', { name: 'Members' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Hide Members' })).toBeVisible();
+    expect(document.querySelector('[data-lucide="users"]')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nora Community' }));
+    expect(screen.getByRole('menuitem', { name: 'Community Home' })).toBeVisible();
 
     fireEvent.click(screen.getByRole('button', { name: 'lobby' }));
     expect(screen.getByRole('heading', { name: 'lobby' })).toBeVisible();

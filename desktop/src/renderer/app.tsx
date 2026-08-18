@@ -191,7 +191,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     <main className="shell">
       <aside className="instance-rail" aria-label="Instances">
         <div className="brand-mark" aria-label="AllChat">
-          A
+          AC
         </div>
         {state?.instances.map((instance) => (
           <button
@@ -201,6 +201,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
               void bridge.selectInstance(instance.id).then(setState)
             }
             aria-label={instance.displayName}
+            aria-current={instance.id === state.activeInstanceId ? "page" : undefined}
           >
             {instance.displayName.slice(0, 1).toUpperCase()}
           </button>
@@ -391,6 +392,7 @@ function CommunityShell({
               type="button"
               key={dm.id}
               aria-label={memberName(dm.other)}
+              aria-current={conversation?.id === dm.id ? "page" : undefined}
               onClick={() =>
                 setConversation({
                   id: dm.id,
@@ -417,6 +419,7 @@ function CommunityShell({
                     type="button"
                     key={channel.id}
                     aria-label={channel.name}
+                    aria-current={conversation?.id === channel.id ? "page" : undefined}
                     onClick={() =>
                       setConversation({
                         id: channel.id,

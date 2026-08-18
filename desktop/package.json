@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron-forge start",
     "test": "vitest run",
+    "test:styles": "node scripts/check-renderer-styles.mjs",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && electron-forge package",
     "make": "npm run typecheck && electron-forge make"

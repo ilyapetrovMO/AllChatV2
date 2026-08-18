@@ -3,8 +3,8 @@ const { test, expect } = require('@playwright/test');
 test('web app exposes the chat bubble favicon', async ({request}) => {
   const response = await request.get('/favicon.ico');
   expect(response.status()).toBe(200);
-  expect(response.headers()['content-type']).toContain('image/svg+xml');
-  expect(await response.text()).toContain('stroke="#fff"');
+  expect(response.headers()['content-type']).toContain('image/png');
+  expect([...((await response.body()).subarray(0, 8))]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
 });
 
 test('terminal Voice Room failure releases the microphone', async ({ page }) => {

@@ -1070,12 +1070,12 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /dms/{dmID}/block", i.setDirectMessageBlockWeb)
 	mux.HandleFunc("POST /dms/{dmID}/unblock", i.setDirectMessageBlockWeb)
 	mux.HandleFunc("GET /favicon.ico", func(response http.ResponseWriter, _ *http.Request) {
-		icon, err := embeddedWeb.ReadFile("web/assets/favicon.svg")
+		icon, err := embeddedWeb.ReadFile("web/assets/favicon.png")
 		if err != nil {
 			http.Error(response, "favicon unavailable", http.StatusInternalServerError)
 			return
 		}
-		response.Header().Set("Content-Type", "image/svg+xml")
+		response.Header().Set("Content-Type", "image/png")
 		response.Header().Set("Cache-Control", "public, max-age=86400")
 		_, _ = response.Write(icon)
 	})
@@ -1093,7 +1093,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /manifest.webmanifest", func(response http.ResponseWriter, _ *http.Request) {
 		response.Header().Set("Content-Type", "application/manifest+json")
 		response.Header().Set("Cache-Control", "public, max-age=3600")
-		_, _ = response.Write([]byte(`{"id":"/","name":"AllChat","short_name":"AllChat","start_url":"/","scope":"/","display":"standalone","background_color":"#111214","theme_color":"#111214","icons":[{"src":"/favicon.ico","sizes":"any","type":"image/svg+xml"}]}`))
+		_, _ = response.Write([]byte(`{"id":"/","name":"AllChat","short_name":"AllChat","start_url":"/","scope":"/","display":"standalone","background_color":"#111214","theme_color":"#111214","icons":[{"src":"/assets/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/assets/icon-512.png","sizes":"512x512","type":"image/png"}]}`))
 	})
 	mux.Handle("GET /assets/", http.StripPrefix("/assets/", noCache(http.FileServerFS(mustSub(embeddedWeb, "web/assets")))))
 	mux.HandleFunc("GET /", i.homePage)

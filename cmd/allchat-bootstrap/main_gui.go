@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"image/color"
 	"net"
@@ -34,6 +35,9 @@ const (
 )
 
 type bootstrapTheme struct{ fyne.Theme }
+
+//go:embed assets/icon.png
+var bootstrapIcon []byte
 
 var (
 	graphiteSidebar = color.NRGBA{R: 43, G: 45, B: 49, A: 255} // #2b2d31
@@ -125,6 +129,7 @@ func featureRow(text string) fyne.CanvasObject {
 
 func main() {
 	a := app.NewWithID("org.allchat.bootstrap")
+	a.SetIcon(fyne.NewStaticResource("allchat.png", bootstrapIcon))
 	a.Settings().SetTheme(bootstrapTheme{})
 	w := a.NewWindow("AllChat Setup")
 	w.Resize(fyne.NewSize(980, 680))

@@ -12,6 +12,7 @@ export interface MemberSummary {
   username: string;
   displayName?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   owner: boolean;
 }
 

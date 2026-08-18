@@ -100,6 +100,17 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           ? { ...channel, read_sequence: result.sequence, unread: 0 }
           : channel),
       } : current);
+    } else if (result.type === 'member') {
+      setInstanceState((current) => current ? {
+        ...current,
+        member: current.member.id === result.member.id ? result.member : current.member,
+        members: current.members.map((member) => member.id === result.member.id ? result.member : member),
+      } : current);
+    } else if (result.type === 'direct_message') {
+      setInstanceState((current) => current ? {
+        ...current,
+        direct_messages: [result.directMessage, ...current.direct_messages.filter(({ id }) => id !== result.directMessage.id)],
+      } : current);
     }
     return result;
   }
@@ -165,6 +176,9 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
   const [attachments, setAttachments] = useState<File[]>([]);
   const [searchResults, setSearchResults] = useState<import('../shared/instance-state').SearchResult[] | null>(null);
   const [showPins, setShowPins] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<import('../shared/instance-actions').SessionInfo[] | null>(null);
   const lastTypingAt = useRef(0);
   const categories = [...state.categories].filter(({ archived }) => !archived).sort(byPosition);
   const channels = [...state.channels].filter(({ archived }) => !archived);
@@ -228,11 +242,11 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
         </footer>
       </aside>
       <section className="conversation-content">
-        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1>{conversation?.type === 'text' && <button className="header-button" type="button" onClick={() => setShowPins((value) => !value)}>Pinned Messages</button>}<form className="header-search" onSubmit={(event) => { event.preventDefault(); const query = String(new FormData(event.currentTarget).get('query') || ''); void onAction({ type: 'search_messages', query }).then((result) => { if (result?.type === 'search_results') setSearchResults(result.results); }); }}><input name="query" aria-label="Search Messages" placeholder="Search" /></form>{state.connection === 'offline' && <span className="offline-badge">Offline</span>}</header>
+        <header><h1>{settingsOpen ? 'User Settings' : conversation?.name || 'Home'}</h1><button className="header-button" type="button" onClick={() => setMembersOpen((value) => !value)}>Members</button>{conversation?.type === 'text' && <button className="header-button" type="button" onClick={() => setShowPins((value) => !value)}>Pinned Messages</button>}<form className="header-search" onSubmit={(event) => { event.preventDefault(); const query = String(new FormData(event.currentTarget).get('query') || ''); void onAction({ type: 'search_messages', query }).then((result) => { if (result?.type === 'search_results') setSearchResults(result.results); }); }}><input name="query" aria-label="Search Messages" placeholder="Search" /></form>{state.connection === 'offline' && <span className="offline-badge">Offline</span>}</header>
         {settingsOpen ? (
           <div className="settings-layout">
-            <nav aria-label="User settings"><button aria-current="page">Profile</button><button>Voice &amp; Video</button><button>Notifications</button><button>Sessions</button></nav>
-            <section><p className="eyebrow">Member settings</p><h2>Profile</h2><p>Signed in as @{state.member.username}</p></section>
+            <nav aria-label="User settings"><button aria-current="page">Profile</button><button>Voice &amp; Video</button><button>Notifications</button><button type="button" onClick={() => void onAction({ type: 'list_sessions' }).then((result) => { if (result?.type === 'sessions') setSessions(result.sessions); })}>Sessions</button></nav>
+            <section><p className="eyebrow">Member settings</p><h2>Profile</h2><ProfileImages member={state.member} onAction={onAction} /><form className="profile-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: 'update_profile', username: String(data.get('username') || ''), displayName: String(data.get('displayName') || '') }); }}><label>Username<input name="username" defaultValue={state.member.username} required /></label><label>Display Name<input name="displayName" defaultValue={state.member.displayName || ''} /></label><button type="submit">Save Profile</button></form><div className="presence-controls"><strong>Presence</strong><button type="button" onClick={() => void onAction({ type: 'set_presence', mode: 'available' })}>Online</button><button type="button" onClick={() => void onAction({ type: 'set_presence', mode: 'dnd' })}>Do Not Disturb</button></div>{sessions && <section className="session-list"><h3>Sessions</h3>{sessions.map((session) => <article key={session.id}><span><strong>{session.device}</strong><small>{session.current ? 'Current Session' : `Active ${session.last_activity}`}</small></span>{!session.current && <button type="button" onClick={() => void onAction({ type: 'revoke_session', sessionId: session.id }).then(() => setSessions((current) => current?.filter(({ id }) => id !== session.id) || null))}>Revoke</button>}</article>)}</section>}</section>
           </div>
         ) : searchResults ? (
           <div className="search-results"><h2>Search Results</h2><button type="button" onClick={() => setSearchResults(null)}>Close Search</button>{searchResults.length ? searchResults.map((result) => <article key={result.message.id}><strong>#{result.channel_name} · {result.message.author_name}</strong><p>{result.snippet}</p></article>) : <p>No results found.</p>}</div>
@@ -275,6 +289,7 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
           </div>
         )}
       </section>
+      {membersOpen && <aside className="member-directory" aria-label="Members"><h2>Members</h2>{state.members.map((member) => <button type="button" key={member.id} onClick={() => setSelectedMemberId(member.id)}><span className={`presence-dot ${state.presence[member.id] || 'offline'}`} />{memberName(member)}<small>@{member.username}</small></button>)}{selectedMemberId && (() => { const member = state.members.find(({ id }) => id === selectedMemberId); if (!member) return null; const dm = state.direct_messages.find(({ other }) => other.id === member.id); return <section className="member-card"><AuthenticatedImage path={member.bannerUrl} alt="" className="member-banner" onAction={onAction} /><AuthenticatedImage path={member.avatarUrl} alt="" className="member-card-avatar" onAction={onAction} /><h3>{memberName(member)}</h3><p>@{member.username}</p>{member.id !== state.member.id && <><button type="button" onClick={() => void onAction({ type: 'open_dm', memberId: member.id }).then((result) => { if (result?.type === 'direct_message') { setConversation({ id: result.directMessage.id, name: memberName(result.directMessage.other), type: 'dm' }); setMembersOpen(false); } })}>Message</button><button className="danger-button" type="button" onClick={() => void onAction({ type: 'set_block', memberId: member.id, blocked: !dm?.blocked_by_me })}>{dm?.blocked_by_me ? 'Unblock' : 'Block'}</button></>}</section>; })()}</aside>}
     </div>
   );
 }
@@ -347,4 +362,28 @@ function AttachmentView({ attachment, onAction }: { attachment: Attachment; onAc
       {objectUrl && <a href={objectUrl} download={attachment.name}>Download</a>}
     </figure>
   );
+}
+
+function AuthenticatedImage({ path, alt, className, onAction }: { path?: string; alt: string; className: string; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
+  const [source, setSource] = useState<string | null>(null);
+  useEffect(() => {
+    if (!path) { setSource(null); return; }
+    let current = true;
+    let url: string | null = null;
+    void onAction({ type: 'load_asset', path }).then((result) => {
+      if (!current || result?.type !== 'asset') return;
+      url = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
+      setSource(url);
+    });
+    return () => { current = false; if (url) URL.revokeObjectURL(url); };
+  }, [path]);
+  return source ? <img src={source} alt={alt} className={className} /> : <span className={className} aria-hidden="true" />;
+}
+
+function ProfileImages({ member, onAction }: { member: InstanceViewState['member']; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
+  async function upload(kind: 'avatar' | 'banner', file?: File): Promise<void> {
+    if (!file) return;
+    await onAction({ type: 'update_profile_image', kind, contentType: file.type || 'application/octet-stream', data: new Uint8Array(await file.arrayBuffer()) });
+  }
+  return <div className="profile-images"><AuthenticatedImage path={member.bannerUrl} alt="Profile banner" className="profile-banner" onAction={onAction} /><AuthenticatedImage path={member.avatarUrl} alt="Profile avatar" className="profile-avatar" onAction={onAction} /><label>Avatar<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void upload('avatar', event.target.files?.[0])} /></label><button type="button" onClick={() => void onAction({ type: 'remove_profile_image', kind: 'avatar' })}>Remove Avatar</button><label>Banner<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void upload('banner', event.target.files?.[0])} /></label><button type="button" onClick={() => void onAction({ type: 'remove_profile_image', kind: 'banner' })}>Remove Banner</button></div>;
 }

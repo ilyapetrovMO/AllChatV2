@@ -1,4 +1,7 @@
-import type { Attachment, Message, SearchResult } from './instance-state';
+import type { MemberSummary } from './desktop-bridge';
+import type { Attachment, DirectMessage, Message, SearchResult } from './instance-state';
+
+export interface SessionInfo { id: string; device: string; created_at: string; last_activity: string; current: boolean }
 
 export type InstanceAction =
   | { type: 'load_messages'; conversationId: string; direct: boolean; before?: number; limit?: number }
@@ -13,7 +16,15 @@ export type InstanceAction =
   | { type: 'search_messages'; query: string; cursor?: string }
   | { type: 'upload_attachment'; name: string; contentType: string; data: Uint8Array }
   | { type: 'link_preview'; url: string }
-  | { type: 'load_asset'; path: string };
+  | { type: 'load_asset'; path: string }
+  | { type: 'update_profile'; username: string; displayName: string }
+  | { type: 'update_profile_image'; kind: 'avatar' | 'banner'; contentType: string; data: Uint8Array }
+  | { type: 'remove_profile_image'; kind: 'avatar' | 'banner' }
+  | { type: 'set_presence'; mode: 'available' | 'dnd' }
+  | { type: 'open_dm'; memberId: string }
+  | { type: 'set_block'; memberId: string; blocked: boolean }
+  | { type: 'list_sessions' }
+  | { type: 'revoke_session'; sessionId: string };
 
 export type MessagePage = { messages: Message[]; has_more: boolean; next_before: number };
 
@@ -26,4 +37,7 @@ export type InstanceActionResult =
   | { type: 'search_results'; results: SearchResult[]; nextCursor?: string }
   | { type: 'link_preview'; preview: { url: string; site_name?: string; title?: string; description?: string; image_url?: string } }
   | { type: 'asset'; contentType: string; data: Uint8Array }
+  | { type: 'member'; member: MemberSummary }
+  | { type: 'direct_message'; directMessage: DirectMessage }
+  | { type: 'sessions'; sessions: SessionInfo[] }
   | { type: 'accepted' };

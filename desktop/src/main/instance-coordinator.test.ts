@@ -98,4 +98,27 @@ describe('InstanceCoordinator', () => {
       body: JSON.stringify({ emoji: '👍' }),
     });
   });
+
+  it('updates the Member profile through the authenticated action interface', async () => {
+    const registry = new InstanceRegistry(() => 'home');
+    registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    registry.setSession('home', 'desktop-session:home', {
+      member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z',
+    });
+    const vault = new MemoryDesktopCredentialVault();
+    await vault.put('desktop-session:home', 'token');
+    const request = vi.fn(async () => new Response(JSON.stringify({
+      id: 'me', username: 'nora', display_name: 'Nora', owner: false,
+    }), { status: 200 }));
+
+    const result = await new InstanceCoordinator(registry, vault, request).execute('home', {
+      type: 'update_profile', username: 'nora', displayName: 'Nora',
+    });
+
+    expect(result).toEqual({ type: 'member', member: { id: 'me', username: 'nora', displayName: 'Nora', owner: false } });
+    expect(request).toHaveBeenCalledWith('https://chat.example/api/v1/profile', {
+      method: 'PATCH', headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'nora', display_name: 'Nora' }),
+    });
+  });
 });

@@ -180,9 +180,22 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'load_asset') {
     assertString(value.path, 'Asset path');
     const asset = new URL(value.path, 'https://allchat.invalid');
-    if (asset.origin !== 'https://allchat.invalid' || !asset.pathname.startsWith('/api/v1/attachments/')) throw new Error('Asset path is invalid');
+    const allowed = asset.pathname.startsWith('/api/v1/attachments/') || /^\/api\/v1\/members\/[^/]+\/(avatar|banner)$/.test(asset.pathname);
+    if (asset.origin !== 'https://allchat.invalid' || !allowed) throw new Error('Asset path is invalid');
     return;
   }
+  if (value.type === 'update_profile') { assertString(value.username, 'Username'); if (typeof value.displayName !== 'string' || value.displayName.length > 80) throw new Error('Display Name is invalid'); return; }
+  if (value.type === 'update_profile_image') {
+    if (value.kind !== 'avatar' && value.kind !== 'banner') throw new Error('Profile image kind is invalid');
+    assertString(value.contentType, 'Profile image content type');
+    if (!(value.data instanceof Uint8Array) || value.data.byteLength < 1 || value.data.byteLength > 8 * 1024 * 1024) throw new Error('Profile image is invalid');
+    return;
+  }
+  if (value.type === 'remove_profile_image') { if (value.kind !== 'avatar' && value.kind !== 'banner') throw new Error('Profile image kind is invalid'); return; }
+  if (value.type === 'set_presence') { if (value.mode !== 'available' && value.mode !== 'dnd') throw new Error('Presence mode is invalid'); return; }
+  if (value.type === 'open_dm' || value.type === 'set_block') { assertString(value.memberId, 'Member identity'); if (value.type === 'set_block' && typeof value.blocked !== 'boolean') throw new Error('Block state is invalid'); return; }
+  if (value.type === 'list_sessions') return;
+  if (value.type === 'revoke_session') { assertString(value.sessionId, 'Session identity'); return; }
   throw new Error('Unsupported Instance action');
 }
 

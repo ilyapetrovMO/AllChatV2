@@ -180,6 +180,60 @@ export class InstanceCoordinator {
         data: new Uint8Array(await response.arrayBuffer()),
       };
     }
+    if (action.type === 'update_profile') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/profile`, {
+        method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: action.username, display_name: action.displayName }),
+      });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isMember(body)) throw new Error(readError(body, 'Could not update the profile.'));
+      return { type: 'member', member: normalizeMember(body) };
+    }
+    if (action.type === 'update_profile_image') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/profile/${action.kind}`, {
+        method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': action.contentType },
+        body: Buffer.from(action.data) as unknown as BodyInit,
+      });
+      if (!response.ok) throw new Error(`Could not update the ${action.kind}.`);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'remove_profile_image') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/profile/${action.kind}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error(`Could not remove the ${action.kind}.`);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'set_presence') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/presence-mode`, {
+        method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: action.mode }),
+      });
+      if (!response.ok) throw new Error('Could not update Presence.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'open_dm') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/dms`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ member_id: action.memberId }),
+      });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isDirectMessage(body)) throw new Error(readError(body, 'Could not open the Direct Message.'));
+      return { type: 'direct_message', directMessage: { ...body, other: normalizeMember(body.other) } };
+    }
+    if (action.type === 'set_block') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/blocks/${encodeURIComponent(action.memberId)}`, { method: action.blocked ? 'PUT' : 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error(`Could not ${action.blocked ? 'Block' : 'Unblock'} the Member.`);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'list_sessions') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/sessions`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const sessions = body && typeof body === 'object' && 'sessions' in body ? (body as { sessions?: unknown }).sessions : undefined;
+      if (!response.ok || !Array.isArray(sessions)) throw new Error(readError(body, 'Could not load Sessions.'));
+      return { type: 'sessions', sessions: sessions as import('../shared/instance-actions').SessionInfo[] };
+    }
+    if (action.type === 'revoke_session') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/sessions/${encodeURIComponent(action.sessionId)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Could not revoke the Session.');
+      return { type: 'accepted' };
+    }
     throw new Error('Unsupported Instance action.');
   }
 
@@ -271,6 +325,14 @@ function isLinkPreview(value: unknown): value is { url: string; site_name?: stri
   return !!value && typeof value === 'object' && typeof (value as { url?: unknown }).url === 'string';
 }
 
+function isMember(value: unknown): value is import('../shared/desktop-bridge').MemberSummary {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' && typeof (value as { username?: unknown }).username === 'string' && typeof (value as { owner?: unknown }).owner === 'boolean';
+}
+
+function isDirectMessage(value: unknown): value is import('../shared/instance-state').DirectMessage {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' && isMember((value as { other?: unknown }).other);
+}
+
 function isInstanceViewState(value: unknown): value is InstanceViewState {
   if (!value || typeof value !== 'object') return false;
   const state = value as Partial<InstanceViewState>;
@@ -296,10 +358,13 @@ function normalizeMember(member: InstanceViewState['member']): InstanceViewState
   const source = member as InstanceViewState['member'] & {
     display_name?: string;
     avatar_url?: string;
+    banner_url?: string;
   };
+  const { display_name: _displayName, avatar_url: _avatarUrl, banner_url: _bannerUrl, ...normalized } = source;
   return {
-    ...source,
+    ...normalized,
     ...(source.display_name ? { displayName: source.display_name } : {}),
     ...(source.avatar_url ? { avatarUrl: source.avatar_url } : {}),
+    ...(source.banner_url ? { bannerUrl: source.banner_url } : {}),
   };
 }

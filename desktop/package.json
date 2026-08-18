@@ -2,7 +2,6 @@
   "name": "@allchat/desktop",
   "version": "0.1.0-canary.0",
   "private": true,
-  "type": "module",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",

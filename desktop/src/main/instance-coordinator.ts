@@ -234,6 +234,50 @@ export class InstanceCoordinator {
       if (!response.ok) throw new Error('Could not revoke the Session.');
       return { type: 'accepted' };
     }
+    if (action.type === 'create_report') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/reports', 'POST', { target_member_id: action.targetMemberId || '', target_message_id: action.targetMessageId || '', reason: action.reason });
+      if (!response.ok || !isReport(response.body)) throw new Error(readError(response.body, 'Could not submit the Report.'));
+      return { type: 'report', report: response.body };
+    }
+    if (action.type === 'list_reports') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/reports`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const reports = body && typeof body === 'object' && 'reports' in body ? (body as { reports?: unknown }).reports : undefined;
+      if (!response.ok || !Array.isArray(reports) || !reports.every(isReport)) throw new Error(readError(body, 'Could not load Reports.'));
+      return { type: 'reports', reports };
+    }
+    if (action.type === 'resolve_report') {
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/reports/${encodeURIComponent(action.reportId)}/resolve`, 'POST', { outcome: action.outcome });
+      if (!response.ok || !isReport(response.body)) throw new Error(readError(response.body, 'Could not resolve the Report.'));
+      return { type: 'report', report: response.body };
+    }
+    if (action.type === 'list_moderation_records') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/moderation-records`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const records = body && typeof body === 'object' && 'records' in body ? (body as { records?: unknown }).records : undefined;
+      if (!response.ok || !Array.isArray(records)) throw new Error(readError(body, 'Could not load Moderation Records.'));
+      return { type: 'moderation_records', records: records as import('../shared/instance-actions').ModerationRecord[] };
+    }
+    if (action.type === 'purge_moderation_records') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/moderation-records/purge', 'POST', { before: action.before });
+      if (!response.ok || !response.body || typeof response.body !== 'object') throw new Error(readError(response.body, 'Could not purge Moderation Records.'));
+      return { type: 'moderation_record', record: response.body as import('../shared/instance-actions').ModerationRecord };
+    }
+    if (action.type === 'moderate') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/moderation-actions', 'POST', { action: action.action, target_member_id: action.targetMemberId || '', target_message_id: action.targetMessageId || '', invitation_id: action.invitationId || '', reason: action.reason, duration_minutes: action.durationMinutes || 0 });
+      if (!response.ok || !response.body || typeof response.body !== 'object') throw new Error(readError(response.body, 'Could not apply the moderation action.'));
+      return { type: 'moderation_record', record: response.body as import('../shared/instance-actions').ModerationRecord };
+    }
+    if (action.type === 'export_account') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/account/export`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Could not export the Account.');
+      return { type: 'asset', contentType: 'application/json', data: new Uint8Array(await response.arrayBuffer()) };
+    }
+    if (action.type === 'delete_account') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/account/delete', 'POST', { password: action.password, confirmation: action.confirmation });
+      if (!response.ok) throw new Error(readError(response.body, 'Could not delete the Account.'));
+      return { type: 'account_deleted' };
+    }
     throw new Error('Unsupported Instance action.');
   }
 
@@ -285,6 +329,11 @@ export class InstanceCoordinator {
     return token;
   }
 
+  private async jsonRequest(baseUrl: string, token: string, path: string, method: string, value: unknown): Promise<{ ok: boolean; body: unknown }> {
+    const response = await this.request(`${baseUrl}${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+    return { ok: response.ok, body: await response.json().catch(() => undefined) };
+  }
+
   private publish(instanceId: string, state: InstanceViewState): void {
     this.#listeners.get(instanceId)?.forEach((listener) => listener(state));
   }
@@ -331,6 +380,10 @@ function isMember(value: unknown): value is import('../shared/desktop-bridge').M
 
 function isDirectMessage(value: unknown): value is import('../shared/instance-state').DirectMessage {
   return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' && isMember((value as { other?: unknown }).other);
+}
+
+function isReport(value: unknown): value is import('../shared/instance-actions').Report {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' && typeof (value as { reason?: unknown }).reason === 'string' && typeof (value as { status?: unknown }).status === 'string';
 }
 
 function isInstanceViewState(value: unknown): value is InstanceViewState {

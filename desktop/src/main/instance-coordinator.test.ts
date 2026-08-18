@@ -121,4 +121,17 @@ describe('InstanceCoordinator', () => {
       body: JSON.stringify({ username: 'nora', display_name: 'Nora' }),
     });
   });
+
+  it('submits a Report through the authenticated safety interface', async () => {
+    const registry = new InstanceRegistry(() => 'home');
+    registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
+    const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home', 'token');
+    const request = vi.fn(async () => new Response(JSON.stringify({ id: 'report-1', reporter_id: 'me', target_member_id: 'other', reason: 'spam', status: 'open', created_at: '2026-08-18T10:00:00Z' }), { status: 201 }));
+
+    const result = await new InstanceCoordinator(registry, vault, request).execute('home', { type: 'create_report', targetMemberId: 'other', reason: 'spam' });
+
+    expect(result.type).toBe('report');
+    expect(request).toHaveBeenCalledWith('https://chat.example/api/v1/reports', { method: 'POST', headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' }, body: JSON.stringify({ target_member_id: 'other', target_message_id: '', reason: 'spam' }) });
+  });
 });

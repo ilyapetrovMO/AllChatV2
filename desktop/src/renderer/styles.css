@@ -148,3 +148,13 @@ button { font: inherit; }
 .member-card p { margin: 2px 0 12px; color: #9299ad; }
 .member-card button { margin-right: 6px; }
 .member-card .danger-button { background: #a93d49; }
+.safety-panel { display: grid; gap: 14px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #34394f; }
+.safety-panel form { display: grid; gap: 10px; }
+.safety-panel label { display: grid; gap: 5px; color: #aeb4c8; font-size: 12px; }
+.safety-panel input, .safety-panel select, .safety-panel textarea { padding: 9px; border: 1px solid #34394f; border-radius: 6px; color: white; background: #191d2a; }
+.safety-panel button { width: fit-content; padding: 8px 12px; border: 0; border-radius: 6px; color: white; background: #5965f2; }
+.report-list article, .safety-panel details article { padding: 10px 0; border-bottom: 1px solid #292d3d; }
+.report-list p, .safety-panel details p { margin: 3px 0; color: #aeb4c8; }
+.danger-zone { margin-top: 8px; padding: 14px; border: 1px solid #74333c; border-radius: 8px; }
+.danger-zone h4 { margin: 0; color: #ff8b97; }
+.danger-zone button { background: #a93d49; }

@@ -196,7 +196,29 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'open_dm' || value.type === 'set_block') { assertString(value.memberId, 'Member identity'); if (value.type === 'set_block' && typeof value.blocked !== 'boolean') throw new Error('Block state is invalid'); return; }
   if (value.type === 'list_sessions') return;
   if (value.type === 'revoke_session') { assertString(value.sessionId, 'Session identity'); return; }
+  if (value.type === 'create_report') {
+    if ((value.targetMemberId ? 1 : 0) + (value.targetMessageId ? 1 : 0) !== 1) throw new Error('Report target is invalid');
+    if (value.targetMemberId) assertString(value.targetMemberId, 'Member identity');
+    if (value.targetMessageId) assertString(value.targetMessageId, 'Message identity');
+    assertBoundedText(value.reason, 'Report reason', 3, 1_000); return;
+  }
+  if (value.type === 'list_reports' || value.type === 'list_moderation_records' || value.type === 'export_account') return;
+  if (value.type === 'purge_moderation_records') { assertString(value.before, 'Moderation cutoff'); if (Number.isNaN(Date.parse(value.before))) throw new Error('Moderation cutoff is invalid'); return; }
+  if (value.type === 'resolve_report') { assertString(value.reportId, 'Report identity'); assertBoundedText(value.outcome, 'Report outcome', 3, 1_000); return; }
+  if (value.type === 'moderate') {
+    assertString(value.action, 'Moderation action'); assertBoundedText(value.reason, 'Moderation reason', 3, 1_000);
+    if (value.targetMemberId) assertString(value.targetMemberId, 'Member identity');
+    if (value.targetMessageId) assertString(value.targetMessageId, 'Message identity');
+    if (value.invitationId) assertString(value.invitationId, 'Invitation identity');
+    if (value.durationMinutes !== undefined && (!Number.isInteger(value.durationMinutes) || value.durationMinutes < 0 || value.durationMinutes > 525_600)) throw new Error('Moderation duration is invalid');
+    return;
+  }
+  if (value.type === 'delete_account') { assertString(value.password, 'Password'); if (value.confirmation !== 'DELETE') throw new Error('Account deletion confirmation is invalid'); return; }
   throw new Error('Unsupported Instance action');
+}
+
+function assertBoundedText(value: unknown, label: string, minimum: number, maximum: number): asserts value is string {
+  if (typeof value !== 'string' || value.trim().length < minimum || value.length > maximum) throw new Error(`${label} is invalid`);
 }
 
 function lockPermissions(): void {

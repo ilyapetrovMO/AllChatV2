@@ -8,6 +8,8 @@ describe('DesktopBridge', () => {
       'getShellState',
       'addInstance',
       'selectInstance',
+      'loginInstance',
+      'logoutInstance',
     ]);
   });
 
@@ -16,6 +18,8 @@ describe('DesktopBridge', () => {
       getShellState: async () => ({ instances: [], activeInstanceId: null }),
       addInstance: async () => undefined,
       selectInstance: async () => undefined,
+      loginInstance: async () => ({ instances: [], activeInstanceId: null }),
+      logoutInstance: async () => ({ instances: [], activeInstanceId: null }),
     };
 
     expect(isDesktopBridge(valid)).toBe(true);

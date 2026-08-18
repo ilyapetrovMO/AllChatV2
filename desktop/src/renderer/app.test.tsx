@@ -9,8 +9,10 @@ describe('desktop renderer bootstrap', () => {
       <App
         bridge={{
           getShellState: async () => ({ instances: [], activeInstanceId: null }),
-          addInstance: async () => undefined,
-          selectInstance: async () => undefined,
+          addInstance: async () => ({ instances: [], activeInstanceId: null }),
+          selectInstance: async () => ({ instances: [], activeInstanceId: null }),
+          loginInstance: async () => ({ instances: [], activeInstanceId: null }),
+          logoutInstance: async () => ({ instances: [], activeInstanceId: null }),
         }}
       />,
     );

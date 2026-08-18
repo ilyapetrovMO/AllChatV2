@@ -42,4 +42,16 @@ button { font: inherit; }
   background: #5965f2;
   font-weight: 700;
 }
+.onboarding-form { display: grid; gap: 14px; margin-top: 24px; text-align: left; }
+.onboarding-form label { display: grid; gap: 7px; color: #d8dbea; font-size: 13px; font-weight: 700; }
+.onboarding-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #34394f;
+  border-radius: 9px;
+  color: #f7f8fc;
+  background: #171a27;
+  outline: none;
+}
+.onboarding-form input:focus { border-color: #7180ff; box-shadow: 0 0 0 3px rgb(89 101 242 / 18%); }
 .eyebrow { color: #8d95ff !important; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }

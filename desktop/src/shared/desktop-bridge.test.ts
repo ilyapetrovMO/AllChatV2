@@ -10,6 +10,7 @@ describe('DesktopBridge', () => {
       'selectInstance',
       'loginInstance',
       'logoutInstance',
+      'loadInstance',
     ]);
   });
 
@@ -20,6 +21,7 @@ describe('DesktopBridge', () => {
       selectInstance: async () => undefined,
       loginInstance: async () => ({ instances: [], activeInstanceId: null }),
       logoutInstance: async () => ({ instances: [], activeInstanceId: null }),
+      loadInstance: async () => { throw new Error('not authenticated'); },
     };
 
     expect(isDesktopBridge(valid)).toBe(true);

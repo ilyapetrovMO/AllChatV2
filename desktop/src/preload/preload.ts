@@ -14,6 +14,7 @@ const bridge: DesktopBridge = Object.freeze({
   selectInstance: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.selectInstance, id),
   loginInstance: (input: LoginInstanceInput) => ipcRenderer.invoke(IPC_CHANNELS.loginInstance, input),
   logoutInstance: (instanceId: string) => ipcRenderer.invoke(IPC_CHANNELS.logoutInstance, instanceId),
+  loadInstance: (instanceId: string) => ipcRenderer.invoke(IPC_CHANNELS.loadInstance, instanceId),
 });
 
 contextBridge.exposeInMainWorld('allchatDesktop', bridge);

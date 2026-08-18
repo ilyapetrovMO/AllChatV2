@@ -5,6 +5,7 @@ import { app, BrowserWindow, ipcMain, safeStorage, session } from 'electron';
 import { DesktopAccountManager } from './desktop-account-manager';
 import { EncryptedFileCredentialVault } from './desktop-credential-vault';
 import { SQLiteInstanceProfileStore } from './instance-profile-store';
+import { InstanceCoordinator } from './instance-coordinator';
 import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation } from './window-policy';
 import {
@@ -18,6 +19,7 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 
 let registry: InstanceRegistry;
 let accounts: DesktopAccountManager;
+let coordinator: InstanceCoordinator;
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -38,6 +40,7 @@ async function start(): Promise<void> {
     decrypt: async (value) => (await safeStorage.decryptStringAsync(value)).result,
   });
   accounts = new DesktopAccountManager(registry, vault);
+  coordinator = new InstanceCoordinator(registry, vault);
   void accounts.validateStoredSessions();
   registerIpc();
   lockPermissions();
@@ -83,6 +86,10 @@ function registerIpc(): void {
   ipcMain.handle(IPC_CHANNELS.logoutInstance, (_event, id: string) => {
     assertString(id, 'Instance identity');
     return accounts.logout(id);
+  });
+  ipcMain.handle(IPC_CHANNELS.loadInstance, (_event, id: string) => {
+    assertString(id, 'Instance identity');
+    return coordinator.load(id);
   });
 }
 

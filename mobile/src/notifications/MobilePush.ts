@@ -17,8 +17,17 @@ export async function currentMobilePushRegistration(instanceURL: string): Promis
 
 export async function syncMobilePush(account: InstanceAccount): Promise<void> {
   const registration = await currentMobilePushRegistration(account.instance_url);
-  if (!registration) return;
-  await new AllChatClient(account.instance_url).registerMobilePush(account.session_token, registration);
+  if (!registration) {
+    console.warn('[AllChatPush] Mobile push registration is unavailable');
+    return;
+  }
+  try {
+    await new AllChatClient(account.instance_url).registerMobilePush(account.session_token, registration);
+    console.info('[AllChatPush] Mobile push subscription registered');
+  } catch (error) {
+    console.warn('[AllChatPush] Mobile push subscription registration failed', error);
+    throw error;
+  }
 }
 
 export async function removeMobilePush(account: InstanceAccount): Promise<void> {

@@ -1,11 +1,28 @@
 package instance
 
 import (
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestDecodeWebPushSubscriptionAcceptsFirefoxExpirationTime(t *testing.T) {
+	request := httptest.NewRequest("PUT", "/api/v1/web-push/subscription", strings.NewReader(`{
+		"endpoint":"https://updates.push.services.mozilla.com/wpush/v2/id",
+		"expirationTime":null,
+		"keys":{"auth":"auth-value","p256dh":"p256dh-value"}
+	}`))
+
+	subscription, err := decodeWebPushSubscription(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if subscription.Endpoint != "https://updates.push.services.mozilla.com/wpush/v2/id" || subscription.Keys.Auth != "auth-value" || subscription.Keys.P256dh != "p256dh-value" {
+		t.Fatalf("unexpected subscription: %#v", subscription)
+	}
+}
 
 func TestWebPushKeysAreGeneratedOnceAndKeptPrivate(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "web-push-vapid.json")

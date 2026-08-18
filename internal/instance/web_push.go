@@ -269,6 +269,18 @@ func validSubscriptionKey(value string, expectedLength int) bool {
 	return err == nil && len(decoded) == expectedLength
 }
 
+func decodeWebPushSubscription(request *http.Request) (webpush.Subscription, error) {
+	var input struct {
+		Endpoint       string          `json:"endpoint"`
+		ExpirationTime json.RawMessage `json:"expirationTime"`
+		Keys           webpush.Keys    `json:"keys"`
+	}
+	if err := decodeJSON(request, &input); err != nil {
+		return webpush.Subscription{}, err
+	}
+	return webpush.Subscription{Endpoint: input.Endpoint, Keys: input.Keys}, nil
+}
+
 func (i *Instance) webPushConfigAPI(response http.ResponseWriter, request *http.Request) {
 	if _, _, ok := i.authenticated(response, request); !ok {
 		return
@@ -281,13 +293,13 @@ func (i *Instance) webPushSubscriptionAPI(response http.ResponseWriter, request 
 	if !ok {
 		return
 	}
-	var subscription webpush.Subscription
-	if decodeJSON(request, &subscription) != nil || !validWebPushEndpoint(subscription.Endpoint) || !validSubscriptionKey(subscription.Keys.Auth, 16) || !validSubscriptionKey(subscription.Keys.P256dh, 65) {
+	subscription, err := decodeWebPushSubscription(request)
+	if err != nil || !validWebPushEndpoint(subscription.Endpoint) || !validSubscriptionKey(subscription.Keys.Auth, 16) || !validSubscriptionKey(subscription.Keys.P256dh, 65) {
 		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "invalid Web Push subscription"})
 		return
 	}
 	tokenHash := sha256.Sum256([]byte(sessionToken))
-	_, err := i.db.ExecContext(request.Context(), `INSERT INTO web_push_subscriptions(endpoint,member_id,session_id,p256dh,auth,created_at)
+	_, err = i.db.ExecContext(request.Context(), `INSERT INTO web_push_subscriptions(endpoint,member_id,session_id,p256dh,auth,created_at)
 		SELECT ?,?,session_id,?,?,? FROM sessions WHERE token_hash=? AND member_id=? AND revoked_at IS NULL
 		ON CONFLICT(endpoint) DO UPDATE SET member_id=excluded.member_id,session_id=excluded.session_id,p256dh=excluded.p256dh,auth=excluded.auth,created_at=excluded.created_at`,
 		subscription.Endpoint, member.ID, subscription.Keys.P256dh, subscription.Keys.Auth, time.Now().UTC().Format(time.RFC3339Nano), tokenHash[:], member.ID)

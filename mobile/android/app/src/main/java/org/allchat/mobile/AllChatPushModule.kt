@@ -4,6 +4,7 @@ import android.app.Application
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -14,6 +15,7 @@ import com.google.firebase.FirebaseOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.spec.MGF1ParameterSpec
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -38,6 +40,7 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
           promise.reject("push_token_unavailable", task.exception ?: IllegalStateException("FCM token unavailable"))
           return@addOnCompleteListener
         }
+        Log.i(TAG, "FCM registration available; project_id=${BuildConfig.ALLCHAT_FIREBASE_PROJECT_ID} token_fingerprint=${fingerprint(task.result)}")
         val value = WritableNativeMap()
         value.putString("platform", "android")
         value.putString("token", task.result)
@@ -50,6 +53,7 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
   }
 
   companion object {
+    private const val TAG = "AllChatPush"
     private const val KEY_ALIAS = "allchat_mobile_push_v1"
     private const val LABEL = "allchat-mobile-push-v1"
 
@@ -94,5 +98,9 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
 
     private fun encode(value: ByteArray): String = Base64.encodeToString(value, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
     private fun decode(value: String): ByteArray = Base64.decode(value, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+    private fun fingerprint(value: String): String = MessageDigest.getInstance("SHA-256")
+      .digest(value.toByteArray(Charsets.UTF_8))
+      .take(12)
+      .joinToString("") { "%02x".format(it) }
   }
 }

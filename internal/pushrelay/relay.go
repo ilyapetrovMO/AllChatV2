@@ -19,6 +19,7 @@ type PushJob struct {
 	Token      string `json:"token"`
 	Payload    string `json:"payload"`
 	CollapseID string `json:"collapse_id,omitempty"`
+	RequestID  string `json:"-"`
 }
 
 type Sender interface {
@@ -93,6 +94,10 @@ func (r *Relay) push(response http.ResponseWriter, request *http.Request) {
 		writeError(response, http.StatusBadRequest, err.Error())
 		return
 	}
+	job.RequestID = request.Header.Get(HeaderRequestID)
+	if !validRequestID(job.RequestID) {
+		job.RequestID = NewRequestID()
+	}
 	r.queueMu.RLock()
 	if r.closed {
 		r.queueMu.RUnlock()
@@ -102,6 +107,7 @@ func (r *Relay) push(response http.ResponseWriter, request *http.Request) {
 	select {
 	case r.queue <- job:
 		r.accepted.Add(1)
+		r.logger.Info("push request accepted", "request_id", job.RequestID, "platform", job.Platform, "kind", normalizedKind(job.Kind), "token_fingerprint", TokenFingerprint(job.Token), "queue_depth", len(r.queue))
 		r.queueMu.RUnlock()
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusAccepted)
@@ -134,15 +140,17 @@ func validateJob(job PushJob) error {
 func (r *Relay) work() {
 	defer r.workers.Done()
 	for job := range r.queue {
+		started := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		err := r.sender.Send(ctx, job)
 		cancel()
 		if err != nil {
 			r.failed.Add(1)
-			r.logger.Error("push delivery failed", "platform", job.Platform, "kind", normalizedKind(job.Kind), "reason", err.Error())
+			r.logger.Error("push delivery failed", "request_id", job.RequestID, "platform", job.Platform, "kind", normalizedKind(job.Kind), "token_fingerprint", TokenFingerprint(job.Token), "duration_ms", time.Since(started).Milliseconds(), "reason", err.Error())
 			continue
 		}
 		r.delivered.Add(1)
+		r.logger.Info("push delivered", "request_id", job.RequestID, "platform", job.Platform, "kind", normalizedKind(job.Kind), "token_fingerprint", TokenFingerprint(job.Token), "duration_ms", time.Since(started).Milliseconds())
 	}
 }
 

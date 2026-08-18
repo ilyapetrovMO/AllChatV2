@@ -66,7 +66,7 @@ func run(ctx context.Context, args []string, logger *slog.Logger) error {
 		if err != nil {
 			return fmt.Errorf("ALLCHAT_RELAY_PUBLIC_KEYS: %w", err)
 		}
-		authorization = pushrelay.Verifier{Keys: keys, MaxSkew: 5 * time.Minute}
+		authorization = pushrelay.Verifier{Keys: keys, MaxSkew: 5 * time.Minute, Logger: logger}
 	}
 
 	// Provider clients are constructed exactly once and shared by every worker.

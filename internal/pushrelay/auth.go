@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ type Verifier struct {
 	Keys    map[string]ed25519.PublicKey
 	MaxSkew time.Duration
 	Now     func() time.Time
+	Logger  *slog.Logger
 }
 
 func (v Verifier) Middleware(next http.Handler) http.Handler {
@@ -37,6 +39,15 @@ func (v Verifier) Middleware(next http.Handler) http.Handler {
 		request.Body.Close()
 		request.Body = io.NopCloser(bytes.NewReader(body))
 		if err := v.Verify(request, body); err != nil {
+			logger := v.Logger
+			if logger == nil {
+				logger = slog.Default()
+			}
+			attributes := []any{"reason", err.Error()}
+			if requestID := request.Header.Get(HeaderRequestID); validRequestID(requestID) {
+				attributes = append(attributes, "request_id", requestID)
+			}
+			logger.Warn("push request authorization rejected", attributes...)
 			writeError(response, http.StatusUnauthorized, "invalid request signature")
 			return
 		}

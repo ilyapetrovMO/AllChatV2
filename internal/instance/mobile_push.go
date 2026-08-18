@@ -189,13 +189,16 @@ func (service *mobilePushService) deliver(ctx context.Context, event mobilePushE
 			mentioned[mention.MemberID] = true
 		}
 	}
+	skippedPolicy, skippedPermission, invalidEncryption, attempted, accepted := 0, 0, 0, 0, 0
 	for _, subscription := range subscriptions {
 		if event.Kind == "message" && !shouldSendMobilePush(subscription, mentioned[subscription.MemberID]) {
+			skippedPolicy++
 			continue
 		}
 		if event.Kind == "message" {
 			allowed, permissionErr := service.community.CanUseChannel(ctx, subscription.MemberID, event.ChannelID, community.PermissionViewChannels, true)
 			if permissionErr != nil || !allowed {
+				skippedPermission++
 				continue
 			}
 		}
@@ -224,14 +227,22 @@ func (service *mobilePushService) deliver(ctx context.Context, event mobilePushE
 		}
 		encrypted, encryptErr := encryptMobilePushPayload(subscription.PublicKey, payload)
 		if encryptErr != nil {
-			service.logger.Warn("invalid mobile push encryption key", "member_id", subscription.MemberID)
+			invalidEncryption++
+			service.logger.Warn("invalid mobile push encryption key", "kind", event.Kind, "platform", subscription.Platform, "token_fingerprint", pushrelay.TokenFingerprint(subscription.Token))
 			continue
 		}
 		job := pushrelay.PushJob{Platform: subscription.Platform, Kind: event.Kind, Token: subscription.Token, Payload: encrypted, CollapseID: event.ChannelID}
-		if err := service.send(ctx, relayURL, job); err != nil {
-			service.logger.Warn("mobile push relay rejected request", "kind", event.Kind, "status", err)
+		requestID := pushrelay.NewRequestID()
+		attempted++
+		started := time.Now()
+		if err := service.send(ctx, relayURL, requestID, job); err != nil {
+			service.logger.Warn("mobile push relay rejected request", "request_id", requestID, "kind", event.Kind, "platform", subscription.Platform, "token_fingerprint", pushrelay.TokenFingerprint(subscription.Token), "duration_ms", time.Since(started).Milliseconds(), "status", err)
+		} else {
+			accepted++
+			service.logger.Info("mobile push relay accepted request", "request_id", requestID, "kind", event.Kind, "platform", subscription.Platform, "token_fingerprint", pushrelay.TokenFingerprint(subscription.Token), "duration_ms", time.Since(started).Milliseconds())
 		}
 	}
+	service.logger.Info("mobile push event evaluated", "kind", event.Kind, "candidate_subscriptions", len(subscriptions), "attempted", attempted, "accepted", accepted, "skipped_policy", skippedPolicy, "skipped_permission", skippedPermission, "invalid_encryption", invalidEncryption)
 	return nil
 }
 
@@ -328,13 +339,14 @@ func encryptMobilePushPayload(encodedPublicKey string, payload any) (string, err
 	return base64.RawURLEncoding.EncodeToString(envelope), nil
 }
 
-func (service *mobilePushService) send(ctx context.Context, relayURL string, job pushrelay.PushJob) error {
+func (service *mobilePushService) send(ctx context.Context, relayURL, requestID string, job pushrelay.PushJob) error {
 	body, _ := json.Marshal(job)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, relayURL+"/api/v1/push", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set(pushrelay.HeaderRequestID, requestID)
 	pushrelay.SignRequest(request, body, service.keyID, service.privateKey, time.Now())
 	response, err := service.client.Do(request)
 	if err != nil {
@@ -393,6 +405,7 @@ func (i *Instance) mobilePushSubscriptionAPI(response http.ResponseWriter, reque
 		writeJSON(response, http.StatusUnauthorized, map[string]string{"error": "Session is no longer active"})
 		return
 	}
+	i.logger.Info("mobile push subscription registered", "platform", input.Platform, "token_fingerprint", pushrelay.TokenFingerprint(input.Token))
 	response.WriteHeader(http.StatusNoContent)
 }
 
@@ -413,5 +426,6 @@ func (i *Instance) deleteMobilePushSubscriptionAPI(response http.ResponseWriter,
 		writeJSON(response, http.StatusInternalServerError, map[string]string{"error": "could not remove mobile push subscription"})
 		return
 	}
+	i.logger.Info("mobile push subscription removed", "token_fingerprint", pushrelay.TokenFingerprint(input.Token))
 	response.WriteHeader(http.StatusNoContent)
 }

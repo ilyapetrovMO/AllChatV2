@@ -111,4 +111,9 @@ The relay returns `202` after enqueueing, not after provider delivery. A full
 queue returns `503` immediately so instances can retry with jitter. Malformed
 and oversized requests never enter the queue; unsigned requests are accepted
 only in explicitly enabled public mode. Delivery logs include
-only platform, notification kind, and a normalized provider error category.
+only a correlation ID, platform, notification kind, duration, a truncated
+SHA-256 fingerprint of the high-entropy provider token, and a normalized
+provider result. Instance logs use the same correlation ID and fingerprint, so
+an accepted request can be followed through asynchronous provider delivery
+without recording raw tokens, notification payloads, Messages, encryption
+material, authentication headers, or Firebase credentials.

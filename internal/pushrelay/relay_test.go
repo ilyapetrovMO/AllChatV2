@@ -19,6 +19,13 @@ type blockingSender struct {
 	count   atomic.Int32
 }
 
+type capturingSender struct{ jobs chan PushJob }
+
+func (sender capturingSender) Send(_ context.Context, job PushJob) error {
+	sender.jobs <- job
+	return nil
+}
+
 func (sender *blockingSender) Send(context.Context, PushJob) error {
 	sender.count.Add(1)
 	select {
@@ -86,6 +93,29 @@ func TestRelayRejectsUnsignedAndTrailingJSON(t *testing.T) {
 	}
 
 	close(sender.release)
+	relay.Drain()
+}
+
+func TestRelayPropagatesSafeRequestID(t *testing.T) {
+	publicKey, privateKey, _ := ed25519.GenerateKey(nil)
+	sender := capturingSender{jobs: make(chan PushJob, 1)}
+	relay, _ := New(sender, slog.New(slog.NewTextHandler(io.Discard, nil)), 1, 1)
+	handler := relay.Handler(Verifier{Keys: map[string]ed25519.PublicKey{"test": publicKey}, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))})
+
+	body := []byte(validPushJSON)
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/push", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set(HeaderRequestID, "0123456789abcdef")
+	SignRequest(request, body, "test", privateKey, time.Now())
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("status = %d", response.Code)
+	}
+	job := <-sender.jobs
+	if job.RequestID != "0123456789abcdef" {
+		t.Fatalf("request ID = %q", job.RequestID)
+	}
 	relay.Drain()
 }
 

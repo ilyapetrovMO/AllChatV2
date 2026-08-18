@@ -2,19 +2,26 @@ import type { InstanceViewState } from '../shared/instance-state';
 import type { DesktopCredentialVault } from './desktop-credential-vault';
 import type { InstanceRegistry } from './instance-registry';
 import { MemoryInstanceStateCache, type InstanceStateCache } from './instance-state-cache';
-import { RealtimeConnection } from './realtime-connection';
+import { RealtimeConnection, type RealtimeConnectionOptions } from './realtime-connection';
 import { reduceRealtimeFrame } from '../shared/realtime-state';
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
+import { MemoryAssetCache, type AssetCache, type CachedAsset } from './asset-cache';
+
+const ASSET_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
+interface RealtimeDriver { start(): void; stop(): void; sendTyping(conversationId: string): void }
 
 export class InstanceCoordinator {
   readonly #states = new Map<string, InstanceViewState>();
   readonly #listeners = new Map<string, Set<(state: InstanceViewState) => void>>();
-  readonly #connections = new Map<string, RealtimeConnection>();
+  readonly #connections = new Map<string, RealtimeDriver>();
+  readonly #assetLoads = new Map<string, Promise<InstanceActionResult>>();
   constructor(
     private readonly registry: InstanceRegistry,
     private readonly vault: DesktopCredentialVault,
     private readonly request: typeof fetch = fetch,
     private readonly cache: InstanceStateCache = new MemoryInstanceStateCache(),
+    private readonly assetCache: AssetCache = new MemoryAssetCache(),
+    private readonly createRealtime: (options: RealtimeConnectionOptions) => RealtimeDriver = (options) => new RealtimeConnection(options),
   ) {}
 
   async load(instanceId: string): Promise<InstanceViewState> {
@@ -69,13 +76,14 @@ export class InstanceCoordinator {
     if (action.type === 'load_messages') {
       const query = new URLSearchParams({ limit: String(action.limit || 50) });
       if (action.before) query.set('before', String(action.before));
+      if (action.after) query.set('after', String(action.after));
       const kind = action.direct ? 'dms' : 'channels';
       const response = await this.request(`${profile.baseUrl}/api/v1/${kind}/${encodeURIComponent(action.conversationId)}/messages?${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const body: unknown = await response.json().catch(() => undefined);
       if (!response.ok || !isMessagePage(body)) throw new Error(readError(body, 'Could not load Messages.'));
-      return { type: 'messages', conversationId: action.conversationId, page: body };
+      return { type: 'messages', conversationId: action.conversationId, direction: action.after ? 'newer' : 'older', page: body };
     }
     if (action.type === 'send_message') {
       const kind = action.direct ? 'dms' : 'channels';
@@ -129,6 +137,22 @@ export class InstanceCoordinator {
         body: JSON.stringify({ emoji: action.emoji }),
       });
       if (!response.ok) throw new Error('Could not update the Reaction.');
+      const current = this.#states.get(instanceId);
+      if (current) {
+        const state = {
+          ...current,
+          messages: Object.fromEntries(Object.entries(current.messages).map(([conversationId, messages]) => [
+            conversationId,
+            messages.map((message) => message.id === action.messageId ? {
+              ...message,
+              reactions: updateReaction(message.reactions || [], action.emoji, action.active),
+            } : message),
+          ])),
+        };
+        this.#states.set(instanceId, state);
+        this.cache.put(instanceId, state);
+        this.publish(instanceId, state);
+      }
       return { type: 'accepted' };
     }
     if (action.type === 'set_pinned') {
@@ -138,12 +162,30 @@ export class InstanceCoordinator {
       if (!response.ok) throw new Error('Could not update the Pinned Message.');
       return { type: 'accepted' };
     }
+    if (action.type === 'set_community_notifications') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/notification-settings`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level: action.level, muted: action.muted, sound_enabled: action.soundEnabled }),
+      });
+      if (!response.ok) throw new Error('Could not update notification settings.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'set_channel_notifications') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/channels/${encodeURIComponent(action.channelId)}/notification-settings`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level: action.level, muted: action.muted }),
+      });
+      if (!response.ok) throw new Error('Could not update conversation notification settings.');
+      return { type: 'accepted' };
+    }
     if (action.type === 'list_pins') {
       const response = await this.request(`${profile.baseUrl}/api/v1/channels/${encodeURIComponent(action.channelId)}/pins`, { headers: { Authorization: `Bearer ${token}` } });
       const body: unknown = await response.json().catch(() => undefined);
       const messages = body && typeof body === 'object' && 'messages' in body ? (body as { messages?: unknown }).messages : undefined;
       if (!response.ok || !Array.isArray(messages) || !messages.every(isMessage)) throw new Error('Could not load Pinned Messages.');
-      return { type: 'messages', conversationId: action.channelId, page: { messages, has_more: false, next_before: 0 } };
+      return { type: 'messages', conversationId: action.channelId, direction: 'older', page: { messages, has_more: false, next_before: 0 } };
     }
     if (action.type === 'search_messages') {
       const query = new URLSearchParams({ q: action.query, limit: '25' });
@@ -166,19 +208,42 @@ export class InstanceCoordinator {
       const query = new URLSearchParams({ url: action.url });
       const response = await this.request(`${profile.baseUrl}/api/v1/link-preview?${query}`, { headers: { Authorization: `Bearer ${token}` } });
       const body: unknown = await response.json().catch(() => undefined);
+      if ([400, 422, 502].includes(response.status)) return { type: 'accepted' };
       if (!response.ok || !isLinkPreview(body)) throw new Error('Link preview unavailable.');
       return { type: 'link_preview', preview: body };
     }
     if (action.type === 'load_asset') {
-      const response = await this.request(new URL(action.path, profile.baseUrl), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Could not load the Attachment.');
-      return {
-        type: 'asset',
-        contentType: response.headers.get('Content-Type') || 'application/octet-stream',
-        data: new Uint8Array(await response.arrayBuffer()),
-      };
+      const assetUrl = new URL(action.path, profile.baseUrl);
+      const cacheable = /^\/api\/v1\/members\/[^/]+\/(avatar|banner)$/.test(assetUrl.pathname) ||
+        /^\/api\/v1\/attachments\/[^/]+(?:\/preview)?$/.test(assetUrl.pathname);
+      const cacheKey = `${assetUrl.pathname}${assetUrl.search}`;
+      const cached = cacheable ? this.assetCache.get(instanceId, cacheKey) : null;
+      if (cached && Date.now() - cached.cachedAt < ASSET_CACHE_MAX_AGE_MS) return assetResult(cached);
+      const pendingKey = `${instanceId}:${cacheKey}`;
+      const pending = this.#assetLoads.get(pendingKey);
+      if (pending) return pending;
+      const load = (async (): Promise<InstanceActionResult> => {
+        try {
+          const response = await this.request(assetUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok) throw new Error('Could not load the Attachment.');
+          const asset: CachedAsset = {
+            contentType: response.headers.get('Content-Type') || 'application/octet-stream',
+            data: new Uint8Array(await response.arrayBuffer()),
+            cachedAt: Date.now(),
+          };
+          if (cacheable) this.assetCache.put(instanceId, cacheKey, asset);
+          return assetResult(asset);
+        } catch (error) {
+          if (cached) return assetResult(cached);
+          throw error;
+        } finally {
+          this.#assetLoads.delete(pendingKey);
+        }
+      })();
+      this.#assetLoads.set(pendingKey, load);
+      return load;
     }
     if (action.type === 'update_profile') {
       const response = await this.request(`${profile.baseUrl}/api/v1/profile`, {
@@ -195,11 +260,13 @@ export class InstanceCoordinator {
         body: Buffer.from(action.data) as unknown as BodyInit,
       });
       if (!response.ok) throw new Error(`Could not update the ${action.kind}.`);
+      this.assetCache.clearInstance(instanceId);
       return { type: 'accepted' };
     }
     if (action.type === 'remove_profile_image') {
       const response = await this.request(`${profile.baseUrl}/api/v1/profile/${action.kind}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) throw new Error(`Could not remove the ${action.kind}.`);
+      this.assetCache.clearInstance(instanceId);
       return { type: 'accepted' };
     }
     if (action.type === 'set_presence') {
@@ -228,6 +295,159 @@ export class InstanceCoordinator {
       const sessions = body && typeof body === 'object' && 'sessions' in body ? (body as { sessions?: unknown }).sessions : undefined;
       if (!response.ok || !Array.isArray(sessions)) throw new Error(readError(body, 'Could not load Sessions.'));
       return { type: 'sessions', sessions: sessions as import('../shared/instance-actions').SessionInfo[] };
+    }
+    if (action.type === 'list_voice_participants') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/voice/${encodeURIComponent(action.channelId)}/participants`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const participants = body && typeof body === 'object' && 'participants' in body ? (body as { participants?: unknown }).participants : undefined;
+      if (!response.ok || !Array.isArray(participants)) throw new Error(readError(body, 'Could not load Voice participants.'));
+      return { type: 'voice_participants', channelId: action.channelId, participants: participants as import('../shared/instance-actions').VoiceParticipant[] };
+    }
+    if (action.type === 'moderate_voice_participant') {
+      const suffix = action.action === 'disconnect' ? 'disconnect' : 'mute';
+      const response = await this.request(`${profile.baseUrl}/api/v1/media/rooms/${encodeURIComponent(action.roomId)}/participants/${encodeURIComponent(action.memberId)}/${suffix}`, {
+        method: action.action === 'unmute' ? 'DELETE' : action.action === 'mute' ? 'PUT' : 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        ...(action.action === 'disconnect' ? { body: JSON.stringify({ reason: 'Removed by a Community moderator.' }) } : {}),
+      });
+      if (!response.ok) throw new Error('Could not update Voice participant.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'admin_dashboard') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/admin/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isAdminDashboard(body)) throw new Error(readError(body, 'Could not load the Admin Dashboard.'));
+      return { type: 'admin_dashboard', dashboard: body };
+    }
+    if (action.type === 'list_roles') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/roles`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const roles = body && typeof body === 'object' ? (body as { roles?: unknown }).roles : undefined;
+      if (!response.ok || !Array.isArray(roles) || !roles.every(isCommunityRole)) throw new Error(readError(body, 'Could not load Roles.'));
+      return { type: 'roles', roles };
+    }
+    if (action.type === 'create_role') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/roles', 'POST', { name: action.name, position: action.position, permissions: action.permissions });
+      if (!response.ok || !isCommunityRole(response.body)) throw new Error(readError(response.body, 'Could not create the Role.'));
+      return { type: 'role', role: response.body };
+    }
+    if (action.type === 'update_role') {
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/roles/${encodeURIComponent(action.roleId)}`, 'PATCH', { name: action.name, position: action.position, permissions: action.permissions });
+      if (!response.ok || !isCommunityRole(response.body)) throw new Error(readError(response.body, 'Could not update the Role.'));
+      return { type: 'role', role: response.body };
+    }
+    if (action.type === 'retire_role') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/roles/${encodeURIComponent(action.roleId)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Could not retire the Role.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'list_invitations') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/invitations`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const invitations = body && typeof body === 'object' ? (body as { invitations?: unknown }).invitations : undefined;
+      if (!response.ok || !Array.isArray(invitations) || !invitations.every(isCommunityInvitation)) throw new Error(readError(body, 'Could not load Invitations.'));
+      return { type: 'invitations', invitations };
+    }
+    if (action.type === 'create_invitation') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/invitations', 'POST', { expires_in_minutes: action.expiresInMinutes, max_uses: action.maxUses });
+      if (!response.ok || !isCommunityInvitation(response.body)) throw new Error(readError(response.body, 'Could not create the Invitation.'));
+      return { type: 'invitation', invitation: response.body };
+    }
+    if (action.type === 'revoke_invitation') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/invitations/${encodeURIComponent(action.invitationId)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Could not revoke the Invitation.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'create_category') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/categories', 'POST', { name: action.name, position: action.position });
+      if (!response.ok || !isCategory(response.body)) throw new Error(readError(response.body, 'Could not create the Category.'));
+      return { type: 'category', category: response.body };
+    }
+    if (action.type === 'create_channel') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/channels', 'POST', { category_id: action.categoryId, name: action.name, type: action.channelType, position: action.position });
+      if (!response.ok || !isChannel(response.body)) throw new Error(readError(response.body, 'Could not create the Channel.'));
+      return { type: 'channel', channel: response.body };
+    }
+    if (action.type === 'set_channel_archived') {
+      const operation = action.archived ? 'archive' : 'restore';
+      const response = await this.request(`${profile.baseUrl}/api/v1/channels/${encodeURIComponent(action.channelId)}/${operation}`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error(`Could not ${operation} the Channel.`);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'update_channel') {
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/channels/${encodeURIComponent(action.channelId)}`, 'PATCH', { category_id: action.categoryId, name: action.name, type: action.channelType, position: action.position });
+      if (!response.ok || !isChannel(response.body)) throw new Error(readError(response.body, 'Could not update the Channel.'));
+      return { type: 'channel', channel: response.body };
+    }
+    if (action.type === 'set_channel_override') {
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/channels/${encodeURIComponent(action.channelId)}/overrides`, 'PUT', { role_id: action.roleId, permission: action.permission, effect: action.effect });
+      if (!response.ok) throw new Error(readError(response.body, 'Could not update Channel permissions.'));
+      return { type: 'accepted' };
+    }
+    if (action.type === 'delete_channel') {
+      const prepared = await this.request(`${profile.baseUrl}/api/v1/channels/${encodeURIComponent(action.channelId)}/deletion-confirmation`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await prepared.json().catch(() => undefined);
+      const confirmation = body && typeof body === 'object' ? (body as { confirmation_token?: unknown }).confirmation_token : undefined;
+      if (!prepared.ok || typeof confirmation !== 'string') throw new Error(readError(body, 'Could not prepare Channel deletion.'));
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/channels/${encodeURIComponent(action.channelId)}`, 'DELETE', { confirmation_token: confirmation });
+      if (!response.ok) throw new Error(readError(response.body, 'Could not delete the Channel.'));
+      return { type: 'accepted' };
+    }
+    if (action.type === 'list_soundboard') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/soundboard`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const value = body as { sounds?: unknown; settings?: { max_duration_ms?: unknown }; can_manage?: unknown } | undefined;
+      if (!response.ok || !value || !Array.isArray(value.sounds) || !value.sounds.every(isSoundboardSound) || typeof value.settings?.max_duration_ms !== 'number') throw new Error(readError(body, 'Could not load the Soundboard.'));
+      return { type: 'soundboard', sounds: value.sounds, maxDurationMs: value.settings.max_duration_ms, canManage: value.can_manage === true };
+    }
+    if (action.type === 'upload_sound') {
+      const form = new FormData();
+      form.set('name', action.name);
+      form.set('emoji', action.emoji);
+      form.set('position', String(action.position));
+      form.set('file', new Blob([action.data as BlobPart], { type: action.contentType }), action.name);
+      const response = await this.request(`${profile.baseUrl}/api/v1/soundboard`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isSoundboardSound(body)) throw new Error(readError(body, 'Could not upload the Sound.'));
+      return { type: 'sound', sound: body };
+    }
+    if (action.type === 'update_sound') {
+      const response = await this.jsonRequest(profile.baseUrl, token, `/api/v1/soundboard/${encodeURIComponent(action.soundId)}`, 'PATCH', { name: action.name, emoji: action.emoji, position: action.position });
+      if (!response.ok || !isSoundboardSound(response.body)) throw new Error(readError(response.body, 'Could not update the Sound.'));
+      return { type: 'sound', sound: response.body };
+    }
+    if (action.type === 'delete_sound') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/soundboard/${encodeURIComponent(action.soundId)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Could not delete the Sound.');
+      return { type: 'accepted' };
+    }
+    if (action.type === 'set_soundboard_limit') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/soundboard/settings', 'PUT', { max_duration_ms: action.maxDurationMs });
+      if (!response.ok) throw new Error(readError(response.body, 'Could not save Soundboard settings.'));
+      return { type: 'accepted' };
+    }
+    if (action.type === 'get_community_settings') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/admin/settings`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const settings = normalizeCommunitySettings(body);
+      if (!response.ok || !settings) {
+        const serverError = readError(body, '');
+        if (serverError) throw new Error(serverError);
+        throw new Error(responseDiagnostic(response, 'Community settings API'));
+      }
+      return { type: 'community_settings', settings };
+    }
+    if (action.type === 'update_community_settings') {
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/admin/settings', 'PUT', { max_attachment_mib: action.maxAttachmentMiB, home_markdown: action.homeMarkdown, push_relay_url: action.pushRelayURL });
+      if (!response.ok || !isCommunitySettings(response.body)) throw new Error(readError(response.body, 'Could not save Community settings.'));
+      return { type: 'community_settings', settings: response.body };
+    }
+    if (action.type === 'community_home') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/community-home`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      const markdown = body && typeof body === 'object' ? (body as { markdown?: unknown }).markdown : undefined;
+      if (!response.ok || typeof markdown !== 'string') throw new Error(readError(body, 'Could not load the Community Guide.'));
+      return { type: 'community_home', markdown };
     }
     if (action.type === 'revoke_session') {
       const response = await this.request(`${profile.baseUrl}/api/v1/sessions/${encodeURIComponent(action.sessionId)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
@@ -278,6 +498,35 @@ export class InstanceCoordinator {
       if (!response.ok) throw new Error(readError(response.body, 'Could not delete the Account.'));
       return { type: 'account_deleted' };
     }
+    if (action.type === 'current_call') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/calls/current`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.status === 204) return { type: 'call', call: null };
+      const call = await response.json().catch(() => undefined);
+      if (!response.ok || !isDirectCall(call)) throw new Error('Could not load the current Call.');
+      return { type: 'call', call };
+    }
+    if (action.type === 'start_call') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/dms/${encodeURIComponent(action.directMessageId)}/calls`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      const call = await response.json().catch(() => undefined);
+      if (!response.ok || !isDirectCall(call)) throw new Error(readError(call, 'Could not start the Call.'));
+      return { type: 'call', call };
+    }
+    if (action.type === 'call_action') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/calls/${encodeURIComponent(action.callId)}/${action.action}`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      const call = await response.json().catch(() => undefined);
+      if (!response.ok || !isDirectCall(call)) throw new Error(readError(call, `Could not ${action.action} the Call.`));
+      return { type: 'call', call };
+    }
+    if (action.type === 'turn_credentials') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/turn-credentials`, { headers: { Authorization: `Bearer ${token}` } });
+      const body = await response.json().catch(() => undefined) as { ice_servers?: unknown } | undefined;
+      if (!response.ok || !body || !Array.isArray(body.ice_servers)) throw new Error('TURN credentials unavailable.');
+      return { type: 'turn_credentials', iceServers: body.ice_servers as RTCIceServer[] };
+    }
     throw new Error('Unsupported Instance action.');
   }
 
@@ -297,7 +546,7 @@ export class InstanceCoordinator {
     const token = await this.vault.get(profile.credentialRef);
     if (!token) return;
     let state = this.#states.get(instanceId) || await this.load(instanceId);
-    const connection = new RealtimeConnection({
+    const connection = this.createRealtime({
       baseUrl: profile.baseUrl,
       token,
       cursor: state.cursor,
@@ -306,14 +555,14 @@ export class InstanceCoordinator {
           void this.load(instanceId).then((snapshot) => this.publish(instanceId, snapshot));
           return;
         }
-        state = reduceRealtimeFrame(state, frame);
+        state = reduceRealtimeFrame(this.#states.get(instanceId) || state, frame);
         this.#states.set(instanceId, state);
         this.cache.put(instanceId, state);
         this.publish(instanceId, state);
       },
       onStatus: (status) => {
         if (status !== 'reconnecting') return;
-        state = { ...state, connection: 'offline' };
+        state = { ...(this.#states.get(instanceId) || state), connection: 'offline' };
         this.#states.set(instanceId, state);
         this.publish(instanceId, state);
       },
@@ -339,10 +588,34 @@ export class InstanceCoordinator {
   }
 }
 
+function updateReaction(
+  reactions: NonNullable<import('../shared/instance-state').Message['reactions']>,
+  emoji: string,
+  active: boolean,
+) {
+  const existing = reactions.find((reaction) => reaction.emoji === emoji);
+  if (!existing) return active ? [...reactions, { emoji, count: 1, me: true }] : reactions;
+  const count = Math.max(0, existing.count + (active && !existing.me ? 1 : !active && existing.me ? -1 : 0));
+  return reactions.filter((reaction) => reaction.emoji !== emoji).concat(count ? [{ ...existing, count, me: active }] : []);
+}
+
 function readError(value: unknown, fallback: string): string {
   return value && typeof value === 'object' && 'error' in value && typeof (value as { error?: unknown }).error === 'string'
     ? (value as { error: string }).error
     : fallback;
+}
+
+function responseDiagnostic(response: Response, label: string): string {
+  const contentType = response.headers.get('content-type')?.split(';', 1)[0] || 'unknown content type';
+  return `${label} returned HTTP ${response.status} (${contentType}).`;
+}
+
+function assetResult(asset: CachedAsset): InstanceActionResult {
+  return {
+    type: 'asset',
+    contentType: asset.contentType,
+    data: new Uint8Array(asset.data),
+  };
 }
 
 function isMessage(value: unknown): value is import('../shared/instance-state').Message {
@@ -357,7 +630,8 @@ function isMessage(value: unknown): value is import('../shared/instance-state').
 function isMessagePage(value: unknown): value is import('../shared/instance-actions').MessagePage {
   if (!value || typeof value !== 'object') return false;
   const page = value as Partial<import('../shared/instance-actions').MessagePage>;
-  return Array.isArray(page.messages) && page.messages.every(isMessage) && typeof page.has_more === 'boolean' && typeof page.next_before === 'number';
+  return Array.isArray(page.messages) && page.messages.every(isMessage) && typeof page.has_more === 'boolean' &&
+    (typeof page.next_before === 'number' || typeof page.next_after === 'number');
 }
 
 function isAttachment(value: unknown): value is import('../shared/instance-state').Attachment {
@@ -380,6 +654,70 @@ function isMember(value: unknown): value is import('../shared/desktop-bridge').M
 
 function isDirectMessage(value: unknown): value is import('../shared/instance-state').DirectMessage {
   return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' && isMember((value as { other?: unknown }).other);
+}
+
+function isDirectCall(value: unknown): value is import('../shared/instance-actions').DirectCall {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { direct_message_id?: unknown }).direct_message_id === 'string' &&
+    typeof (value as { caller_id?: unknown }).caller_id === 'string' &&
+    typeof (value as { recipient_id?: unknown }).recipient_id === 'string' &&
+    typeof (value as { state?: unknown }).state === 'string';
+}
+
+function isAdminDashboard(value: unknown): value is import('../shared/instance-actions').AdminDashboard {
+  if (!value || typeof value !== 'object') return false;
+  const dashboard = value as Partial<import('../shared/instance-actions').AdminDashboard>;
+  return typeof dashboard.checked_at === 'string' && typeof dashboard.uptime_seconds === 'number' &&
+    !!dashboard.health && !!dashboard.counts && typeof dashboard.counts.members === 'number' &&
+    !!dashboard.resources && Array.isArray(dashboard.storage_sources) && !!dashboard.message_rate &&
+    typeof dashboard.message_rate.messages_per_minute === 'number' && Array.isArray(dashboard.message_rate.buckets);
+}
+
+function isCommunityRole(value: unknown): value is import('../shared/instance-actions').CommunityRole {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { name?: unknown }).name === 'string' && typeof (value as { position?: unknown }).position === 'number' &&
+    Array.isArray((value as { permissions?: unknown }).permissions);
+}
+
+function isCommunityInvitation(value: unknown): value is import('../shared/instance-actions').CommunityInvitation {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { expires_at?: unknown }).expires_at === 'string' && typeof (value as { max_uses?: unknown }).max_uses === 'number' &&
+    typeof (value as { use_count?: unknown }).use_count === 'number';
+}
+
+function isCategory(value: unknown): value is import('../shared/instance-state').Category {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { name?: unknown }).name === 'string' && typeof (value as { position?: unknown }).position === 'number';
+}
+
+function isChannel(value: unknown): value is import('../shared/instance-state').Channel {
+  return isCategory(value) && typeof (value as { category_id?: unknown }).category_id === 'string' &&
+    ((value as { type?: unknown }).type === 'text' || (value as { type?: unknown }).type === 'voice');
+}
+
+function isSoundboardSound(value: unknown): value is import('../shared/instance-actions').SoundboardSound {
+  return !!value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string' &&
+    typeof (value as { name?: unknown }).name === 'string' && typeof (value as { content_type?: unknown }).content_type === 'string' &&
+    typeof (value as { size?: unknown }).size === 'number' && typeof (value as { duration_ms?: unknown }).duration_ms === 'number';
+}
+
+function isCommunitySettings(value: unknown): value is import('../shared/instance-actions').CommunitySettings {
+  return !!value && typeof value === 'object' && typeof (value as { max_attachment_mib?: unknown }).max_attachment_mib === 'number' &&
+    typeof (value as { home_markdown?: unknown }).home_markdown === 'string' && typeof (value as { push_relay_url?: unknown }).push_relay_url === 'string' &&
+    typeof (value as { push_key_id?: unknown }).push_key_id === 'string' && typeof (value as { push_public_key?: unknown }).push_public_key === 'string';
+}
+
+function normalizeCommunitySettings(value: unknown): import('../shared/instance-actions').CommunitySettings | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const settings = value as Partial<import('../shared/instance-actions').CommunitySettings>;
+  if (typeof settings.max_attachment_mib !== 'number' || typeof settings.home_markdown !== 'string' || typeof settings.push_relay_url !== 'string') return undefined;
+  return {
+    max_attachment_mib: settings.max_attachment_mib,
+    home_markdown: settings.home_markdown,
+    push_relay_url: settings.push_relay_url,
+    push_key_id: typeof settings.push_key_id === 'string' ? settings.push_key_id : '',
+    push_public_key: typeof settings.push_public_key === 'string' ? settings.push_public_key : '',
+  };
 }
 
 function isReport(value: unknown): value is import('../shared/instance-actions').Report {

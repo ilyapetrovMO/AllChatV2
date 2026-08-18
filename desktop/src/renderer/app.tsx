@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
@@ -13,6 +14,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   const [instanceState, setInstanceState] = useState<InstanceViewState | null>(
     null,
   );
+  const [homeVersion, setHomeVersion] = useState(0);
+  const [authMode, setAuthMode] = useState<"login" | "register" | "recover">("login");
 
   useEffect(() => {
     void bridge.getShellState().then(setState);
@@ -85,11 +88,62 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     }
   }
 
+  async function register(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (!active) return;
+    setError("");
+    const values = new FormData(event.currentTarget);
+    try {
+      setState(await bridge.registerInstance({ instanceId: active.id, invitationToken: String(values.get("invitationToken") || ""), username: String(values.get("username") || ""), password: String(values.get("password") || "") }));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not register."); }
+  }
+
+  async function recover(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (!active) return;
+    setError("");
+    const values = new FormData(event.currentTarget);
+    try {
+      await bridge.recoverInstance({ instanceId: active.id, recoveryToken: String(values.get("recoveryToken") || ""), password: String(values.get("password") || "") });
+      setAuthMode("login");
+      setError("Password replaced. Sign in with your new password.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not recover the Account."); }
+  }
+
   async function executeAction(
     action: InstanceAction,
   ): Promise<InstanceActionResult | undefined> {
     if (!active) return undefined;
-    const result = await bridge.executeInstance(active.id, action);
+    const reactionAction = action.type === "set_reaction" ? action : null;
+    const applyReaction = (activeReaction: boolean) => {
+      setInstanceState((current) => current ? {
+        ...current,
+        messages: Object.fromEntries(Object.entries(current.messages).map(([channelId, messages]) => [
+          channelId,
+          messages.map((message) => message.id === reactionAction?.messageId
+            ? { ...message, reactions: updateReaction(message.reactions || [], reactionAction.emoji, activeReaction) }
+            : message),
+        ])),
+      } : current);
+    };
+    if (reactionAction) applyReaction(reactionAction.active);
+    let result: InstanceActionResult;
+    try {
+      result = await bridge.executeInstance(active.id, action);
+    } catch (error) {
+      if (reactionAction) applyReaction(!reactionAction.active);
+      throw error;
+    }
+    if (action.type === "set_block" && result.type === "accepted") {
+      setInstanceState((current) => current ? {
+        ...current,
+        direct_messages: current.direct_messages.map((directMessage) =>
+          directMessage.other.id === action.memberId
+            ? { ...directMessage, blocked_by_me: action.blocked }
+            : directMessage,
+        ),
+      } : current);
+    }
     if (result.type === "message") {
       setInstanceState((current) =>
         current
@@ -115,6 +169,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
                 [result.conversationId]: mergeMessages(
                   current.messages[result.conversationId] || [],
                   result.page.messages,
+                  result.direction,
                 ),
               },
             }
@@ -190,17 +245,23 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   return (
     <main className="shell">
       <aside className="instance-rail" aria-label="Instances">
-        <div className="brand-mark" aria-label="AllChat">
-          AC
-        </div>
-        {state?.instances.map((instance) => (
+        <button
+          className="brand-mark"
+          type="button"
+          aria-label="Home"
+          title="Home"
+          onClick={() => setHomeVersion((version) => version + 1)}
+        >
+          <Icon name="home" />
+        </button>
+        {state && state.instances.length > 1 && state.instances.map((instance) => (
           <button
             className="instance-button"
             key={instance.id}
             onClick={() =>
               void bridge.selectInstance(instance.id).then(setState)
             }
-            aria-label={instance.displayName}
+            aria-label={`${instance.displayName} Instance`}
             aria-current={
               instance.id === state.activeInstanceId ? "page" : undefined
             }
@@ -244,9 +305,14 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
         ) : active && !active.session ? (
           <div className="empty-state">
             <p className="eyebrow">{active.displayName}</p>
-            <h1>Sign in to your Community</h1>
+            <h1>{authMode === "login" ? "Sign in to your Community" : authMode === "register" ? "Join your Community" : "Recover your Account"}</h1>
             <p>{active.baseUrl}</p>
-            <form
+            <nav className="auth-tabs" aria-label="Authentication">
+              <button type="button" aria-current={authMode === "login" ? "page" : undefined} onClick={() => setAuthMode("login")}>Sign in</button>
+              <button type="button" aria-current={authMode === "register" ? "page" : undefined} onClick={() => setAuthMode("register")}>Register</button>
+              <button type="button" aria-current={authMode === "recover" ? "page" : undefined} onClick={() => setAuthMode("recover")}>Recovery</button>
+            </nav>
+            {authMode === "login" && <form
               className="onboarding-form"
               onSubmit={(event) => void login(event)}
             >
@@ -264,14 +330,18 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
                 />
               </label>
               <button type="submit">Sign in</button>
-            </form>
+            </form>}
+            {authMode === "register" && <form className="onboarding-form" onSubmit={(event) => void register(event)}><label>Invitation token<input name="invitationToken" required /></label><label>Username<input name="username" autoComplete="username" required /></label><label>Password<input name="password" type="password" minLength={12} autoComplete="new-password" required /></label><button type="submit">Create Account</button></form>}
+            {authMode === "recover" && <form className="onboarding-form" onSubmit={(event) => void recover(event)}><label>Recovery token<input name="recoveryToken" required /></label><label>New password<input name="password" type="password" minLength={12} autoComplete="new-password" required /></label><button type="submit">Replace password</button></form>}
             {error && <p role="alert">{error}</p>}
           </div>
         ) : instanceState ? (
           <CommunityShell
+            key={`${active!.id}:${homeVersion}`}
             instanceId={active!.id}
             state={instanceState}
             onAction={executeAction}
+            connectMedia={bridge.connectMedia}
           />
         ) : (
           <div className="empty-state">
@@ -288,28 +358,52 @@ function CommunityShell({
   instanceId,
   state,
   onAction,
+  connectMedia,
 }: {
   instanceId: string;
   state: InstanceViewState;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+  connectMedia?: DesktopBridge["connectMedia"];
 }) {
   const [conversation, setConversation] = useState<{
     id: string;
     name: string;
     type: "text" | "voice" | "dm";
+    topic?: string;
   } | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [homeView, setHomeView] = useState<"community" | "direct-messages">("community");
+  const [directMessageMemberId, setDirectMessageMemberId] = useState("");
+  const [communityGuide, setCommunityGuide] = useState<string | null>(null);
+  const [voiceParticipants, setVoiceParticipants] = useState<import("../shared/instance-actions").VoiceParticipant[]>([]);
+  const [settingsView, setSettingsView] = useState<
+    "profile" | "voice" | "notifications" | "sessions" | "safety" | "community" | null
+  >(null);
+  const [communitySettingsSection, setCommunitySettingsSection] = useState("general");
   const [draft, setDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [draggingFiles, setDraggingFiles] = useState(false);
+  const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<
     import("../shared/instance-state").SearchResult[] | null
   >(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFiltersOpen, setSearchFiltersOpen] = useState(false);
   const [showPins, setShowPins] = useState(false);
   const [membersOpen, setMembersOpen] = useState(true);
   const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const [memberPopover, setMemberPopover] = useState<{
+    memberId: string;
+    left: number;
+    top: number;
+  } | null>(null);
+  const [voiceMemberMenu, setVoiceMemberMenu] = useState<{
+    participant: import("../shared/instance-actions").VoiceParticipant;
+    left: number;
+    top: number;
+  } | null>(null);
   const [sessions, setSessions] = useState<
     import("../shared/instance-actions").SessionInfo[] | null
   >(null);
@@ -319,12 +413,83 @@ function CommunityShell({
   const [records, setRecords] = useState<
     import("../shared/instance-actions").ModerationRecord[] | null
   >(null);
+
+  useEffect(() => {
+    if (!reactionPickerMessageId) return;
+    const dismiss = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest("[data-reaction-picker], [data-reaction-trigger]")) setReactionPickerMessageId(null);
+    };
+    const dismissWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setReactionPickerMessageId(null);
+    };
+    document.addEventListener("mousedown", dismiss);
+    document.addEventListener("keydown", dismissWithKeyboard);
+    return () => {
+      document.removeEventListener("mousedown", dismiss);
+      document.removeEventListener("keydown", dismissWithKeyboard);
+    };
+  }, [reactionPickerMessageId]);
+  useEffect(() => {
+    void onAction({ type: "community_home" }).then((result) => {
+      if (result?.type === "community_home") setCommunityGuide(result.markdown);
+    }).catch(() => setCommunityGuide(""));
+  }, [instanceId]);
   const lastTypingAt = useRef(0);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottom = useRef(true);
+  const historyLoading = useRef(new Set<string>());
+  const historyExhausted = useRef<Record<string, boolean>>({});
+  const newerHistoryTruncated = useRef<Record<string, boolean>>({});
+  const prependScrollHeight = useRef<number | null>(null);
+  const [messageWindowStarts, setMessageWindowStarts] = useState<Record<string, number | null>>({});
+  const [awayFromPresent, setAwayFromPresent] = useState(false);
   const categories = [...state.categories]
     .filter(({ archived }) => !archived)
     .sort(byPosition);
   const channels = [...state.channels].filter(({ archived }) => !archived);
+  const activeDirectMessage = conversation?.type === "dm"
+    ? state.direct_messages.find(({ id }) => id === conversation.id)
+    : undefined;
+  const directMessageBlocked = !!(activeDirectMessage?.blocked_by_me || activeDirectMessage?.blocked_me);
   useEffect(() => {
+    if (!memberPopover) return;
+    const dismiss = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-member-popover], [data-member-trigger]")) return;
+      setMemberPopover(null);
+    };
+    const dismissWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMemberPopover(null);
+    };
+    document.addEventListener("mousedown", dismiss);
+    document.addEventListener("keydown", dismissWithKeyboard);
+    return () => {
+      document.removeEventListener("mousedown", dismiss);
+      document.removeEventListener("keydown", dismissWithKeyboard);
+    };
+  }, [memberPopover]);
+  useEffect(() => {
+    if (!voiceMemberMenu) return;
+    const dismiss = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest("[data-voice-member-menu]")) setVoiceMemberMenu(null);
+    };
+    document.addEventListener("mousedown", dismiss);
+    return () => document.removeEventListener("mousedown", dismiss);
+  }, [voiceMemberMenu]);
+  useEffect(() => {
+    if (!notificationMenuOpen) return;
+    const dismiss = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".notification-center")) setNotificationMenuOpen(false);
+    };
+    document.addEventListener("mousedown", dismiss);
+    return () => document.removeEventListener("mousedown", dismiss);
+  }, [notificationMenuOpen]);
+  useEffect(() => {
+    stickToBottom.current = true;
+    setAwayFromPresent(false);
     setDraft(
       conversation
         ? localStorage.getItem(draftKey(instanceId, conversation.id)) || ""
@@ -333,6 +498,9 @@ function CommunityShell({
     setEditingMessageId(null);
     if (conversation && conversation.type !== "voice") {
       const messages = state.messages[conversation.id] || [];
+      historyExhausted.current[conversation.id] = (messages[0]?.sequence || 1) <= 1;
+      newerHistoryTruncated.current[conversation.id] = false;
+      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: null }));
       const last = messages.at(-1);
       if (last)
         void onAction({
@@ -343,6 +511,89 @@ function CommunityShell({
         });
     }
   }, [conversation?.id, instanceId]);
+  useEffect(() => {
+    if (!conversation || conversation.type !== "voice") {
+      setVoiceParticipants([]);
+      return;
+    }
+    let current = true;
+    const refresh = () => void onAction({ type: "list_voice_participants", channelId: conversation.id })
+      .then((result) => {
+        if (current && result?.type === "voice_participants") setVoiceParticipants(result.participants);
+      });
+    refresh();
+    const timer = window.setInterval(refresh, 2_000);
+    return () => {
+      current = false;
+      window.clearInterval(timer);
+    };
+  }, [conversation?.id, conversation?.type]);
+  const visibleMessageCount = conversation ? (state.messages[conversation.id] || []).length : 0;
+  useLayoutEffect(() => {
+    const list = messageListRef.current;
+    if (!list) return;
+    if (prependScrollHeight.current !== null) {
+      list.scrollTop += list.scrollHeight - prependScrollHeight.current;
+      prependScrollHeight.current = null;
+      return;
+    }
+    if (!stickToBottom.current) return;
+    list.scrollTop = list.scrollHeight;
+  }, [conversation?.id, visibleMessageCount, messageWindowStarts[conversation?.id || ""], state.messages[conversation?.id || ""]?.[0]?.id]);
+
+  const allConversationMessages = conversation ? state.messages[conversation.id] || [] : [];
+  const requestedWindowStart = conversation ? messageWindowStarts[conversation.id] : null;
+  const messageWindowStart = requestedWindowStart === null || requestedWindowStart === undefined
+    ? Math.max(0, allConversationMessages.length - 80)
+    : Math.max(0, Math.min(requestedWindowStart, Math.max(0, allConversationMessages.length - 1)));
+  const renderedConversationMessages = allConversationMessages.slice(messageWindowStart, messageWindowStart + 80);
+
+  async function loadOlderMessages(): Promise<void> {
+    if (!conversation || conversation.type === "voice" || historyLoading.current.has(conversation.id)) return;
+    const list = messageListRef.current;
+    if (messageWindowStart > 0) {
+      prependScrollHeight.current = list?.scrollHeight ?? null;
+      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: Math.max(0, messageWindowStart - 50) }));
+      return;
+    }
+    const first = allConversationMessages[0];
+    if (!first || first.sequence <= 1 || historyExhausted.current[conversation.id]) return;
+    historyLoading.current.add(conversation.id);
+    prependScrollHeight.current = list?.scrollHeight ?? null;
+    try {
+      const result = await onAction({ type: "load_messages", conversationId: conversation.id, direct: conversation.type === "dm", before: first.sequence, limit: 50 });
+      if (result?.type !== "messages") return;
+      historyExhausted.current[conversation.id] = !result.page.has_more;
+      const incoming = result.page.messages.filter((message) => !allConversationMessages.some(({ id }) => id === message.id)).length;
+      if (allConversationMessages.length + incoming > 300) newerHistoryTruncated.current[conversation.id] = true;
+      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: 0 }));
+    } finally {
+      historyLoading.current.delete(conversation.id);
+    }
+  }
+
+  async function loadPresentMessages(): Promise<void> {
+    if (!conversation || conversation.type === "voice" || historyLoading.current.has(conversation.id)) return;
+    historyLoading.current.add(conversation.id);
+    try {
+      let after = allConversationMessages.at(-1)?.sequence || 0;
+      let hasMore = newerHistoryTruncated.current[conversation.id] || false;
+      for (let page = 0; hasMore && after && page < 100; page += 1) {
+        const result = await onAction({ type: "load_messages", conversationId: conversation.id, direct: conversation.type === "dm", after, limit: 100 });
+        if (result?.type !== "messages" || !result.page.messages.length) break;
+        after = result.page.next_after || result.page.messages.at(-1)?.sequence || after;
+        hasMore = result.page.has_more;
+      }
+      newerHistoryTruncated.current[conversation.id] = false;
+      stickToBottom.current = true;
+      setAwayFromPresent(false);
+      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: null }));
+      const list = messageListRef.current;
+      if (list) list.scrollTop = list.scrollHeight;
+    } finally {
+      historyLoading.current.delete(conversation.id);
+    }
+  }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -382,8 +633,37 @@ function CommunityShell({
     setAttachments([]);
     localStorage.removeItem(draftKey(instanceId, conversation.id));
   }
+  const memberGroups = [
+    {
+      label: "Owner",
+      members: state.members.filter((member) => member.owner),
+    },
+    {
+      label: "Online",
+      members: state.members.filter(
+        (member) =>
+          !member.owner &&
+          (state.presence[member.id] || "offline") !== "offline",
+      ),
+    },
+    {
+      label: "Offline",
+      members: state.members.filter(
+        (member) =>
+          !member.owner &&
+          (state.presence[member.id] || "offline") === "offline",
+      ),
+    },
+  ];
+  const showMemberPopover = (memberId: string, bounds: DOMRect) => {
+    setMemberPopover({
+      memberId,
+      left: Math.min(window.innerWidth - 308, Math.max(8, bounds.left)),
+      top: Math.min(window.innerHeight - 378, Math.max(8, bounds.bottom + 8)),
+    });
+  };
   return (
-    <div className="community-shell">
+    <div className={`community-shell${settingsView === "community" ? " community-settings-open" : ""}`}>
       <aside className="conversation-sidebar">
         <div className="community-switcher">
           <button
@@ -403,31 +683,20 @@ function CommunityShell({
                 role="menuitem"
                 onClick={() => {
                   setConversation(null);
-                  setSettingsOpen(false);
+                  setHomeView("community");
+                  setSettingsView(null);
                   setCommunityMenuOpen(false);
                 }}
               >
                 <Icon name="home" />
                 Community Home
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setConversation(null);
-                  setSettingsOpen(false);
-                  setCommunityMenuOpen(false);
-                }}
-              >
-                <Icon name="messages" />
-                Direct Messages
-              </button>
               {state.member.owner && (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => {
-                    setSettingsOpen(true);
+                    setSettingsView("community");
                     setCommunityMenuOpen(false);
                   }}
                 >
@@ -435,35 +704,35 @@ function CommunityShell({
                   Community Settings
                 </button>
               )}
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setSettingsOpen(true);
-                  setCommunityMenuOpen(false);
-                }}
-              >
-                <Icon name="user" />
-                My Account
-              </button>
             </nav>
           )}
         </div>
         <nav className="conversation-nav" aria-label="Community conversations">
-          {state.direct_messages.length > 0 && <h2>Direct Messages</h2>}
+          <button
+            className="direct-messages-home"
+            type="button"
+            onClick={() => {
+              setConversation(null);
+              setHomeView("direct-messages");
+              setSettingsView(null);
+            }}
+          >
+            Direct Messages
+          </button>
           {state.direct_messages.map((dm) => (
             <button
               type="button"
               key={dm.id}
               aria-label={memberName(dm.other)}
               aria-current={conversation?.id === dm.id ? "page" : undefined}
-              onClick={() =>
+              onClick={() => {
+                setSettingsView(null);
                 setConversation({
                   id: dm.id,
                   name: memberName(dm.other),
                   type: "dm",
-                })
-              }
+                });
+              }}
             >
               <AuthenticatedImage
                 path={dm.other.avatarUrl}
@@ -483,24 +752,56 @@ function CommunityShell({
                 .filter(({ category_id }) => category_id === category.id)
                 .sort(byPosition)
                 .map((channel) => (
+                  <Fragment key={channel.id}>
                   <button
                     type="button"
-                    key={channel.id}
                     aria-label={channel.name}
                     aria-current={
                       conversation?.id === channel.id ? "page" : undefined
                     }
-                    onClick={() =>
+                    onClick={() => {
+                      setSettingsView(null);
                       setConversation({
                         id: channel.id,
                         name: channel.name,
                         type: channel.type,
-                      })
-                    }
+                        topic:
+                          channel.topic ||
+                          `${category.name} ${channel.type === "text" ? "Text" : "Voice"} Channel`,
+                      });
+                    }}
                   >
                     <Icon name={channel.type === "voice" ? "volume" : "hash"} />
                     <span>{channel.name}</span>
                   </button>
+                  {channel.type === "voice" && conversation?.id === channel.id && voiceParticipants.length > 0 && (
+                    <ul className="voice-channel-members" aria-label={`${channel.name} participants`}>
+                      {voiceParticipants.map((participant) => {
+                        const member = state.members.find(({ id }) => id === participant.member_id);
+                        const name = member ? memberName(member) : "Member";
+                        return <li
+                          className={participant.speaking ? "speaking" : ""}
+                          key={participant.member_id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={(event) => showMemberPopover(participant.member_id, event.currentTarget.getBoundingClientRect())}
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            setVoiceMemberMenu({
+                              participant,
+                              left: Math.min(window.innerWidth - 224, event.clientX),
+                              top: Math.min(window.innerHeight - 250, event.clientY),
+                            });
+                          }}
+                        >
+                          <AuthenticatedImage path={member?.avatarUrl} alt="" className="avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                          <span>{name}</span>
+                          {(participant.muted || participant.server_muted) && <small>Muted</small>}
+                        </li>;
+                      })}
+                    </ul>
+                  )}
+                  </Fragment>
                 ))}
             </section>
           ))}
@@ -520,7 +821,7 @@ function CommunityShell({
           <button
             type="button"
             aria-label="User Settings"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setSettingsView("profile")}
           >
             <Icon name="settings" />
           </button>
@@ -529,11 +830,139 @@ function CommunityShell({
       <section className="conversation-content">
         <header>
           <h1>
-            {settingsOpen ? "User Settings" : conversation?.name || "Home"}
+            {!settingsView && conversation?.type === "text" && (
+              <Icon name="hash" />
+            )}
+            {!settingsView && conversation?.type === "voice" && (
+              <Icon name="volume" />
+            )}
+            {settingsView === "community"
+              ? communitySettingsSection === "dashboard" ? "Admin Dashboard" : "Community Settings"
+              : settingsView
+                ? "User Settings"
+                : conversation?.name || (homeView === "direct-messages" ? "Direct Messages" : "Home")}
           </h1>
+          {conversation?.type === "text" && conversation.topic && (
+            <span className="channel-topic">{conversation.topic}</span>
+          )}
+          {conversation?.type === "voice" && (
+            <span className="media-stage-status">Voice Room</span>
+          )}
           <div className="header-actions">
+            {activeDirectMessage && (
+              <button
+                className="header-button"
+                type="button"
+                onClick={() => void onAction({
+                  type: "set_block",
+                  memberId: activeDirectMessage.other.id,
+                  blocked: !activeDirectMessage.blocked_by_me,
+                })}
+              >
+                {activeDirectMessage.blocked_by_me ? "Unblock" : "Block"}
+              </button>
+            )}
+            <DirectCallControls
+              conversation={directMessageBlocked ? null : conversation}
+              currentMemberId={state.member.id}
+              instanceId={instanceId}
+              onAction={onAction}
+              connectMedia={connectMedia}
+            />
             {state.connection === "offline" && (
               <span className="offline-badge">Offline</span>
+            )}
+            {conversation && conversation.type !== "voice" && (
+              <div className="notification-center">
+                <button
+                  className="header-button icon-button"
+                  type="button"
+                  aria-label="Notifications"
+                  aria-expanded={notificationMenuOpen}
+                  onClick={() => setNotificationMenuOpen((value) => !value)}
+                >
+                  <Icon name="bell" />
+                </button>
+                {notificationMenuOpen && (
+                  <section className="notification-popover" aria-label="Notification settings">
+                    <h2>Notifications</h2>
+                    <label>
+                      Community
+                      <select
+                        aria-label="Community notification level"
+                        defaultValue={state.notifications.community.level}
+                        onChange={(event) => void onAction({
+                          type: "set_community_notifications",
+                          level: event.target.value as "all_messages" | "mentions_only" | "nothing",
+                          muted: state.notifications.community.muted,
+                          soundEnabled: state.notifications.community.sound_enabled ?? true,
+                        })}
+                      >
+                        <option value="all_messages">All Messages</option>
+                        <option value="mentions_only">Mentions Only</option>
+                        <option value="nothing">Nothing</option>
+                      </select>
+                    </label>
+                    <label className="notification-check">
+                      <input
+                        type="checkbox"
+                        defaultChecked={state.notifications.community.muted}
+                        onChange={(event) => void onAction({
+                          type: "set_community_notifications",
+                          level: state.notifications.community.level === "default" ? "all_messages" : state.notifications.community.level,
+                          muted: event.target.checked,
+                          soundEnabled: state.notifications.community.sound_enabled ?? true,
+                        })}
+                      />
+                      Mute Community
+                    </label>
+                    <label className="notification-check">
+                      <input
+                        type="checkbox"
+                        defaultChecked={state.notifications.community.sound_enabled ?? true}
+                        onChange={(event) => void onAction({
+                          type: "set_community_notifications",
+                          level: state.notifications.community.level === "default" ? "all_messages" : state.notifications.community.level,
+                          muted: state.notifications.community.muted,
+                          soundEnabled: event.target.checked,
+                        })}
+                      />
+                      Notification sound
+                    </label>
+                    <label>
+                      This conversation
+                      <select
+                        aria-label="Conversation notification level"
+                        defaultValue={state.notifications.channels[conversation.id]?.level || "default"}
+                        onChange={(event) => void onAction({
+                          type: "set_channel_notifications",
+                          channelId: conversation.id,
+                          level: event.target.value as "default" | "all_messages" | "mentions_only" | "nothing",
+                          muted: state.notifications.channels[conversation.id]?.muted || false,
+                        })}
+                      >
+                        <option value="default">Default</option>
+                        <option value="all_messages">All Messages</option>
+                        <option value="mentions_only">Mentions Only</option>
+                        <option value="nothing">Nothing</option>
+                      </select>
+                    </label>
+                    <label className="notification-check">
+                      <input
+                        type="checkbox"
+                        defaultChecked={state.notifications.channels[conversation.id]?.muted || false}
+                        onChange={(event) => void onAction({
+                          type: "set_channel_notifications",
+                          channelId: conversation.id,
+                          level: state.notifications.channels[conversation.id]?.level || "default",
+                          muted: event.target.checked,
+                        })}
+                      />
+                      Mute conversation
+                    </label>
+                  </section>
+                )}
+              </div>
             )}
             {conversation?.type === "text" && (
               <button
@@ -546,24 +975,30 @@ function CommunityShell({
                 <Icon name="pin" />
               </button>
             )}
-            <button
-              className="header-button icon-button"
-              type="button"
-              aria-label={membersOpen ? "Hide Members" : "Show Members"}
-              title="Members"
-              aria-pressed={membersOpen}
-              onClick={() => setMembersOpen((value) => !value)}
-            >
-              <Icon name="users" />
-            </button>
+            {!settingsView && homeView === "community" && (!conversation || conversation.type === "text") && (
+              <button
+                className="header-button icon-button"
+                type="button"
+                aria-label={membersOpen ? "Hide Members" : "Show Members"}
+                title="Members"
+                aria-pressed={membersOpen}
+                onClick={() => setMembersOpen((value) => !value)}
+              >
+                <Icon name="users" />
+              </button>
+            )}
             <form
               className="header-search"
               role="search"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSearchFiltersOpen(false);
+              }}
               onSubmit={(event) => {
                 event.preventDefault();
                 const query = String(
                   new FormData(event.currentTarget).get("query") || "",
                 );
+                setSearchFiltersOpen(false);
                 void onAction({ type: "search_messages", query }).then(
                   (result) => {
                     if (result?.type === "search_results")
@@ -575,32 +1010,56 @@ function CommunityShell({
               <Icon name="search" />
               <input
                 name="query"
+                type="search"
                 aria-label="Search Messages"
                 placeholder="Search"
+                maxLength={200}
+                required
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onFocus={() => setSearchFiltersOpen(true)}
               />
+              {searchFiltersOpen && <div className="search-filter-menu" role="menu" aria-label="Search filters">{[["from:", "From a specific user"], ["in:", "Sent in a specific channel"], ["has:file", "Includes a file"], ["has:image", "Includes an image"], ["has:link", "Includes a link"], ["mentions:", "Mentions a specific user"], ["before:", "Sent before a date"], ["after:", "Sent after a date"]].map(([token, label]) => <button type="button" role="menuitem" key={token} onMouseDown={(event) => event.preventDefault()} onClick={() => { setSearchQuery((current) => `${current}${current && !current.endsWith(" ") ? " " : ""}${token}`); }}><strong>{label}</strong><small>{token}{token.endsWith(":") ? "…" : ""}</small></button>)}</div>}
             </form>
           </div>
         </header>
-        {settingsOpen ? (
+        {settingsView && !searchResults ? settingsView === "community" ? (
+          <div className="community-settings-layout">
+            <CommunityAdministration state={state} onAction={onAction} onSectionChange={setCommunitySettingsSection} />
+          </div>
+        ) : (
           <div className="settings-layout">
             <nav aria-label="User settings">
-              <button aria-current="page">Profile</button>
-              <button>Voice &amp; Video</button>
-              <button>Notifications</button>
+              <button
+                aria-current={settingsView === "profile" ? "page" : undefined}
+                onClick={() => setSettingsView("profile")}
+              >Profile</button>
+              <button
+                aria-current={settingsView === "voice" ? "page" : undefined}
+                onClick={() => setSettingsView("voice")}
+              >Voice &amp; Video</button>
+              <button
+                aria-current={settingsView === "notifications" ? "page" : undefined}
+                onClick={() => setSettingsView("notifications")}
+              >Notifications</button>
               <button
                 type="button"
-                onClick={() =>
+                aria-current={settingsView === "sessions" ? "page" : undefined}
+                onClick={() => {
+                  setSettingsView("sessions");
                   void onAction({ type: "list_sessions" }).then((result) => {
                     if (result?.type === "sessions")
                       setSessions(result.sessions);
-                  })
-                }
+                  });
+                }}
               >
                 Sessions
               </button>
               <button
                 type="button"
+                aria-current={settingsView === "safety" ? "page" : undefined}
                 onClick={() => {
+                  setSettingsView("safety");
                   void onAction({ type: "list_reports" }).then((result) => {
                     if (result?.type === "reports") setReports(result.reports);
                   });
@@ -618,6 +1077,7 @@ function CommunityShell({
             </nav>
             <section>
               <p className="eyebrow">Member settings</p>
+              {settingsView === "profile" && <>
               <h2>Profile</h2>
               <ProfileImages member={state.member} onAction={onAction} />
               <form
@@ -668,10 +1128,21 @@ function CommunityShell({
                   Do Not Disturb
                 </button>
               </div>
-              {sessions && (
+              </>}
+              {settingsView === "voice" && (
+                <VoiceVideoSettings memberId={state.member.id} />
+              )}
+              {settingsView === "notifications" && (
+                <NotificationSettings
+                  state={state}
+                  onAction={onAction}
+                />
+              )}
+              {settingsView === "sessions" && (
                 <section className="session-list">
-                  <h3>Sessions</h3>
-                  {sessions.map((session) => (
+                  <h2>Sessions</h2>
+                  {!sessions && <p>Loading Sessions…</p>}
+                  {sessions?.map((session) => (
                     <article key={session.id}>
                       <span>
                         <strong>{session.device}</strong>
@@ -684,7 +1155,8 @@ function CommunityShell({
                       {!session.current && (
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            if (!window.confirm(`Revoke the Session on ${session.device}?`)) return;
                             void onAction({
                               type: "revoke_session",
                               sessionId: session.id,
@@ -695,8 +1167,8 @@ function CommunityShell({
                                     ({ id }) => id !== session.id,
                                   ) || null,
                               ),
-                            )
-                          }
+                            );
+                          }}
                         >
                           Revoke
                         </button>
@@ -705,6 +1177,10 @@ function CommunityShell({
                   ))}
                 </section>
               )}
+              {settingsView === "safety" && (
+                <section className="settings-panel">
+                  <h2>Safety</h2>
+                  {!reports && <p>Loading Safety information…</p>}
               {reports && (
                 <SafetyPanel
                   reports={reports}
@@ -713,6 +1189,8 @@ function CommunityShell({
                   onAction={onAction}
                   onReports={setReports}
                 />
+              )}
+                </section>
               )}
             </section>
           </div>
@@ -737,34 +1215,49 @@ function CommunityShell({
           </div>
         ) : conversation ? (
           conversation.type === "voice" ? (
-            <div className="welcome">
-              <h2>{conversation.name}</h2>
-              <p>Join this Voice Room to talk with Members.</p>
-            </div>
+            <section className="media-stage">
+              <div className="media-stage-grid">
+                {voiceParticipants.length === 0 ? (
+                  <p className="media-stage-empty">No one is connected to this Voice Room.</p>
+                ) : voiceParticipants.map((participant) => {
+                  const member = state.members.find(({ id }) => id === participant.member_id);
+                  const name = member ? memberName(member) : "Member";
+                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} key={participant.member_id}>
+                    <AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                    <strong>{name}</strong>
+                    {participant.screen_sharing && <span>Sharing screen</span>}
+                  </article>;
+                })}
+              </div>
+            </section>
           ) : (
             <div
               className="message-list"
               aria-label={`${conversation.name} Messages`}
+              ref={messageListRef}
+              onLoadCapture={() => {
+                const list = messageListRef.current;
+                if (!list || !stickToBottom.current) return;
+                list.scrollTop = list.scrollHeight;
+                requestAnimationFrame(() => { if (stickToBottom.current) list.scrollTop = list.scrollHeight; });
+              }}
+              onLoadedMetadataCapture={() => {
+                const list = messageListRef.current;
+                if (list && stickToBottom.current) list.scrollTop = list.scrollHeight;
+              }}
+              onScroll={(event) => {
+                const list = event.currentTarget;
+                stickToBottom.current = list.scrollHeight - list.scrollTop - list.clientHeight < 72;
+                setAwayFromPresent(!stickToBottom.current);
+                if (list.scrollTop < 80) void loadOlderMessages();
+                if (stickToBottom.current && requestedWindowStart !== null && requestedWindowStart !== undefined) {
+                  const nextStart = Math.min(Math.max(0, allConversationMessages.length - 80), messageWindowStart + 50);
+                  if (nextStart !== messageWindowStart) setMessageWindowStarts((current) => ({ ...current, [conversation.id]: nextStart }));
+                  else if (newerHistoryTruncated.current[conversation.id]) void loadPresentMessages();
+                }
+              }}
             >
-              {(state.messages[conversation.id] || []).length > 0 && (
-                <button
-                  className="load-older"
-                  type="button"
-                  onClick={() => {
-                    const first = state.messages[conversation.id]?.[0];
-                    void onAction({
-                      type: "load_messages",
-                      conversationId: conversation.id,
-                      direct: conversation.type === "dm",
-                      before: first?.sequence,
-                      limit: 50,
-                    });
-                  }}
-                >
-                  Load older Messages
-                </button>
-              )}
-              {(state.messages[conversation.id] || [])
+              {renderedConversationMessages
                 .filter((message) => !showPins || message.pinned)
                 .map((message) => (
                   <article className="message" key={message.id}>
@@ -788,9 +1281,7 @@ function CommunityShell({
                             : message.reply.body}
                         </blockquote>
                       )}
-                      <p>
-                        {message.deleted ? "Message deleted" : message.body}
-                      </p>
+                      <p>{message.deleted ? "Message deleted" : <LinkifiedText body={message.body || ""} />}</p>
                       {message.body && (
                         <LinkPreview body={message.body} onAction={onAction} />
                       )}
@@ -829,17 +1320,22 @@ function CommunityShell({
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
-                              void onAction({
-                                type: "set_reaction",
-                                messageId: message.id,
-                                emoji: "👍",
-                                active: true,
-                              })
-                            }
+                            data-reaction-trigger
+                            aria-haspopup="menu"
+                            aria-expanded={reactionPickerMessageId === message.id}
+                            onClick={() => setReactionPickerMessageId((current) => current === message.id ? null : message.id)}
                           >
                             React
                           </button>
+                          {reactionPickerMessageId === message.id && (
+                            <EmojiPicker
+                              reactions={message.reactions || []}
+                              onSelect={(emoji, active) => {
+                                void onAction({ type: "set_reaction", messageId: message.id, emoji, active });
+                                setReactionPickerMessageId(null);
+                              }}
+                            />
+                          )}
                           <button
                             type="button"
                             onClick={() =>
@@ -900,9 +1396,36 @@ function CommunityShell({
                     </div>
                   </article>
                 ))}
-              <form
-                className="message-composer"
+              {awayFromPresent && (
+                <button
+                  className="jump-to-present"
+                  type="button"
+                  onClick={() => {
+                    void loadPresentMessages();
+                  }}
+                >
+                  Jump to present
+                </button>
+              )}
+              {directMessageBlocked && (
+                <div className="blocked-conversation">
+                  {activeDirectMessage?.blocked_by_me
+                    ? "You blocked this Member. Unblock them to send Messages."
+                    : "This Member is not accepting Messages."}
+                </div>
+              )}
+              {!directMessageBlocked && <form
+                className={`message-composer${draggingFiles ? " file-drag-active" : ""}`}
                 onSubmit={(event) => void sendMessage(event)}
+                onDragEnter={(event) => { event.preventDefault(); if (event.dataTransfer.types.includes("Files")) setDraggingFiles(true); }}
+                onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; }}
+                onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDraggingFiles(false); }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDraggingFiles(false);
+                  const files = [...event.dataTransfer.files];
+                  if (files.length) setAttachments((current) => appendUniqueFiles(current, files));
+                }}
               >
                 {replyTo && (
                   <div className="composer-context">
@@ -912,9 +1435,29 @@ function CommunityShell({
                     </button>
                   </div>
                 )}
+                {editingMessageId && (
+                  <div className="composer-context">
+                    Editing Message{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMessageId(null);
+                        setDraft("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
                 <textarea
                   aria-label={`Message ${conversation.name}`}
+                  placeholder={`Message #${conversation.name}`}
                   value={draft}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }}
                   onChange={(event) => {
                     setDraft(event.target.value);
                     localStorage.setItem(
@@ -937,7 +1480,7 @@ function CommunityShell({
                     type="file"
                     multiple
                     onChange={(event) =>
-                      setAttachments([...(event.target.files || [])])
+                      setAttachments((current) => appendUniqueFiles(current, [...(event.target.files || [])]))
                     }
                   />
                 </label>
@@ -952,116 +1495,352 @@ function CommunityShell({
                     {editingMessageId ? "Save" : "Send"}
                   </span>
                 </button>
-                {attachments.length > 0 && (
-                  <small>
-                    {attachments.map(({ name }) => name).join(", ")}
-                  </small>
-                )}
-              </form>
+                {attachments.length > 0 && <AttachmentPreviewList files={attachments} onRemove={(index) => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} />}
+              </form>}
             </div>
           )
+        ) : homeView === "direct-messages" ? (
+          <section className="dm-home">
+            <div>
+              <p className="eyebrow">Your conversations</p>
+              <h2>Direct Messages</h2>
+              <p>Choose a conversation from the sidebar, or start one with another Member.</p>
+              <form
+                className="dm-start-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!directMessageMemberId) return;
+                  void onAction({ type: "open_dm", memberId: directMessageMemberId }).then((result) => {
+                    if (result?.type !== "direct_message") return;
+                    setConversation({
+                      id: result.directMessage.id,
+                      name: memberName(result.directMessage.other),
+                      type: "dm",
+                    });
+                    setDirectMessageMemberId("");
+                  });
+                }}
+              >
+                <label>
+                  Start a Direct Message
+                  <select
+                    aria-label="Start a Direct Message"
+                    required
+                    value={directMessageMemberId}
+                    onChange={(event) => setDirectMessageMemberId(event.target.value)}
+                  >
+                    <option value="">Choose a Member</option>
+                    {state.members.filter(({ id }) => id !== state.member.id).map((member) => (
+                      <option value={member.id} key={member.id}>
+                        {memberName(member)} (@{member.username})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button type="submit">Open DM</button>
+              </form>
+            </div>
+          </section>
         ) : (
           <div className="welcome">
             <p className="eyebrow">{state.community.name}</p>
-            <h2>Welcome, {memberName(state.member)}</h2>
-            <p>Select a Text Channel or Direct Message to start chatting.</p>
+            {communityGuide === null ? <p>Loading Community Guide…</p> : communityGuide ? <article className="community-guide" aria-label="Community Guide"><MarkdownContent value={communityGuide} /></article> : <><h2>Welcome, {memberName(state.member)}</h2><p>Select a Text Channel or Direct Message to start chatting.</p></>}
           </div>
         )}
       </section>
-      {membersOpen && (
+      {membersOpen && !settingsView && homeView === "community" && (!conversation || conversation.type === "text") && (
         <aside className="member-directory" aria-label="Members">
-          <h2>Members</h2>
-          {state.members.map((member) => (
-            <button
-              type="button"
-              key={member.id}
-              onClick={() => setSelectedMemberId(member.id)}
-            >
-              <span className="member-directory-avatar">
-                <AuthenticatedImage
-                  path={member.avatarUrl}
-                  alt=""
-                  className="avatar"
-                  fallback={memberName(member).slice(0, 1).toUpperCase()}
-                  onAction={onAction}
-                />
-                <span
-                  className={`presence-dot ${state.presence[member.id] || "offline"}`}
-                />
-              </span>
-              <span>{memberName(member)}</span>
-              <small>@{member.username}</small>
-            </button>
+          {memberGroups.map((group) => (
+            <section className="member-directory-group" key={group.label}>
+              <h2>{group.label} — {group.members.length}</h2>
+              {group.members.map((member) => (
+                <button
+                  type="button"
+                  key={member.id}
+                  data-member-trigger
+                  onClick={(event) => {
+                    showMemberPopover(member.id, event.currentTarget.getBoundingClientRect());
+                  }}
+                >
+                  <span className="member-directory-avatar">
+                    <AuthenticatedImage
+                      path={member.avatarUrl}
+                      alt=""
+                      className="avatar"
+                      fallback={memberName(member).slice(0, 1).toUpperCase()}
+                      onAction={onAction}
+                    />
+                    <span
+                      className={`presence-dot ${state.presence[member.id] || "offline"}`}
+                    />
+                  </span>
+                  <span>{memberName(member)}</span>
+                  <small>{member.owner ? "Owner" : `@${member.username}`}</small>
+                </button>
+              ))}
+            </section>
           ))}
-          {selectedMemberId &&
-            (() => {
-              const member = state.members.find(
-                ({ id }) => id === selectedMemberId,
-              );
-              if (!member) return null;
-              const dm = state.direct_messages.find(
-                ({ other }) => other.id === member.id,
-              );
-              return (
-                <section className="member-card">
-                  <AuthenticatedImage
-                    path={member.bannerUrl}
-                    alt=""
-                    className="member-banner"
-                    onAction={onAction}
-                  />
-                  <AuthenticatedImage
-                    path={member.avatarUrl}
-                    alt=""
-                    className="member-card-avatar"
-                    onAction={onAction}
-                  />
-                  <h3>{memberName(member)}</h3>
-                  <p>@{member.username}</p>
-                  {member.id !== state.member.id && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void onAction({
-                            type: "open_dm",
-                            memberId: member.id,
-                          }).then((result) => {
-                            if (result?.type === "direct_message") {
-                              setConversation({
-                                id: result.directMessage.id,
-                                name: memberName(result.directMessage.other),
-                                type: "dm",
-                              });
-                              setMembersOpen(false);
-                            }
-                          })
-                        }
-                      >
-                        Message
-                      </button>
-                      <button
-                        className="danger-button"
-                        type="button"
-                        onClick={() =>
-                          void onAction({
-                            type: "set_block",
-                            memberId: member.id,
-                            blocked: !dm?.blocked_by_me,
-                          })
-                        }
-                      >
-                        {dm?.blocked_by_me ? "Unblock" : "Block"}
-                      </button>
-                    </>
-                  )}
-                </section>
-              );
-            })()}
         </aside>
       )}
+      {memberPopover &&
+        (() => {
+          const member = state.members.find(
+            ({ id }) => id === memberPopover.memberId,
+          );
+          if (!member) return null;
+          const dm = state.direct_messages.find(
+            ({ other }) => other.id === member.id,
+          );
+          return createPortal(
+            <section
+              className="member-card"
+              role="dialog"
+              aria-label="Member profile"
+              data-member-popover
+              style={{
+                position: "fixed",
+                left: memberPopover.left,
+                top: memberPopover.top,
+              }}
+            >
+              <AuthenticatedImage
+                path={member.bannerUrl}
+                alt=""
+                className="member-banner"
+                onAction={onAction}
+              />
+              <AuthenticatedImage
+                path={member.avatarUrl}
+                alt=""
+                className="member-card-avatar"
+                onAction={onAction}
+              />
+              <h3>{memberName(member)}</h3>
+              <p>@{member.username}</p>
+              {member.id !== state.member.id && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void onAction({
+                        type: "open_dm",
+                        memberId: member.id,
+                      }).then((result) => {
+                        if (result?.type === "direct_message") {
+                          setConversation({
+                            id: result.directMessage.id,
+                            name: memberName(result.directMessage.other),
+                            type: "dm",
+                          });
+                          setMembersOpen(false);
+                          setMemberPopover(null);
+                        }
+                      })
+                    }
+                  >
+                    Message
+                  </button>
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() =>
+                      void onAction({
+                        type: "set_block",
+                        memberId: member.id,
+                        blocked: !dm?.blocked_by_me,
+                      })
+                    }
+                  >
+                    {dm?.blocked_by_me ? "Unblock" : "Block"}
+                  </button>
+                </>
+              )}
+            </section>,
+            document.body,
+          );
+        })()}
+      {voiceMemberMenu && createPortal((() => {
+        const member = state.members.find(({ id }) => id === voiceMemberMenu.participant.member_id);
+        if (!member) return <></>;
+        const participant = voiceMemberMenu.participant;
+        return <nav
+          className="voice-member-context"
+          role="menu"
+          aria-label="Voice Member actions"
+          data-voice-member-menu
+          style={{ position: "fixed", left: voiceMemberMenu.left, top: voiceMemberMenu.top }}
+        >
+          <button type="button" role="menuitem" onClick={() => {
+            showMemberPopover(member.id, new DOMRect(voiceMemberMenu.left, voiceMemberMenu.top, 0, 0));
+            setVoiceMemberMenu(null);
+          }}>Profile</button>
+          {member.id !== state.member.id && <button type="button" role="menuitem" onClick={() => void onAction({ type: "open_dm", memberId: member.id }).then((result) => {
+            if (result?.type === "direct_message") setConversation({ id: result.directMessage.id, name: memberName(result.directMessage.other), type: "dm" });
+            setVoiceMemberMenu(null);
+          })}>Message</button>}
+          {state.member.owner && member.id !== state.member.id && <>
+            <button type="button" role="menuitem" onClick={() => {
+              void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: participant.server_muted ? "unmute" : "mute" });
+              setVoiceMemberMenu(null);
+            }}>{participant.server_muted ? "Server Unmute" : "Server Mute"}</button>
+            <button className="danger-text" type="button" role="menuitem" onClick={() => {
+              void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: "disconnect" });
+              setVoiceMemberMenu(null);
+            }}>Disconnect</button>
+          </>}
+          <button type="button" role="menuitem" onClick={() => {
+            void navigator.clipboard.writeText(member.id);
+            setVoiceMemberMenu(null);
+          }}>Copy User ID</button>
+        </nav>;
+      })(), document.body)}
     </div>
   );
+}
+
+function DirectCallControls({
+  conversation,
+  currentMemberId,
+  instanceId,
+  onAction,
+  connectMedia,
+}: {
+  conversation: { id: string; type: "text" | "voice" | "dm" } | null;
+  currentMemberId: string;
+  instanceId: string;
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+  connectMedia?: DesktopBridge["connectMedia"];
+}) {
+  const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
+  const [status, setStatus] = useState("");
+  const [muted, setMuted] = useState(false);
+  const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
+  const voiceRoomRef = useRef<string | null>(null);
+  const media = useRef<{ stream: MediaStream; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
+
+  const cleanup = () => {
+    const active = media.current;
+    media.current = null;
+    active?.socket.send({ version: 1, type: "leave" });
+    active?.socket.close();
+    active?.peer.close();
+    active?.stream.getTracks().forEach((track) => track.stop());
+    active?.audio.forEach((element) => element.remove());
+    setMuted(false);
+  };
+
+  async function connect(activeCall: import("../shared/instance-actions").DirectCall): Promise<void> {
+    if (media.current || !connectMedia) return;
+    setStatus("Requesting microphone permission…");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const credentials = await onAction({ type: "turn_credentials" });
+    if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
+    const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
+    const audio: HTMLAudioElement[] = [];
+    stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+    peer.addTransceiver("audio", { direction: "sendrecv" });
+    let socket: import("../shared/desktop-bridge").DesktopMediaConnection;
+    socket = await connectMedia(instanceId, (value) => {
+      const frame = value as { type?: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit; error?: string };
+      if (frame.type === "answer" && frame.sdp) void peer.setRemoteDescription(frame.sdp);
+      if (frame.type === "candidate" && frame.candidate) void peer.addIceCandidate(frame.candidate);
+      if (frame.type === "offer" && frame.sdp) void (async () => {
+        await peer.setRemoteDescription(frame.sdp!);
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        socket.send({ version: 1, type: "answer", sdp: peer.localDescription });
+      })();
+      if (frame.type === "error") setStatus(frame.error || "Call connection failed.");
+    }, (reason) => setStatus(reason || "Call disconnected."));
+    media.current = { stream, peer, socket, audio };
+    peer.onicecandidate = ({ candidate }) => {
+      if (candidate) socket.send({ version: 1, type: "candidate", candidate: candidate.toJSON() });
+    };
+    peer.ontrack = ({ streams, track }) => {
+      if (track.kind !== "audio") return;
+      const element = document.createElement("audio");
+      element.autoplay = true;
+      element.srcObject = streams[0] || new MediaStream([track]);
+      document.body.append(element);
+      audio.push(element);
+      void element.play().catch(() => undefined);
+    };
+    peer.onconnectionstatechange = () => setStatus(peer.connectionState === "connected" ? "Call connected" : `Call ${peer.connectionState}`);
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    socket.send({ version: 1, type: "join", room_id: activeCall.id, sdp: peer.localDescription });
+    setStatus("Connecting Call…");
+  }
+
+  useEffect(() => {
+    let current = true;
+    const poll = () => void onAction({ type: "current_call" }).then((result) => {
+      if (!current || result?.type !== "call") return;
+      setCall(result.call);
+      if (!result.call && !voiceRoomRef.current) cleanup();
+      else if (result.call?.state === "accepted") void connect(result.call).catch((error) => setStatus(error instanceof Error ? error.message : "Call failed."));
+    });
+    poll();
+    const timer = window.setInterval(poll, 1_000);
+    return () => { current = false; window.clearInterval(timer); cleanup(); };
+  }, [instanceId]);
+
+  async function start(): Promise<void> {
+    if (!conversation || conversation.type !== "dm") return;
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => stream.getTracks().forEach((track) => track.stop()));
+      const result = await onAction({ type: "start_call", directMessageId: conversation.id });
+      if (result?.type === "call") { setCall(result.call); setStatus("Calling…"); }
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Could not start Call."); }
+  }
+
+  async function act(action: "accept" | "decline" | "end"): Promise<void> {
+    if (!call) return;
+    const result = await onAction({ type: "call_action", callId: call.id, action });
+    if (result?.type === "call") setCall(result.call);
+    if (action === "decline" || action === "end") { cleanup(); setCall(null); setStatus(""); }
+  }
+
+  async function joinVoice(): Promise<void> {
+    if (!conversation || conversation.type !== "voice") return;
+    const room = conversation.id;
+    if (voiceRoomRef.current === room) return;
+    if (voiceRoomRef.current) cleanup();
+    voiceRoomRef.current = room;
+    setVoiceRoom(room);
+    try {
+      await connect({ id: room, direct_message_id: "", caller_id: currentMemberId, recipient_id: "", state: "accepted", created_at: new Date().toISOString() });
+    } catch (error) {
+      voiceRoomRef.current = null;
+      setVoiceRoom(null);
+      cleanup();
+      setStatus(error instanceof Error ? error.message : "Could not join Voice.");
+    }
+  }
+
+  useEffect(() => {
+    if (conversation?.type === "voice" && voiceRoomRef.current !== conversation.id) {
+      void joinVoice();
+    }
+  }, [conversation?.id, conversation?.type]);
+
+  function leaveVoice(): void {
+    cleanup();
+    voiceRoomRef.current = null;
+    setVoiceRoom(null);
+    setStatus("");
+  }
+
+  const incoming = call?.state === "ringing" && call.recipient_id === currentMemberId;
+  return <>
+    {!call && conversation?.type === "dm" && <button className="header-button icon-button" type="button" aria-label="Start Call" title="Start Call" onClick={() => void start()}><Icon name="phone" /></button>}
+    {incoming && <><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept Call</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></>}
+    {call && !incoming && call.state === "ringing" && <button className="call-end" type="button" onClick={() => void act("end")}>Cancel Call</button>}
+    {(call?.state === "accepted" || voiceRoom) && <button className="header-button" type="button" onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}>{muted ? "Unmute" : "Mute"}</button>}
+    {call?.state === "accepted" && <button className="call-end" type="button" onClick={() => void act("end")}>End Call</button>}
+    {voiceRoom && <button className="call-end" type="button" onClick={leaveVoice}>Disconnect Voice</button>}
+    {status && <span className="call-status" role="status">{status}</span>}
+  </>;
 }
 
 function memberName(member: InstanceViewState["member"]): string {
@@ -1089,22 +1868,118 @@ function mergeMessage(
 ) {
   return [...messages.filter(({ id }) => id !== incoming.id), incoming].sort(
     (left, right) => left.sequence - right.sequence,
-  );
+  ).slice(-300);
 }
 
 function mergeMessages(
   current: InstanceViewState["messages"][string],
   incoming: InstanceViewState["messages"][string],
+  direction: "older" | "newer" = "newer",
 ) {
   const messages = new Map(current.map((message) => [message.id, message]));
   incoming.forEach((message) => messages.set(message.id, message));
-  return [...messages.values()].sort(
+  const merged = [...messages.values()].sort(
     (left, right) => left.sequence - right.sequence,
+  );
+  return merged.length <= 300 ? merged : direction === "older" ? merged.slice(0, 300) : merged.slice(-300);
+}
+
+function updateReaction(
+  reactions: NonNullable<InstanceViewState["messages"][string][number]["reactions"]>,
+  emoji: string,
+  active: boolean,
+) {
+  const existing = reactions.find((reaction) => reaction.emoji === emoji);
+  if (!existing) return active ? [...reactions, { emoji, count: 1, me: true }] : reactions;
+  const count = Math.max(0, existing.count + (active && !existing.me ? 1 : !active && existing.me ? -1 : 0));
+  return reactions
+    .filter((reaction) => reaction.emoji !== emoji)
+    .concat(count ? [{ ...existing, count, me: active }] : []);
+}
+
+const reactionEmojis = [
+  "👍", "👎", "❤️", "😂", "🎉", "😮", "😢", "😡",
+  "🔥", "✨", "✅", "❌", "👀", "🙏", "💯", "🤔",
+  "👏", "🙌", "💪", "🚀", "⭐", "💜", "🤣", "😭",
+];
+
+function EmojiPicker({
+  reactions,
+  onSelect,
+}: {
+  reactions: NonNullable<InstanceViewState["messages"][string][number]["reactions"]>;
+  onSelect(emoji: string, active: boolean): void;
+}) {
+  return (
+    <div className="emoji-picker" role="menu" aria-label="Choose a Reaction" data-reaction-picker>
+      {reactionEmojis.map((emoji) => {
+        const selected = reactions.some((reaction) => reaction.emoji === emoji && reaction.me);
+        return <button key={emoji} type="button" role="menuitemcheckbox" aria-checked={selected} aria-label={`${selected ? "Remove" : "Add"} ${emoji} Reaction`} onClick={() => onSelect(emoji, !selected)}>{emoji}</button>;
+      })}
+    </div>
+  );
+}
+
+function appendUniqueFiles(current: File[], incoming: File[]): File[] {
+  const files = [...current];
+  for (const file of incoming) {
+    if (!files.some((item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) files.push(file);
+  }
+  return files.slice(0, 10);
+}
+
+function AttachmentPreviewList({ files, onRemove }: { files: File[]; onRemove(index: number): void }) {
+  return (
+    <section className="attachment-preview-list" aria-label="Files ready to send">
+      {files.map((file, index) => <PendingAttachmentPreview key={`${file.name}-${file.size}-${file.lastModified}`} file={file} onRemove={() => onRemove(index)} />)}
+    </section>
+  );
+}
+
+function PendingAttachmentPreview({ file, onRemove }: { file: File; onRemove(): void }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return (
+    <article className="attachment-preview">
+      {previewUrl && file.type.startsWith("image/") ? <img src={previewUrl} alt="" /> : previewUrl && file.type.startsWith("video/") ? <video src={previewUrl} muted aria-label={`${file.name} preview`} /> : <span className="attachment-file-icon"><Icon name="file" /></span>}
+      <span className="attachment-preview-details"><strong title={file.name}>{file.name}</strong><small>{formatBytes(file.size)}</small></span>
+      <button className="attachment-preview-remove" type="button" aria-label={`Remove ${file.name}`} onClick={onRemove}><Icon name="x" /></button>
+    </article>
   );
 }
 
 function formatBytes(size: number): string {
-  return size < 1024 ? `${size} B` : `${Math.ceil(size / 1024)} KiB`;
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+  let value = Number(size || 0), index = 0;
+  while (value >= 1024 && index < units.length - 1) { value /= 1024; index += 1; }
+  return `${value.toFixed(index ? 1 : 0)} ${units[index]}`;
+}
+
+function LinkifiedText({ body }: { body: string }) {
+  const parts: Array<string | { url: string }> = [];
+  const pattern = /https?:\/\/[^\s<]+/g;
+  let offset = 0;
+  for (const match of body.matchAll(pattern)) {
+    const index = match.index || 0;
+    if (index > offset) parts.push(body.slice(offset, index));
+    const raw = match[0];
+    const url = raw.replace(/[),.!?;:]+$/, "");
+    parts.push({ url });
+    if (url.length < raw.length) parts.push(raw.slice(url.length));
+    offset = index + raw.length;
+  }
+  if (offset < body.length) parts.push(body.slice(offset));
+  return <>{parts.map((part, index) => typeof part === "string" ? <Fragment key={index}>{part}</Fragment> : <a className="message-link" key={index} href={part.url} target="_blank" rel="noreferrer">{part.url}</a>)}</>;
+}
+
+function firstMessageURL(body: string): string | undefined {
+  const raw = body.match(/https?:\/\/[^\s<]+/)?.[0];
+  return raw?.replace(/[),.!?;:]+$/, "");
 }
 
 function LinkPreview({
@@ -1119,8 +1994,9 @@ function LinkPreview({
     site_name?: string;
     title?: string;
     description?: string;
+    image_url?: string;
   } | null>(null);
-  const url = body.match(/https?:\/\/[^\s<]+/)?.[0];
+  const url = firstMessageURL(body);
   useEffect(() => {
     if (!url) return;
     let current = true;
@@ -1144,6 +2020,14 @@ function LinkPreview({
       <small>{preview.site_name || new URL(preview.url).hostname}</small>
       <strong>{preview.title || preview.url}</strong>
       {preview.description && <span>{preview.description}</span>}
+      {preview.image_url && (
+        <AuthenticatedImage
+          path={`/api/v1/link-preview/image?url=${encodeURIComponent(preview.image_url)}`}
+          alt=""
+          className="link-preview-image"
+          onAction={onAction}
+        />
+      )}
     </a>
   ) : null;
 }
@@ -1156,6 +2040,8 @@ function AttachmentView({
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
 }) {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [loadingOriginal, setLoadingOriginal] = useState(false);
   const path =
     attachment.preview_url ||
     attachment.url ||
@@ -1167,21 +2053,36 @@ function AttachmentView({
     },
     [objectUrl],
   );
+  useEffect(() => () => { if (viewerUrl) URL.revokeObjectURL(viewerUrl); }, [viewerUrl]);
 
-  async function load(): Promise<void> {
-    const result = await onAction({ type: "load_asset", path });
-    if (result?.type !== "asset") return;
-    const nextUrl = URL.createObjectURL(
-      new Blob([result.data as BlobPart], { type: result.contentType }),
-    );
-    setObjectUrl(nextUrl);
+  useEffect(() => {
+    let current = true;
+    void onAction({ type: "load_asset", path }).then((result) => {
+      if (!current || result?.type !== "asset") return;
+      const nextUrl = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
+      setObjectUrl(nextUrl);
+    }).catch(() => undefined);
+    return () => { current = false; };
+  }, [path]);
+
+  async function openOriginalImage(): Promise<void> {
+    setLoadingOriginal(true);
+    try {
+      const originalPath = attachment.url || `/api/v1/attachments/${attachment.id}`;
+      const result = await onAction({ type: "load_asset", path: originalPath });
+      if (result?.type !== "asset") return;
+      if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+      setViewerUrl(URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType })));
+    } finally {
+      setLoadingOriginal(false);
+    }
   }
 
   const type = attachment.content_type;
   return (
     <figure className="attachment">
       {objectUrl && type.startsWith("image/") && (
-        <img src={objectUrl} alt={attachment.name} />
+        <button className="attachment-image-button" type="button" aria-label={`View ${attachment.name} at full size`} onClick={() => void openOriginalImage()}><img src={objectUrl} alt={attachment.name} /></button>
       )}
       {objectUrl && type.startsWith("audio/") && (
         <audio src={objectUrl} controls />
@@ -1193,35 +2094,70 @@ function AttachmentView({
         <strong>{attachment.name}</strong>
         <small>{formatBytes(attachment.size)}</small>
       </figcaption>
-      <button type="button" onClick={() => void load()}>
-        {objectUrl ? "Reload" : "Open"}
-      </button>
+      {!objectUrl && <span className="attachment-loading">Loading…</span>}
+      {loadingOriginal && <span className="attachment-loading">Opening original…</span>}
       {objectUrl && (
         <a href={objectUrl} download={attachment.name}>
           Download
         </a>
       )}
+      {viewerUrl && <ImageLightbox src={viewerUrl} alt={attachment.name} onClose={() => setViewerUrl(null)} />}
     </figure>
   );
 }
 
+function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose(): void }) {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  useEffect(() => {
+    const closeWithEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", closeWithEscape);
+    return () => document.removeEventListener("keydown", closeWithEscape);
+  }, [onClose]);
+  return createPortal(
+    <section className={`image-lightbox${dragging ? " dragging" : ""}`} role="dialog" aria-modal="true" aria-label={`Image viewer: ${alt}`} onWheel={(event) => { event.preventDefault(); setScale((current) => Math.min(8, Math.max(.25, current * (event.deltaY < 0 ? 1.15 : .87)))); }} onPointerMove={(event) => { if (dragging) setPosition((current) => ({ x: current.x + event.movementX, y: current.y + event.movementY })); }} onPointerUp={(event) => { if (dragging && event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false); }}>
+      <img src={src} alt={alt} draggable={false} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }} onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); setDragging(true); event.currentTarget.closest<HTMLElement>(".image-lightbox")?.setPointerCapture(event.pointerId); }} />
+      <output aria-live="polite">{Math.round(scale * 100)}%</output>
+      <button className="image-lightbox-close" type="button" aria-label="Close image viewer" onClick={onClose}><Icon name="x" /></button>
+    </section>,
+    document.body,
+  );
+}
+
 type IconName =
+  | "bell"
   | "chevron-down"
+  | "file"
   | "hash"
   | "home"
   | "messages"
   | "paperclip"
+  | "phone"
   | "pin"
   | "search"
   | "send"
   | "settings"
   | "user"
   | "users"
-  | "volume";
+  | "volume"
+  | "x";
 
 function Icon({ name }: { name: IconName }) {
   const paths = {
+    bell: (
+      <>
+        <path d="M10.3 21a2 2 0 0 0 3.4 0" />
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      </>
+    ),
     "chevron-down": <path d="m6 9 6 6 6-6" />,
+    file: (
+      <>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6" />
+      </>
+    ),
     hash: (
       <>
         <line x1="4" x2="20" y1="9" y2="9" />
@@ -1249,6 +2185,7 @@ function Icon({ name }: { name: IconName }) {
         <path d="M5 17c0-3 2-5 2-7h10c0 2 2 4 2 7Z" />
       </>
     ),
+    phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z" />,
     search: (
       <>
         <circle cx="11" cy="11" r="8" />
@@ -1284,6 +2221,12 @@ function Icon({ name }: { name: IconName }) {
       <>
         <path d="M11 5 6 9H2v6h4l5 4Z" />
         <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+      </>
+    ),
+    x: (
+      <>
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
       </>
     ),
   };
@@ -1336,6 +2279,412 @@ function AuthenticatedImage({
   );
 }
 
+type VoiceVideoPreferences = {
+  version: 1;
+  microphoneID: string;
+  speakerID: string;
+  cameraID: string;
+  inputGain: number;
+  outputVolume: number;
+  noiseSuppressionMode: "standard" | "enhanced" | "off";
+  echoCancellation: boolean;
+  autoGainControl: boolean;
+  noiseGate: boolean;
+  noiseGateThresholdDB: number;
+};
+
+const defaultVoiceVideoPreferences: VoiceVideoPreferences = {
+  version: 1,
+  microphoneID: "",
+  speakerID: "",
+  cameraID: "",
+  inputGain: 1,
+  outputVolume: 1,
+  noiseSuppressionMode: "standard",
+  echoCancellation: true,
+  autoGainControl: false,
+  noiseGate: true,
+  noiseGateThresholdDB: -50,
+};
+
+function CommunityAdministration({
+  state,
+  onAction,
+  onSectionChange,
+}: {
+  state: InstanceViewState;
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+  onSectionChange(section: string): void;
+}) {
+  const [section, setSection] = useState<"general" | "dashboard" | "channels" | "roles" | "invitations" | "soundboard">("general");
+  const [dashboard, setDashboard] = useState<import("../shared/instance-actions").AdminDashboard | null>(null);
+  const [dashboardHistory, setDashboardHistory] = useState<import("../shared/instance-actions").AdminDashboard[]>([]);
+  const [roles, setRoles] = useState<import("../shared/instance-actions").CommunityRole[] | null>(null);
+  const [invitations, setInvitations] = useState<import("../shared/instance-actions").CommunityInvitation[] | null>(null);
+  const [adminCategories, setAdminCategories] = useState(state.categories);
+  const [adminChannels, setAdminChannels] = useState(state.channels);
+  const [sounds, setSounds] = useState<import("../shared/instance-actions").SoundboardSound[] | null>(null);
+  const [soundLimit, setSoundLimit] = useState(10_000);
+  const [communitySettings, setCommunitySettings] = useState<import("../shared/instance-actions").CommunitySettings | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    void onAction({ type: "get_community_settings" }).then((result) => {
+      if (result?.type === "community_settings") setCommunitySettings(result.settings);
+    }).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load Community settings."));
+  }, []);
+
+  useEffect(() => {
+    if (section !== "dashboard") return;
+    let current = true;
+    const refresh = () => void onAction({ type: "admin_dashboard" }).then((result) => {
+      if (!current || result?.type !== "admin_dashboard") return;
+      setDashboard(result.dashboard);
+      setDashboardHistory((history) => [...history, result.dashboard].slice(-60));
+      setError("");
+    }).catch((cause) => {
+      if (current) setError(cause instanceof Error ? cause.message : "Could not load the Admin Dashboard.");
+    });
+    setDashboard(null);
+    setDashboardHistory([]);
+    refresh();
+    const timer = window.setInterval(refresh, 5_000);
+    return () => { current = false; window.clearInterval(timer); };
+  }, [section, onAction]);
+
+  function select(next: typeof section): void {
+    setSection(next);
+    onSectionChange(next);
+    setError("");
+    if (next === "general" && !communitySettings) {
+      void onAction({ type: "get_community_settings" }).then((result) => {
+        if (result?.type === "community_settings") setCommunitySettings(result.settings);
+      }).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load Community settings."));
+    }
+    if (next === "roles") {
+      setRoles(null);
+      void onAction({ type: "list_roles" }).then((result) => {
+        if (result?.type === "roles") setRoles(result.roles);
+      }).catch(() => setError("Could not load Roles."));
+    }
+    if (next === "channels" && !roles) {
+      void onAction({ type: "list_roles" }).then((result) => {
+        if (result?.type === "roles") setRoles(result.roles);
+      }).catch(() => setError("Could not load Channel permission Roles."));
+    }
+    if (next === "invitations") {
+      setInvitations(null);
+      void onAction({ type: "list_invitations" }).then((result) => {
+        if (result?.type === "invitations") setInvitations(result.invitations);
+      }).catch(() => setError("Could not load Invitations."));
+    }
+    if (next === "soundboard") {
+      setSounds(null);
+      void onAction({ type: "list_soundboard" }).then((result) => {
+        if (result?.type === "soundboard") { setSounds(result.sounds); setSoundLimit(result.maxDurationMs); }
+      }).catch(() => setError("Could not load the Soundboard."));
+    }
+  }
+
+  return (
+    <section className="community-administration" data-community-administration>
+      <nav aria-label="Community settings">
+        {(["dashboard", "general", "channels", "roles", "invitations", "soundboard"] as const).map((item) => <button type="button" key={item} aria-current={section === item ? "page" : undefined} onClick={() => select(item)}>{item === "general" ? "General" : item[0].toUpperCase() + item.slice(1)}</button>)}
+      </nav>
+      {section === "general" && <section className="settings-panel administration-list"><h2>General</h2><p>Manage {state.community.name} from the desktop client.</p>{!communitySettings && !error && <p>Loading Community settings…</p>}{error && <p role="alert" className="notice-error">{error}</p>}{communitySettings && <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "update_community_settings", maxAttachmentMiB: Number(data.get("maxAttachmentMiB")), homeMarkdown: String(data.get("homeMarkdown") || ""), pushRelayURL: String(data.get("pushRelayURL") || "") }).then((result) => { if (result?.type === "community_settings") setCommunitySettings(result.settings); }).catch(() => setError("Could not save Community settings.")); }}><label>Maximum attachment size (MiB)<input name="maxAttachmentMiB" type="number" min="1" max="256" defaultValue={communitySettings.max_attachment_mib} required /></label><p>Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Community Guide<textarea name="homeMarkdown" rows={8} defaultValue={communitySettings.home_markdown} /></label><label>Mobile push relay<input name="pushRelayURL" type="url" defaultValue={communitySettings.push_relay_url} placeholder="https://push.example.com" /></label><p>Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p>Key ID: <code>{communitySettings.push_key_id}</code></p><textarea readOnly rows={3} value={communitySettings.push_public_key} aria-label="Relay public key" /></details><button type="submit">Save settings</button></form>}</section>}
+      {section === "dashboard" && <AdminDashboardView dashboard={dashboard} history={dashboardHistory} error={error} />}
+      {section === "channels" && <section className="settings-panel administration-list"><h2>Channels</h2><p>Create and archive Community Categories and Channels.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_category", name: String(data.get("name") || ""), position: adminCategories.length }).then((result) => { if (result?.type === "category") setAdminCategories((current) => [...current, result.category]); }); event.currentTarget.reset(); }}><label>Category name<input name="name" required /></label><button type="submit">Create Category</button></form><form className="administration-inline-form channel-create-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_channel", categoryId: String(data.get("category")), name: String(data.get("name") || ""), channelType: String(data.get("type")) as "text" | "voice", position: adminChannels.length }).then((result) => { if (result?.type === "channel") setAdminChannels((current) => [...current, result.channel]); }); event.currentTarget.reset(); }}><label>Category<select name="category" required>{adminCategories.filter(({ archived }) => !archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Channel name<input name="name" required /></label><label>Type<select name="type"><option value="text">Text</option><option value="voice">Voice</option></select></label><button type="submit">Create Channel</button></form>{adminCategories.map((category) => <section className="admin-category" key={category.id}><h3>{category.name}</h3>{adminChannels.filter(({ category_id }) => category_id === category.id).map((channel) => <AdminChannelRow key={channel.id} channel={channel} roles={roles || []} onAction={onAction} onUpdate={(updated) => setAdminChannels((current) => updated ? current.map((item) => item.id === channel.id ? updated : item) : current.filter(({ id }) => id !== channel.id))} />)}</section>)}</section>}
+      {section === "roles" && <section className="settings-panel administration-list"><h2>Roles</h2><p>Create Roles and manage their permissions and ordering.</p><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_role", name: String(data.get("name") || ""), position: roles?.length || 0, permissions: data.getAll("permissions").map(String) }).then((result) => { if (result?.type === "role") setRoles((current) => [...(current || []), result.role]); }); event.currentTarget.reset(); }}><label>Role name<input name="name" required /></label><fieldset><legend>Permissions</legend>{["manage_channels", "manage_roles", "manage_invitations", "manage_soundboard", "moderate_members"].map((permission) => <label className="notification-check" key={permission}><input type="checkbox" name="permissions" value={permission} />{permission.replaceAll("_", " ")}</label>)}</fieldset><button type="submit">Create Role</button></form>{!roles && !error && <p>Loading Roles…</p>}{roles?.map((role) => <article key={role.id}><span><strong>{role.name}</strong><small>{role.permissions.join(", ") || "No permissions"}</small></span>{!role.default && !role.owner && <div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Role name", role.name); if (!name) return; void onAction({ type: "update_role", roleId: role.id, name, position: role.position, permissions: role.permissions }).then((result) => { if (result?.type === "role") setRoles((current) => current?.map((item) => item.id === role.id ? result.role : item) || null); }); }}>Edit</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Retire ${role.name}?`)) return; void onAction({ type: "retire_role", roleId: role.id }).then(() => setRoles((current) => current?.filter(({ id }) => id !== role.id) || null)); }}>Retire</button></div>}</article>)}</section>}
+      {section === "invitations" && <section className="settings-panel administration-list"><h2>Invitations</h2><p>Create and revoke Community Invitations.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_invitation", expiresInMinutes: Number(data.get("expires")), maxUses: Number(data.get("uses")) }).then((result) => { if (result?.type === "invitation") setInvitations((current) => [result.invitation, ...(current || [])]); }); }}><label>Expires in minutes<input name="expires" type="number" min="1" defaultValue="1440" required /></label><label>Maximum uses<input name="uses" type="number" min="1" defaultValue="1" required /></label><button type="submit">Create Invitation</button></form>{!invitations && !error && <p>Loading Invitations…</p>}{invitations?.length === 0 && <p>No active Invitations.</p>}{invitations?.map((invitation) => <article key={invitation.id}><span><strong>{invitation.token || invitation.id}</strong><small>{invitation.use_count} / {invitation.max_uses} uses · expires {new Date(invitation.expires_at).toLocaleString()}</small></span><button className="danger-button" type="button" onClick={() => { if (!window.confirm("Revoke this Invitation?")) return; void onAction({ type: "revoke_invitation", invitationId: invitation.id }).then(() => setInvitations((current) => current?.filter(({ id }) => id !== invitation.id) || null)); }}>Revoke</button></article>)}</section>}
+      {section === "soundboard" && <section className="settings-panel administration-list"><h2>Soundboard</h2><p>Upload and manage sounds available in Voice Rooms.</p><form onSubmit={(event) => { event.preventDefault(); const form = event.currentTarget; const data = new FormData(form); const file = data.get("file"); if (!(file instanceof File)) return; void file.arrayBuffer().then((bytes) => onAction({ type: "upload_sound", name: String(data.get("name") || ""), emoji: String(data.get("emoji") || ""), position: sounds?.length || 0, contentType: file.type || "application/octet-stream", data: new Uint8Array(bytes) })).then((result) => { if (result?.type === "sound") setSounds((current) => [...(current || []), result.sound]); }); form.reset(); }}><label>Name<input name="name" required /></label><label>Emoji<input name="emoji" maxLength={8} /></label><label>Audio (MP3, WAV, Ogg; up to 1 MiB)<input name="file" type="file" accept="audio/mpeg,audio/wav,audio/ogg" required /></label><button type="submit">Upload sound</button></form><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const seconds = Number(new FormData(event.currentTarget).get("seconds")); void onAction({ type: "set_soundboard_limit", maxDurationMs: seconds * 1000 }).then(() => setSoundLimit(seconds * 1000)); }}><label>Maximum clip length (seconds)<input name="seconds" type="number" min="1" max="30" defaultValue={Math.round(soundLimit / 1000)} required /></label><button type="submit">Save limit</button></form>{!sounds && !error && <p>Loading sounds…</p>}{sounds?.length === 0 && <p>No sounds uploaded.</p>}{sounds?.map((sound) => <article key={sound.id}><span><strong>{sound.emoji} {sound.name}</strong><small>{(sound.duration_ms / 1000).toFixed(1)}s · {formatBytes(sound.size)}</small></span><div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Sound name", sound.name); if (!name) return; const emoji = window.prompt("Sound emoji", sound.emoji || "") ?? sound.emoji ?? ""; void onAction({ type: "update_sound", soundId: sound.id, name, emoji, position: sound.position }).then((result) => { if (result?.type === "sound") setSounds((current) => current?.map((item) => item.id === sound.id ? result.sound : item) || null); }); }}>Edit</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Delete ${sound.name}?`)) return; void onAction({ type: "delete_sound", soundId: sound.id }).then(() => setSounds((current) => current?.filter(({ id }) => id !== sound.id) || null)); }}>Delete</button></div></article>)}</section>}
+    </section>
+  );
+}
+
+function AdminChannelRow({ channel, roles, onAction, onUpdate }: {
+  channel: InstanceViewState["channels"][number];
+  roles: import("../shared/instance-actions").CommunityRole[];
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+  onUpdate(channel: InstanceViewState["channels"][number] | null): void;
+}) {
+  return <article><span><strong><Icon name={channel.type === "voice" ? "volume" : "hash"} />{channel.name}</strong><small>{channel.type} Channel{channel.archived ? " · archived" : ""}</small></span><div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Channel name", channel.name); if (!name) return; void onAction({ type: "update_channel", channelId: channel.id, categoryId: channel.category_id, name, channelType: channel.type, position: channel.position }).then((result) => { if (result?.type === "channel") onUpdate(result.channel); }); }}>Edit</button><button type="button" onClick={() => void onAction({ type: "set_channel_archived", channelId: channel.id, archived: !channel.archived }).then(() => onUpdate({ ...channel, archived: !channel.archived }))}>{channel.archived ? "Restore" : "Archive"}</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Permanently delete #${channel.name}?`)) return; void onAction({ type: "delete_channel", channelId: channel.id }).then(() => onUpdate(null)); }}>Delete</button></div><details className="channel-permissions"><summary>Permission override</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "set_channel_override", channelId: channel.id, roleId: String(data.get("roleId")), permission: String(data.get("permission")), effect: String(data.get("effect")) as "allow" | "deny" | "inherit" }); }}><label>Role<select name="roleId" required>{roles.map((role) => <option value={role.id} key={role.id}>{role.name}</option>)}</select></label><label>Permission<select name="permission"><option value="view_channel">View Channel</option><option value="send_messages">Send Messages</option><option value="connect_voice">Connect Voice</option></select></label><label>Effect<select name="effect"><option value="inherit">Inherit</option><option value="allow">Allow</option><option value="deny">Deny</option></select></label><button type="submit">Save override</button></form></details></article>;
+}
+
+function DashboardStat({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
+  return <article className="dashboard-stat"><span>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</article>;
+}
+
+function AdminDashboardView({ dashboard, history, error }: { dashboard: import("../shared/instance-actions").AdminDashboard | null; history: import("../shared/instance-actions").AdminDashboard[]; error: string }) {
+  if (!dashboard) return <section className="admin-dashboard" data-admin-dashboard><header className="dashboard-heading"><div><h2>Instance overview</h2><p>Live health, capacity, storage, and Community activity.</p></div><span>Loading…</span></header>{error && <p className="notice-error" role="alert">{error}</p>}</section>;
+  const resources = dashboard.resources;
+  const cpuHistory = history.map((sample, index) => {
+    const previous = history[index - 1];
+    if (!previous) return 0;
+    const elapsed = (new Date(sample.checked_at).getTime() - new Date(previous.checked_at).getTime()) / 1_000;
+    return elapsed > 0 ? Math.min(100, Math.max(0, (sample.resources.cpu_seconds - previous.resources.cpu_seconds) / elapsed / Math.max(1, sample.resources.cpu_cores) * 100)) : 0;
+  });
+  const cpu = cpuHistory.at(-1) || 0;
+  const maximumSource = Math.max(1, ...dashboard.storage_sources.map(({ bytes }) => bytes));
+  const healthy = (status: string) => status === "ready" || status === "embedded" || status === "external";
+  return <section className="admin-dashboard" data-admin-dashboard>
+    <header className="dashboard-heading"><div><h2>Instance overview</h2><p>Live health, capacity, storage, and Community activity.</p></div><span>Updated {new Date(dashboard.checked_at).toLocaleTimeString()}</span></header>
+    {error && <p className="notice-error" role="alert">{error}</p>}
+    <div className="dashboard-stat-grid">
+      <DashboardStat label="Members" value={dashboard.counts.members.toLocaleString()} detail={`${dashboard.counts.online_members} online`} />
+      <DashboardStat label="Messages" value={dashboard.counts.messages.toLocaleString()} detail={`${dashboard.message_rate.messages_per_minute} in the last minute`} />
+      <DashboardStat label="Attachments" value={dashboard.counts.attachments.toLocaleString()} />
+      <DashboardStat label="Process memory" value={formatBytes(resources.memory_bytes)} detail={`${formatBytes(resources.heap_bytes)} active heap`} />
+      <DashboardStat label="CPU" value={`${cpu.toFixed(1)}%`} detail={`${resources.cpu_cores} logical cores`} />
+      <DashboardStat label="App storage" value={formatBytes(resources.app_storage_bytes)} detail={`${formatBytes(resources.disk_available_bytes)} disk available`} />
+      <DashboardStat label="Uptime" value={formatDuration(dashboard.uptime_seconds)} />
+      <DashboardStat label="Relay" value={dashboard.health.relay} detail={`SFU ${dashboard.health.sfu}`} />
+    </div>
+    <div className="dashboard-chart-grid">
+      <section className="settings-card dashboard-chart"><h3>Resource usage</h3><p className="muted">Process CPU and memory sampled while this dashboard is open.</p><div className="dashboard-resource-chart"><DashboardLineChart series={[{ label: "CPU", values: cpuHistory }]} formatter={(value) => value.toFixed(1)} suffix="%" /></div><div className="dashboard-resource-chart"><DashboardLineChart series={[{ label: "Memory", values: history.map(({ resources: value }) => value.memory_bytes / 1_048_576) }, { label: "App storage", values: history.map(({ resources: value }) => value.app_storage_bytes / 1_048_576) }]} formatter={(value) => value.toFixed(1)} suffix=" MiB" /></div></section>
+      <section className="settings-card dashboard-chart"><h3>Messages sent</h3><p className="muted">Messages per minute over the last 30 minutes.</p><DashboardLineChart series={[{ label: "Messages/min", values: dashboard.message_rate.buckets.map(({ count }) => count) }]} formatter={Math.round} /></section>
+    </div>
+    <section className="settings-card"><h3>Storage by source</h3><p className="muted">Message and profile values are logical payload sizes inside SQLite; database and index overhead is shown separately.</p><div className="dashboard-storage">{dashboard.storage_sources.map((source) => <div className="dashboard-storage-row" key={source.name}><span>{source.name}</span><div><i style={{ width: `${source.bytes / maximumSource * 100}%` }} /></div><strong>{formatBytes(source.bytes)}</strong></div>)}</div></section>
+    <section className="settings-card dashboard-health"><h3>Subsystem health</h3><div>{Object.entries(dashboard.health).map(([name, status]) => <div key={name}><span className={`dashboard-health-dot ${healthy(status) ? "ready" : status}`} /><strong>{name.replaceAll("_", " ")}</strong><span>{status}</span></div>)}</div></section>
+  </section>;
+}
+
+function DashboardLineChart({ series, formatter, suffix = "" }: { series: Array<{ label: string; values: number[] }>; formatter(value: number): string | number; suffix?: string }) {
+  const width = 620, height = 190, pad = 28;
+  const values = series.flatMap((item) => item.values).filter(Number.isFinite);
+  const maximum = Math.max(1, ...values);
+  const count = Math.max(1, series[0]?.values.length || 0);
+  const x = (index: number) => pad + index * (width - pad * 2) / Math.max(1, count - 1);
+  const y = (value: number) => height - pad - value / maximum * (height - pad * 2);
+  const colors = ["#6d75e8", "#35b978", "#d9a441"];
+  return <><div className="dashboard-chart-legend">{series.map((item, index) => <span key={item.label} style={{ "--chart-color": colors[index] } as CSSProperties}>{item.label}: <strong>{formatter(item.values.at(-1) || 0)}{suffix}</strong></span>)}</div><svg className="dashboard-chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${series.map(({ label }) => label).join(" and ")} history`}><line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} /><line x1={pad} y1={pad} x2={pad} y2={height - pad} /><text x={pad + 4} y={pad + 4}>{formatter(maximum)}{suffix}</text><text x={pad + 4} y={height - pad - 5}>0</text>{series.map((item, index) => <polyline key={item.label} fill="none" stroke={colors[index]} strokeWidth="2.5" vectorEffect="non-scaling-stroke" points={item.values.map((value, point) => `${x(point)},${y(value)}`).join(" ")} />)}</svg></>;
+}
+
+function formatDuration(seconds: number): string {
+  const value = Math.max(0, seconds);
+  const days = Math.floor(value / 86400), hours = Math.floor(value % 86400 / 3600), minutes = Math.floor(value % 3600 / 60);
+  return days ? `${days}d ${hours}h` : hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
+
+function MarkdownContent({ value }: { value: string }) {
+  return <>{value.split(/\n{2,}/).map((block, index) => {
+    const text = block.trim();
+    if (!text) return null;
+    const heading = /^(#{1,3})\s+(.+)$/.exec(text);
+    if (heading) {
+      const content = heading[2];
+      if (heading[1].length === 1) return <h2 key={index}>{content}</h2>;
+      if (heading[1].length === 2) return <h3 key={index}>{content}</h3>;
+      return <h4 key={index}>{content}</h4>;
+    }
+    const lines = text.split("\n");
+    if (lines.every((line) => /^[-*]\s+/.test(line))) return <ul key={index}>{lines.map((line, lineIndex) => <li key={lineIndex}>{line.replace(/^[-*]\s+/, "")}</li>)}</ul>;
+    return <p key={index}>{lines.join(" ")}</p>;
+  })}</>;
+}
+
+function NotificationSettings({
+  state,
+  onAction,
+}: {
+  state: InstanceViewState;
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+}) {
+  type CommunityLevel = "all_messages" | "mentions_only" | "nothing";
+  type ChannelLevel = "default" | CommunityLevel;
+  const initialCommunityLevel: CommunityLevel = state.notifications.community.level === "default"
+    ? "mentions_only"
+    : state.notifications.community.level;
+  const [community, setCommunity] = useState({
+    level: initialCommunityLevel,
+    muted: state.notifications.community.muted,
+    soundEnabled: state.notifications.community.sound_enabled ?? true,
+  });
+  const [channels, setChannels] = useState(state.notifications.channels);
+  const [notice, setNotice] = useState("");
+
+  async function saveCommunity(next: typeof community): Promise<void> {
+    setCommunity(next);
+    try {
+      await onAction({ type: "set_community_notifications", ...next });
+      setNotice("Community notification settings saved.");
+    } catch {
+      setNotice("Could not save notification settings.");
+    }
+  }
+
+  async function saveChannel(channelId: string, next: { level: ChannelLevel; muted: boolean }): Promise<void> {
+    setChannels((current) => ({ ...current, [channelId]: next }));
+    try {
+      await onAction({ type: "set_channel_notifications", channelId, ...next });
+      setNotice("Channel notification settings saved.");
+    } catch {
+      setNotice("Could not save channel notification settings.");
+    }
+  }
+
+  return (
+    <section className="settings-panel notification-settings-page" data-notification-settings>
+      <p className="eyebrow">Member settings</p>
+      <h2>Notifications</h2>
+      <p>Choose when this Community may notify you. Electron delivers native operating-system notifications.</p>
+      <section className="settings-card">
+        <h3>Desktop notifications</h3>
+        <p className="notification-permission-state"><span className="presence-dot online" /> Native notifications enabled</p>
+      </section>
+      <section className="settings-card">
+        <h3>Community defaults</h3>
+        <label>Notification level<select aria-label="Community notification level" value={community.level} onChange={(event) => void saveCommunity({ ...community, level: event.target.value as CommunityLevel })}><option value="all_messages">All Messages</option><option value="mentions_only">Only @mentions</option><option value="nothing">Nothing</option></select></label>
+        <label className="notification-check"><input type="checkbox" checked={community.muted} onChange={(event) => void saveCommunity({ ...community, muted: event.target.checked })} />Mute Community</label>
+        <label className="notification-check"><input type="checkbox" checked={community.soundEnabled} onChange={(event) => void saveCommunity({ ...community, soundEnabled: event.target.checked })} />Notification sound</label>
+      </section>
+      <section className="settings-card channel-overrides">
+        <h3>Channel overrides</h3>
+        {state.channels.filter(({ type, archived }) => type === "text" && !archived).map((channel) => {
+          const setting = channels[channel.id] || { level: "default" as const, muted: false };
+          return <div className="channel-override" key={channel.id}>
+            <strong><Icon name="hash" />{channel.name}</strong>
+            <select aria-label={`${channel.name} notification level`} value={setting.level} onChange={(event) => void saveChannel(channel.id, { ...setting, level: event.target.value as ChannelLevel })}><option value="default">Community default</option><option value="all_messages">All Messages</option><option value="mentions_only">Only @mentions</option><option value="nothing">Nothing</option></select>
+            <label className="notification-check"><input type="checkbox" checked={setting.muted} onChange={(event) => void saveChannel(channel.id, { ...setting, muted: event.target.checked })} />Mute</label>
+          </div>;
+        })}
+      </section>
+      <p role="status" aria-live="polite">{notice}</p>
+    </section>
+  );
+}
+
+function VoiceVideoSettings({ memberId }: { memberId: string }) {
+  const storageKey = `allchat:voice-video:v1:desktop:${memberId}`;
+  const [preferences, setPreferences] = useState<VoiceVideoPreferences>(() => {
+    try {
+      return {
+        ...defaultVoiceVideoPreferences,
+        ...JSON.parse(localStorage.getItem(storageKey) || "null"),
+      };
+    } catch {
+      return defaultVoiceVideoPreferences;
+    }
+  });
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [notice, setNotice] = useState("");
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const cameraPreview = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    void navigator.mediaDevices.enumerateDevices().then(setDevices).catch(() => {
+      setNotice("Media devices are unavailable.");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (cameraPreview.current) cameraPreview.current.srcObject = cameraStream;
+    return () => cameraStream?.getTracks().forEach((track) => track.stop());
+  }, [cameraStream]);
+
+  function save(next: VoiceVideoPreferences): void {
+    setPreferences(next);
+    localStorage.setItem(storageKey, JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent("allchat:voice-settings", { detail: next }));
+  }
+
+  function patch(next: Partial<VoiceVideoPreferences>): void {
+    save({ ...preferences, ...next });
+  }
+
+  async function testMicrophone(): Promise<void> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          ...(preferences.microphoneID ? { deviceId: { ideal: preferences.microphoneID } } : {}),
+          echoCancellation: preferences.echoCancellation,
+          noiseSuppression: preferences.noiseSuppressionMode === "standard",
+          autoGainControl: preferences.autoGainControl,
+        },
+        video: false,
+      });
+      setNotice("Microphone is working.");
+      window.setTimeout(() => stream.getTracks().forEach((track) => track.stop()), 1_000);
+    } catch {
+      setNotice("Microphone permission was denied or the selected device is unavailable.");
+    }
+  }
+
+  async function toggleCamera(): Promise<void> {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+      setNotice("Camera preview stopped.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: preferences.cameraID ? { deviceId: { ideal: preferences.cameraID } } : true,
+      });
+      setCameraStream(stream);
+      setNotice("Camera preview started.");
+    } catch {
+      setNotice("Camera permission was denied or the selected device is unavailable.");
+    }
+  }
+
+  function playSpeakerTest(): void {
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    gain.gain.value = Math.min(1, preferences.outputVolume) * 0.12;
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.25);
+    oscillator.onended = () => void context.close();
+    setNotice("Speaker test played.");
+  }
+
+  const microphones = devices.filter(({ kind }) => kind === "audioinput");
+  const speakers = devices.filter(({ kind }) => kind === "audiooutput");
+  const cameras = devices.filter(({ kind }) => kind === "videoinput");
+  return (
+    <section className="settings-panel voice-video-settings" data-voice-settings>
+      <header className="voice-settings-intro">
+        <p className="eyebrow">Local media preferences</p>
+        <h2>Voice &amp; Video</h2>
+        <p>Choose how you sound and look in Voice Rooms and Direct Calls. Your microphone audio is processed locally.</p>
+      </header>
+      <section className="voice-settings-section">
+        <h3>Voice</h3>
+        <div className="voice-device-grid">
+          <label>Microphone<select aria-label="Microphone" value={preferences.microphoneID} onChange={(event) => patch({ microphoneID: event.target.value })}><option value="">System default</option>{microphones.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Microphone ${index + 1}`}</option>)}</select></label>
+          <label>Speaker<select aria-label="Speaker" value={preferences.speakerID} onChange={(event) => patch({ speakerID: event.target.value })}><option value="">System default</option>{speakers.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Speaker ${index + 1}`}</option>)}</select></label>
+        </div>
+        <label className="setting-row"><span><strong>Microphone volume</strong><small>Adjust the level sent to other Members.</small></span><output>{Math.round(preferences.inputGain * 100)}%</output><input aria-label="Microphone volume" type="range" min="0" max="2" step="0.05" value={preferences.inputGain} onChange={(event) => patch({ inputGain: Number(event.target.value) })} /></label>
+        <label className="setting-row"><span><strong>Speaker volume</strong><small>Adjust all incoming voice audio.</small></span><output>{Math.round(preferences.outputVolume * 100)}%</output><input aria-label="Speaker volume" type="range" min="0" max="1" step="0.05" value={preferences.outputVolume} onChange={(event) => patch({ outputVolume: Number(event.target.value) })} /></label>
+        <button type="button" onClick={() => void testMicrophone()}>Mic Test</button>
+      </section>
+      <section className="voice-settings-section">
+        <h3>Input processing</h3>
+        <label className="setting-row"><span><strong>Noise suppression</strong><small>Enhanced uses local RNNoise; Standard uses WebRTC.</small></span><select aria-label="Noise suppression" value={preferences.noiseSuppressionMode} onChange={(event) => patch({ noiseSuppressionMode: event.target.value as VoiceVideoPreferences["noiseSuppressionMode"] })}><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
+        <label className="setting-row setting-toggle"><span><strong>Echo cancellation</strong><small>Reduces sound from your speakers returning through the microphone.</small></span><input type="checkbox" checked={preferences.echoCancellation} onChange={(event) => patch({ echoCancellation: event.target.checked })} /></label>
+        <label className="setting-row setting-toggle"><span><strong>Automatic gain control</strong><small>Compensates for microphones that are unusually quiet.</small></span><input type="checkbox" checked={preferences.autoGainControl} onChange={(event) => patch({ autoGainControl: event.target.checked })} /></label>
+        <label className="setting-row setting-toggle"><span><strong>Noise gate</strong><small>Closes the microphone below the sensitivity threshold.</small></span><input type="checkbox" checked={preferences.noiseGate} onChange={(event) => patch({ noiseGate: event.target.checked })} /></label>
+        <label className="setting-row"><span><strong>Input sensitivity</strong></span><output>{preferences.noiseGateThresholdDB} dB</output><input aria-label="Input sensitivity" type="range" min="-80" max="-20" step="1" value={preferences.noiseGateThresholdDB} onChange={(event) => patch({ noiseGateThresholdDB: Number(event.target.value) })} /></label>
+      </section>
+      <section className="voice-settings-section">
+        <h3>Camera</h3>
+        <div className="camera-test"><video ref={cameraPreview} autoPlay muted playsInline hidden={!cameraStream} /><div className="camera-placeholder" hidden={Boolean(cameraStream)}>Camera preview is off</div></div>
+        <label>Camera<select aria-label="Camera" value={preferences.cameraID} onChange={(event) => patch({ cameraID: event.target.value })}><option value="">System default</option>{cameras.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}</select></label>
+        <button type="button" onClick={() => void toggleCamera()}>{cameraStream ? "Stop Video" : "Test Video"}</button>
+      </section>
+      <section className="voice-settings-section">
+        <h3>Advanced</h3>
+        <div className="setting-row"><span><strong>Speaker test</strong><small>Play a short tone through the selected output device.</small></span><button type="button" onClick={playSpeakerTest}>Play sound</button></div>
+        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save(defaultVoiceVideoPreferences); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
+      </section>
+      <p className="voice-settings-notice" role="status" aria-live="polite">{notice}</p>
+    </section>
+  );
+}
+
 function ProfileImages({
   member,
   onAction,
@@ -1343,14 +2692,38 @@ function ProfileImages({
   member: InstanceViewState["member"];
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
 }) {
-  async function upload(kind: "avatar" | "banner", file?: File): Promise<void> {
+  const [editor, setEditor] = useState<{ kind: "avatar" | "banner"; file: File; url: string; zoom: number } | null>(null);
+  const [status, setStatus] = useState("");
+
+  useEffect(() => () => { if (editor) URL.revokeObjectURL(editor.url); }, [editor?.url]);
+
+  function choose(kind: "avatar" | "banner", file?: File): void {
     if (!file) return;
-    await onAction({
-      type: "update_profile_image",
-      kind,
-      contentType: file.type || "application/octet-stream",
-      data: new Uint8Array(await file.arrayBuffer()),
-    });
+    if (editor) URL.revokeObjectURL(editor.url);
+    setEditor({ kind, file, url: URL.createObjectURL(file), zoom: 1 });
+    setStatus(`${kind === "avatar" ? "Avatar" : "Profile banner"} crop ready to upload.`);
+  }
+
+  async function uploadCrop(): Promise<void> {
+    if (!editor) return;
+    const image = new Image();
+    image.src = editor.url;
+    await image.decode();
+    const [width, height] = editor.kind === "avatar" ? [512, 512] : [1200, 344];
+    const targetAspect = width / height;
+    let sourceWidth = image.naturalWidth;
+    let sourceHeight = image.naturalHeight;
+    if (sourceWidth / sourceHeight > targetAspect) sourceWidth = sourceHeight * targetAspect;
+    else sourceHeight = sourceWidth / targetAspect;
+    sourceWidth /= editor.zoom;
+    sourceHeight /= editor.zoom;
+    const canvas = document.createElement("canvas");
+    canvas.width = width; canvas.height = height;
+    canvas.getContext("2d")?.drawImage(image, (image.naturalWidth - sourceWidth) / 2, (image.naturalHeight - sourceHeight) / 2, sourceWidth, sourceHeight, 0, 0, width, height);
+    const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not crop image.")), "image/png"));
+    await onAction({ type: "update_profile_image", kind: editor.kind, contentType: blob.type, data: new Uint8Array(await blob.arrayBuffer()) });
+    setStatus(`${editor.kind === "avatar" ? "Avatar" : "Profile banner"} updated.`);
+    setEditor(null);
   }
   return (
     <div className="profile-images">
@@ -1371,7 +2744,7 @@ function ProfileImages({
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => void upload("avatar", event.target.files?.[0])}
+          onChange={(event) => choose("avatar", event.target.files?.[0])}
         />
       </label>
       <button
@@ -1387,7 +2760,7 @@ function ProfileImages({
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => void upload("banner", event.target.files?.[0])}
+          onChange={(event) => choose("banner", event.target.files?.[0])}
         />
       </label>
       <button
@@ -1398,6 +2771,8 @@ function ProfileImages({
       >
         Remove Banner
       </button>
+      <p className="profile-image-status" role="status">{status}</p>
+      {editor && createPortal(<section className="image-crop-dialog" role="dialog" aria-modal="true" aria-label={`Crop ${editor.kind}`}><h2>Crop {editor.kind === "avatar" ? "Avatar" : "Profile Banner"}</h2><div className={`image-crop-preview image-crop-${editor.kind}`}><img src={editor.url} alt="Crop preview" style={{ transform: `scale(${editor.zoom})` }} /></div><label>Zoom<input aria-label="Crop zoom" type="range" min="1" max="3" step="0.05" value={editor.zoom} onChange={(event) => setEditor({ ...editor, zoom: Number(event.target.value) })} /></label><div className="dialog-actions"><button type="button" onClick={() => void uploadCrop()}>Upload {editor.kind}</button><button type="button" onClick={() => setEditor(null)}>Cancel</button></div></section>, document.body)}
     </div>
   );
 }

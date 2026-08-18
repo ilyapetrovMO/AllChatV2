@@ -14,6 +14,7 @@ export interface Channel {
   type: 'text' | 'voice';
   position: number;
   archived: boolean;
+  topic?: string;
 }
 
 export interface DirectMessage {

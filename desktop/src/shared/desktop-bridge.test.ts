@@ -9,10 +9,13 @@ describe('DesktopBridge', () => {
       'addInstance',
       'selectInstance',
       'loginInstance',
+      'registerInstance',
+      'recoverInstance',
       'logoutInstance',
       'loadInstance',
       'watchInstance',
       'executeInstance',
+      'connectMedia',
     ]);
   });
 
@@ -22,10 +25,13 @@ describe('DesktopBridge', () => {
       addInstance: async () => undefined,
       selectInstance: async () => undefined,
       loginInstance: async () => ({ instances: [], activeInstanceId: null }),
+      registerInstance: async () => ({ instances: [], activeInstanceId: null }),
+      recoverInstance: async () => ({ instances: [], activeInstanceId: null }),
       logoutInstance: async () => ({ instances: [], activeInstanceId: null }),
       loadInstance: async () => { throw new Error('not authenticated'); },
       watchInstance: () => () => undefined,
       executeInstance: async () => { throw new Error('unused'); },
+      connectMedia: async () => ({ send: () => undefined, close: () => undefined }),
     };
 
     expect(isDesktopBridge(valid)).toBe(true);

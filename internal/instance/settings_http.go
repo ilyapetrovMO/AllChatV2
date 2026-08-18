@@ -10,6 +10,77 @@ import (
 	"strconv"
 )
 
+type communitySettingsView struct {
+	MaxAttachmentMiB int64  `json:"max_attachment_mib"`
+	HomeMarkdown     string `json:"home_markdown"`
+	PushRelayURL     string `json:"push_relay_url"`
+	PushKeyID        string `json:"push_key_id"`
+	PushPublicKey    string `json:"push_public_key"`
+}
+
+func (i *Instance) communitySettingsAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticated(w, r)
+	if !ok {
+		return
+	}
+	if !member.Owner {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "permission denied"})
+		return
+	}
+	home, err := i.community.CommunityHomeMarkdown(r.Context())
+	if err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	relayURL, err := i.mobilePushRelayURL(r.Context())
+	if err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, communitySettingsView{
+		MaxAttachmentMiB: i.community.MaxAttachmentBytes() / (1 << 20), HomeMarkdown: home,
+		PushRelayURL: relayURL, PushKeyID: i.mobilePush.keyID,
+		PushPublicKey: base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey),
+	})
+}
+
+func (i *Instance) updateCommunitySettingsAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticatedCSRF(w, r)
+	if !ok {
+		return
+	}
+	if !member.Owner {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "permission denied"})
+		return
+	}
+	var input communitySettingsView
+	if decodeJSON(r, &input) != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+	if err := i.community.UpdateMaxAttachmentBytes(r.Context(), member, input.MaxAttachmentMiB<<20); err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	if err := i.community.UpdateCommunityHomeMarkdown(r.Context(), member, input.HomeMarkdown); err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	var pushConfig Config
+	if err := pushConfig.ConfigurePushRelay(input.PushRelayURL); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if _, err := i.db.ExecContext(r.Context(), `INSERT INTO mobile_push_settings(id,relay_url) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET relay_url=excluded.relay_url`, pushConfig.PushRelayURL); err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	input.PushRelayURL = pushConfig.PushRelayURL
+	input.PushKeyID = i.mobilePush.keyID
+	input.PushPublicKey = base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey)
+	writeJSON(w, http.StatusOK, input)
+}
+
 func (i *Instance) communitySettingsPage(w http.ResponseWriter, r *http.Request) {
 	member, _, ok := i.authenticated(w, r)
 	if !ok {

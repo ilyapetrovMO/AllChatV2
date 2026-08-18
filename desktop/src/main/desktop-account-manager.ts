@@ -1,6 +1,8 @@
 import type {
   DesktopSessionSummary,
   LoginInstanceInput,
+  RecoverInstanceInput,
+  RegisterInstanceInput,
   MemberSummary,
   ShellState,
 } from '../shared/desktop-bridge';
@@ -28,16 +30,40 @@ export class DesktopAccountManager {
   ) {}
 
   async login(input: LoginInstanceInput): Promise<ShellState> {
+    return this.authenticate(input.instanceId, '/api/v1/auth/native/login', { username: input.username, password: input.password });
+  }
+
+  async register(input: RegisterInstanceInput): Promise<ShellState> {
+    return this.authenticate(input.instanceId, '/api/v1/auth/native/register', { token: input.invitationToken, username: input.username, password: input.password });
+  }
+
+  async recover(input: RecoverInstanceInput): Promise<ShellState> {
     const profile = this.registry.get(input.instanceId);
     let response: Response;
     try {
-      response = await this.request(`${profile.baseUrl}/api/v1/auth/native/login`, {
+      response = await this.request(`${profile.baseUrl}/api/v1/auth/recover`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-AllChat-Device': 'AllChat Desktop',
-        },
-        body: JSON.stringify({ username: input.username, password: input.password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: input.recoveryToken, password: input.password }),
+      });
+    } catch {
+      throw new Error('Could not reach the Instance. Check its address and HTTPS certificate.');
+    }
+    if (!response.ok) {
+      const body: unknown = await response.json().catch(() => undefined);
+      throw new Error(body && typeof body === 'object' && typeof (body as { error?: unknown }).error === 'string' ? (body as { error: string }).error : 'Could not recover the Account.');
+    }
+    return this.registry.state();
+  }
+
+  private async authenticate(instanceId: string, path: string, body: unknown): Promise<ShellState> {
+    const profile = this.registry.get(instanceId);
+    let response: Response;
+    try {
+      response = await this.request(`${profile.baseUrl}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-AllChat-Device': 'AllChat Desktop' },
+        body: JSON.stringify(body),
       });
     } catch {
       throw new Error('Could not reach the Instance. Check its address and HTTPS certificate.');

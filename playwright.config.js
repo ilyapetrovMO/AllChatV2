@@ -15,10 +15,11 @@ module.exports = defineConfig({
     timeout: 120_000,
   },
   projects: [
-    { name: 'desktop-chromium', testIgnore: /layout\.spec\.js/, use: { ...devices['Desktop Chrome'] } },
-    { name: 'desktop-firefox', testIgnore: /layout\.spec\.js/, use: { ...devices['Desktop Firefox'] } },
-    { name: 'desktop-webkit', testIgnore: /layout\.spec\.js/, use: { ...devices['Desktop Safari'] } },
-    { name: 'mobile-chromium', testIgnore: /layout\.spec\.js/, use: { ...devices['Pixel 7'] } },
+    { name: 'desktop-chromium', testIgnore: /layout\.spec\.js|desktop-parity\.spec\.js/, use: { ...devices['Desktop Chrome'] } },
+    { name: 'desktop-firefox', testIgnore: /layout\.spec\.js|desktop-parity\.spec\.js/, use: { ...devices['Desktop Firefox'] } },
+    { name: 'desktop-webkit', testIgnore: /layout\.spec\.js|desktop-parity\.spec\.js/, use: { ...devices['Desktop Safari'] } },
+    { name: 'mobile-chromium', testIgnore: /layout\.spec\.js|desktop-parity\.spec\.js/, use: { ...devices['Pixel 7'] } },
     { name: 'visual-chromium', testMatch: /layout\.spec\.js/, use: { ...devices['Desktop Chrome'], reducedMotion: 'reduce' } },
+    { name: 'desktop-parity', testMatch: /desktop-parity\.spec\.js/, use: { ...devices['Desktop Chrome'], reducedMotion: 'reduce' } },
   ],
 });

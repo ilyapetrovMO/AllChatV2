@@ -915,6 +915,8 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/updates/android.apk", i.androidUpdateAPI)
 	mux.HandleFunc("GET /api/v1/admin/diagnostics", i.diagnosticsAPI)
 	mux.HandleFunc("GET /api/v1/admin/dashboard", i.adminDashboardAPI)
+	mux.HandleFunc("GET /api/v1/admin/settings", i.communitySettingsAPI)
+	mux.HandleFunc("PUT /api/v1/admin/settings", i.updateCommunitySettingsAPI)
 	if i.config.MetricsEnabled {
 		mux.HandleFunc("GET /metrics", i.metrics)
 	}

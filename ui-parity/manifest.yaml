@@ -1,0 +1,496 @@
+version: 1
+canonical_client: web
+last_checked: 2026-08-18
+
+viewports:
+  desktop:
+    width: 1280
+    height: 720
+
+# Status values: verified, partial, missing, intentional.
+# A state is verified only when the evidence named on the state has passed.
+screens:
+  community-home:
+    dashboard_name: Community Home
+    web: /
+    desktop: community-home
+    overall: partial
+    states:
+      - id: default
+        status: verified
+        evidence: desktop-community-home-default
+      - id: guide-content
+        status: partial
+        evidence: renderer-community-guide
+      - id: loading
+        status: partial
+      - id: error
+        status: partial
+
+  text-channel:
+    dashboard_name: Text Channel
+    web: /channels/{channelID}
+    desktop: channel:{channelID}
+    overall: partial
+    states:
+      - id: default
+        status: verified
+        evidence: desktop-channel-default
+      - id: empty
+        status: partial
+      - id: loading
+        status: partial
+      - id: error
+        status: partial
+      - id: message-hover-actions
+        status: partial
+      - id: reaction-selected
+        status: partial
+        evidence: renderer-emoji-picker-add-remove
+      - id: reaction-picker-open
+        status: partial
+        evidence: renderer-emoji-picker-add-remove
+      - id: reply-active
+        status: partial
+        evidence: renderer-message-reply-action
+      - id: edit-active
+        status: partial
+        evidence: renderer-message-edit-action
+      - id: attachment-preview
+        status: partial
+        evidence: renderer-attachment-auto-load
+      - id: image-lightbox-open
+        status: partial
+        evidence: renderer-original-image-lightbox-interactions
+      - id: image-lightbox-zoomed-and-panned
+        status: partial
+        evidence: renderer-original-image-lightbox-interactions
+      - id: composer-attachment-previews
+        status: partial
+        evidence: renderer-file-drop-preview-remove
+      - id: composer-file-drag-active
+        status: partial
+        evidence: renderer-file-drop-preview-remove
+      - id: link-embed-loaded
+        status: partial
+      - id: plain-link-clickable
+        status: partial
+        evidence: renderer-safe-external-link-navigation
+      - id: member-popover-open
+        status: partial
+        evidence: renderer-member-popover-anchor-and-dismissal
+      - id: notification-menu-open
+        status: partial
+        evidence: renderer-notification-menu-and-persistence
+      - id: pinned-messages-open
+        status: partial
+        evidence: renderer-pinned-message-filter
+      - id: search-results-open
+        status: partial
+      - id: unread-and-jump-to-present
+        status: partial
+      - id: paginated-history-window
+        status: partial
+        evidence: desktop-bidirectional-bounded-history
+        evidence: renderer-jump-to-present
+
+  direct-messages-home:
+    dashboard_name: Direct Messages Home
+    web: /dms
+    desktop: direct-messages
+    overall: partial
+    states:
+      - id: default
+        status: verified
+        evidence: desktop-direct-messages-home-default
+      - id: empty
+        status: partial
+      - id: member-search
+        status: partial
+        evidence: renderer-open-direct-message
+      - id: blocked-member
+        status: partial
+        evidence: renderer-direct-message-blocked-state
+
+  direct-message:
+    dashboard_name: Direct Message
+    web: /dms/{dmID}
+    desktop: dm:{dmID}
+    overall: partial
+    states:
+      - id: default
+        status: verified
+        evidence: desktop-direct-message-default
+      - id: message-hover-actions
+        status: partial
+      - id: blocked
+        status: partial
+        evidence: renderer-direct-message-blocked-state
+      - id: outgoing-call
+        status: partial
+      - id: incoming-call
+        status: partial
+      - id: active-call
+        status: partial
+      - id: call-error
+        status: partial
+
+  voice-room:
+    dashboard_name: Voice Room
+    web: /channels/{voiceChannelID}
+    desktop: voice:{voiceChannelID}
+    overall: partial
+    states:
+      - id: disconnected
+        status: partial
+        evidence: renderer-voice-channel-auto-join
+      - id: connecting
+        status: partial
+      - id: connected
+        status: partial
+      - id: participant-list
+        status: partial
+        evidence: renderer-voice-participant-stage-and-sidebar
+      - id: participant-menu
+        status: partial
+        evidence: renderer-voice-participant-context-menu
+      - id: media-error
+        status: partial
+
+  global-search:
+    dashboard_name: Search
+    web: /search
+    desktop: channel-search
+    overall: partial
+    states:
+      - id: global-header-availability
+        status: partial
+        evidence: renderer-global-search-availability
+      - id: empty-query
+        status: partial
+      - id: results
+        status: partial
+      - id: no-results
+        status: partial
+      - id: filters-applied
+        status: partial
+        evidence: renderer-search-filter-menu
+      - id: error
+        status: partial
+
+  profile-settings:
+    dashboard_name: Profile Settings
+    web: /profile
+    desktop: settings:profile
+    overall: partial
+    states:
+      - id: default
+        status: partial
+      - id: avatar-upload
+        status: partial
+        evidence: renderer-profile-image-upload
+      - id: avatar-editor
+        status: partial
+        evidence: renderer-profile-image-crop-editor
+      - id: banner-upload
+        status: partial
+        evidence: renderer-profile-image-upload
+      - id: save-error
+        status: partial
+
+  voice-video-settings:
+    dashboard_name: Voice & Video Settings
+    web: /voice-video
+    desktop: settings:voice
+    overall: partial
+    states:
+      - id: default
+        status: partial
+        evidence: renderer-voice-video-settings
+      - id: device-selection
+        status: partial
+        evidence: renderer-voice-video-settings
+      - id: processing-controls
+        status: partial
+        evidence: renderer-voice-video-settings
+      - id: permission-error
+        status: partial
+        evidence: renderer-voice-video-settings
+
+  notification-settings:
+    dashboard_name: Notification Settings
+    web: settings-overlay:notifications
+    desktop: settings:notifications
+    overall: partial
+    states:
+      - id: default
+        status: partial
+        evidence: renderer-notification-settings
+      - id: permission-granted
+        status: intentional
+        evidence: renderer-native-notification-status
+      - id: permission-denied
+        status: intentional
+        evidence: native-notifications
+      - id: channel-overrides
+        status: partial
+        evidence: renderer-notification-settings
+      - id: save-error
+        status: partial
+        evidence: renderer-notification-settings
+
+  sessions-settings:
+    dashboard_name: Sessions
+    web: /sessions
+    desktop: settings:sessions
+    overall: partial
+    states:
+      - id: loading
+        status: partial
+      - id: populated
+        status: partial
+      - id: revoke-confirmation
+        status: partial
+        evidence: renderer-session-revoke-confirmation
+      - id: error
+        status: partial
+
+  safety-settings:
+    dashboard_name: Safety
+    web: settings-overlay:safety
+    desktop: settings:safety
+    overall: partial
+    states:
+      - id: loading
+        status: partial
+      - id: reports
+        status: partial
+      - id: moderation-history
+        status: partial
+      - id: report-dialog
+        status: partial
+        evidence: renderer-safety-report-form
+      - id: error
+        status: partial
+
+  community-settings:
+    dashboard_name: Community Settings
+    web: /admin/settings
+    desktop: settings:community
+    overall: partial
+    states:
+      - id: default
+        status: partial
+        evidence: renderer-community-general-settings
+      - id: community-menu-open
+        status: partial
+      - id: save-error
+        status: partial
+        evidence: renderer-community-general-settings
+
+  channel-administration:
+    dashboard_name: Channel Administration
+    web: /admin/channels
+    desktop: settings:community:channels
+    overall: partial
+    states:
+      - id: default
+        status: partial
+        evidence: renderer-channel-administration
+      - id: create-category-dialog
+        status: partial
+        evidence: renderer-channel-administration
+      - id: create-channel-dialog
+        status: partial
+        evidence: renderer-channel-administration
+      - id: edit-channel-dialog
+        status: partial
+        evidence: renderer-channel-administration
+      - id: permissions-overrides
+        status: partial
+        evidence: renderer-channel-administration
+      - id: deletion-confirmation
+        status: partial
+        evidence: renderer-channel-administration
+
+  role-administration:
+    dashboard_name: Role Administration
+    web: /admin/roles
+    desktop: settings:community:roles
+    overall: partial
+    states:
+      - id: default
+        status: partial
+        evidence: renderer-role-administration
+      - id: create
+        status: partial
+        evidence: renderer-role-administration
+      - id: edit
+        status: partial
+        evidence: renderer-role-administration
+      - id: retire-confirmation
+        status: partial
+        evidence: renderer-role-administration
+
+  invitation-administration:
+    dashboard_name: Invitations
+    web: /admin/invitations
+    desktop: settings:community:invitations
+    overall: partial
+    states:
+      - id: empty
+        status: partial
+        evidence: renderer-invitation-administration
+      - id: populated
+        status: partial
+        evidence: renderer-invitation-administration
+      - id: create
+        status: partial
+        evidence: renderer-invitation-administration
+      - id: revoke-confirmation
+        status: partial
+        evidence: renderer-invitation-administration
+
+  soundboard-administration:
+    dashboard_name: Soundboard
+    web: /admin/soundboard
+    desktop: settings:community:soundboard
+    overall: partial
+    states:
+      - id: empty
+        status: partial
+        evidence: renderer-soundboard-administration
+      - id: populated
+        status: partial
+        evidence: renderer-soundboard-administration
+      - id: upload
+        status: partial
+        evidence: renderer-soundboard-administration
+      - id: edit
+        status: partial
+        evidence: renderer-soundboard-administration
+
+  admin-dashboard:
+    dashboard_name: Admin Dashboard
+    web: /admin/dashboard
+    desktop: settings:community:dashboard
+    overall: verified
+    states:
+      - id: healthy
+        status: verified
+        evidence: packaged-admin-dashboard-visual-comparison
+      - id: degraded
+        status: verified
+        evidence: renderer-admin-dashboard-degraded-health
+      - id: loading
+        status: verified
+        evidence: renderer-admin-dashboard-loading
+      - id: refresh-error
+        status: verified
+        evidence: renderer-admin-dashboard-refresh-error
+
+  authentication:
+    dashboard_name: Authentication
+    web: /login
+    desktop: instance-login
+    overall: partial
+    states:
+      - id: add-instance
+        status: partial
+      - id: login
+        status: partial
+      - id: invalid-credentials
+        status: partial
+      - id: registration
+        status: partial
+        evidence: desktop-native-registration
+      - id: recovery
+        status: partial
+        evidence: desktop-native-recovery
+
+flows:
+  - id: sign-in-open-channel-send-message
+    dashboard_name: Sign in → open channel → send Message
+    status: partial
+  - id: receive-message-react-reply-edit-delete
+    dashboard_name: Receive → react → reply → edit → delete
+    status: partial
+  - id: attach-preview-send-reopen
+    dashboard_name: Attach → preview → send → reopen
+    status: partial
+  - id: search-open-result-return
+    dashboard_name: Search → open result → return
+    status: partial
+  - id: open-dm-send-start-call-end-call
+    dashboard_name: Open DM → send → start Call → end
+    status: partial
+  - id: receive-call-accept-talk-end
+    dashboard_name: Receive Call → accept → talk → end
+    status: partial
+  - id: join-voice-talk-leave
+    dashboard_name: Join Voice → talk → leave
+    status: partial
+  - id: update-profile-avatar-banner
+    dashboard_name: Update profile → avatar → banner
+    status: partial
+  - id: configure-notifications-and-channel-override
+    dashboard_name: Configure notifications → channel override
+    status: partial
+  - id: administer-community
+    dashboard_name: Administer Community
+    status: partial
+  - id: revoke-session
+    dashboard_name: Revoke Session
+    status: partial
+
+intentional_differences:
+  - id: native-window-chrome
+    reason: Electron owns the operating-system window and lifecycle.
+  - id: multi-instance-rail
+    reason: Electron can retain and switch among multiple AllChat Instances.
+  - id: native-notifications
+    reason: Electron uses native notification delivery instead of Web Push permission UI.
+  - id: persistent-asset-cache
+    reason: Electron caches authenticated avatars and media on disk.
+
+automation:
+  desktop-community-home-default:
+    screen: community-home
+    state: default
+    web_path: /
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.05
+    evidence_directory: .scratch/desktop-visual-parity/community-home
+  desktop-direct-messages-home-default:
+    screen: direct-messages-home
+    state: default
+    web_path: /dms
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.05
+    evidence_directory: .scratch/desktop-visual-parity/direct-messages-home
+  desktop-channel-default:
+    screen: text-channel
+    state: default
+    web_path: /channels/{channelID}
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.05
+    evidence_directory: .scratch/desktop-visual-parity/latest
+  desktop-direct-message-default:
+    screen: direct-message
+    state: default
+    web_path: /channels/{dmID}
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.05
+    evidence_directory: .scratch/desktop-visual-parity/direct-message
+  desktop-admin-dashboard-healthy:
+    screen: admin-dashboard
+    state: healthy
+    web_path: /admin/dashboard
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.05
+    evidence_directory: .scratch/desktop-visual-parity/admin-dashboard

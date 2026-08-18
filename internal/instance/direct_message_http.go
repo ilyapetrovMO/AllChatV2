@@ -130,10 +130,25 @@ func (i *Instance) directMessageMessagesAPI(response http.ResponseWriter, reques
 		return
 	}
 	before, _ := strconv.ParseInt(request.URL.Query().Get("before"), 10, 64)
+	after, _ := strconv.ParseInt(request.URL.Query().Get("after"), 10, 64)
+	if before > 0 && after > 0 {
+		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "choose either before or after"})
+		return
+	}
 	limit, _ := strconv.Atoi(request.URL.Query().Get("limit"))
-	messages, err := i.community.ListMessages(request.Context(), member, request.PathValue("dmID"), before, limit)
+	var messages []community.Message
+	var err error
+	if after > 0 {
+		messages, err = i.community.ListMessagesAfter(request.Context(), member, request.PathValue("dmID"), after, limit)
+	} else {
+		messages, err = i.community.ListMessages(request.Context(), member, request.PathValue("dmID"), before, limit)
+	}
 	if err != nil {
 		writeCommunityError(response, err)
+		return
+	}
+	if after > 0 {
+		writeJSON(response, http.StatusOK, forwardMessagePage(messages, limit))
 		return
 	}
 	writeJSON(response, http.StatusOK, messagePage(messages, limit))

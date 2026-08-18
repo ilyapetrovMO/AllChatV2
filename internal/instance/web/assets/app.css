@@ -163,8 +163,8 @@
 .card, .list-item { background: #1d1e24; }
 .message .body { color: #d9dbe2; }
 .message:hover { background: rgba(255,255,255,.022); }
-.composer-wrap { background: linear-gradient(transparent,var(--bg-main) 26%); }
-.composer { background: #222329; }
+.composer-wrap { padding: 0 6px 6px; background: linear-gradient(transparent,var(--bg-main) 26%); }
+.composer { padding: 5px 6px; background: #222329; }
 .sidebar-footer { background: #0e0f12; }
 a[href="/search"] { display: none; }
 .settings-nav > a[href="/"], [data-community-return] { display:none!important; }

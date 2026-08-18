@@ -54,7 +54,7 @@ try {
   }));
   if (
     actual.display !== "grid" ||
-    actual.color !== "rgb(242, 243, 245)" ||
+    actual.color !== "rgb(240, 241, 245)" ||
     styleErrors.length
   ) {
     throw new Error(

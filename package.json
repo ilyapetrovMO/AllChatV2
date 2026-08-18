@@ -13,6 +13,10 @@
     "test:media:browser": "node media-tests/browser/run.js",
     "test:media:soak": "node media-tests/soak.js",
     "test:desktop": "npm test --workspace @allchat/desktop",
+    "build:desktop:parity-report": "node ui-parity/build-report.mjs",
+    "test:desktop:parity:docs": "node ui-parity/check-dashboard.mjs",
+    "test:desktop:visual": "npm run build:desktop && playwright test --project desktop-parity",
+    "test:desktop:parity": "npm run test:desktop:parity:docs && npm run build:desktop:parity-report && npm run test:desktop:visual",
     "build:desktop": "npm run build --workspace @allchat/desktop"
   },
   "devDependencies": {

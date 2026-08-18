@@ -26,3 +26,12 @@ export function isAllowedAppNavigation(target: string): boolean {
     return false;
   }
 }
+
+export function isAllowedExternalNavigation(target: string): boolean {
+  try {
+    const url = new URL(target);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && !!url.hostname && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}

@@ -49,4 +49,24 @@ describe('DesktopAccountManager', () => {
     expect(registry.get('home').session).toBeUndefined();
     expect(await vault.get('desktop-session:home')).toBeNull();
   });
+
+  it('registers and recovers native Accounts through the Instance contracts', async () => {
+    const registry = new InstanceRegistry(() => 'home');
+    registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    const vault = new MemoryDesktopCredentialVault();
+    const requests: Array<{ url: string; body: unknown }> = [];
+    const accounts = new DesktopAccountManager(registry, vault, async (input, init) => {
+      requests.push({ url: String(input), body: JSON.parse(String(init?.body || '{}')) });
+      if (String(input).endsWith('/recover')) return new Response(null, { status: 204 });
+      return new Response(JSON.stringify({ member: { id: 'member-2', username: 'alex', owner: false }, session_token: 'register-secret', session_id: 'session-2', expires_at: '2026-09-18T00:00:00Z' }), { status: 201, headers: { 'Content-Type': 'application/json' } });
+    });
+
+    await accounts.register({ instanceId: 'home', invitationToken: 'invite', username: 'alex', password: 'twelve-characters' });
+    await accounts.recover({ instanceId: 'home', recoveryToken: 'recovery', password: 'replacement-pass' });
+
+    expect(requests).toEqual([
+      { url: 'https://chat.example/api/v1/auth/native/register', body: { token: 'invite', username: 'alex', password: 'twelve-characters' } },
+      { url: 'https://chat.example/api/v1/auth/recover', body: { token: 'recovery', password: 'replacement-pass' } },
+    ]);
+  });
 });

@@ -1,7 +1,11 @@
 (() => {
+  if (!document.querySelector('link[rel~="icon"]')) {
+    const favicon = document.createElement("link"); favicon.rel = "icon"; favicon.type = "image/png"; favicon.href = "/assets/favicon.png"; document.head.append(favicon);
+  }
   // Selected Lucide icons, ISC licensed: https://lucide.dev/license
   const iconPaths = {
     bell: '<path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M3.26 15.33A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.67C19.41 13.84 18 12.28 18 8a6 6 0 0 0-12 0c0 4.28-1.41 5.84-2.74 7.33"/>',
+    "chevron-down": '<path d="m6 9 6 6 6-6"/>',
     home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
     file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5Z"/><polyline points="14 2 14 8 20 8"/>',
@@ -20,6 +24,7 @@
   const setIcon=(element,name)=>{if(!element)return;element.replaceChildren(icon(name))};
   const installIcons=(root=document)=>{
     for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"],[".attachment-button","plus"],["#composer-submit","send"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
+    root.querySelectorAll?.('[data-community-menu-toggle] > [aria-hidden="true"]').forEach(element=>setIcon(element,"chevron-down"));
     root.querySelectorAll?.('.community-mark[href="/"]:not(.dm-rail-mark)').forEach(element=>{setIcon(element,"home");if(!element.getAttribute("aria-label"))element.setAttribute("aria-label","Community Home");if(!element.getAttribute("title"))element.setAttribute("title","Community Home")});
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});
   };

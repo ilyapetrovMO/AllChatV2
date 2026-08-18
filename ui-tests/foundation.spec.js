@@ -1,10 +1,20 @@
 const { test, expect } = require('@playwright/test');
 
-test('web app exposes the chat bubble favicon', async ({request}) => {
+test('web app exposes and declares the chat bubble favicon', async ({request, page}) => {
   const response = await request.get('/favicon.ico');
   expect(response.status()).toBe(200);
   expect(response.headers()['content-type']).toContain('image/png');
   expect([...((await response.body()).subarray(0, 8))]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  await page.goto('/login');
+  await page.addScriptTag({url: '/assets/app.js'});
+  await expect(page.locator('link[rel~="icon"]')).toHaveAttribute('href', '/assets/favicon.png');
+});
+
+test('community switcher uses a chevron icon', async ({page}) => {
+  await page.goto('/login');
+  await page.locator('body').evaluate(body => { body.innerHTML = '<button data-community-menu-toggle><span>Community</span><span aria-hidden="true"></span></button>'; });
+  await page.addScriptTag({url: '/assets/app.js'});
+  await expect(page.locator('[data-community-menu-toggle] [data-lucide="chevron-down"]')).toBeVisible();
 });
 
 test('terminal Voice Room failure releases the microphone', async ({ page }) => {

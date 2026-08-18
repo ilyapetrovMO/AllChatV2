@@ -137,11 +137,25 @@ function assertString(value: unknown, label: string): asserts value is string {
 }
 
 function assertInstanceAction(value: import('../shared/instance-actions').InstanceAction): void {
-  if (!value || typeof value !== 'object' || value.type !== 'send_message') throw new Error('Invalid Instance action');
-  assertString(value.conversationId, 'Conversation identity');
-  if (typeof value.direct !== 'boolean' || typeof value.body !== 'string' || !value.body.trim() || value.body.length > 8_000) {
-    throw new Error('Message body is invalid');
+  if (!value || typeof value !== 'object' || typeof value.type !== 'string') throw new Error('Invalid Instance action');
+  if ('conversationId' in value) assertString(value.conversationId, 'Conversation identity');
+  if (value.type === 'send_message' || value.type === 'edit_message') {
+    if (value.type === 'edit_message') assertString(value.messageId, 'Message identity');
+    if (value.type === 'send_message' && typeof value.direct !== 'boolean') throw new Error('Conversation type is invalid');
+    if (typeof value.body !== 'string' || !value.body.trim() || value.body.length > 8_000) throw new Error('Message body is invalid');
+    return;
   }
+  if (value.type === 'delete_message') { assertString(value.messageId, 'Message identity'); return; }
+  if (value.type === 'load_messages') {
+    if (typeof value.direct !== 'boolean' || (value.limit !== undefined && (!Number.isInteger(value.limit) || value.limit < 1 || value.limit > 100))) throw new Error('Message page is invalid');
+    return;
+  }
+  if (value.type === 'update_read_position') {
+    if (typeof value.direct !== 'boolean' || !Number.isSafeInteger(value.sequence) || value.sequence < 0) throw new Error('Read Position is invalid');
+    return;
+  }
+  if (value.type === 'send_typing') return;
+  throw new Error('Unsupported Instance action');
 }
 
 function lockPermissions(): void {

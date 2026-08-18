@@ -53,6 +53,12 @@ export class RealtimeConnection {
     this.options.onStatus?.('stopped');
   }
 
+  sendTyping(conversationId: string): void {
+    if (this.#socket?.readyState === 1) {
+      this.#socket.send(JSON.stringify({ type: 'typing', channel_id: conversationId }));
+    }
+  }
+
   private connect(status: 'connecting' | 'reconnecting'): void {
     if (this.#stopped) return;
     this.options.onStatus?.(status);

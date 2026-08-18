@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 import type { DesktopBridge, ShellState } from '../shared/desktop-bridge';
 import type { InstanceViewState } from '../shared/instance-state';
@@ -73,6 +73,33 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           [result.message.channel_id]: mergeMessage(current.messages[result.message.channel_id] || [], result.message),
         },
       } : current);
+    } else if (result.type === 'messages') {
+      setInstanceState((current) => current ? {
+        ...current,
+        messages: {
+          ...current.messages,
+          [action.type === 'load_messages' ? action.conversationId : '']: mergeMessages(
+            action.type === 'load_messages' ? current.messages[action.conversationId] || [] : [],
+            result.page.messages,
+          ),
+        },
+      } : current);
+    } else if (result.type === 'deleted_message') {
+      setInstanceState((current) => current ? {
+        ...current,
+        messages: {
+          ...current.messages,
+          [result.conversationId]: (current.messages[result.conversationId] || []).map((message) =>
+            message.id === result.messageId ? { ...message, deleted: true } : message),
+        },
+      } : current);
+    } else if (result.type === 'read_position') {
+      setInstanceState((current) => current ? {
+        ...current,
+        channel_states: current.channel_states.map((channel) => channel.channel_id === result.conversationId
+          ? { ...channel, read_sequence: result.sequence, unread: 0 }
+          : channel),
+      } : current);
     }
   }
 
@@ -132,18 +159,29 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
   const [conversation, setConversation] = useState<{ id: string; name: string; type: 'text' | 'voice' | 'dm' } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const lastTypingAt = useRef(0);
   const categories = [...state.categories].filter(({ archived }) => !archived).sort(byPosition);
   const channels = [...state.channels].filter(({ archived }) => !archived);
   useEffect(() => {
     setDraft(conversation ? localStorage.getItem(draftKey(instanceId, conversation.id)) || '' : '');
+    setEditingMessageId(null);
+    if (conversation && conversation.type !== 'voice') {
+      const messages = state.messages[conversation.id] || [];
+      const last = messages.at(-1);
+      if (last) void onAction({ type: 'update_read_position', conversationId: conversation.id, direct: conversation.type === 'dm', sequence: last.sequence });
+    }
   }, [conversation?.id, instanceId]);
 
   async function sendMessage(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (!conversation || conversation.type === 'voice' || !draft.trim()) return;
     const body = draft;
-    await onAction({ type: 'send_message', conversationId: conversation.id, direct: conversation.type === 'dm', body });
+    await onAction(editingMessageId
+      ? { type: 'edit_message', messageId: editingMessageId, body }
+      : { type: 'send_message', conversationId: conversation.id, direct: conversation.type === 'dm', body });
     setDraft('');
+    setEditingMessageId(null);
     localStorage.removeItem(draftKey(instanceId, conversation.id));
   }
   return (
@@ -189,18 +227,26 @@ function CommunityShell({ instanceId, state, onAction }: { instanceId: string; s
             <div className="welcome"><h2>{conversation.name}</h2><p>Join this Voice Room to talk with Members.</p></div>
           ) : (
             <div className="message-list" aria-label={`${conversation.name} Messages`}>
+              {(state.messages[conversation.id] || []).length > 0 && <button className="load-older" type="button" onClick={() => {
+                const first = state.messages[conversation.id]?.[0];
+                void onAction({ type: 'load_messages', conversationId: conversation.id, direct: conversation.type === 'dm', before: first?.sequence, limit: 50 });
+              }}>Load older Messages</button>}
               {(state.messages[conversation.id] || []).map((message) => (
                 <article className="message" key={message.id}>
                   <span className="avatar">{message.author_name.slice(0, 1).toUpperCase()}</span>
-                  <div><strong>{message.author_name}</strong><time dateTime={message.created_at}>{formatMessageTime(message.created_at)}</time><p>{message.deleted ? 'Message deleted' : message.body}</p></div>
+                  <div><strong>{message.author_name}</strong><time dateTime={message.created_at}>{formatMessageTime(message.created_at)}</time><p>{message.deleted ? 'Message deleted' : message.body}</p>{message.author_id === state.member.id && !message.deleted && <span className="message-actions"><button type="button" onClick={() => { setDraft(message.body || ''); setEditingMessageId(message.id); }}>Edit</button><button type="button" onClick={() => void onAction({ type: 'delete_message', messageId: message.id, conversationId: conversation.id })}>Delete</button></span>}</div>
                 </article>
               ))}
               <form className="message-composer" onSubmit={(event) => void sendMessage(event)}>
                 <textarea aria-label={`Message ${conversation.name}`} value={draft} onChange={(event) => {
                   setDraft(event.target.value);
                   localStorage.setItem(draftKey(instanceId, conversation.id), event.target.value);
+                  if (Date.now() - lastTypingAt.current > 3_000) {
+                    lastTypingAt.current = Date.now();
+                    void onAction({ type: 'send_typing', conversationId: conversation.id });
+                  }
                 }} />
-                <button type="submit" aria-label="Send Message">Send</button>
+                <button type="submit" aria-label={editingMessageId ? 'Save Message' : 'Send Message'}>{editingMessageId ? 'Save' : 'Send'}</button>
               </form>
             </div>
           )
@@ -234,4 +280,10 @@ function draftKey(instanceId: string, conversationId: string): string {
 
 function mergeMessage(messages: InstanceViewState['messages'][string], incoming: InstanceViewState['messages'][string][number]) {
   return [...messages.filter(({ id }) => id !== incoming.id), incoming].sort((left, right) => left.sequence - right.sequence);
+}
+
+function mergeMessages(current: InstanceViewState['messages'][string], incoming: InstanceViewState['messages'][string]) {
+  const messages = new Map(current.map((message) => [message.id, message]));
+  incoming.forEach((message) => messages.set(message.id, message));
+  return [...messages.values()].sort((left, right) => left.sequence - right.sequence);
 }

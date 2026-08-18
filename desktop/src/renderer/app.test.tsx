@@ -65,7 +65,7 @@ describe('desktop renderer bootstrap', () => {
           media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1,
         }),
         watchInstance: () => () => undefined,
-        executeInstance: async () => { throw new Error('unused'); },
+        executeInstance: async () => ({ type: 'accepted' }),
       }} />,
     );
 

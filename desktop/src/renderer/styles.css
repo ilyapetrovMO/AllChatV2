@@ -82,6 +82,10 @@ button { font: inherit; }
 .message:hover { background: rgb(255 255 255 / 2.5%); }
 .message time { margin-left: 8px; color: #777f95; font-size: 11px; }
 .message p { margin: 4px 0 0; color: #d9dcea; line-height: 1.45; overflow-wrap: anywhere; }
+.load-older { align-self: center; margin-bottom: 18px; border: 0; color: #939cff; background: transparent; }
+.message-actions { display: inline-flex; gap: 8px; margin-top: 6px; opacity: 0; }
+.message:hover .message-actions, .message:focus-within .message-actions { opacity: 1; }
+.message-actions button { padding: 0; border: 0; color: #9299ad; background: transparent; font-size: 11px; }
 .message-composer { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: auto 20px 20px; padding-top: 18px; }
 .message-composer textarea { min-height: 46px; max-height: 180px; resize: vertical; padding: 12px 14px; border: 1px solid #34394f; border-radius: 10px; color: white; background: #202432; }
 .message-composer button { align-self: end; min-height: 46px; padding: 0 18px; border: 0; border-radius: 9px; color: white; background: #5965f2; font-weight: 800; }

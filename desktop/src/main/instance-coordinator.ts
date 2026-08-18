@@ -62,6 +62,21 @@ export class InstanceCoordinator {
   async execute(instanceId: string, action: InstanceAction): Promise<InstanceActionResult> {
     const profile = this.registry.get(instanceId);
     const token = await this.credential(profile.credentialRef);
+    if (action.type === 'send_typing') {
+      this.#connections.get(instanceId)?.sendTyping(action.conversationId);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'load_messages') {
+      const query = new URLSearchParams({ limit: String(action.limit || 50) });
+      if (action.before) query.set('before', String(action.before));
+      const kind = action.direct ? 'dms' : 'channels';
+      const response = await this.request(`${profile.baseUrl}/api/v1/${kind}/${encodeURIComponent(action.conversationId)}/messages?${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isMessagePage(body)) throw new Error(readError(body, 'Could not load Messages.'));
+      return { type: 'messages', page: body };
+    }
     if (action.type === 'send_message') {
       const kind = action.direct ? 'dms' : 'channels';
       const response = await this.request(
@@ -75,6 +90,33 @@ export class InstanceCoordinator {
       const body: unknown = await response.json().catch(() => undefined);
       if (!response.ok || !isMessage(body)) throw new Error(response.ok ? 'Instance returned an invalid Message.' : readError(body, 'Could not send the Message.'));
       return { type: 'message', message: body };
+    }
+    if (action.type === 'edit_message') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/messages/${encodeURIComponent(action.messageId)}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: action.body }),
+      });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !isMessage(body)) throw new Error(readError(body, 'Could not edit the Message.'));
+      return { type: 'message', message: body };
+    }
+    if (action.type === 'delete_message') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/messages/${encodeURIComponent(action.messageId)}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Could not delete the Message.');
+      return { type: 'deleted_message', messageId: action.messageId, conversationId: action.conversationId };
+    }
+    if (action.type === 'update_read_position') {
+      const kind = action.direct ? 'dms' : 'channels';
+      const response = await this.request(`${profile.baseUrl}/api/v1/${kind}/${encodeURIComponent(action.conversationId)}/read-position`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sequence: action.sequence }),
+      });
+      if (!response.ok) throw new Error('Could not update the Read Position.');
+      return { type: 'read_position', conversationId: action.conversationId, sequence: action.sequence };
     }
     throw new Error('Unsupported Instance action.');
   }
@@ -145,6 +187,12 @@ function isMessage(value: unknown): value is import('../shared/instance-state').
     typeof message.author_id === 'string' && typeof message.author_name === 'string' &&
     typeof message.sequence === 'number' && typeof message.created_at === 'string' &&
     typeof message.deleted === 'boolean';
+}
+
+function isMessagePage(value: unknown): value is import('../shared/instance-actions').MessagePage {
+  if (!value || typeof value !== 'object') return false;
+  const page = value as Partial<import('../shared/instance-actions').MessagePage>;
+  return Array.isArray(page.messages) && page.messages.every(isMessage) && typeof page.has_more === 'boolean' && typeof page.next_before === 'number';
 }
 
 function isInstanceViewState(value: unknown): value is InstanceViewState {

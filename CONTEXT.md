@@ -124,6 +124,18 @@ _Avoid_: Temporary password, reset password
 A revocable authenticated relationship between a Member and one web or native client device.
 _Avoid_: Login, connection
 
+**Desktop Client**:
+The installed AllChat application that lets one Member use multiple Instances from one operating-system session.
+_Avoid_: Desktop Instance, Electron app
+
+**Instance Profile**:
+The Desktop Client's non-secret local record for one Instance, including its stable local identity, address, and presentation metadata.
+_Avoid_: Account, server profile
+
+**Desktop Device Session**:
+A revocable, scoped Session issued to the Desktop Client for one Member on one Instance and held through the operating system's credential protection.
+_Avoid_: Cookie, desktop password
+
 **Conversation Sequence**:
 A monotonically increasing position that orders Messages and their subsequent edit or deletion events within one Text Channel or Direct Message.
 _Avoid_: Timestamp, global message ID

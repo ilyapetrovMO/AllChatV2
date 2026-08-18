@@ -9,7 +9,10 @@ const nativePush = NativeModules.AllChatPush as NativePush | undefined;
 
 export async function currentMobilePushRegistration(instanceURL: string): Promise<MobilePushRegistration | undefined> {
   if (Platform.OS !== 'android' || !nativePush) return undefined;
-  const permission = await notifee.requestPermission();
+  let permission = await notifee.getNotificationSettings();
+  if (permission.authorizationStatus === AuthorizationStatus.NOT_DETERMINED) {
+    permission = await notifee.requestPermission();
+  }
   if (permission.authorizationStatus === AuthorizationStatus.DENIED) return undefined;
   const registration = await nativePush.getRegistration();
   return registration ? {...registration, instance_url: instanceURL} : undefined;

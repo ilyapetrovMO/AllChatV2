@@ -27,3 +27,4 @@ describe('Electron main module format', () => {
     expect(actionTypes.filter((type) => !validator.includes(`'${type}'`))).toEqual([]);
   });
 });
+// @vitest-environment node

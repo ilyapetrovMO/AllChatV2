@@ -44,3 +44,4 @@ describe('InstanceRegistry', () => {
     expect(new Set(restored.list().map(({ partition }) => partition)).size).toBe(2);
   });
 });
+// @vitest-environment node

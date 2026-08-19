@@ -70,3 +70,4 @@ describe('DesktopAccountManager', () => {
     ]);
   });
 });
+// @vitest-environment node

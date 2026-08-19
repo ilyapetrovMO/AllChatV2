@@ -293,3 +293,4 @@ describe('InstanceCoordinator', () => {
     expect(request).toHaveBeenCalledWith('https://chat.example/api/v1/reports', { method: 'POST', headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' }, body: JSON.stringify({ target_member_id: 'other', target_message_id: '', reason: 'spam' }) });
   });
 });
+// @vitest-environment node

@@ -24,3 +24,4 @@ describe('SQLiteAssetCache', () => {
     fs.rmSync(directory, { recursive: true, force: true });
   });
 });
+// @vitest-environment node

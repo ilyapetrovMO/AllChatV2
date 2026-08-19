@@ -22,3 +22,4 @@ describe('RealtimeConnection', () => {
     connection.stop();
   });
 });
+// @vitest-environment node

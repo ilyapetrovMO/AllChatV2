@@ -37,3 +37,4 @@ describe('desktop window policy', () => {
     expect(isAllowedRendererPermission('notifications', true)).toBe(false);
   });
 });
+// @vitest-environment node

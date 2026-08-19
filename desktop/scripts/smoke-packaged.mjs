@@ -8,7 +8,10 @@ const executable = process.platform === 'win32'
     ? path.join(packageDirectory, 'AllChat.app', 'Contents', 'MacOS', 'AllChat')
     : path.join(packageDirectory, 'AllChat');
 const command = process.platform === 'linux' ? 'xvfb-run' : executable;
-const args = process.platform === 'linux' ? ['-a', executable] : [];
+// GitHub's unpacked workspace cannot provide Electron's root-owned mode-4755
+// SUID helper. Disable Chromium's process sandbox only for this disposable
+// packaged-startup probe; the shipped application still starts normally.
+const args = process.platform === 'linux' ? ['-a', executable, '--no-sandbox'] : [];
 const child = spawn(command, args, {
   env: { ...process.env, ALLCHAT_DESKTOP_SMOKE_TEST: '1' },
   stdio: ['ignore', 'pipe', 'pipe'],

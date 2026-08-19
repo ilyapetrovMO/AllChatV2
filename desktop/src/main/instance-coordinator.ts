@@ -431,6 +431,7 @@ export class InstanceCoordinator {
       const body: unknown = await response.json().catch(() => undefined);
       const settings = normalizeCommunitySettings(body);
       if (!response.ok || !settings) {
+        if (response.status === 404) return { type: 'community_settings_unavailable', reason: 'Update the Instance to manage Community settings from desktop.' };
         const serverError = readError(body, '');
         if (serverError) throw new Error(serverError);
         throw new Error(responseDiagnostic(response, 'Community settings API'));

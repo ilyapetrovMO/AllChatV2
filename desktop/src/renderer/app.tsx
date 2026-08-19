@@ -2426,6 +2426,7 @@ function CommunityAdministration({
 }) {
   const onActionRef = useRef(onAction);
   onActionRef.current = onAction;
+  const communitySettingsRequested = useRef(false);
   const [section, setSection] = useState<"general" | "dashboard" | "channels" | "roles" | "invitations" | "soundboard">("general");
   const [dashboard, setDashboard] = useState<import("../shared/instance-actions").AdminDashboard | null>(null);
   const [dashboardHistory, setDashboardHistory] = useState<import("../shared/instance-actions").AdminDashboard[]>([]);
@@ -2439,8 +2440,11 @@ function CommunityAdministration({
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (communitySettingsRequested.current) return;
+    communitySettingsRequested.current = true;
     void onAction({ type: "get_community_settings" }).then((result) => {
       if (result?.type === "community_settings") setCommunitySettings(result.settings);
+      if (result?.type === "community_settings_unavailable") setError(result.reason);
     }).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load Community settings."));
   }, []);
 
@@ -2469,6 +2473,7 @@ function CommunityAdministration({
     if (next === "general" && !communitySettings) {
       void onAction({ type: "get_community_settings" }).then((result) => {
         if (result?.type === "community_settings") setCommunitySettings(result.settings);
+        if (result?.type === "community_settings_unavailable") setError(result.reason);
       }).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not load Community settings."));
     }
     if (next === "roles") {

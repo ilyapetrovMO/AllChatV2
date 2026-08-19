@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,61 @@ const (
 )
 
 type bootstrapTheme struct{ fyne.Theme }
+
+type filePickerEntry struct {
+	name  string
+	path  string
+	isDir bool
+}
+
+type filePickerRow struct {
+	widget.BaseWidget
+	icon           *widget.Icon
+	label          *canvas.Text
+	onTapped       func()
+	onDoubleTapped func()
+}
+
+type autocompleteEntry struct {
+	widget.Entry
+	suggestion string
+}
+
+func newAutocompleteEntry() *autocompleteEntry {
+	entry := &autocompleteEntry{}
+	entry.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
+	entry.ExtendBaseWidget(entry)
+	return entry
+}
+
+func (entry *autocompleteEntry) TypedKey(key *fyne.KeyEvent) {
+	if key.Name == fyne.KeyTab && entry.suggestion != "" {
+		entry.SetText(entry.suggestion)
+		entry.CursorColumn = len([]rune(entry.Text))
+		return
+	}
+	entry.Entry.TypedKey(key)
+}
+
+func (entry *autocompleteEntry) AcceptsTab() bool {
+	return entry.suggestion != ""
+}
+
+func (row *filePickerRow) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, row.icon, nil, row.label))
+}
+
+func (row *filePickerRow) Tapped(*fyne.PointEvent) {
+	if row.onTapped != nil {
+		row.onTapped()
+	}
+}
+
+func (row *filePickerRow) DoubleTapped(*fyne.PointEvent) {
+	if row.onDoubleTapped != nil {
+		row.onDoubleTapped()
+	}
+}
 
 //go:embed assets/icon.png
 var bootstrapIcon []byte
@@ -127,7 +183,199 @@ func featureRow(text string) fyne.CanvasObject {
 	return container.NewHBox(icon, widget.NewLabel(text))
 }
 
+func searchableFiles(directory, query string, extensions []string) ([]filePickerEntry, error) {
+	items, err := os.ReadDir(directory)
+	if err != nil {
+		return nil, err
+	}
+	query = strings.ToLower(strings.TrimSpace(query))
+	allowed := func(name string) bool {
+		if len(extensions) == 0 {
+			return true
+		}
+		extension := strings.ToLower(filepath.Ext(name))
+		for _, candidate := range extensions {
+			if extension == strings.ToLower(candidate) {
+				return true
+			}
+		}
+		return false
+	}
+	entries := make([]filePickerEntry, 0, len(items))
+	for _, item := range items {
+		if query != "" && !strings.Contains(strings.ToLower(item.Name()), query) {
+			continue
+		}
+		if !item.IsDir() && !allowed(item.Name()) {
+			continue
+		}
+		entries = append(entries, filePickerEntry{name: item.Name(), path: filepath.Join(directory, item.Name()), isDir: item.IsDir()})
+	}
+	sort.Slice(entries, func(left, right int) bool {
+		if entries[left].isDir != entries[right].isDir {
+			return entries[left].isDir
+		}
+		return strings.ToLower(entries[left].name) < strings.ToLower(entries[right].name)
+	})
+	return entries, nil
+}
+
+func newFilePickerRow() fyne.CanvasObject {
+	row := &filePickerRow{icon: widget.NewIcon(theme.FileIcon()), label: canvas.NewText("filename", graphiteText)}
+	row.label.TextSize = theme.Size(theme.SizeNameText)
+	row.ExtendBaseWidget(row)
+	return row
+}
+
+func updateFilePickerRow(object fyne.CanvasObject, entry filePickerEntry) {
+	row := object.(*filePickerRow)
+	if entry.isDir {
+		row.icon.SetResource(theme.FolderIcon())
+	} else {
+		row.icon.SetResource(theme.FileIcon())
+	}
+	row.label.Text = entry.name
+	row.label.Refresh()
+}
+
+func normalizeBootstrapLocale() {
+	for _, name := range []string{"LC_ALL", "LC_MESSAGES", "LANG"} {
+		value := strings.ToUpper(strings.TrimSpace(os.Getenv(name)))
+		base := strings.SplitN(value, ".", 2)[0]
+		if base == "C" || base == "POSIX" {
+			_ = os.Setenv(name, "en_US.UTF-8")
+		}
+		if value != "" {
+			return
+		}
+	}
+}
+
+func showSearchableFilePicker(application fyne.App, parent fyne.Window, title string, extensions []string, selected func(string)) {
+	picker := application.NewWindow(title)
+	picker.Resize(fyne.NewSize(820, 560))
+	picker.CenterOnScreen()
+
+	directory, err := os.UserHomeDir()
+	if err != nil || directory == "" {
+		directory, _ = os.Getwd()
+	}
+	pathEntry := widget.NewEntry()
+	pathEntry.SetText(directory)
+	search := newAutocompleteEntry()
+	search.SetPlaceHolder("Search files in this folder…")
+	completion := canvas.NewText(" ", graphiteFaint)
+	completion.TextSize = 12
+	status := widget.NewLabel("")
+	status.Truncation = fyne.TextTruncateEllipsis
+	open := widget.NewButton("Open", nil)
+	open.Disable()
+	var entries []filePickerEntry
+	selectedIndex := -1
+	var activate func(widget.ListItemID)
+
+	var list *widget.List
+	list = widget.NewList(
+		func() int { return len(entries) },
+		newFilePickerRow,
+		func(id widget.ListItemID, object fyne.CanvasObject) {
+			updateFilePickerRow(object, entries[id])
+			row := object.(*filePickerRow)
+			row.onTapped = func() { list.Select(id) }
+			row.onDoubleTapped = func() {
+				list.Select(id)
+				if activate != nil {
+					activate(id)
+				}
+			}
+		},
+	)
+	refresh := func() {
+		selectedIndex = -1
+		open.Disable()
+		value, readErr := searchableFiles(directory, search.Text, extensions)
+		if readErr != nil {
+			entries = nil
+			status.SetText(readErr.Error())
+		} else {
+			entries = value
+			status.SetText(fmt.Sprintf("%d item(s)", len(entries)))
+		}
+		search.suggestion = ""
+		completion.Text = " "
+		if query := strings.TrimSpace(search.Text); query != "" {
+			for _, entry := range entries {
+				if !strings.EqualFold(entry.name, query) {
+					search.suggestion = entry.name
+					completion.Text = "Tab to complete: " + entry.name
+					break
+				}
+			}
+		}
+		completion.Refresh()
+		list.UnselectAll()
+		list.Refresh()
+	}
+	navigate := func(target string) {
+		target = filepath.Clean(strings.TrimSpace(target))
+		info, statErr := os.Stat(target)
+		if statErr != nil || !info.IsDir() {
+			status.SetText("Choose an existing folder.")
+			return
+		}
+		directory = target
+		pathEntry.SetText(directory)
+		refresh()
+	}
+	list.OnSelected = func(id widget.ListItemID) {
+		selectedIndex = id
+		open.Enable()
+	}
+	activate = func(id widget.ListItemID) {
+		if id < 0 || id >= len(entries) {
+			return
+		}
+		entry := entries[id]
+		if entry.isDir {
+			navigate(entry.path)
+			return
+		}
+		selected(entry.path)
+		picker.Close()
+		parent.RequestFocus()
+	}
+	open.OnTapped = func() { activate(selectedIndex) }
+	search.OnChanged = func(string) { refresh() }
+	pathEntry.OnSubmitted = navigate
+	goButton := widget.NewButton("Go", func() { navigate(pathEntry.Text) })
+	upButton := widget.NewButtonWithIcon("Up", theme.NavigateBackIcon(), func() { navigate(filepath.Dir(directory)) })
+	homeButton := widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
+		home, homeErr := os.UserHomeDir()
+		if homeErr == nil {
+			navigate(home)
+		}
+	})
+	cancel := widget.NewButton("Cancel", func() { picker.Close(); parent.RequestFocus() })
+	buttons := container.NewHBox(cancel, open)
+	footer := container.NewBorder(nil, nil, status, buttons, widget.NewLabel(""))
+	picker.SetContent(container.NewBorder(
+		container.NewVBox(
+			container.NewBorder(nil, nil, container.NewHBox(homeButton, upButton), goButton, pathEntry),
+			search,
+			completion,
+		),
+		footer,
+		nil,
+		nil,
+		list,
+	))
+	refresh()
+	picker.Show()
+	picker.Canvas().Focus(search)
+}
+
 func main() {
+	normalizeBootstrapLocale()
 	a := app.NewWithID("org.allchat.bootstrap")
 	a.SetIcon(fyne.NewStaticResource("allchat.png", bootstrapIcon))
 	a.Settings().SetTheme(bootstrapTheme{})
@@ -145,17 +393,7 @@ func main() {
 	sudoPassword := widget.NewPasswordEntry()
 	sudoPassword.SetPlaceHolder("Only needed when sudo asks for a password")
 	chooseKey := widget.NewButton("Choose key file…", func() {
-		dialog.NewFileOpen(func(file fyne.URIReadCloser, err error) {
-			if err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-			if file == nil {
-				return
-			}
-			keyPath.SetText(file.URI().Path())
-			_ = file.Close()
-		}, w).Show()
+		showSearchableFilePicker(a, w, "Choose SSH private key", nil, keyPath.SetText)
 	})
 	passwordFields := container.NewVBox(widget.NewForm(widget.NewFormItem("SSH password", password)))
 	keyFields := container.NewVBox(
@@ -186,17 +424,7 @@ func main() {
 	firebasePath := widget.NewEntry()
 	firebasePath.SetPlaceHolder("Firebase service-account JSON")
 	chooseFirebase := widget.NewButton("Choose JSON…", func() {
-		dialog.NewFileOpen(func(file fyne.URIReadCloser, err error) {
-			if err != nil {
-				dialog.ShowError(err, w)
-				return
-			}
-			if file == nil {
-				return
-			}
-			firebasePath.SetText(file.URI().Path())
-			_ = file.Close()
-		}, w).Show()
+		showSearchableFilePicker(a, w, "Choose Firebase service-account JSON", []string{".json"}, firebasePath.SetText)
 	})
 	firebaseFields := container.NewVBox(container.NewBorder(nil, nil, nil, chooseFirebase, firebasePath), widget.NewLabel("The service account must match the Firebase project compiled into your APK."))
 	firebaseFields.Hide()

@@ -105,5 +105,6 @@ export type InstanceActionResult =
   | { type: 'soundboard'; sounds: SoundboardSound[]; maxDurationMs: number; canManage: boolean }
   | { type: 'sound'; sound: SoundboardSound }
   | { type: 'community_settings'; settings: CommunitySettings }
+  | { type: 'community_settings_unavailable'; reason: string }
   | { type: 'community_home'; markdown: string }
   | { type: 'accepted' };

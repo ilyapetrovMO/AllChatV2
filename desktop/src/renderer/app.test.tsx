@@ -1,9 +1,70 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { App } from './app';
 
 describe('desktop renderer bootstrap', () => {
+  it('shows a single compatibility notice when a legacy Instance lacks Community settings', async () => {
+    const executeInstance = vi.fn(async (_instanceId: string, action: { type: string }) => {
+      if (action.type === 'get_community_settings') return {
+        type: 'community_settings_unavailable' as const,
+        reason: 'Update the Instance to manage Community settings from desktop.',
+      };
+      if (action.type === 'community_home') return { type: 'community_home' as const, markdown: '' };
+      return { type: 'accepted' as const };
+    });
+
+    render(
+      <StrictMode>
+        <App bridge={{
+          getShellState: async () => ({
+            activeInstanceId: 'legacy',
+            instances: [{
+              id: 'legacy', displayName: 'Legacy', baseUrl: 'https://legacy.example',
+              partition: 'persist:allchat-legacy', credentialRef: 'desktop-session:legacy',
+              session: {
+                member: { id: 'me', username: 'nora', owner: true },
+                sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z',
+              },
+            }],
+          }),
+          addInstance: async () => { throw new Error('unused'); },
+          selectInstance: async () => { throw new Error('unused'); },
+          loginInstance: async () => { throw new Error('unused'); },
+          registerInstance: async () => { throw new Error('unused'); },
+          recoverInstance: async () => { throw new Error('unused'); },
+          logoutInstance: async () => { throw new Error('unused'); },
+          loadInstance: async () => ({
+            connection: 'online', version: 1,
+            community: { name: 'Legacy Community' },
+            member: { id: 'me', username: 'nora', owner: true },
+            members: [{ id: 'me', username: 'nora', owner: true }],
+            categories: [], channels: [], direct_messages: [], messages: {},
+            channel_states: [], presence: {}, typing: [],
+            notifications: {
+              current_member_id: 'me', community: { level: 'default', muted: false },
+              channels: {}, muted_channel_ids: [],
+            },
+            media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1,
+          }),
+          watchInstance: () => () => undefined,
+          executeInstance,
+        }} />
+      </StrictMode>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Legacy Community' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Community Settings' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Update the Instance to manage Community settings from desktop.',
+    );
+    await waitFor(() => {
+      expect(executeInstance.mock.calls.filter(([, action]) => action.type === 'get_community_settings')).toHaveLength(1);
+    });
+  });
+
   it('renders the local shell and an empty Instance state', async () => {
     const controlWindow = vi.fn(async (_action: 'minimize' | 'toggle-maximize' | 'close') => undefined);
     render(

@@ -63,4 +63,3 @@ jobs:
           name: allchat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
           if-no-files-found: error
-          retention-days: 30

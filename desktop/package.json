@@ -1,6 +1,9 @@
 {
   "name": "@allchat/desktop",
   "version": "0.1.0-canary.0",
+  "productName": "AllChat",
+  "description": "Native desktop client for AllChat",
+  "author": "AllChat contributors",
   "private": true,
   "main": ".vite/build/main.js",
   "scripts": {

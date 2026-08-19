@@ -1,0 +1,66 @@
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/desktop.yml'
+      - 'desktop/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - name: Windows x64
+            os: windows-2025
+            platform: windows
+            arch: x64
+          - name: macOS Intel
+            os: macos-15-intel
+            platform: macos
+            arch: x64
+          - name: macOS Apple Silicon
+            os: macos-15
+            platform: macos
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux packaging tools
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y zip
+      - run: npm ci
+      - name: Test desktop application
+        run: npm test --workspace @allchat/desktop
+      - name: Create desktop distribution
+        run: npm run make --workspace @allchat/desktop
+      - name: Stage desktop distribution
+        shell: bash
+        run: |
+          mkdir -p dist
+          find desktop/out/make -type f \( -name '*.zip' -o -name '*.exe' -o -name '*.nupkg' -o -name 'RELEASES' \) -exec cp {} dist/ \;
+      - name: Upload desktop distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: allchat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30

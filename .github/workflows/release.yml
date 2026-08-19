@@ -225,8 +225,53 @@ jobs:
           name: android-apk
           path: dist/*
 
+  desktop:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - os: windows-2025
+            platform: windows
+            arch: x64
+          - os: macos-15-intel
+            platform: macos
+            arch: x64
+          - os: macos-15
+            platform: macos
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Linux packaging tools
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y zip
+      - run: npm ci
+      - name: Apply release version
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version
+      - name: Create desktop distribution
+        run: npm run make --workspace @allchat/desktop
+      - name: Stage desktop distribution
+        shell: bash
+        run: |
+          mkdir -p dist
+          find desktop/out/make -type f \( -name '*.zip' -o -name '*.exe' -o -name '*.nupkg' -o -name 'RELEASES' \) -exec cp {} dist/ \;
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+
   publish:
-    needs: [linux-binaries, bootstrapper, android-apk]
+    needs: [linux-binaries, bootstrapper, android-apk, desktop]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -243,7 +288,7 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           git archive --format=zip --prefix="AllChatV2-${version}/" -o "dist/allchat_${version}_source.zip" "$GITHUB_SHA"
           cd dist
-          sha256sum allchat* > SHA256SUMS
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

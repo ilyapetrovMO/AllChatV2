@@ -57,7 +57,7 @@ jobs:
   browser-full-matrix:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -72,10 +72,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Install browser runtime
+        timeout-minutes: 10
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run real-browser media test
+        timeout-minutes: 6
         env:
           ALLCHAT_MEDIA_BROWSER: ${{ matrix.browser }}
+          ALLCHAT_MEDIA_TIMEOUT_MS: 300000
         run: npm run test:media:browser
       - if: failure()
         uses: actions/upload-artifact@v4

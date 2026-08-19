@@ -12,6 +12,41 @@ const browserName = process.env.ALLCHAT_MEDIA_BROWSER || 'chromium';
 const only = process.env.ALLCHAT_MEDIA_ONLY || '';
 const browserType = {chromium, firefox, webkit}[browserName];
 if (!browserType) throw new Error(`unsupported ALLCHAT_MEDIA_BROWSER: ${browserName}`);
+const diagnosticDirectory = path.resolve(__dirname, '../../.dev/media-tests', browserName);
+const failurePath = path.join(diagnosticDirectory, 'failure.json');
+const hardTimeoutMS = Number(process.env.ALLCHAT_MEDIA_TIMEOUT_MS || 5 * 60_000);
+const timeline = [];
+let currentPhase = 'initializing';
+
+function markPhase(phase) {
+  currentPhase = phase;
+  const elapsedMS = Date.now() - startedAt;
+  timeline.push({phase, elapsed_ms: elapsedMS});
+  process.stdout.write(`[media:${browserName}] ${phase} (${elapsedMS}ms)\n`);
+}
+
+function writeFailure(error) {
+  fs.mkdirSync(diagnosticDirectory, {recursive: true});
+  fs.writeFileSync(failurePath, JSON.stringify({
+    schema: 'allchat.media.failure/v1', browser: browserName, at: new Date().toISOString(),
+    phase: currentPhase, elapsed_ms: Date.now() - startedAt, timeline,
+    error: String(error?.stack || error),
+  }, null, 2));
+}
+
+const startedAt = Date.now();
+fs.rmSync(failurePath, {force: true});
+const watchdog = setTimeout(() => {
+  const error = new Error(`media test exceeded ${hardTimeoutMS}ms during ${currentPhase}`);
+  writeFailure(error);
+  console.error(error);
+  process.exit(1);
+}, hardTimeoutMS);
+
+for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => {
+  writeFailure(new Error(`media test received ${signal} during ${currentPhase}`));
+  process.exit(1);
+});
 
 async function waitForServer(deadline = Date.now() + 60_000) {
   while (Date.now() < deadline) {
@@ -269,33 +304,38 @@ async function runPair(browser, firstAPI, secondAPI, roomID, label) {
 }
 
 async function main() {
+  markPhase('starting Instance');
   const dataDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'allchat-media-'));
   const server = spawn('go', ['run', '-buildvcs=false', './cmd/allchat', '--data-dir', dataDirectory, '--listen', `${host}:${port}`], {cwd: path.resolve(__dirname, '../..'), env: {...process.env, GOCACHE: process.env.GOCACHE || '/tmp/allchat-media-gocache'}, stdio: ['ignore', 'inherit', 'inherit']});
   let browser;
   try {
     await waitForServer();
+    markPhase('provisioning fixture');
     const fixture = await provision(dataDirectory);
+    markPhase('launching browser');
     browser = await browserType.launch({headless: true});
-    if (!only || only === 'baseline') await runPair(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room');
-    if (!only || only === 'video-restart') await runTrackRestart(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/video-restart');
-    if (!only || only === 'glare') await runSimultaneousRestarts(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/glare');
-    if (!only || only === 'signaling-recovery') await runSignalingRecovery(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/signaling-recovery');
+    if (!only || only === 'baseline') { markPhase('voice-room baseline'); await runPair(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room'); }
+    if (!only || only === 'video-restart') { markPhase('voice-room video restart'); await runTrackRestart(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/video-restart'); }
+    if (!only || only === 'glare') { markPhase('voice-room glare'); await runSimultaneousRestarts(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/glare'); }
+    if (!only || only === 'signaling-recovery') { markPhase('voice-room signaling recovery'); await runSignalingRecovery(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/signaling-recovery'); }
+    markPhase('creating direct call');
     const call = await post(fixture.first, `/api/v1/dms/${fixture.dm.id}/calls`, {});
     await post(fixture.second, `/api/v1/calls/${call.id}/accept`, {});
-    if (!only || only === 'baseline') await runPair(browser, fixture.first, fixture.second, call.id, 'direct-call');
-    if (!only || only === 'video-restart') await runTrackRestart(browser, fixture.first, fixture.second, call.id, 'direct-call/video-restart');
-    if (!only || only === 'glare') await runSimultaneousRestarts(browser, fixture.first, fixture.second, call.id, 'direct-call/glare');
-    if (!only || only === 'signaling-recovery') await runSignalingRecovery(browser, fixture.first, fixture.second, call.id, 'direct-call/signaling-recovery');
+    if (!only || only === 'baseline') { markPhase('direct-call baseline'); await runPair(browser, fixture.first, fixture.second, call.id, 'direct-call'); }
+    if (!only || only === 'video-restart') { markPhase('direct-call video restart'); await runTrackRestart(browser, fixture.first, fixture.second, call.id, 'direct-call/video-restart'); }
+    if (!only || only === 'glare') { markPhase('direct-call glare'); await runSimultaneousRestarts(browser, fixture.first, fixture.second, call.id, 'direct-call/glare'); }
+    if (!only || only === 'signaling-recovery') { markPhase('direct-call signaling recovery'); await runSignalingRecovery(browser, fixture.first, fixture.second, call.id, 'direct-call/signaling-recovery'); }
     await fixture.first.dispose(); await fixture.second.dispose();
+    markPhase('complete');
     process.stdout.write(`browser media interoperability (${browserName}): PASS\n`);
   } finally {
+    markPhase('cleanup');
     await browser?.close(); server.kill('SIGTERM');
   }
 }
 
-main().catch(error => {
-  const directory = path.resolve(__dirname, '../../.dev/media-tests', browserName);
-  fs.mkdirSync(directory, {recursive: true});
-  fs.writeFileSync(path.join(directory, 'failure.json'), JSON.stringify({schema: 'allchat.media.failure/v1', browser: browserName, at: new Date().toISOString(), error: String(error?.stack || error)}, null, 2));
+main().then(() => clearTimeout(watchdog)).catch(error => {
+  clearTimeout(watchdog);
+  writeFailure(error);
   console.error(error); process.exitCode = 1;
 });

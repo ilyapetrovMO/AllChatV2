@@ -8,7 +8,7 @@ const config: ForgeConfig = {
     asar: true,
     executableName: 'AllChat',
   },
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin', 'linux'])],
+  makers: [new MakerSquirrel({ name: 'AllChat' }), new MakerZIP({}, ['darwin', 'linux'])],
   plugins: [
     new VitePlugin({
       build: [

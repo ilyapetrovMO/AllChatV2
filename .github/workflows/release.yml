@@ -3,6 +3,15 @@ name: Release
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version embedded in dry-run artifacts
+        required: true
+        default: v0.0.0-test
+
+env:
+  RELEASE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
 permissions:
   contents: read
@@ -49,9 +58,9 @@ jobs:
           GOARM: ${{ matrix.goarm }}
           ARTIFACT_ARCH: ${{ matrix.artifact_arch || matrix.goarch }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$RELEASE_REF -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat-music-bot_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat-music-bot
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat-push-relay_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat-push-relay
@@ -129,9 +138,9 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
           CC: ${{ matrix.cc }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$RELEASE_REF -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
           mkdir -p dist
           CGO_ENABLED=1 go build -trimpath -buildvcs=false -tags bootstrap_gui -ldflags="$ldflags" -o "dist/allchat-bootstrap_${version}_${PLATFORM}_${GOARCH}${SUFFIX}" ./cmd/allchat-bootstrap
       - name: Build native bootstrapper on Windows
@@ -145,9 +154,9 @@ jobs:
         run: |
           go version
           "$CC" --version
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          ldflags="-s -w -X allchat/internal/buildinfo.Version=$GITHUB_REF_NAME -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
+          ldflags="-s -w -X allchat/internal/buildinfo.Version=$RELEASE_REF -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
           mkdir -p dist
           CGO_ENABLED=1 go build -trimpath -buildvcs=false -tags bootstrap_gui -ldflags="$ldflags" -o "dist/allchat-bootstrap_${version}_${PLATFORM}_${GOARCH}${SUFFIX}" ./cmd/allchat-bootstrap
       - name: Sign Windows executable
@@ -161,7 +170,7 @@ jobs:
         if: matrix.platform == 'darwin'
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           executable="allchat-bootstrap_${version}_darwin_${{ matrix.goarch }}"
           bundle="dist/AllChat Bootstrapper.app"
           mkdir -p "$bundle/Contents/MacOS"
@@ -214,10 +223,10 @@ jobs:
           cache: gradle
       - run: npm ci --prefix mobile
       - name: Build universal standalone APK
-        run: cd mobile/android && ./gradlew assembleStandalone --no-daemon -PallchatVersionName="${GITHUB_REF_NAME#v}" -PallchatVersionCode="${GITHUB_RUN_NUMBER}"
+        run: cd mobile/android && ./gradlew assembleStandalone --no-daemon -PallchatVersionName="${RELEASE_REF#v}" -PallchatVersionCode="${GITHUB_RUN_NUMBER}"
       - name: Name release APK
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           mkdir -p dist
           cp mobile/android/app/build/outputs/apk/standalone/app-standalone.apk "dist/allchat_${version}_android_universal.apk"
       - uses: actions/upload-artifact@v4
@@ -256,7 +265,7 @@ jobs:
       - run: npm ci
       - name: Apply release version
         shell: bash
-        run: npm version "${GITHUB_REF_NAME#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version
+        run: npm version "${RELEASE_REF#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version
       - name: Create desktop distribution
         run: npm run make --workspace @allchat/desktop
       - name: Stage desktop distribution
@@ -270,11 +279,9 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-  publish:
+  assemble-release:
     needs: [linux-binaries, bootstrapper, android-apk, desktop]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -285,10 +292,51 @@ jobs:
           merge-multiple: true
       - name: Add source and checksums
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_REF#v}"
           git archive --format=zip --prefix="AllChatV2-${version}/" -o "dist/allchat_${version}_source.zip" "$GITHUB_SHA"
+      - name: Validate complete release artifact set
+        shell: bash
+        run: |
+          version="${RELEASE_REF#v}"
+          require_file() { test -f "$1" || { echo "Missing release artifact: $1" >&2; exit 1; }; }
+          require_glob() { compgen -G "$1" >/dev/null || { echo "Missing release artifact matching: $1" >&2; exit 1; }; }
+          for arch in amd64 arm64 armv7; do
+            require_file "dist/allchat_${version}_linux_${arch}"
+            require_file "dist/allchat-music-bot_${version}_linux_${arch}"
+            require_file "dist/allchat-push-relay_${version}_linux_${arch}"
+          done
+          require_file "dist/allchat_${version}_android_universal.apk"
+          require_file "dist/allchat_${version}_source.zip"
+          require_glob 'dist/allchat-bootstrap_*_linux_*'
+          require_glob 'dist/allchat-bootstrap_*_windows_*.exe'
+          require_glob 'dist/allchat-bootstrap_*_darwin_*.app.zip'
+          require_glob 'dist/*linux*x64*.zip'
+          require_glob 'dist/*darwin*x64*.zip'
+          require_glob 'dist/*darwin*arm64*.zip'
+          require_glob 'dist/*Setup.exe'
+          require_glob 'dist/*.nupkg'
+          require_file 'dist/RELEASES'
+      - name: Generate checksums
+        run: |
           cd dist
           find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-bundle
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: assemble-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-bundle
+          path: dist
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

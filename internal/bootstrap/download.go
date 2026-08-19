@@ -68,8 +68,8 @@ func downloadLatestVerified(ctx context.Context, client *http.Client, version, a
 	scanner := bufio.NewScanner(strings.NewReader(string(checksums)))
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
-		if len(fields) == 2 && pattern.MatchString(strings.TrimPrefix(fields[1], "*")) {
-			asset = strings.TrimPrefix(fields[1], "*")
+		if len(fields) == 2 && pattern.MatchString(checksumAsset(fields[1])) {
+			asset = checksumAsset(fields[1])
 			break
 		}
 	}
@@ -85,7 +85,7 @@ func verifyDownload(ctx context.Context, client *http.Client, base string, check
 	scanner := bufio.NewScanner(strings.NewReader(string(checksums)))
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
-		if len(fields) == 2 && strings.TrimPrefix(fields[1], "*") == asset {
+		if len(fields) == 2 && checksumAsset(fields[1]) == asset {
 			want = fields[0]
 			break
 		}
@@ -102,6 +102,10 @@ func verifyDownload(ctx context.Context, client *http.Client, base string, check
 		return nil, fmt.Errorf("checksum mismatch for %s", asset)
 	}
 	return content, nil
+}
+
+func checksumAsset(field string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(field, "*"), "./")
 }
 
 func download(ctx context.Context, client *http.Client, location string) ([]byte, error) {

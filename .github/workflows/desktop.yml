@@ -46,12 +46,14 @@ jobs:
           cache: npm
       - name: Install Linux packaging tools
         if: matrix.platform == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y zip
+        run: sudo apt-get update && sudo apt-get install -y zip xvfb
       - run: npm ci
       - name: Test desktop application
         run: npm test --workspace @allchat/desktop
       - name: Create desktop distribution
         run: npm run make --workspace @allchat/desktop
+      - name: Smoke test packaged desktop application
+        run: npm run smoke:packaged --workspace @allchat/desktop
       - name: Stage desktop distribution
         shell: bash
         run: |

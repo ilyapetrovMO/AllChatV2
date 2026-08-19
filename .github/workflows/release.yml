@@ -261,13 +261,15 @@ jobs:
           cache: npm
       - name: Install Linux packaging tools
         if: matrix.platform == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y zip
+        run: sudo apt-get update && sudo apt-get install -y zip xvfb
       - run: npm ci
       - name: Apply release version
         shell: bash
         run: npm version "${RELEASE_REF#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version
       - name: Create desktop distribution
         run: npm run make --workspace @allchat/desktop
+      - name: Smoke test packaged desktop application
+        run: npm run smoke:packaged --workspace @allchat/desktop
       - name: Stage desktop distribution
         shell: bash
         run: |
@@ -319,7 +321,12 @@ jobs:
       - name: Generate checksums
         run: |
           cd dist
-          find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\0' | sort -z | xargs -0 sha256sum > SHA256SUMS
+          if grep -Eq '  [*]?(\./|.*/)' SHA256SUMS; then
+            echo 'Checksum manifest contains a path instead of a release asset name' >&2
+            exit 1
+          fi
+          sha256sum --check SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: release-bundle

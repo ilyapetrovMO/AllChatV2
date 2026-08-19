@@ -120,7 +120,7 @@ func TestDownloadVerifiedChecksArtifactDigest(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 		body := content
 		if strings.HasSuffix(request.URL.Path, "/SHA256SUMS") {
-			body = []byte(fmt.Sprintf("%x  allchat_1.2.3_linux_amd64\n", digest))
+			body = []byte(fmt.Sprintf("%x  ./allchat_1.2.3_linux_amd64\n", digest))
 		}
 		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(strings.NewReader(string(body))), Header: make(http.Header)}, nil
 	})}
@@ -136,7 +136,7 @@ func TestDownloadInstanceVerifiedDiscoversLatestVersionedAsset(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 		body := content
 		if strings.HasSuffix(request.URL.Path, "/SHA256SUMS") {
-			body = []byte(fmt.Sprintf("%x  allchat_2.4.6_linux_amd64\n", digest))
+			body = []byte(fmt.Sprintf("%x  ./allchat_2.4.6_linux_amd64\n", digest))
 		}
 		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(strings.NewReader(string(body))), Header: make(http.Header)}, nil
 	})}

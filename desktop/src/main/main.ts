@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { app, BrowserWindow, ipcMain, Menu, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell } from 'electron';
 import WebSocket from 'ws';
 
 import { DesktopAccountManager } from './desktop-account-manager';
@@ -33,7 +33,12 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', () => BrowserWindow.getAllWindows()[0]?.show());
-  app.whenReady().then(start);
+  app.whenReady().then(start).catch((error: unknown) => {
+    const message = error instanceof Error ? error.stack || error.message : String(error);
+    console.error('AllChat desktop failed to start:', message);
+    dialog.showErrorBox('AllChat could not start', message);
+    app.quit();
+  });
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
   });
@@ -61,6 +66,10 @@ async function start(): Promise<void> {
   registerIpc();
   lockPermissions();
   await createMainWindow();
+  if (process.env.ALLCHAT_DESKTOP_SMOKE_TEST === '1') {
+    console.log('AllChat desktop packaged startup: PASS');
+    app.quit();
+  }
 }
 
 async function createMainWindow(): Promise<BrowserWindow> {

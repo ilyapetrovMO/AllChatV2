@@ -76,6 +76,9 @@ screens:
       - id: plain-link-clickable
         status: partial
         evidence: renderer-safe-external-link-navigation
+      - id: fenced-code-block
+        status: verified
+        evidence: web-and-renderer-syntax-highlighted-fenced-code-tests
       - id: member-popover-open
         status: partial
         evidence: renderer-member-popover-anchor-and-dismissal
@@ -148,9 +151,16 @@ screens:
         status: partial
       - id: connected
         status: partial
+        evidence: renderer-bottom-left-voice-connection-controls
       - id: participant-list
-        status: partial
-        evidence: renderer-voice-participant-stage-and-sidebar
+        status: verified
+        evidence: renderer-all-voice-channel-participant-polling
+      - id: first-click-connects-in-place
+        status: verified
+        evidence: renderer-voice-first-click-stays-in-current-view
+      - id: connected-channel-opens-grid
+        status: verified
+        evidence: renderer-voice-second-click-opens-stage
       - id: participant-menu
         status: partial
         evidence: renderer-voice-participant-context-menu
@@ -444,8 +454,8 @@ flows:
     status: partial
 
 intentional_differences:
-  - id: native-window-chrome
-    reason: Electron owns the operating-system window and lifecycle.
+  - id: custom-window-chrome
+    reason: Electron uses a slim draggable titlebar with native minimize, maximize/restore, and close actions; content comparisons exclude it.
   - id: multi-instance-rail
     reason: Electron can retain and switch among multiple AllChat Instances.
   - id: native-notifications

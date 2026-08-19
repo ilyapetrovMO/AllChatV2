@@ -154,7 +154,7 @@ test('packaged Desktop Community Home remains visually aligned with web', async 
   const { app, desktopPage, assertNoErrors } = await launchSignedInDesktop(communityHomeDefault, 'allchat-desktop-parity-home-');
   try {
     await desktopPage.locator('.welcome').waitFor();
-    const desktop = await desktopPage.screenshot({ animations: 'disabled', caret: 'hide' });
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     await recordComparison(page, testInfo, communityHomeDefault, 'Community Home', web, desktop);
     assertNoErrors();
   } finally { await app.close(); }
@@ -174,7 +174,7 @@ test('packaged Desktop Admin Dashboard remains visually aligned with web', async
     await desktopPage.locator('[data-admin-dashboard] .dashboard-stat').first().waitFor();
     await expect(desktopPage.locator('.dashboard-stat')).toHaveCount(8);
     await expect(desktopPage.getByRole('heading', { name: 'Admin Dashboard', level: 1 })).toBeVisible();
-    const desktop = await desktopPage.screenshot({ animations: 'disabled', caret: 'hide' });
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     await recordComparison(page, testInfo, adminDashboardHealthy, 'Admin Dashboard', web, desktop);
     assertNoErrors();
   } finally { await app.close(); }
@@ -190,7 +190,7 @@ test('packaged Desktop Direct Messages Home remains visually aligned with web', 
   try {
     await desktopPage.getByRole('button', { name: 'Direct Messages' }).click();
     await desktopPage.locator('.dm-home').waitFor();
-    const desktop = await desktopPage.screenshot({ animations: 'disabled', caret: 'hide' });
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     await recordComparison(page, testInfo, directMessagesHomeDefault, 'Direct Messages Home', web, desktop);
     assertNoErrors();
   } finally { await app.close(); }
@@ -232,7 +232,7 @@ test('packaged Desktop remains visually aligned with web', async ({ page }, test
         })
         .map((control) => control.getAttribute('aria-label') || control.textContent?.trim() || control.tagName));
     expect(controlsWithoutPointer, 'enabled visible controls without pointer cursor').toEqual([]);
-    const desktop = await desktopPage.screenshot({ animations: 'disabled', caret: 'hide' });
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     const comparison = await compareScreenshots(page, web, desktop);
     const diff = Buffer.from(comparison.diff, 'base64');
     const artifactDirectory = path.resolve(__dirname, '..', channelDefault.evidenceDirectory);
@@ -277,7 +277,7 @@ test('packaged Desktop Direct Message remains visually aligned with web', async 
     await desktopPage.locator('.message').first().waitFor();
     await expect(desktopPage.getByRole('complementary', { name: 'Members' })).toHaveCount(0);
     await expect(desktopPage.getByRole('button', { name: 'Start Call' })).toBeVisible();
-    const desktop = await desktopPage.screenshot({ animations: 'disabled', caret: 'hide' });
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     const comparison = await compareScreenshots(page, web, desktop);
     const diff = Buffer.from(comparison.diff, 'base64');
     const artifactDirectory = path.resolve(__dirname, '..', directMessageDefault.evidenceDirectory);

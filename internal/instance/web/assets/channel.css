@@ -86,6 +86,12 @@
 .message > mark { display:none; }
 .composer.file-drag-active { border-color: var(--brand-light, #8ea1e1); box-shadow: 0 0 0 2px rgba(88,101,242,.35); }
 .composer #message-body { min-width: 0; height: 34px; flex: 1 1 auto; border: 0; padding: 6px 4px; }
+.message .body pre { max-width: 100%; margin: 5px 0; padding: 10px 12px; overflow: auto; border: 1px solid var(--border); border-radius: 4px; background: #111214; }
+.message .body pre code { padding: 0; color: #dbdee1; background: transparent; font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre; }
+.message .body .syntax-key { color: #79c0ff; }
+.message .body .syntax-string { color: #a5d6ff; }
+.message .body .syntax-literal { color: #ff7b72; }
+.message .body .syntax-keyword { color: #d2a8ff; font-weight: 700; }
 .composer #attachment { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .attachment-button { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; padding: 0; border-radius: 50%; background: var(--muted); color: var(--bg-main); cursor: pointer; font-size: 0; line-height: 0; }
 .attachment-button:hover { background: var(--text); }

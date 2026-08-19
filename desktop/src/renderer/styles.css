@@ -193,12 +193,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 button:disabled { cursor: not-allowed; opacity: .5; }
 a { color: #00a8fc; }
 
-.shell { grid-template-columns: 72px minmax(0, 1fr); height: 100vh; min-height: 0; overflow: hidden; background: var(--bg-main); }
+.desktop-titlebar { position: relative; z-index: 2000; height: 28px; display: flex; align-items: center; justify-content: space-between; padding-left: 10px; border-bottom: 1px solid rgb(255 255 255 / 5%); background: #0d0e11; color: var(--faint); user-select: none; -webkit-app-region: drag; }
+.desktop-titlebar-title { font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.desktop-titlebar nav { align-self: stretch; display: flex; -webkit-app-region: no-drag; }
+.desktop-titlebar button { width: 38px; min-height: 0; display: grid; place-items: center; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--muted); }
+.desktop-titlebar button:hover { background: var(--bg-hover); color: var(--text); }
+.desktop-titlebar .desktop-window-close:hover { background: var(--red); color: white; }
+.desktop-titlebar svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.25; }
+.shell { grid-template-columns: 72px minmax(0, 1fr); height: calc(100vh - 28px); min-height: 0; overflow: hidden; background: var(--bg-main); }
 .instance-rail { gap: 10px; padding: 12px 0; border: 0; background: var(--bg-rail); }
 .brand-mark, .instance-button { width: 48px; height: 48px; border-radius: 16px; background: var(--brand); font-size: 15px; transition: border-radius .15s, background .15s; }
 .instance-button:hover, .instance-button[aria-current="page"] { border-radius: 12px; background: var(--brand-hover); }
 .instance-button[aria-current="page"]::before { position: absolute; left: 0; width: 4px; height: 40px; border-radius: 0 4px 4px 0; background: white; content: ""; }
-.content { height: 100vh; min-height: 0; background: var(--bg-main); }
+.content { height: calc(100vh - 28px); min-height: 0; background: var(--bg-main); }
 .content > .empty-state { margin: 0 auto; }
 .empty-state { width: min(100%, 480px); padding: 32px; border-radius: 8px; background: var(--bg-main); box-shadow: var(--shadow); }
 .content:has(> .empty-state) { display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #404eed 0, transparent 38%), var(--bg-rail); }
@@ -212,9 +219,9 @@ a { color: #00a8fc; }
 .onboarding-form input:hover, .profile-form input:hover, .safety-panel input:hover, .safety-panel select:hover, .safety-panel textarea:hover { border-color: rgb(255 255 255 / 14%); }
 .eyebrow { color: var(--faint) !important; letter-spacing: normal; }
 
-.community-shell { grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: 48px minmax(0, 1fr); height: 100vh; min-height: 0; overflow: hidden; }
+.community-shell { grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: 48px minmax(0, 1fr); height: calc(100vh - 28px); min-height: 0; overflow: hidden; }
 .community-shell:has(.member-directory) { grid-template-columns: 240px minmax(0, 1fr) 240px; }
-.conversation-sidebar { grid-column: 1; grid-row: 1 / -1; width: 240px; min-width: 240px; max-width: 240px; height: 100vh; min-height: 0; overflow: hidden; border-right: 1px solid rgb(255 255 255 / 3.5%); background: var(--bg-sidebar); }
+.conversation-sidebar { grid-column: 1; grid-row: 1 / -1; width: 240px; min-width: 240px; max-width: 240px; height: calc(100vh - 28px); min-height: 0; overflow: hidden; border-right: 1px solid rgb(255 255 255 / 3.5%); background: var(--bg-sidebar); }
 .community-header { height: 48px; padding: 0 16px; border-bottom: 1px solid rgb(255 255 255 / 6%); background: #101115; box-shadow: none; font-size: 16px; }
 .conversation-nav { overflow-x: hidden; overflow-y: auto; padding: 12px 8px; scrollbar-width: none; }
 .conversation-nav::-webkit-scrollbar { display: none; }
@@ -229,6 +236,16 @@ a { color: #00a8fc; }
 .member-panel { min-height: 52px; gap: 4px; padding: 6px 8px; background: #0e0f12; }
 .member-panel .avatar { width: 32px; height: 32px; flex-basis: 32px; }
 .member-panel small { color: var(--faint); }
+#desktop-call-controls:empty { display: none; }
+.voice-connection-panel { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 7px 8px 7px 12px; border-top: 1px solid rgb(0 0 0 / 35%); background: rgb(0 0 0 / 20%); }
+.voice-connection-panel > div:first-child { display: grid; min-width: 0; }
+.voice-connection-panel strong { color: var(--green); font-size: .78rem; }
+.voice-connection-panel span { overflow: hidden; color: var(--muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.voice-connection-actions { display: flex; gap: 2px; }
+.voice-connection-actions button { position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 4px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; }
+.voice-connection-actions button:hover { color: var(--text); background: var(--bg-hover); }
+.voice-connection-actions .voice-mute.muted, .voice-connection-actions .voice-hangup { color: var(--red); }
+.voice-connection-actions .voice-hangup::after, .voice-connection-actions .voice-mute.muted::after { position: absolute; top: 15px; right: 7px; left: 7px; height: 2px; border-radius: 2px; background: currentColor; content: ""; transform: rotate(-42deg); }
 
 .conversation-content { display: contents; }
 .conversation-content > header { position: relative; z-index: 2; grid-column: 2 / -1; grid-row: 1; display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-bottom: 1px solid rgb(255 255 255 / 6%); background: #16171b; box-shadow: none; }
@@ -259,6 +276,13 @@ a { color: #00a8fc; }
 .message > div > strong { font-size: .95rem; }
 .message time { margin-left: 6px; color: var(--faint); font-size: .72rem; }
 .message p { margin: 0; color: #dbdee1; line-height: 1.4; }
+.message-body { margin: 0; color: #dbdee1; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.message-body pre { max-width: 100%; margin: 5px 0; padding: 10px 12px; overflow: auto; border: 1px solid var(--border); border-radius: 4px; background: #111214; white-space: pre; }
+.message-body pre code { padding: 0; color: #dbdee1; background: transparent; font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre; }
+.message-body .syntax-key { color: #79c0ff; }
+.message-body .syntax-string { color: #a5d6ff; }
+.message-body .syntax-literal { color: #ff7b72; }
+.message-body .syntax-keyword { color: #d2a8ff; font-weight: 700; }
 .message-actions { position: absolute; z-index: 2; top: 4px; right: 16px; gap: 5px; margin: 0; visibility: hidden; }
 .message:hover .message-actions, .message:focus-within .message-actions { visibility: visible; }
 .message-actions button { min-height: 30px; padding: .25rem .55rem; border-radius: 4px; color: var(--muted); font-size: .75rem; }
@@ -348,7 +372,7 @@ a { color: #00a8fc; }
 .community-settings-open .conversation-sidebar > * { display: none; }
 .community-settings-open .conversation-sidebar::before { content: "Community Settings"; display: flex; align-items: center; height: 48px; padding: 0 16px; border-bottom: 1px solid rgb(0 0 0 / 24%); box-shadow: 0 1px 0 rgb(0 0 0 / 20%); font-weight: 700; }
 .community-settings-open .community-administration { display: block; }
-.community-settings-open .community-administration > nav { position: fixed; z-index: 4; top: 48px; left: 72px; width: 240px; height: calc(100vh - 48px); padding: 12px 8px; background: var(--bg-sidebar); }
+.community-settings-open .community-administration > nav { position: fixed; z-index: 4; top: 76px; left: 72px; width: 240px; height: calc(100vh - 76px); padding: 12px 8px; background: var(--bg-sidebar); }
 .community-administration > nav { display: grid; align-content: start; gap: 2px; }
 .community-administration > nav button { min-height: 0; padding: 7px 10px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; text-align: left; }
 .community-administration > nav button:hover,.community-administration > nav button[aria-current="page"] { background: var(--bg-active); color: var(--text); }

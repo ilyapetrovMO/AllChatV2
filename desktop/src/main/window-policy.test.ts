@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation } from './window-policy';
+import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
 
 describe('desktop window policy', () => {
   it('isolates and sandboxes the renderer without Node.js', () => {
@@ -13,6 +13,7 @@ describe('desktop window policy', () => {
       preload: '/opt/allchat/preload.js',
     });
     expect(options.webPreferences?.partition).toBeUndefined();
+    expect(options).toMatchObject({ frame: false, autoHideMenuBar: true });
   });
 
   it('allows only bundled app navigation', () => {
@@ -27,5 +28,12 @@ describe('desktop window policy', () => {
     expect(isAllowedExternalNavigation('javascript:alert(1)')).toBe(false);
     expect(isAllowedExternalNavigation('file:///etc/passwd')).toBe(false);
     expect(isAllowedExternalNavigation('https://user:secret@example.com/')).toBe(false);
+  });
+
+  it('allows microphone and camera prompts only for an AllChat application window', () => {
+    expect(isAllowedRendererPermission('media', true)).toBe(true);
+    expect(isAllowedRendererPermission('media', false)).toBe(false);
+    expect(isAllowedRendererPermission('geolocation', true)).toBe(false);
+    expect(isAllowedRendererPermission('notifications', true)).toBe(false);
   });
 });

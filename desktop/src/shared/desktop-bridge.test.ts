@@ -5,6 +5,7 @@ import { DESKTOP_BRIDGE_METHODS, isDesktopBridge } from './desktop-bridge';
 describe('DesktopBridge', () => {
   it('has a deliberately small, explicit capability list', () => {
     expect(DESKTOP_BRIDGE_METHODS).toEqual([
+      'controlWindow',
       'getShellState',
       'addInstance',
       'selectInstance',
@@ -21,6 +22,7 @@ describe('DesktopBridge', () => {
 
   it('rejects missing and additional renderer capabilities', () => {
     const valid = {
+      controlWindow: async () => undefined,
       getShellState: async () => ({ instances: [], activeInstanceId: null }),
       addInstance: async () => undefined,
       selectInstance: async () => undefined,

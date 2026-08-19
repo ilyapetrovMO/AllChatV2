@@ -33,11 +33,14 @@ The default Community Home, Direct Messages Home, Text Channel, and Direct Messa
 
 ### Voice Room
 
-- ⚠️ Participant stage/list, anchored participant menus, auto-join, moderation, and disconnect transport exist, but connected and failure states are not visually verified.
+- ✅ First click connects in place, a second click opens the connected room, and participants are polled and shown beneath every Voice Channel without selecting it.
+- ✅ Connected Call and Voice controls occupy the web-style bottom-left connection panel; connected-state actions are absent from the conversation header.
+- ⚠️ Participant stage, anchored participant menus, moderation, and disconnect transport exist, but connected and failure states are not visually verified across two packaged clients.
 
 ### Message interactions
 
 - ✅ Default Text Channel shell and message feed visual comparison.
+- ✅ Language-tagged fenced code blocks, including compact single-line fences, receive JSON/shell syntax highlighting on web and desktop.
 - ⚠️ Links are clickable; reactions update immediately and survive subsequent realtime frames; images have a cached-original viewer. Channel and DM history use bounded bidirectional pagination, preserve prepend anchors, restore forward history, and re-anchor after delayed media sizing while following present. Reply/edit/delete, pins, link embeds, notification policy, and several rendered states still need complete coverage.
 - ⚠️ Native notification status is exposed; recent history and several keyboard/error states remain incomplete.
 - ✅ The shared Search control and filter menu are available from every authenticated screen; complete rendered search-state coverage remains tracked under Search.
@@ -85,7 +88,7 @@ The default Community Home, Direct Messages Home, Text Channel, and Direct Messa
 
 ## Intentional differences
 
-- ➖ Native operating-system window chrome and lifecycle.
+- ➖ Electron uses a slim custom draggable titlebar with minimize, maximize/restore, and close controls; parity screenshots compare the application shell beneath it.
 - ➖ Electron multi-Instance rail.
 - ➖ Native notifications replace browser Web Push permission UI.
 - ➖ Persistent authenticated asset caching.

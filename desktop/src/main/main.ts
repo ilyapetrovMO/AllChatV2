@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { app, BrowserWindow, ipcMain, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, safeStorage, session, shell } from 'electron';
 import WebSocket from 'ws';
 
 import { DesktopAccountManager } from './desktop-account-manager';
@@ -11,7 +11,7 @@ import { InstanceCoordinator } from './instance-coordinator';
 import { SQLiteInstanceStateCache } from './instance-state-cache';
 import { SQLiteAssetCache } from './asset-cache';
 import { InstanceRegistry } from './instance-registry';
-import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation } from './window-policy';
+import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -40,6 +40,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function start(): Promise<void> {
+  Menu.setApplicationMenu(null);
   const dataPath = app.getPath('userData');
   registry = new InstanceRegistry(undefined, new SQLiteInstanceProfileStore(path.join(dataPath, 'desktop.db')));
   vault = new EncryptedFileCredentialVault(path.join(dataPath, 'credentials.vault'), {
@@ -88,6 +89,13 @@ async function createMainWindow(): Promise<BrowserWindow> {
 function registerIpc(): void {
   const realtimeListeners = new Map<string, (state: import('../shared/instance-state').InstanceViewState) => void>();
   ipcMain.handle(IPC_CHANNELS.getShellState, () => registry.state());
+  ipcMain.handle(IPC_CHANNELS.windowControl, (event, action: import('../shared/desktop-bridge').WindowControlAction) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (!window || !['minimize', 'toggle-maximize', 'close'].includes(action)) throw new Error('Invalid window action');
+    if (action === 'minimize') window.minimize();
+    else if (action === 'toggle-maximize') window.isMaximized() ? window.unmaximize() : window.maximize();
+    else window.close();
+  });
   ipcMain.handle(IPC_CHANNELS.addInstance, (_event, input: AddInstanceInput) => {
     assertAddInstanceInput(input);
     registry.add(input);
@@ -351,8 +359,9 @@ function assertBoundedText(value: unknown, label: string, minimum: number, maxim
 }
 
 function lockPermissions(): void {
-  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
-    callback(false);
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    callback(isAllowedRendererPermission(permission, BrowserWindow.fromWebContents(webContents) !== null));
   });
-  session.defaultSession.setPermissionCheckHandler(() => false);
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) =>
+    isAllowedRendererPermission(permission, !!webContents && BrowserWindow.fromWebContents(webContents) !== null));
 }

@@ -20,6 +20,7 @@ type Config struct {
 	Realm, SharedSecret        string
 	TLSListenAddress           string
 	TLSConfig                  *tls.Config
+	TLSHost                    string
 	allowPrivatePeers          bool // tests only; production always uses safePeer
 }
 type Relay struct {
@@ -81,9 +82,13 @@ func Start(config Config) (*Relay, error) {
 	}
 	listeners := []turn.ListenerConfig{{Listener: tcpListener, RelayAddressGenerator: generator(), PermissionHandler: permissionHandler}}
 	port := conn.LocalAddr().(*net.UDPAddr).Port
-	hostPort := net.JoinHostPort(config.PublicIP.String(), fmt.Sprint(port))
-	urls := []string{"turn:" + hostPort + "?transport=udp", "turn:" + hostPort + "?transport=tcp"}
+	urls := relayURLs(config.PublicIP, port, "", 0)
 	if config.TLSConfig != nil && config.TLSListenAddress != "" {
+		if config.TLSHost == "" {
+			conn.Close()
+			tcpListener.Close()
+			return nil, fmt.Errorf("TURN/TLS certificate host is required")
+		}
 		plainTLS, tlsErr := net.Listen("tcp", config.TLSListenAddress)
 		if tlsErr != nil {
 			conn.Close()
@@ -92,7 +97,7 @@ func Start(config Config) (*Relay, error) {
 		}
 		listeners = append(listeners, turn.ListenerConfig{Listener: tls.NewListener(plainTLS, config.TLSConfig.Clone()), RelayAddressGenerator: generator(), PermissionHandler: permissionHandler})
 		tlsPort := plainTLS.Addr().(*net.TCPAddr).Port
-		urls = append(urls, "turns:"+net.JoinHostPort(config.PublicIP.String(), fmt.Sprint(tlsPort))+"?transport=tcp")
+		urls = append(urls, "turns:"+net.JoinHostPort(config.TLSHost, fmt.Sprint(tlsPort))+"?transport=tcp")
 	}
 	server, err := turn.NewServer(turn.ServerConfig{Realm: config.Realm, AuthHandler: turn.LongTermTURNRESTAuthHandler(config.SharedSecret, factory.NewLogger("turn-auth")), QuotaHandler: func(username, _ string, _ net.Addr) bool {
 		quotaMu.Lock()
@@ -105,6 +110,15 @@ func Start(config Config) (*Relay, error) {
 		return nil, err
 	}
 	return &Relay{server: server, conn: conn, urls: urls, secret: config.SharedSecret}, nil
+}
+
+func relayURLs(publicIP net.IP, port int, tlsHost string, tlsPort int) []string {
+	hostPort := net.JoinHostPort(publicIP.String(), fmt.Sprint(port))
+	urls := []string{"turn:" + hostPort + "?transport=udp", "turn:" + hostPort + "?transport=tcp"}
+	if tlsHost != "" && tlsPort > 0 {
+		urls = append(urls, "turns:"+net.JoinHostPort(tlsHost, fmt.Sprint(tlsPort))+"?transport=tcp")
+	}
+	return urls
 }
 func safePeer(_ net.Addr, ip net.IP) bool {
 	return ip != nil && !ip.IsUnspecified() && !ip.IsLoopback() && !ip.IsPrivate() && !ip.IsLinkLocalUnicast() && !ip.IsLinkLocalMulticast() && !ip.IsMulticast()

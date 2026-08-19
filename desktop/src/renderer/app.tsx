@@ -243,6 +243,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   }
 
   return (
+    <>
+    <DesktopTitleBar onAction={(action) => void bridge.controlWindow?.(action)} />
     <main className="shell">
       <aside className="instance-rail" aria-label="Instances">
         <button
@@ -351,7 +353,19 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
         )}
       </section>
     </main>
+    </>
   );
+}
+
+function DesktopTitleBar({ onAction }: { onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
+  return <header className="desktop-titlebar" aria-label="Window controls">
+    <span className="desktop-titlebar-title">AllChat</span>
+    <nav>
+      <button type="button" aria-label="Minimize window" title="Minimize" onClick={() => onAction("minimize")}><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8" /></svg></button>
+      <button type="button" aria-label="Maximize window" title="Maximize" onClick={() => onAction("toggle-maximize")}><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.25" y="2.25" width="7.5" height="7.5" /></svg></button>
+      <button className="desktop-window-close" type="button" aria-label="Close window" title="Close" onClick={() => onAction("close")}><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 2.5 7 7m0-7-7 7" /></svg></button>
+    </nav>
+  </header>;
 }
 
 function CommunityShell({
@@ -374,7 +388,8 @@ function CommunityShell({
   const [homeView, setHomeView] = useState<"community" | "direct-messages">("community");
   const [directMessageMemberId, setDirectMessageMemberId] = useState("");
   const [communityGuide, setCommunityGuide] = useState<string | null>(null);
-  const [voiceParticipants, setVoiceParticipants] = useState<import("../shared/instance-actions").VoiceParticipant[]>([]);
+  const [voiceParticipantsByChannel, setVoiceParticipantsByChannel] = useState<Record<string, import("../shared/instance-actions").VoiceParticipant[]>>({});
+  const [requestedVoiceRoom, setRequestedVoiceRoom] = useState<string | null>(null);
   const [settingsView, setSettingsView] = useState<
     "profile" | "voice" | "notifications" | "sessions" | "safety" | "community" | null
   >(null);
@@ -511,23 +526,30 @@ function CommunityShell({
         });
     }
   }, [conversation?.id, instanceId]);
+  const voiceChannelIds = channels.filter(({ type }) => type === "voice").map(({ id }) => id);
+  const voiceChannelKey = voiceChannelIds.join("\u0000");
   useEffect(() => {
-    if (!conversation || conversation.type !== "voice") {
-      setVoiceParticipants([]);
-      return;
-    }
     let current = true;
-    const refresh = () => void onAction({ type: "list_voice_participants", channelId: conversation.id })
-      .then((result) => {
-        if (current && result?.type === "voice_participants") setVoiceParticipants(result.participants);
-      });
+    const refresh = () => {
+      for (const channelId of voiceChannelIds) {
+        void onAction({ type: "list_voice_participants", channelId })
+          .then((result) => {
+            if (!current || result?.type !== "voice_participants") return;
+            setVoiceParticipantsByChannel((value) => ({ ...value, [channelId]: result.participants }));
+          })
+          .catch(() => undefined);
+      }
+    };
     refresh();
     const timer = window.setInterval(refresh, 2_000);
     return () => {
       current = false;
       window.clearInterval(timer);
     };
-  }, [conversation?.id, conversation?.type]);
+  }, [voiceChannelKey]);
+  const visibleVoiceParticipants = conversation?.type === "voice"
+    ? voiceParticipantsByChannel[conversation.id] || []
+    : [];
   const visibleMessageCount = conversation ? (state.messages[conversation.id] || []).length : 0;
   useLayoutEffect(() => {
     const list = messageListRef.current;
@@ -761,6 +783,10 @@ function CommunityShell({
                     }
                     onClick={() => {
                       setSettingsView(null);
+                      if (channel.type === "voice" && requestedVoiceRoom !== channel.id) {
+                        setRequestedVoiceRoom(channel.id);
+                        return;
+                      }
                       setConversation({
                         id: channel.id,
                         name: channel.name,
@@ -774,9 +800,9 @@ function CommunityShell({
                     <Icon name={channel.type === "voice" ? "volume" : "hash"} />
                     <span>{channel.name}</span>
                   </button>
-                  {channel.type === "voice" && conversation?.id === channel.id && voiceParticipants.length > 0 && (
+                  {channel.type === "voice" && (voiceParticipantsByChannel[channel.id]?.length || 0) > 0 && (
                     <ul className="voice-channel-members" aria-label={`${channel.name} participants`}>
-                      {voiceParticipants.map((participant) => {
+                      {voiceParticipantsByChannel[channel.id].map((participant) => {
                         const member = state.members.find(({ id }) => id === participant.member_id);
                         const name = member ? memberName(member) : "Member";
                         return <li
@@ -806,6 +832,7 @@ function CommunityShell({
             </section>
           ))}
         </nav>
+        <div id="desktop-call-controls" />
         <footer className="member-panel">
           <AuthenticatedImage
             path={state.member.avatarUrl}
@@ -868,6 +895,9 @@ function CommunityShell({
               instanceId={instanceId}
               onAction={onAction}
               connectMedia={connectMedia}
+              requestedVoiceRoom={requestedVoiceRoom}
+              requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
+              onVoiceRoomChange={setRequestedVoiceRoom}
             />
             {state.connection === "offline" && (
               <span className="offline-badge">Offline</span>
@@ -1217,9 +1247,9 @@ function CommunityShell({
           conversation.type === "voice" ? (
             <section className="media-stage">
               <div className="media-stage-grid">
-                {voiceParticipants.length === 0 ? (
+                {visibleVoiceParticipants.length === 0 ? (
                   <p className="media-stage-empty">No one is connected to this Voice Room.</p>
-                ) : voiceParticipants.map((participant) => {
+                ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
                   return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} key={participant.member_id}>
@@ -1281,7 +1311,7 @@ function CommunityShell({
                             : message.reply.body}
                         </blockquote>
                       )}
-                      <p>{message.deleted ? "Message deleted" : <LinkifiedText body={message.body || ""} />}</p>
+                      <div className="message-body">{message.deleted ? "Message deleted" : <MessageBody body={message.body || ""} />}</div>
                       {message.body && (
                         <LinkPreview body={message.body} onAction={onAction} />
                       )}
@@ -1704,12 +1734,18 @@ function DirectCallControls({
   instanceId,
   onAction,
   connectMedia,
+  requestedVoiceRoom,
+  requestedVoiceRoomName,
+  onVoiceRoomChange,
 }: {
-  conversation: { id: string; type: "text" | "voice" | "dm" } | null;
+  conversation: { id: string; name?: string; type: "text" | "voice" | "dm" } | null;
   currentMemberId: string;
   instanceId: string;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   connectMedia?: DesktopBridge["connectMedia"];
+  requestedVoiceRoom: string | null;
+  requestedVoiceRoomName: string;
+  onVoiceRoomChange(roomId: string | null): void;
 }) {
   const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [status, setStatus] = useState("");
@@ -1801,9 +1837,7 @@ function DirectCallControls({
     if (action === "decline" || action === "end") { cleanup(); setCall(null); setStatus(""); }
   }
 
-  async function joinVoice(): Promise<void> {
-    if (!conversation || conversation.type !== "voice") return;
-    const room = conversation.id;
+  async function joinVoice(room: string): Promise<void> {
     if (voiceRoomRef.current === room) return;
     if (voiceRoomRef.current) cleanup();
     voiceRoomRef.current = room;
@@ -1813,33 +1847,48 @@ function DirectCallControls({
     } catch (error) {
       voiceRoomRef.current = null;
       setVoiceRoom(null);
+      onVoiceRoomChange(null);
       cleanup();
       setStatus(error instanceof Error ? error.message : "Could not join Voice.");
     }
   }
 
   useEffect(() => {
-    if (conversation?.type === "voice" && voiceRoomRef.current !== conversation.id) {
-      void joinVoice();
+    if (requestedVoiceRoom && voiceRoomRef.current !== requestedVoiceRoom) {
+      void joinVoice(requestedVoiceRoom);
     }
-  }, [conversation?.id, conversation?.type]);
+  }, [requestedVoiceRoom]);
 
   function leaveVoice(): void {
     cleanup();
     voiceRoomRef.current = null;
     setVoiceRoom(null);
+    onVoiceRoomChange(null);
     setStatus("");
   }
 
   const incoming = call?.state === "ringing" && call.recipient_id === currentMemberId;
+  const connected = call?.state === "accepted" || !!voiceRoom;
+  const controlSlot = document.getElementById("desktop-call-controls");
+  const connectedControls = connected && controlSlot ? createPortal(
+    <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
+      <div>
+        <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
+        <span>{voiceRoom ? requestedVoiceRoomName : conversation?.name || "Direct Call"}</span>
+      </div>
+      <div className="voice-connection-actions">
+        <button className={muted ? "voice-mute muted" : "voice-mute"} type="button" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute" : "Mute"} onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}><Icon name="mic" /></button>
+        <button className="voice-hangup" type="button" aria-label={voiceRoom ? "Disconnect voice" : "End call"} title={voiceRoom ? "Disconnect Voice" : "End Call"} onClick={() => voiceRoom ? leaveVoice() : void act("end")}><Icon name="phone" /></button>
+      </div>
+    </section>,
+    controlSlot,
+  ) : null;
   return <>
-    {!call && conversation?.type === "dm" && <button className="header-button icon-button" type="button" aria-label="Start Call" title="Start Call" onClick={() => void start()}><Icon name="phone" /></button>}
+    {!call && !voiceRoom && conversation?.type === "dm" && <button className="header-button icon-button" type="button" aria-label="Start Call" title="Start Call" onClick={() => void start()}><Icon name="phone" /></button>}
     {incoming && <><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept Call</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></>}
     {call && !incoming && call.state === "ringing" && <button className="call-end" type="button" onClick={() => void act("end")}>Cancel Call</button>}
-    {(call?.state === "accepted" || voiceRoom) && <button className="header-button" type="button" onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}>{muted ? "Unmute" : "Mute"}</button>}
-    {call?.state === "accepted" && <button className="call-end" type="button" onClick={() => void act("end")}>End Call</button>}
-    {voiceRoom && <button className="call-end" type="button" onClick={leaveVoice}>Disconnect Voice</button>}
-    {status && <span className="call-status" role="status">{status}</span>}
+    {!connected && status && <span className="call-status" role="status">{status}</span>}
+    {connectedControls}
   </>;
 }
 
@@ -1975,6 +2024,57 @@ function LinkifiedText({ body }: { body: string }) {
   }
   if (offset < body.length) parts.push(body.slice(offset));
   return <>{parts.map((part, index) => typeof part === "string" ? <Fragment key={index}>{part}</Fragment> : <a className="message-link" key={index} href={part.url} target="_blank" rel="noreferrer">{part.url}</a>)}</>;
+}
+
+function MessageBody({ body }: { body: string }) {
+  const parts: Array<{ code?: string; language?: string; text?: string }> = [];
+  const pattern = /```(?:([A-Za-z0-9_+-]+)(?:[ \t]+|\r?\n))?([\s\S]*?)```/g;
+  let offset = 0;
+  for (const match of body.matchAll(pattern)) {
+    const index = match.index || 0;
+    if (index > offset) parts.push({ text: body.slice(offset, index) });
+    parts.push({ language: match[1] || "", code: match[2].trim() });
+    offset = index + match[0].length;
+  }
+  if (offset < body.length) parts.push({ text: body.slice(offset) });
+  if (!parts.length) return <LinkifiedText body={body} />;
+  return <>{parts.map((part, index) => part.code !== undefined
+    ? <pre key={index}><code className={part.language ? `language-${part.language}` : undefined}><SyntaxHighlightedCode language={part.language || ""} code={part.code} /></code></pre>
+    : <LinkifiedText key={index} body={part.text || ""} />)}</>;
+}
+
+function SyntaxHighlightedCode({ language, code }: { language: string; code: string }) {
+  if (language === "json") {
+    try {
+      return <JsonSyntax value={JSON.parse(code)} />;
+    } catch {
+      return <>{code}</>;
+    }
+  }
+  if (["bash", "sh", "shell"].includes(language)) {
+    return <>{code.split(/(\s+|"[^"]*"|'[^']*')/).filter(Boolean).map((token, index) => /^['"]/.test(token)
+      ? <span className="syntax-string" key={index}>{token}</span>
+      : /^(echo|cd|curl|go|npm|npx|git|sudo)$/.test(token)
+        ? <span className="syntax-keyword" key={index}>{token}</span>
+        : <Fragment key={index}>{token}</Fragment>)}</>;
+  }
+  return <>{code}</>;
+}
+
+function JsonSyntax({ value, depth = 0 }: { value: unknown; depth?: number }) {
+  if (value === null) return <span className="syntax-literal">null</span>;
+  if (typeof value === "string") return <span className="syntax-string">{JSON.stringify(value)}</span>;
+  if (typeof value === "number" || typeof value === "boolean") return <span className="syntax-literal">{String(value)}</span>;
+  const array = Array.isArray(value);
+  const entries: Array<[string, unknown]> = array
+    ? value.map((item, index) => [String(index), item])
+    : Object.entries(value as Record<string, unknown>);
+  return <>{array ? "[" : "{"}{entries.length ? "\n" : ""}{entries.map(([key, item], index) => <Fragment key={key}>
+    {"  ".repeat(depth + 1)}
+    {!array && <><span className="syntax-key">{JSON.stringify(key)}</span>{": "}</>}
+    <JsonSyntax value={item} depth={depth + 1} />
+    {index < entries.length - 1 ? ",\n" : "\n"}
+  </Fragment>)}{"  ".repeat(depth)}{array ? "]" : "}"}</>;
 }
 
 function firstMessageURL(body: string): string | undefined {
@@ -2132,6 +2232,7 @@ type IconName =
   | "hash"
   | "home"
   | "messages"
+  | "mic"
   | "paperclip"
   | "phone"
   | "pin"
@@ -2174,6 +2275,13 @@ function Icon({ name }: { name: IconName }) {
       </>
     ),
     messages: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
+    mic: (
+      <>
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" x2="12" y1="19" y2="22" />
+      </>
+    ),
     paperclip: (
       <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
     ),
@@ -2316,6 +2424,8 @@ function CommunityAdministration({
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   onSectionChange(section: string): void;
 }) {
+  const onActionRef = useRef(onAction);
+  onActionRef.current = onAction;
   const [section, setSection] = useState<"general" | "dashboard" | "channels" | "roles" | "invitations" | "soundboard">("general");
   const [dashboard, setDashboard] = useState<import("../shared/instance-actions").AdminDashboard | null>(null);
   const [dashboardHistory, setDashboardHistory] = useState<import("../shared/instance-actions").AdminDashboard[]>([]);
@@ -2337,7 +2447,7 @@ function CommunityAdministration({
   useEffect(() => {
     if (section !== "dashboard") return;
     let current = true;
-    const refresh = () => void onAction({ type: "admin_dashboard" }).then((result) => {
+    const refresh = () => void onActionRef.current({ type: "admin_dashboard" }).then((result) => {
       if (!current || result?.type !== "admin_dashboard") return;
       setDashboard(result.dashboard);
       setDashboardHistory((history) => [...history, result.dashboard].slice(-60));
@@ -2350,7 +2460,7 @@ function CommunityAdministration({
     refresh();
     const timer = window.setInterval(refresh, 5_000);
     return () => { current = false; window.clearInterval(timer); };
-  }, [section, onAction]);
+  }, [section]);
 
   function select(next: typeof section): void {
     setSection(next);

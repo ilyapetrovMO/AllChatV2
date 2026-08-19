@@ -8,11 +8,13 @@ import {
   type RecoverInstanceInput,
   type RegisterInstanceInput,
   type ShellState,
+  type WindowControlAction,
 } from '../shared/desktop-bridge';
 import type { InstanceViewState } from '../shared/instance-state';
 import type { InstanceAction } from '../shared/instance-actions';
 
 const bridge: DesktopBridge = Object.freeze({
+  controlWindow: (action: WindowControlAction) => ipcRenderer.invoke(IPC_CHANNELS.windowControl, action),
   getShellState: () => ipcRenderer.invoke(IPC_CHANNELS.getShellState) as Promise<ShellState>,
   addInstance: (input: AddInstanceInput) => ipcRenderer.invoke(IPC_CHANNELS.addInstance, input),
   selectInstance: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.selectInstance, id),

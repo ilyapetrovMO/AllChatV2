@@ -8,6 +8,8 @@ export function createWindowOptions(preload: string): BrowserWindowConstructorOp
     minHeight: 640,
     backgroundColor: '#0f111a',
     show: false,
+    frame: false,
+    autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -34,4 +36,8 @@ export function isAllowedExternalNavigation(target: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function isAllowedRendererPermission(permission: string, belongsToAppWindow: boolean): boolean {
+  return belongsToAppWindow && permission === 'media';
 }

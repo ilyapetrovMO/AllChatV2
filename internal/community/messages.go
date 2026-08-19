@@ -133,6 +133,11 @@ func (s *Service) listMessages(ctx context.Context, member identity.Member, chan
 		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.AuthorName, &authorHasAvatar, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted, &message.RenderedHTML, &replyID, &replyAuthor, &replyBody, &replyDeleted); err != nil {
 			return nil, err
 		}
+		// Render from the canonical body so formatter improvements also apply
+		// to Messages created before the current release.
+		if !message.Deleted {
+			message.RenderedHTML = renderMarkdown(message.Body)
+		}
 		if authorHasAvatar {
 			message.AuthorAvatarURL = "/api/v1/members/" + message.AuthorID + "/avatar"
 		}

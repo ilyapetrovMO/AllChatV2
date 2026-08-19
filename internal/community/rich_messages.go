@@ -40,9 +40,31 @@ var (
 	markdownBold    = regexp.MustCompile(`\*\*([^*\n]+)\*\*`)
 	markdownItalic  = regexp.MustCompile(`\*([^*\n]+)\*`)
 	markdownMention = regexp.MustCompile(`(^|[^\pL\pN._-])@([\pL\pN._-]{3,32})`)
+	markdownFence   = regexp.MustCompile("(?s)```(?:([A-Za-z0-9_+-]+)(?:[ \\t]+|\\r?\\n))?(.*?)```")
 )
 
 func renderMarkdown(body string) string {
+	matches := markdownFence.FindAllStringSubmatchIndex(body, -1)
+	if len(matches) == 0 {
+		return renderInlineMarkdown(body)
+	}
+	var rendered strings.Builder
+	offset := 0
+	for _, match := range matches {
+		rendered.WriteString(renderInlineMarkdown(body[offset:match[0]]))
+		language := ""
+		if match[2] >= 0 {
+			language = ` class="language-` + body[match[2]:match[3]] + `"`
+		}
+		code := strings.TrimSpace(body[match[4]:match[5]])
+		rendered.WriteString("<pre><code" + language + ">" + html.EscapeString(code) + "</code></pre>")
+		offset = match[1]
+	}
+	rendered.WriteString(renderInlineMarkdown(body[offset:]))
+	return rendered.String()
+}
+
+func renderInlineMarkdown(body string) string {
 	rendered := html.EscapeString(body)
 	rendered = markdownCode.ReplaceAllString(rendered, "<code>$1</code>")
 	rendered = markdownBold.ReplaceAllString(rendered, "<strong>$1</strong>")

@@ -95,6 +95,13 @@ func TestRelayIssuesMemberBoundTemporaryCredentials(t *testing.T) {
 	}
 }
 
+func TestRelayURLsAdvertiseTLSCertificateHost(t *testing.T) {
+	urls := relayURLs(net.ParseIP("203.0.113.10"), 3478, "voice.example.test", 5349)
+	if got, want := urls[2], "turns:voice.example.test:5349?transport=tcp"; got != want {
+		t.Fatalf("TURN/TLS URL = %q, want %q", got, want)
+	}
+}
+
 func TestRealTURNAllocationAndExpiredCredentialRejection(t *testing.T) {
 	server, err := Start(Config{ListenAddress: "127.0.0.1:0", PublicIP: net.ParseIP("127.0.0.1"), RelayMinPort: 52100, RelayMaxPort: 52120, Realm: "allchat", SharedSecret: "allocation-test-secret"})
 	if err != nil {

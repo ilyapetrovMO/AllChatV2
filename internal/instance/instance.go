@@ -115,6 +115,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		return nil, fmt.Errorf("clean Attachment storage: %w", err)
 	}
 	var tlsConfig *tls.Config
+	var turnTLSHost string
 	var acmeManager *acmeCertificateManager
 	if config.TLSCertFile != "" {
 		certificate, loadErr := tls.LoadX509KeyPair(config.TLSCertFile, config.TLSKeyFile)
@@ -130,6 +131,13 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 			return nil, fmt.Errorf("supplied TLS certificate is not currently valid")
 		}
 		tlsConfig = &tls.Config{MinVersion: tls.VersionTLS12, Certificates: []tls.Certificate{certificate}}
+		if len(leaf.DNSNames) > 0 {
+			turnTLSHost = leaf.DNSNames[0]
+		} else if len(leaf.IPAddresses) > 0 {
+			turnTLSHost = leaf.IPAddresses[0].String()
+		} else {
+			turnTLSHost = leaf.Subject.CommonName
+		}
 	}
 	if config.ACMEHost != "" {
 		manager, managerErr := newACMECertificateManager(config.ACMEHost, config.ACMEEmail, config.DataDir, logger)
@@ -137,6 +145,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 			return nil, managerErr
 		}
 		tlsConfig = manager.TLSConfig()
+		turnTLSHost = config.ACMEHost
 		acmeManager = manager
 	}
 	mediaManager, mediaErr := media.NewManagerWithLimits(30*time.Second, config.MediaPortMin, config.MediaPortMax, config.MediaMaxParticipants)
@@ -167,7 +176,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 		if secretErr != nil {
 			return nil, secretErr
 		}
-		turnRelay, relayErr := relay.Start(relay.Config{ListenAddress: config.TURNListenAddress, PublicIP: net.ParseIP(config.TURNPublicIP), RelayMinPort: config.TURNRelayMinPort, RelayMaxPort: config.TURNRelayMaxPort, Realm: "allchat", SharedSecret: secret, TLSListenAddress: config.TURNTLSListenAddress, TLSConfig: tlsConfig})
+		turnRelay, relayErr := relay.Start(relay.Config{ListenAddress: config.TURNListenAddress, PublicIP: net.ParseIP(config.TURNPublicIP), RelayMinPort: config.TURNRelayMinPort, RelayMaxPort: config.TURNRelayMaxPort, Realm: "allchat", SharedSecret: secret, TLSListenAddress: config.TURNTLSListenAddress, TLSConfig: tlsConfig, TLSHost: turnTLSHost})
 		if relayErr != nil {
 			return nil, fmt.Errorf("start embedded TURN relay: %w", relayErr)
 		}

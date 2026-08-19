@@ -5,9 +5,11 @@ import { App } from './app';
 
 describe('desktop renderer bootstrap', () => {
   it('renders the local shell and an empty Instance state', async () => {
+    const controlWindow = vi.fn(async (_action: 'minimize' | 'toggle-maximize' | 'close') => undefined);
     render(
       <App
         bridge={{
+          controlWindow,
           getShellState: async () => ({ instances: [], activeInstanceId: null }),
           addInstance: async () => ({ instances: [], activeInstanceId: null }),
           selectInstance: async () => ({ instances: [], activeInstanceId: null }),
@@ -24,6 +26,10 @@ describe('desktop renderer bootstrap', () => {
 
     expect(await screen.findByRole('heading', { name: 'Add your first Instance' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Add Instance' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize window' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Maximize window' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close window' }));
+    expect(controlWindow.mock.calls.map(([action]) => action)).toEqual(['minimize', 'toggle-maximize', 'close']);
   });
 
   it('renders authenticated Community navigation from the versioned bootstrap contract', async () => {
@@ -111,7 +117,7 @@ describe('desktop renderer bootstrap', () => {
           messages: {
             chat: [{
               id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora',
-              sequence: 1, body: 'Desktop parity starts here https://example.com/story', created_at: '2026-08-18T09:00:00Z', deleted: false,
+              sequence: 1, body: 'Desktop parity starts here https://example.com/story\n```json ["123", "321"] ```', created_at: '2026-08-18T09:00:00Z', deleted: false,
               attachments: [{ id: 'media-1', name: 'landscape.png', content_type: 'image/png', size: 1024, url: '/api/v1/attachments/media-1', preview_url: '/api/v1/attachments/media-1/preview' }],
             }],
           },
@@ -138,6 +144,8 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.queryByRole('button', { name: 'Home Instance' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Direct Messages' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
+    const initialVoiceMembers = await screen.findByRole('list', { name: 'Lounge participants' });
+    expect(within(initialVoiceMembers).getByText('nora')).toBeVisible();
 
     fireEvent.click(screen.getByRole('button', { name: 'Nora Community' }));
     expect(screen.getByRole('menuitem', { name: 'Community Home' })).toBeVisible();
@@ -190,6 +198,10 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.getByLabelText('lobby Messages')).toHaveProperty('scrollTop', 1_000);
     scrollHeight.mockRestore();
     expect(screen.getByText(/Desktop parity starts here/)).toBeVisible();
+    const jsonCode = document.querySelector('pre code.language-json') as HTMLElement;
+    expect(jsonCode).toBeVisible();
+    expect(jsonCode.querySelectorAll('.syntax-string')).toHaveLength(2);
+    expect(jsonCode).toHaveTextContent(/"123"/);
     expect(screen.getByRole('link', { name: 'https://example.com/story' })).toHaveAttribute('href', 'https://example.com/story');
     expect(await screen.findByText('Example story')).toBeVisible();
     fireEvent.click(await screen.findByRole('button', { name: 'View landscape.png at full size' }));
@@ -340,9 +352,17 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lounge' }));
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Join Voice' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Disconnect Voice' })).toBeVisible();
+    const voiceControls = screen.getByRole('region', { name: 'Voice controls' });
+    expect(within(voiceControls).getByRole('button', { name: 'Disconnect voice' })).toBeVisible();
+    expect(within(voiceControls).getByRole('button', { name: 'Mute microphone' })).toBeVisible();
+    expect(voiceControls.parentElement?.nextElementSibling).toHaveClass('member-panel');
+    const conversationHeader = document.querySelector('.conversation-content > header') as HTMLElement;
+    expect(within(conversationHeader).queryByRole('button', { name: 'Disconnect voice' })).not.toBeInTheDocument();
+    expect(within(conversationHeader).queryByRole('button', { name: 'Start Call' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'alex' })).toBeVisible();
     const voiceMembers = await screen.findByRole('list', { name: 'Lounge participants' });
     expect(within(voiceMembers).getByText('nora')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Lounge' }));
     expect(document.querySelector('.media-stage-tile.speaking')).toBeInTheDocument();
     fireEvent.contextMenu(within(voiceMembers).getByRole('button', { name: 'nora' }), { clientX: 400, clientY: 240 });
     const voiceMenu = screen.getByRole('menu', { name: 'Voice Member actions' });

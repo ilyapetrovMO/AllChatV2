@@ -41,6 +41,7 @@ export interface ShellState {
 }
 
 export interface DesktopBridge {
+  controlWindow?(action: WindowControlAction): Promise<void>;
   getShellState(): Promise<ShellState>;
   addInstance(input: AddInstanceInput): Promise<ShellState>;
   selectInstance(id: string): Promise<ShellState>;
@@ -54,9 +55,12 @@ export interface DesktopBridge {
   connectMedia?(instanceId: string, listener: (frame: unknown) => void, closed: (reason: string) => void): Promise<DesktopMediaConnection>;
 }
 
+export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
+
 export interface DesktopMediaConnection { send(frame: unknown): void; close(): void }
 
 export const DESKTOP_BRIDGE_METHODS = [
+  'controlWindow',
   'getShellState',
   'addInstance',
   'selectInstance',
@@ -71,6 +75,7 @@ export const DESKTOP_BRIDGE_METHODS = [
 ] as const satisfies readonly (keyof DesktopBridge)[];
 
 export const IPC_CHANNELS = {
+  windowControl: 'allchat:window:control',
   getShellState: 'allchat:shell:get-state',
   addInstance: 'allchat:instance:add',
   selectInstance: 'allchat:instance:select',

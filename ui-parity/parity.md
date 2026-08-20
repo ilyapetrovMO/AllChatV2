@@ -36,7 +36,8 @@ Desktop now reports throttled Member activity over realtime, exposes the web-sty
 ### Voice Room
 
 - ✅ First click connects in place, a second click opens the connected room, and participants are polled and shown beneath every Voice Channel without selecting it.
-- ✅ Connected Call and Voice controls occupy the web-style bottom-left connection panel; volume, screen sharing, soundboard, mute, and disconnect are inline there, and connected-state actions are absent from the conversation header.
+- ✅ Connected Call and Voice controls occupy the web-style bottom-left connection panel; screen sharing, soundboard, mute, and disconnect are inline there, and connected-state actions are absent from the conversation header.
+- ✅ Per-Member volume is available from participant context menus (right-click on web/desktop, long-press on mobile); master speaker volume remains exclusively in Voice & Video settings.
 - ✅ Going Home explicitly disconnects the active Voice Room instead of leaving stale local membership.
 - ⚠️ Desktop screen-share publication, teardown, authoritative SFU owner attribution, and participant-tile rendering are implemented and unit-verified; a packaged two-peer visual run remains.
 - ⚠️ Participant stage, anchored participant menus, moderation, and disconnect transport exist, but connected and failure states are not visually verified across two packaged clients.

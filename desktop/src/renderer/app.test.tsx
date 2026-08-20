@@ -129,6 +129,10 @@ describe('desktop renderer bootstrap', () => {
           member_id: 'me', room_id: 'voice', connected: true,
           joined_at: '2026-08-18T08:00:00Z', server_muted: false,
           speaking: true, muted: false, screen_sharing: false,
+        }, {
+          member_id: 'alex', room_id: 'voice', connected: true,
+          joined_at: '2026-08-18T08:00:00Z', server_muted: false,
+          speaking: false, muted: false, screen_sharing: false,
         }],
       };
       if (action.type === 'admin_dashboard') return {
@@ -460,7 +464,7 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(alexMember);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'Member profile' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'alex' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'alex' })[0]);
     expect(screen.getByRole('button', { name: 'Start Call' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Block' }));
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
@@ -480,6 +484,9 @@ describe('desktop renderer bootstrap', () => {
     expect(directCallGrid.querySelectorAll('.media-stage-visual')).toHaveLength(2);
     expect(within(directCallGrid).getByText('You')).toBeVisible();
     expect(screen.getByLabelText('alex Messages')).toBeVisible();
+    fireEvent.contextMenu(directCallGrid.querySelector('[data-media-member-id="alex"]') as HTMLElement, { clientX: 420, clientY: 260 });
+    expect(screen.getByRole('slider', { name: 'alex volume' })).toBeVisible();
+    fireEvent.mouseDown(document.body);
     fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Home' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Direct Messages' }));
@@ -496,7 +503,9 @@ describe('desktop renderer bootstrap', () => {
     expect(within(voiceControls).getByRole('button', { name: 'Mute microphone' })).toBeVisible();
     expect(within(voiceControls).getByRole('button', { name: 'Share screen' })).toBeVisible();
     expect(within(voiceControls).getByRole('button', { name: 'Open soundboard' })).toBeVisible();
-    expect(within(voiceControls).getByRole('slider', { name: 'Call volume' })).toBeVisible();
+    expect(within(voiceControls).queryByRole('slider')).not.toBeInTheDocument();
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'alex voice participant' }));
+    expect(screen.getByRole('slider', { name: 'alex volume' })).toBeVisible();
     expect(voiceControls.parentElement?.nextElementSibling).toHaveClass('member-panel');
     const conversationHeader = document.querySelector('.conversation-content > header') as HTMLElement;
     expect(within(conversationHeader).queryByRole('button', { name: 'Disconnect voice' })).not.toBeInTheDocument();
@@ -506,7 +515,7 @@ describe('desktop renderer bootstrap', () => {
     expect(within(voiceMembers).getByText('nora')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Lounge' }));
     expect(document.querySelector('.media-stage-tile.speaking')).toBeInTheDocument();
-    fireEvent.contextMenu(within(voiceMembers).getByRole('button', { name: 'nora' }), { clientX: 400, clientY: 240 });
+    fireEvent.contextMenu(within(voiceMembers).getByRole('button', { name: 'nora voice participant' }), { clientX: 400, clientY: 240 });
     const voiceMenu = screen.getByRole('menu', { name: 'Voice Member actions' });
     fireEvent.click(within(voiceMenu).getByRole('menuitem', { name: 'Profile' }));
     expect(screen.getByRole('dialog', { name: 'Member profile' })).toBeVisible();

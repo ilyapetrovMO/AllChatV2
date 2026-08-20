@@ -180,9 +180,9 @@ screens:
       - id: connected
         status: partial
         evidence: renderer-bottom-left-voice-connection-controls
-      - id: inline-volume
+      - id: participant-volume-menu
         status: partial
-        evidence: renderer-bottom-left-call-volume
+        evidence: renderer-participant-context-volume
       - id: screen-sharing
         status: partial
         evidence: renderer-desktop-screen-share-owner-routing

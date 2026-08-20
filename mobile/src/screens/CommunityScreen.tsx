@@ -1793,6 +1793,7 @@ function MediaRoomScreen({
   const [sounds, setSounds] = useState<SoundboardSound[]>([]);
   const [soundboardOpen, setSoundboardOpen] = useState(false);
   const [playingSound, setPlayingSound] = useState('');
+  const [volumeMember, setVolumeMember] = useState<{id: string; label: string}>();
   const [expandedVideo, setExpandedVideo] = useState<{
     label: string;
     self: boolean;
@@ -2062,22 +2063,10 @@ function MediaRoomScreen({
                 })
             : undefined
         }
-        onVolumeChange={
+        onVolumeMenu={
           memberID === account.member.id
             ? undefined
-            : () => {
-                const levels = [1, 0.75, 0.5, 0.25, 0],
-                  next = levels[(levels.indexOf(volume) + 1) % levels.length],
-                  settings = {
-                    ...voiceSettings,
-                    memberVolumes: {
-                      ...voiceSettings.memberVolumes,
-                      [memberID]: next,
-                    },
-                  };
-                session.current?.updateAudioSettings(settings);
-                onVoiceSettingsChange(settings);
-              }
+            : () => setVolumeMember({id: memberID, label})
         }
         palette={palette}
         scrolling={scrollingGrid}
@@ -2276,6 +2265,19 @@ function MediaRoomScreen({
         palette={palette}
         sounds={sounds}
       />
+      <ParticipantVolumeModal
+        label={volumeMember?.label || ''}
+        onChange={next => {
+          if (!volumeMember) return;
+          const settings = {...voiceSettings, memberVolumes: {...voiceSettings.memberVolumes, [volumeMember.id]: next}};
+          session.current?.updateAudioSettings(settings);
+          onVoiceSettingsChange(settings);
+        }}
+        onClose={() => setVolumeMember(undefined)}
+        open={Boolean(volumeMember)}
+        palette={palette}
+        value={volumeMember ? voiceSettings.memberVolumes[volumeMember.id] ?? 1 : 1}
+      />
       <Modal
         animationType="fade"
         onRequestClose={() => setExpandedVideo(undefined)}
@@ -2313,7 +2315,7 @@ function MediaParticipantTile({
   member,
   memberID,
   onOpenVideo,
-  onVolumeChange,
+  onVolumeMenu,
   palette,
   scrolling,
   self,
@@ -2327,7 +2329,7 @@ function MediaParticipantTile({
   member?: Member;
   memberID: string;
   onOpenVideo?(): void;
-  onVolumeChange?(): void;
+  onVolumeMenu?(): void;
   palette: Palette;
   scrolling: boolean;
   self: boolean;
@@ -2339,13 +2341,13 @@ function MediaParticipantTile({
   return (
     <TouchableOpacity
       accessibilityHint={
-        onVolumeChange ? 'Long press to lower this Member volume' : undefined
+        onVolumeMenu ? 'Long press to adjust this Member volume' : undefined
       }
       accessibilityLabel={`${label}${self ? ', you' : ''}${
         video ? ', open video fullscreen' : ''
       }`}
-      disabled={!video && !onVolumeChange}
-      onLongPress={onVolumeChange}
+      disabled={!video && !onVolumeMenu}
+      onLongPress={onVolumeMenu}
       onPress={onOpenVideo}
       style={[
         styles.mediaParticipant,
@@ -2387,7 +2389,7 @@ function MediaParticipantTile({
             : memberID
             ? 'Voice connected'
             : 'Connecting'}
-          {onVolumeChange ? ` · ${Math.round(volume * 100)}% (hold)` : ''}
+          {onVolumeMenu ? ` · ${Math.round(volume * 100)}% (hold)` : ''}
         </Text>
       </View>
     </TouchableOpacity>
@@ -2467,6 +2469,50 @@ function mediaStatusText(status: MediaStatus) {
     ? 'Disconnected'
     : 'Connecting…';
 }
+
+export function participantVolumeFromPosition(position: number, width: number) {
+  if (!Number.isFinite(position) || !Number.isFinite(width) || width <= 0) return 1;
+  return Math.round(Math.min(1, Math.max(0, position / width)) * 20) / 20;
+}
+
+function ParticipantVolumeModal({label, onChange, onClose, open, palette, value}: {
+  label: string;
+  onChange(value: number): void;
+  onClose(): void;
+  open: boolean;
+  palette: Palette;
+  value: number;
+}) {
+  const [width, setWidth] = useState(1);
+  const adjust = (locationX: number) => onChange(participantVolumeFromPosition(locationX, width));
+  return (
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={open}>
+      <TouchableOpacity activeOpacity={1} onPress={onClose} style={styles.participantVolumeBackdrop}>
+        <TouchableOpacity activeOpacity={1} onPress={() => undefined} style={[styles.participantVolumePopover, {backgroundColor: palette.field}]}>
+          <Text style={[styles.participantVolumeTitle, {color: palette.text}]}>{label} volume</Text>
+          <Text style={[styles.participantVolumeValue, {color: palette.muted}]}>{Math.round(value * 100)}%</Text>
+          <View
+            accessibilityActions={[{name: 'increment'}, {name: 'decrement'}]}
+            accessibilityLabel={`${label} volume`}
+            accessibilityRole="adjustable"
+            accessibilityValue={{min: 0, max: 100, now: Math.round(value * 100)}}
+            onAccessibilityAction={event => onChange(Math.min(1, Math.max(0, value + (event.nativeEvent.actionName === 'increment' ? 0.05 : -0.05))))}
+            onLayout={event => setWidth(event.nativeEvent.layout.width)}
+            onMoveShouldSetResponder={() => true}
+            onResponderGrant={event => adjust(event.nativeEvent.locationX)}
+            onResponderMove={event => adjust(event.nativeEvent.locationX)}
+            onStartShouldSetResponder={() => true}
+            style={[styles.participantVolumeTrack, {backgroundColor: palette.border}]}
+          >
+            <View style={[styles.participantVolumeFill, {backgroundColor: palette.accent, width: `${value * 100}%`}]} />
+            <View style={[styles.participantVolumeThumb, {backgroundColor: palette.text, left: `${value * 100}%`}]} />
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
 function SoundboardModal({
   onClose,
   onPlay,
@@ -4891,6 +4937,25 @@ const styles = StyleSheet.create({
     gap: 4,
     justifyContent: 'center',
   },
+  participantVolumeBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,.55)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  participantVolumePopover: {
+    borderRadius: 12,
+    elevation: 12,
+    maxWidth: 340,
+    padding: 18,
+    width: '100%',
+  },
+  participantVolumeTitle: {fontSize: 16, fontWeight: '800'},
+  participantVolumeValue: {fontSize: 13, marginBottom: 18, marginTop: 4},
+  participantVolumeTrack: {borderRadius: 4, height: 8, position: 'relative'},
+  participantVolumeFill: {borderRadius: 4, height: 8},
+  participantVolumeThumb: {borderRadius: 10, height: 20, marginLeft: -10, position: 'absolute', top: -6, width: 20},
   mediaControlsScroll: {
     borderTopWidth: StyleSheet.hairlineWidth,
     flexGrow: 0,

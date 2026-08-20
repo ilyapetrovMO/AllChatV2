@@ -7,6 +7,7 @@ export type DesktopVoicePreferences = {
   cameraID: string;
   inputGain: number;
   outputVolume: number;
+  memberVolumes: Record<string, number>;
   noiseSuppressionMode: 'standard' | 'enhanced' | 'off';
   echoCancellation: boolean;
   autoGainControl: boolean;
@@ -15,7 +16,7 @@ export type DesktopVoicePreferences = {
 };
 
 export const defaultDesktopVoicePreferences: DesktopVoicePreferences = {
-  version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1,
+  version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
   noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
   noiseGate: true, noiseGateThresholdDB: -50,
 };
@@ -57,9 +58,12 @@ export async function captureDesktopMicrophone(memberId: string): Promise<Deskto
 
 export function applyDesktopOutputPreferences(element: HTMLAudioElement, memberId: string, remoteMemberId = ''): void {
   const preferences = loadDesktopVoicePreferences(memberId);
-  element.volume = clamp(preferences.outputVolume, 0, 1, 1);
+  element.volume = desktopMemberOutputVolume(preferences, remoteMemberId);
   if (preferences.speakerID && typeof element.setSinkId === 'function') void element.setSinkId(preferences.speakerID).catch(() => undefined);
-  void remoteMemberId;
+}
+
+export function desktopMemberOutputVolume(preferences: DesktopVoicePreferences, remoteMemberId: string): number {
+  return clamp(preferences.outputVolume * (preferences.memberVolumes[remoteMemberId] ?? 1), 0, 1, 1);
 }
 
 async function capture(preferences: DesktopVoicePreferences): Promise<DesktopMicrophoneCapture> {
@@ -148,6 +152,9 @@ function normalizeDesktopVoicePreferences(value: unknown): DesktopVoicePreferenc
     microphoneID: typeof source.microphoneID === 'string' ? source.microphoneID : '',
     speakerID: typeof source.speakerID === 'string' ? source.speakerID : '',
     cameraID: typeof source.cameraID === 'string' ? source.cameraID : '',
+    memberVolumes: source.memberVolumes && typeof source.memberVolumes === 'object'
+      ? Object.fromEntries(Object.entries(source.memberVolumes).map(([id, volume]) => [id, clamp(volume, 0, 1, 1)]))
+      : {},
     inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1),
     noiseGateThresholdDB: clamp(source.noiseGateThresholdDB, -80, -20, -50), noiseSuppressionMode: mode,
   };

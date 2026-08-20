@@ -1,7 +1,7 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
-import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
+import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, desktopMemberOutputVolume, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 import { insertMention, matchMention } from "./mentions";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
@@ -474,6 +474,7 @@ function CommunityShell({
     participant: import("../shared/instance-actions").VoiceParticipant;
     left: number;
     top: number;
+    directCall?: boolean;
   } | null>(null);
   const [sessions, setSessions] = useState<
     import("../shared/instance-actions").SessionInfo[] | null
@@ -966,6 +967,7 @@ function CommunityShell({
                           className={participant.speaking ? "speaking" : ""}
                           key={participant.member_id}
                           role="button"
+                          aria-label={`${name} voice participant`}
                           tabIndex={0}
                           onClick={(event) => showMemberPopover(participant.member_id, event.currentTarget.getBoundingClientRect())}
                           onContextMenu={(event) => {
@@ -1388,7 +1390,10 @@ function CommunityShell({
                 ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
-                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} data-media-member-id={participant.member_id} key={participant.member_id}>
+                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} data-media-member-id={participant.member_id} key={participant.member_id} onContextMenu={(event) => {
+                    event.preventDefault();
+                    setVoiceMemberMenu({ participant, left: Math.min(window.innerWidth - 224, event.clientX), top: Math.min(window.innerHeight - 280, event.clientY) });
+                  }}>
                     <div className="media-stage-visual"><AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                     <strong>{name}</strong>
                     {participant.screen_sharing && <span>Sharing screen</span>}
@@ -1403,7 +1408,16 @@ function CommunityShell({
                   <div className="media-stage-grid" data-tile-count={2}>
                     {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
                       const name = memberName(participant);
-                      return <article className="media-stage-tile participant-tile" data-media-member-id={participant.id} key={participant.id}>
+                      return <article className="media-stage-tile participant-tile" data-media-member-id={participant.id} key={participant.id} onContextMenu={(event) => {
+                        if (participant.id === state.member.id || !directCall) return;
+                        event.preventDefault();
+                        setVoiceMemberMenu({
+                          directCall: true,
+                          participant: { member_id: participant.id, room_id: directCall.id, connected: true, joined_at: directCall.created_at, server_muted: false, muted: false, speaking: false, screen_sharing: false },
+                          left: Math.min(window.innerWidth - 224, event.clientX),
+                          top: Math.min(window.innerHeight - 280, event.clientY),
+                        });
+                      }}>
                         <div className="media-stage-visual"><AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                         <strong>{participant.id === state.member.id ? "You" : name}</strong>
                       </article>;
@@ -1878,6 +1892,8 @@ function CommunityShell({
         const member = state.members.find(({ id }) => id === voiceMemberMenu.participant.member_id);
         if (!member) return <></>;
         const participant = voiceMemberMenu.participant;
+        const preferences = loadDesktopVoicePreferences(state.member.id);
+        const memberVolume = preferences.memberVolumes[member.id] ?? 1;
         return <nav
           className="voice-member-context"
           role="menu"
@@ -1885,6 +1901,15 @@ function CommunityShell({
           data-voice-member-menu
           style={{ position: "fixed", left: voiceMemberMenu.left, top: voiceMemberMenu.top }}
         >
+          {member.id !== state.member.id && <label className="voice-member-volume">
+            <span><Icon name="volume" /> {memberName(member)} volume</span>
+            <output>{Math.round(memberVolume * 100)}%</output>
+            <input aria-label={`${memberName(member)} volume`} type="range" min="0" max="1" step="0.05" value={memberVolume} onChange={(event) => {
+              const next = Number(event.target.value);
+              saveDesktopVoicePreferences(state.member.id, { ...preferences, memberVolumes: { ...preferences.memberVolumes, [member.id]: next } });
+              setVoiceMemberMenu((current) => current ? { ...current } : null);
+            }} />
+          </label>}
           <button type="button" role="menuitem" onClick={() => {
             showMemberPopover(member.id, new DOMRect(voiceMemberMenu.left, voiceMemberMenu.top, 0, 0));
             setVoiceMemberMenu(null);
@@ -1893,7 +1918,7 @@ function CommunityShell({
             if (result?.type === "direct_message") setConversation({ id: result.directMessage.id, name: memberName(result.directMessage.other), type: "dm" });
             setVoiceMemberMenu(null);
           })}>Message</button>}
-          {state.member.owner && member.id !== state.member.id && <>
+          {!voiceMemberMenu.directCall && state.member.owner && member.id !== state.member.id && <>
             <button type="button" role="menuitem" onClick={() => {
               void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: participant.server_muted ? "unmute" : "mute" });
               setVoiceMemberMenu(null);
@@ -1945,7 +1970,7 @@ export function DirectCallControls({
   const [remoteScreens, setRemoteScreens] = useState<Record<string, MediaStream>>({});
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[]; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[] } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[] } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
   const connectionTimeout = useRef<number | null>(null);
@@ -1959,7 +1984,7 @@ export function DirectCallControls({
     active?.peer.close();
     active?.capture.stop();
     active?.screen?.getTracks().forEach((track) => track.stop());
-    active?.audio.forEach((element) => element.remove());
+    active?.audio.forEach((elements) => elements.forEach((element) => element.remove()));
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
     if (connectionTimeout.current !== null) window.clearTimeout(connectionTimeout.current);
@@ -1986,7 +2011,7 @@ export function DirectCallControls({
     const credentials = await onAction({ type: "turn_credentials" });
     if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
     const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
-    const audio: HTMLAudioElement[] = [];
+    const audio = new Map<string, HTMLAudioElement[]>();
     const pendingCandidates: RTCIceCandidateInit[] = [];
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
     peer.addTransceiver("audio", { direction: "sendrecv" });
@@ -2036,13 +2061,19 @@ export function DirectCallControls({
         return;
       }
       if (track.kind !== "audio") return;
+      const fallbackOwner = activeCall.caller_id === currentMemberId ? activeCall.recipient_id : activeCall.caller_id;
+      const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
       const element = document.createElement("audio");
       element.autoplay = true;
       element.srcObject = remoteStream;
-      applyDesktopOutputPreferences(element, currentMemberId);
-      element.volume = outputVolume;
+      applyDesktopOutputPreferences(element, currentMemberId, owner);
       document.body.append(element);
-      audio.push(element);
+      audio.set(owner, [...(audio.get(owner) || []), element]);
+      track.addEventListener("ended", () => {
+        element.remove();
+        const remaining = (audio.get(owner) || []).filter((item) => item !== element);
+        if (remaining.length) audio.set(owner, remaining); else audio.delete(owner);
+      });
       void element.play().catch(() => undefined);
     };
     const updateConnectionState = () => {
@@ -2200,6 +2231,15 @@ export function DirectCallControls({
     return () => { window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: false } })); };
   }, [Boolean(call)]);
   useEffect(() => {
+    const updateVolumes = (event: Event) => {
+      const preferences = (event as CustomEvent<DesktopVoicePreferences>).detail || loadDesktopVoicePreferences(currentMemberId);
+      setOutputVolume(preferences.outputVolume);
+      media.current?.audio.forEach((elements, memberId) => elements.forEach((element) => { element.volume = desktopMemberOutputVolume(preferences, memberId); }));
+    };
+    window.addEventListener("allchat:voice-settings", updateVolumes);
+    return () => window.removeEventListener("allchat:voice-settings", updateVolumes);
+  }, [currentMemberId]);
+  useEffect(() => {
     if (!incoming || typeof AudioContext === "undefined") return;
     const context = new AudioContext();
     const pulse = () => {
@@ -2230,7 +2270,6 @@ export function DirectCallControls({
         <span>{voiceRoom ? requestedVoiceRoomName : conversation?.name || "Direct Call"}</span>
       </div>
       <div className="voice-connection-actions">
-        <label className="voice-volume" title="Call volume"><Icon name="volume" /><input aria-label="Call volume" type="range" min="0" max="1" step="0.05" value={outputVolume} onChange={(event) => { const volume = Number(event.target.value); setOutputVolume(volume); saveDesktopVoicePreferences(currentMemberId, { ...loadDesktopVoicePreferences(currentMemberId), outputVolume: volume }); media.current?.audio.forEach((element) => { element.volume = volume; }); }} /></label>
         <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
         <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => setStatus(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>
         <button className={muted ? "voice-mute muted" : "voice-mute"} type="button" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute" : "Mute"} onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}><Icon name="mic" /></button>

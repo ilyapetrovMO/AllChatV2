@@ -24,3 +24,26 @@ func TestWebMediaOwnershipPrefersAuthoritativeSFUStreamIdentity(t *testing.T) {
 		}
 	}
 }
+
+func TestWebParticipantMenusControlIndividualVolume(t *testing.T) {
+	settings, err := embeddedWeb.ReadFile("web/assets/voice-settings.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"openParticipantVolumeMenu", "memberVolumes", "allchat:voice-settings"} {
+		if !strings.Contains(string(settings), want) {
+			t.Fatalf("voice settings do not expose per-participant volume control: missing %q", want)
+		}
+	}
+	for _, asset := range []string{"web/assets/voice-sidebar.js", "web/assets/voice.js", "web/assets/call.js"} {
+		source, readErr := embeddedWeb.ReadFile(asset)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		for _, want := range []string{"oncontextmenu", "openParticipantVolumeMenu", "dataset.memberId"} {
+			if !strings.Contains(string(source), want) {
+				t.Fatalf("%s does not bind remote audio to a right-click participant volume menu: missing %q", asset, want)
+			}
+		}
+	}
+}

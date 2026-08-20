@@ -305,6 +305,11 @@
 .soundboard-popover { position: fixed; z-index: 110; width: min(320px,calc(100vw - 16px)); max-height: 430px; overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #17181d; box-shadow: 0 12px 32px rgba(0,0,0,.55); }
 .soundboard-popover header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .soundboard-popover header button { min-height: 28px; padding: 2px 8px; background: transparent; color: var(--muted); }
+.participant-volume-popover { position: fixed; z-index: 120; display: grid; gap: 8px; width: 220px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #17181d; box-shadow: 0 12px 32px rgba(0,0,0,.55); }
+.participant-volume-popover > label { color: var(--text); font-size: .82rem; font-weight: 700; }
+.participant-volume-popover > span { display: grid; grid-template-columns: 42px 1fr; align-items: center; gap: 8px; }
+.participant-volume-popover output { color: var(--muted); font-size: .76rem; font-variant-numeric: tabular-nums; }
+.participant-volume-popover input { width: 100%; min-width: 0; padding: 0; accent-color: var(--brand); }
 .soundboard-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .sound-button { min-width: 0; display: flex; align-items: center; gap: 8px; padding: 9px; background: var(--bg-active); text-align: left; }
 .sound-button span { font-size: 1.3rem; }.sound-button strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }

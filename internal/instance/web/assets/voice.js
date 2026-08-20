@@ -21,6 +21,7 @@
     participants.forEach(participant => {
       const item = document.createElement("li");
       item.textContent = participant.member_id === memberID ? "You" : participantNames[participant.member_id]||"Member";
+      if(participant.member_id!==memberID)item.oncontextmenu=event=>{event.preventDefault();window.AllChatVoiceSettings?.openParticipantVolumeMenu({memberID:participant.member_id,label:participantNames[participant.member_id]||"Member",x:event.clientX,y:event.clientY})};
       const state = document.createElement("span");
       state.className = `badge ${participant.connected ? "badge-success" : ""}`;
       state.textContent = participant.connected ? "Connected" : "Reconnecting";
@@ -60,7 +61,7 @@
         const media = document.createElement(event.track.kind === "video" ? "video" : "audio");
         media.autoplay = true;
         if (event.track.kind === "video") { media.className = "shared-screen"; media.playsInline = true; }
-        media.srcObject = event.streams[0] || new MediaStream([event.track]);if(event.track.kind==="audio")window.AllChatVoiceSettings.applyOutput(media);
+        media.srcObject = event.streams[0] || new MediaStream([event.track]);if(event.track.kind==="audio"){const owner=window.allchatMediaOwnerID?.(event.track.id,event.streams[0]?.id)||"";media.dataset.memberId=owner;window.AllChatVoiceSettings.applyOutput(media,owner)}
         (event.track.kind === "video" ? document.querySelector(".voice-stage") : remoteAudio).append(media);
       };
       const offer = await peer.createOffer();
@@ -106,6 +107,7 @@
   screen.addEventListener("click",async()=>{if(screenStream){screenStream.getTracks().forEach(track=>track.stop());return}try{screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});const track=screenStream.getVideoTracks()[0],senders=[];let sender;try{sender=peer.addTransceiver(track,{direction:"sendonly",streams:[screenStream],sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,mediaConfig.screen_bitrate)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,mediaConfig.screen_bitrate)},{rid:"f",scaleResolutionDownBy:1,maxBitrate:mediaConfig.screen_bitrate}]}).sender}catch(_){sender=peer.addTrack(track,screenStream)}screenSender=sender;senders.push(sender);screenStream.getAudioTracks().forEach(audioTrack=>senders.push(peer.addTrack(audioTrack,screenStream)));track.onended=async()=>{senders.forEach(item=>peer.removeTrack(item));screenSender=null;screenStream=null;screen.textContent="Share Screen";const offer=await peer.createOffer();await peer.setLocalDescription(offer);await waitForGathering(peer);socket.send(JSON.stringify({version:1,type:"offer",sdp:peer.localDescription}))};screen.textContent=screenStream.getAudioTracks().length?"Stop Sharing (with audio)":"Stop Sharing";const offer=await peer.createOffer();await peer.setLocalDescription(offer);await waitForGathering(peer);socket.send(JSON.stringify({version:1,type:"offer",sdp:peer.localDescription}))}catch(error){status.textContent=error.message||"Screen sharing is unavailable on this browser or operating system."}});
   document.addEventListener("visibilitychange",()=>socket?.readyState===WebSocket.OPEN&&socket.send(JSON.stringify({version:1,type:"screen-visibility",visible:!document.hidden})));
   leave.addEventListener("click", () => {sessionStorage.removeItem(resumeKey);stop()});
+  addEventListener("allchat:voice-settings",()=>remoteAudio.querySelectorAll("audio").forEach(audio=>window.AllChatVoiceSettings.applyOutput(audio,audio.dataset.memberId||"")));
   addEventListener("pagehide", stop);
   refreshParticipants();
 })();

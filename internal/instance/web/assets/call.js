@@ -68,9 +68,10 @@
   };
 
   const mediaGrid = () => document.querySelector(".direct-call-workspace [data-media-stage-grid]");
-  const participantTile = (label, image, video) => {
+  const participantTile = (memberID, label, image, video) => {
     const tile = document.createElement("article"), visual = document.createElement("div"), name = document.createElement("strong");
     tile.className = `media-stage-tile participant-tile${video ? " sharing" : ""}`; visual.className = "media-stage-visual"; name.textContent = label;
+    if(memberID&&memberID!==document.body.dataset.memberId)tile.oncontextmenu=event=>{event.preventDefault();window.AllChatVoiceSettings?.openParticipantVolumeMenu({memberID,label,x:event.clientX,y:event.clientY})};
     if (video) {
       visual.append(video);
       const badge = document.createElement("span"); badge.className = "screen-sharing-badge"; badge.textContent = "Sharing screen"; tile.append(visual, name, badge);
@@ -86,8 +87,9 @@
     const summary = document.querySelector(".member-summary"), other = document.querySelector(".dm-profile-card"), videos = [...remoteVideo.values()].filter(video => video.dataset.stopped !== "true");
     const ownName = summary?.querySelector("strong")?.textContent.trim() || "You", ownImage = summary?.querySelector("img")?.src || "";
     const otherName = other?.querySelector("h2")?.textContent.trim() || "Other Member", otherImage = other?.querySelector("img")?.src || "";
-    grid.replaceChildren(participantTile(ownName === "You" ? ownName : `${ownName} (You)`, ownImage, localScreenVideo), participantTile(otherName, otherImage, videos[0]));
-    for (const video of videos.slice(1)) grid.append(participantTile("Shared screen", "", video));
+    const remoteMemberID=call?.caller_id===document.body.dataset.memberId?call?.recipient_id:call?.caller_id;
+    grid.replaceChildren(participantTile(document.body.dataset.memberId,ownName === "You" ? ownName : `${ownName} (You)`, ownImage, localScreenVideo), participantTile(remoteMemberID,otherName, otherImage, videos[0]));
+    for (const video of videos.slice(1)) grid.append(participantTile(video.dataset.memberId||remoteMemberID,"Shared screen", "", video));
     grid.dataset.tileCount = String(grid.children.length);
   };
 
@@ -176,11 +178,12 @@
       event.track.addEventListener("ended",remove);event.track.addEventListener("mute",remove);event.track.addEventListener("unmute",publish);
       if(!event.track.muted)publish();return;
     }
-    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream; window.AllChatVoiceSettings?.applyOutput(audio,window.allchatMediaOwnerID?.(event.track.id,stream.id)||"");
+    const memberID=window.allchatMediaOwnerID?.(event.track.id,stream.id)||(call?.caller_id===document.body.dataset.memberId?call?.recipient_id:call?.caller_id)||"";const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;audio.dataset.memberId=memberID;window.AllChatVoiceSettings?.applyOutput(audio,memberID);
     remoteAudio.set(event.track, audio); document.body.append(audio);
     audio.play().catch(() => {});
     event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});
   };
+  addEventListener("allchat:voice-settings",()=>remoteAudio.forEach(audio=>window.AllChatVoiceSettings?.applyOutput(audio,audio.dataset.memberId||"")));
 
   const connect = async activeCall => {
     if (connection) return;

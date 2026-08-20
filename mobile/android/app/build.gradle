@@ -127,6 +127,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("androidx.core:core-ktx:1.17.0")
+    testImplementation("junit:junit:4.13.2")
 
     // React Native leaves animated WebP decoding optional. Keep this version in
     // sync with node_modules/react-native/gradle/libs.versions.toml.

@@ -22,10 +22,6 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
     val process = ActivityManager.RunningAppProcessInfo()
     ActivityManager.getMyMemoryState(process)
     Log.i(TAG, "FCM message received; process_importance=${process.importance}")
-    if (process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-      Log.i(TAG, "FCM message suppressed because the app is foregrounded")
-      return
-    }
     val encrypted = message.data["payload"]
     if (encrypted == null) {
       Log.w(TAG, "FCM message discarded because the encrypted payload is missing")
@@ -38,9 +34,13 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       return
     }
     val kind = payload.optString("kind", "message")
+    if (!PushPresentationPolicy.shouldPost(kind, process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND)) {
+      Log.i(TAG, "FCM message suppressed because the app is foregrounded")
+      return
+    }
     val calls = kind == "call"
     val sound = payload.optBoolean("sound", true)
-    val channelID = (if (calls) "allchat_calls" else "allchat_messages") + if (sound) "" else "_silent"
+    val channelID = PushPresentationPolicy.channelID(kind, sound)
     val manager = getSystemService(NotificationManager::class.java)
     if (manager.getNotificationChannel(channelID) == null) {
       val channel = NotificationChannel(channelID, if (calls) "Incoming calls" else "Messages", if (calls) NotificationManager.IMPORTANCE_HIGH else NotificationManager.IMPORTANCE_DEFAULT)
@@ -68,6 +68,8 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       .setPriority(NotificationCompat.PRIORITY_HIGH)
       .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
       .setFullScreenIntent(if (calls) pending else null, calls)
+      .setSound(if (sound) RingtoneManager.getDefaultUri(if (calls) RingtoneManager.TYPE_RINGTONE else RingtoneManager.TYPE_NOTIFICATION) else null)
+      .setTimeoutAfter(if (calls) 30_000L else 0L)
       .build()
     manager.notify(if (calls) payload.optString("call_id").hashCode() else payload.optString("conversation_id").hashCode(), notification)
     Log.i(TAG, "Notification posted; kind=$kind channel=$channelID")

@@ -7,7 +7,6 @@ import {
   ConversationTimeline,
   formatMessageTime,
   homeDirectMessages,
-  IncomingCallChime,
   FormattedBody,
   loadAuthenticatedImage,
   mergeMessagePage,
@@ -75,30 +74,6 @@ describe('native conversation timeline', () => {
       ]),
     ).toEqual(['mobile']);
   });
-  it('mounts the incoming-call chime only while a call is ringing', () => {
-    let tree!: renderer.ReactTestRenderer;
-    act(() => {
-      tree = renderer.create(<IncomingCallChime active={false} />);
-    });
-    expect(tree.toJSON()).toBeNull();
-
-    act(() => {
-      tree.update(<IncomingCallChime active />);
-    });
-    const player = tree.root.find(
-      node =>
-        typeof node.props.source?.uri === 'string' &&
-        node.props.source.uri.startsWith('data:audio/wav;base64,'),
-    );
-    expect(player.props.paused).toBe(false);
-    expect(player.props.source.uri).toMatch(/^data:audio\/wav;base64,/);
-
-    act(() => {
-      tree.update(<IncomingCallChime active={false} />);
-    });
-    expect(tree.toJSON()).toBeNull();
-  });
-
   it('renders fenced JSON as a labelled, syntax-highlighted code block', () => {
     let tree!: renderer.ReactTestRenderer;
     act(() => {

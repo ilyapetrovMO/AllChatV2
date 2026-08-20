@@ -903,15 +903,6 @@ export function CommunityScreen({
       voiceSettings={voiceSettings}
     />
   ) : null;
-  const callChime = (
-    <IncomingCallChime
-      active={
-        currentCall?.state === 'ringing' &&
-        currentCall.recipient_id === community.member.id
-      }
-    />
-  );
-
   if (!activeID || (!channel && !direct)) {
     const visibleChannels = community.channels
       .filter(item => !item.archived)
@@ -952,7 +943,6 @@ export function CommunityScreen({
     );
     return (
       <>
-        {callChime}
         {mediaSession}
         {!mediaRoomOpen ? (
           <View style={styles.fill}>
@@ -1321,7 +1311,6 @@ export function CommunityScreen({
     .map(item => item.member_name);
   return (
     <>
-      {callChime}
       {mediaSession}
       {!mediaRoomOpen ? (
         <KeyboardAvoidingView

@@ -2,7 +2,15 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { App } from './app';
+import { App, isCommunitySwitchDisabled } from './app';
+
+describe('community switch Call lock', () => {
+  it('allows only the current Community while a Direct Call is active', () => {
+    expect(isCommunitySwitchDisabled(true, 'current', 'current')).toBe(false);
+    expect(isCommunitySwitchDisabled(true, 'other', 'current')).toBe(true);
+    expect(isCommunitySwitchDisabled(false, 'other', 'current')).toBe(false);
+  });
+});
 
 describe('desktop renderer bootstrap', () => {
   it('shows a single compatibility notice when a legacy Instance lacks Community settings', async () => {
@@ -480,6 +488,8 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start Call' }));
     const directCallGrid = await screen.findByRole('region', { name: 'Direct Call grid' });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Home' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Home Instance' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Add Community' })).toBeDisabled();
     expect(directCallGrid).toBeVisible();
     expect(directCallGrid.closest('.direct-call-workspace')).toBeTruthy();
     expect(directCallGrid.closest('.message-list')).toBeNull();

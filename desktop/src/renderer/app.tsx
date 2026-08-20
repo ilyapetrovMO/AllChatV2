@@ -284,7 +284,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           <button
             className="instance-button"
             key={instance.id}
-            disabled={directCallActive}
+            disabled={isCommunitySwitchDisabled(directCallActive, instance.id, state.activeInstanceId)}
             onClick={() => void bridge.selectInstance(instance.id).then((next) => {
               setState(next);
               setCommunityHomeRevision((value) => value + 1);
@@ -402,6 +402,10 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     </main>
     </>
   );
+}
+
+export function isCommunitySwitchDisabled(callActive: boolean, instanceId: string, activeInstanceId: string | null): boolean {
+  return callActive && instanceId !== activeInstanceId;
 }
 
 function DesktopTitleBar({ onAction }: { onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
@@ -2108,7 +2112,7 @@ export function DirectCallControls({
     connectionTimeout.current = window.setTimeout(() => {
       if (peer.connectionState !== "connected") setStatus(`Media connection timed out (${peer.iceConnectionState || peer.connectionState || "unknown"}).`);
     }, 15_000);
-    setStatus("Connecting Call…");
+    setStatus("Connecting…");
     } catch (error) {
       provisionalCapture?.stop();
       cleanup();
@@ -2291,10 +2295,10 @@ export function DirectCallControls({
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
       {voiceRoom ? <div>
-        <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : status || (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
+        <strong>{status === "Call connected" ? "Connected" : status || "Connecting"}</strong>
         <span>{requestedVoiceRoomName}</span>
       </div> : <button className="voice-connection-identity" type="button" aria-label={`Return to Direct Message with ${directCallName}`} title={`Return to Direct Message with ${directCallName}`} onClick={() => call && onOpenDirectCall?.(call.direct_message_id)}>
-        <strong>{status === "Call connected" ? "Call Connected" : status || "Call Connecting"}</strong>
+        <strong>{status === "Call connected" ? "Connected" : status || "Connecting"}</strong>
         <span>{directCallName}</span>
       </button>}
       <div className="voice-connection-actions">

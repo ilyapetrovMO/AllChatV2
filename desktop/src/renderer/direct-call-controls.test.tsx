@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
@@ -90,6 +90,7 @@ describe('DirectCallControls remote lifecycle', () => {
     </>);
 
     const controls = await screen.findByRole('region', {name:'Call controls'});
+    expect(within(controls).getByText('Connecting')).toBeVisible();
     expect(controls).toHaveTextContent('mobile');
     expect(controls).not.toHaveTextContent('text channel');
     fireEvent.click(screen.getByRole('button', {name:'Return to Direct Message with mobile'}));

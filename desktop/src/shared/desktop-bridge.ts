@@ -45,6 +45,7 @@ export interface ShellState {
 export interface DesktopBridge {
   controlWindow?(action: WindowControlAction): Promise<void>;
   setNotificationContext?(instanceId: string, conversationId: string | null): void;
+  reportDiagnostic?(event: DesktopDiagnosticEvent, detail: string): void;
   getShellState(): Promise<ShellState>;
   addInstance(input: AddInstanceInput): Promise<ShellState>;
   selectInstance(id: string): Promise<ShellState>;
@@ -59,12 +60,14 @@ export interface DesktopBridge {
 }
 
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
+export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed';
 
 export interface DesktopMediaConnection { send(frame: unknown): void; close(): void }
 
 export const DESKTOP_BRIDGE_METHODS = [
   'controlWindow',
   'setNotificationContext',
+  'reportDiagnostic',
   'getShellState',
   'addInstance',
   'selectInstance',
@@ -81,6 +84,7 @@ export const DESKTOP_BRIDGE_METHODS = [
 export const IPC_CHANNELS = {
   windowControl: 'allchat:window:control',
   notificationContext: 'allchat:notification:context',
+  diagnostic: 'allchat:diagnostic',
   getShellState: 'allchat:shell:get-state',
   addInstance: 'allchat:instance:add',
   selectInstance: 'allchat:instance:select',

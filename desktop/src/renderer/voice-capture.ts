@@ -81,7 +81,9 @@ async function capture(preferences: DesktopVoicePreferences): Promise<DesktopMic
   if (preferences.noiseSuppressionMode === 'enhanced') {
     try {
       enhanced = await createRNNoiseNode(context);
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      window.allchatDesktop?.reportDiagnostic?.('rnnoise_initialization_failed', reason);
       raw.getTracks().forEach((track) => track.stop());
       await context.close().catch(() => undefined);
       const fallback = await capture({ ...preferences, noiseSuppressionMode: 'standard' });
@@ -128,13 +130,17 @@ async function capture(preferences: DesktopVoicePreferences): Promise<DesktopMic
 }
 
 async function createRNNoiseNode(context: AudioContext): Promise<AudioWorkletNode> {
-  await context.audioWorklet.addModule(rnnoiseWorkletUrl);
+  try {
+    await context.audioWorklet.addModule(rnnoiseWorkletUrl);
+  } catch (error) {
+    throw new Error(`worklet_module_load: ${error instanceof Error ? error.message : String(error)}`);
+  }
   const node = new AudioWorkletNode(context, 'allchat-desktop-rnnoise', { channelCount: 1, channelCountMode: 'explicit', outputChannelCount: [1] });
   await new Promise<void>((resolve, reject) => {
-    const timeout = window.setTimeout(() => reject(new Error('RNNoise initialization timed out.')), 10_000);
+    const timeout = window.setTimeout(() => reject(new Error('worklet_ready_timeout: no ready message after 10000ms')), 10_000);
     node.port.onmessage = (event) => {
       if (event.data?.type === 'ready') { window.clearTimeout(timeout); resolve(); }
-      if (event.data?.type === 'error') { window.clearTimeout(timeout); reject(new Error(event.data.message || 'RNNoise initialization failed.')); }
+      if (event.data?.type === 'error') { window.clearTimeout(timeout); reject(new Error(`worklet_initialization: ${event.data.message || 'unknown error'}`)); }
     };
   });
   return node;

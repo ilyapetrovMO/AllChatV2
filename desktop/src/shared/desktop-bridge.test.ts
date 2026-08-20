@@ -7,6 +7,7 @@ describe('DesktopBridge', () => {
     expect(DESKTOP_BRIDGE_METHODS).toEqual([
       'controlWindow',
       'setNotificationContext',
+      'reportDiagnostic',
       'getShellState',
       'addInstance',
       'selectInstance',
@@ -25,6 +26,7 @@ describe('DesktopBridge', () => {
     const valid = {
       controlWindow: async () => undefined,
       setNotificationContext: () => undefined,
+      reportDiagnostic: () => undefined,
       getShellState: async () => ({ instances: [], activeInstanceId: null }),
       addInstance: async () => undefined,
       selectInstance: async () => undefined,

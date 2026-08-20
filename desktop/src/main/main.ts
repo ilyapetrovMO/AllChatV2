@@ -20,6 +20,7 @@ import { configureApplicationIdentity } from './application-identity';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
+  type DesktopDiagnosticEvent,
   type LoginInstanceInput,
   type RecoverInstanceInput,
   type RegisterInstanceInput,
@@ -247,6 +248,12 @@ function registerIpc(): void {
     assertString(instanceId, 'Instance identity');
     if (conversationId !== null) assertString(conversationId, 'Conversation identity');
     notificationContext = { instanceId, conversationId: conversationId || '' };
+  });
+  ipcMain.on(IPC_CHANNELS.diagnostic, (event, diagnosticEvent: DesktopDiagnosticEvent, detail: string) => {
+    if (event.sender !== mainWindow?.webContents) return;
+    if (diagnosticEvent !== 'rnnoise_initialization_failed') return;
+    if (typeof detail !== 'string') return;
+    console.warn('[AllChat desktop diagnostic]', JSON.stringify({ event: diagnosticEvent, detail: detail.slice(0, 1_000) }));
   });
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action: import('../shared/desktop-bridge').WindowControlAction) => {
     const window = BrowserWindow.fromWebContents(event.sender);

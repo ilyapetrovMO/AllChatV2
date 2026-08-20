@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureDesktopMicrophone, desktopVoiceConstraints, loadDesktopVoicePreferences, saveDesktopVoicePreferences } from './voice-capture';
 
 describe('desktop voice capture', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    Object.defineProperty(window, 'allchatDesktop', { configurable: true, value: { reportDiagnostic: vi.fn() } });
+  });
 
   it('persists normalized preferences and builds standard WebRTC constraints', () => {
     const saved = saveDesktopVoicePreferences('member', {
@@ -90,5 +93,6 @@ describe('desktop voice capture', () => {
     expect(capture.enhanced).toBe(false);
     expect(capture.compatibilityNotice).toContain('standard WebRTC suppression is active');
     expect(firstTrack.stop).toHaveBeenCalledOnce();
+    expect(window.allchatDesktop.reportDiagnostic).toHaveBeenCalledWith('rnnoise_initialization_failed', 'worklet_module_load: worklet unavailable');
   });
 });

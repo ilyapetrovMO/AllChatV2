@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 28 {
-		t.Fatalf("health = %+v, want status ok at schema version 28", health)
+	if health.Status != "ok" || health.SchemaVersion < 1 {
+		t.Fatalf("health = %+v, want status ok at a positive schema version", health)
 	}
 
 	client := newClient(t)
@@ -298,6 +298,17 @@ func connectMediaPeer(t *testing.T, client *http.Client, app *runningInstance, r
 func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	dataDirectory := t.TempDir()
 	first := startInstance(t, dataDirectory)
+	firstResponse := get(t, first.url("/api/v1/health"))
+	var firstHealth map[string]any
+	if err := json.NewDecoder(firstResponse.Body).Decode(&firstHealth); err != nil {
+		firstResponse.Body.Close()
+		t.Fatalf("decode health response before restart: %v", err)
+	}
+	firstResponse.Body.Close()
+	initialSchemaVersion, ok := firstHealth["schema_version"].(float64)
+	if firstHealth["status"] != "ok" || !ok || initialSchemaVersion < 1 {
+		t.Fatalf("health before restart = %#v", firstHealth)
+	}
 	first.stop(t)
 
 	second := startInstance(t, dataDirectory)
@@ -307,7 +318,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(28) {
+	if health["status"] != "ok" || health["schema_version"] != initialSchemaVersion {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }

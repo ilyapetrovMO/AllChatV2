@@ -4,8 +4,15 @@ import notifee, {AuthorizationStatus} from '@notifee/react-native';
 import {AllChatClient, type MobilePushRegistration} from '../client/AllChatClient';
 import type {InstanceAccount} from '../session/SessionVault';
 
-type NativePush = {getRegistration(): Promise<Omit<MobilePushRegistration, 'instance_url'> | null>};
+type NativePush = {
+  getRegistration(): Promise<Omit<MobilePushRegistration, 'instance_url'> | null>;
+  cacheAvatar?(avatarURL: string, avatarVersion: string, dataURI: string): void;
+};
 const nativePush = NativeModules.AllChatPush as NativePush | undefined;
+
+export function cachePushAvatar(avatarURL: string, avatarVersion: string, dataURI: string): void {
+  if (Platform.OS === 'android') nativePush?.cacheAvatar?.(avatarURL, avatarVersion, dataURI);
+}
 
 export async function currentMobilePushRegistration(instanceURL: string): Promise<MobilePushRegistration | undefined> {
   if (Platform.OS !== 'android' || !nativePush) return undefined;

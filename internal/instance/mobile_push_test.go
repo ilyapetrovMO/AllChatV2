@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"allchat/internal/community"
 	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
@@ -92,6 +93,19 @@ func TestMobilePushNotificationPolicy(t *testing.T) {
 	}
 	if shouldSendMobilePush(mobilePushSubscription{CommunityLevel: "all_messages", ChannelLevel: "default", CommunityMuted: true}, true) {
 		t.Fatal("muted subscription accepted")
+	}
+}
+
+func TestMobilePushPayloadV2CarriesStableSenderIdentity(t *testing.T) {
+	payload := mobilePushPayload(mobilePushEvent{
+		Kind: "message", ChannelID: "channel", AuthorID: "member-123", AuthorName: "Alice",
+		Message: &community.Message{Body: "hello"},
+	}, mobilePushSubscription{InstanceURL: "https://chat.example", CommunitySound: true}, "general", "avatar-revision")
+	if payload["version"] != 2 || payload["author_id"] != "member-123" || payload["avatar_version"] != "avatar-revision" {
+		t.Fatalf("payload identity = %#v", payload)
+	}
+	if payload["title"] != "Alice in #general" {
+		t.Fatalf("payload title = %q", payload["title"])
 	}
 }
 

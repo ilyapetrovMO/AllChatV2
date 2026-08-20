@@ -192,6 +192,10 @@ func (service *mobilePushService) deliver(ctx context.Context, event mobilePushE
 			mentioned[mention.MemberID] = true
 		}
 	}
+	avatarVersion, err := service.avatarVersion(ctx, event.AuthorID)
+	if err != nil {
+		return err
+	}
 	skippedPolicy, skippedPermission, invalidEncryption, attempted, accepted := 0, 0, 0, 0, 0
 	for _, subscription := range subscriptions {
 		if event.Kind == "message" && !shouldSendMobilePush(subscription, mentioned[subscription.MemberID]) {
@@ -205,29 +209,7 @@ func (service *mobilePushService) deliver(ctx context.Context, event mobilePushE
 				continue
 			}
 		}
-		payload := map[string]any{
-			"version": 1, "kind": event.Kind, "instance_url": subscription.InstanceURL,
-			"conversation_id": event.ChannelID, "author": event.AuthorName, "sound": subscription.CommunitySound,
-		}
-		if event.Kind == "call" {
-			payload["call_id"] = event.CallID
-			payload["title"] = "Incoming call"
-			payload["body"] = event.AuthorName + " is calling"
-		} else {
-			preview := strings.Join(strings.Fields(event.Message.Body), " ")
-			if preview == "" {
-				preview = "Sent an attachment"
-			}
-			runes := []rune(preview)
-			if len(runes) > 160 {
-				preview = string(runes[:157]) + "..."
-			}
-			payload["title"] = event.AuthorName
-			if channelName != "" {
-				payload["title"] = event.AuthorName + " in #" + channelName
-			}
-			payload["body"] = preview
-		}
+		payload := mobilePushPayload(event, subscription, channelName, avatarVersion)
 		encrypted, encryptErr := encryptMobilePushPayload(subscription.PublicKey, payload)
 		if encryptErr != nil {
 			invalidEncryption++
@@ -247,6 +229,50 @@ func (service *mobilePushService) deliver(ctx context.Context, event mobilePushE
 	}
 	service.logger.Info("mobile push event evaluated", "kind", event.Kind, "candidate_subscriptions", len(subscriptions), "attempted", attempted, "accepted", accepted, "skipped_policy", skippedPolicy, "skipped_permission", skippedPermission, "invalid_encryption", invalidEncryption)
 	return nil
+}
+
+func mobilePushPayload(event mobilePushEvent, subscription mobilePushSubscription, channelName, avatarVersion string) map[string]any {
+	payload := map[string]any{
+		"version": 2, "kind": event.Kind, "instance_url": subscription.InstanceURL,
+		"conversation_id": event.ChannelID, "author_id": event.AuthorID,
+		"author": event.AuthorName, "sound": subscription.CommunitySound,
+	}
+	if avatarVersion != "" {
+		payload["avatar_version"] = avatarVersion
+	}
+	if event.Kind == "call" {
+		payload["call_id"] = event.CallID
+		payload["title"] = "Incoming call"
+		payload["body"] = event.AuthorName + " is calling"
+		return payload
+	}
+	preview := strings.Join(strings.Fields(event.Message.Body), " ")
+	if preview == "" {
+		preview = "Sent an attachment"
+	}
+	runes := []rune(preview)
+	if len(runes) > 160 {
+		preview = string(runes[:157]) + "..."
+	}
+	payload["title"] = event.AuthorName
+	if channelName != "" {
+		payload["title"] = event.AuthorName + " in #" + channelName
+	}
+	payload["body"] = preview
+	return payload
+}
+
+func (service *mobilePushService) avatarVersion(ctx context.Context, memberID string) (string, error) {
+	var avatar []byte
+	err := service.db.QueryRowContext(ctx, "SELECT avatar FROM members WHERE id=? AND avatar IS NOT NULL", memberID).Scan(&avatar)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(avatar)
+	return base64.RawURLEncoding.EncodeToString(digest[:12]), nil
 }
 
 func (service *mobilePushService) relayURL(ctx context.Context) (string, error) {

@@ -52,6 +52,14 @@ class AllChatPushModule(context: ReactApplicationContext) : ReactContextBaseJava
     }
   }
 
+  @ReactMethod
+  fun cacheAvatar(avatarURL: String, avatarVersion: String, dataURI: String) {
+    Thread {
+      runCatching { PushAvatarCache.put(reactApplicationContext, avatarURL, avatarVersion, dataURI) }
+        .onFailure { Log.w(TAG, "Could not cache push avatar: ${it.javaClass.simpleName}") }
+    }.start()
+  }
+
   companion object {
     private const val TAG = "AllChatPush"
     private const val KEY_ALIAS = "allchat_mobile_push_v1"

@@ -10,6 +10,8 @@ import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
+import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -57,7 +59,15 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       putExtra("allchat_call_id", payload.optString("call_id"))
     }
     val pending = PendingIntent.getActivity(this, payload.optString("conversation_id").hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    val notification = NotificationCompat.Builder(this, channelID)
+    val author = payload.optString("author", "Member")
+    val avatar = PushAvatarCache.get(this, payload.optString("instance_url"), payload.optString("author_id"), payload.optString("avatar_version"))
+      ?: PushAvatarCache.fallback(author)
+    val person = Person.Builder()
+      .setName(author)
+      .setKey(payload.optString("author_id", author))
+      .setIcon(IconCompat.createWithBitmap(avatar))
+      .build()
+    val builder = NotificationCompat.Builder(this, channelID)
       .setSmallIcon(R.drawable.ic_stat_allchat)
       .setColor(Color.rgb(88, 101, 242))
       .setContentTitle(payload.optString("title", if (calls) "Incoming call" else "New message"))
@@ -67,10 +77,19 @@ class AllChatFirebaseMessagingService : FirebaseMessagingService() {
       .setCategory(if (calls) NotificationCompat.CATEGORY_CALL else NotificationCompat.CATEGORY_MESSAGE)
       .setPriority(NotificationCompat.PRIORITY_HIGH)
       .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+      .setLargeIcon(avatar)
+      .addPerson(person)
       .setFullScreenIntent(if (calls) pending else null, calls)
       .setSound(if (sound) RingtoneManager.getDefaultUri(if (calls) RingtoneManager.TYPE_RINGTONE else RingtoneManager.TYPE_NOTIFICATION) else null)
       .setTimeoutAfter(if (calls) 30_000L else 0L)
-      .build()
+    if (!calls) {
+      val style = NotificationCompat.MessagingStyle(person)
+        .addMessage(payload.optString("body"), System.currentTimeMillis(), person)
+      val conversationTitle = payload.optString("title").takeIf { it != author }
+      if (conversationTitle != null) style.setConversationTitle(conversationTitle)
+      builder.setStyle(style)
+    }
+    val notification = builder.build()
     manager.notify(if (calls) payload.optString("call_id").hashCode() else payload.optString("conversation_id").hashCode(), notification)
     Log.i(TAG, "Notification posted; kind=$kind channel=$channelID")
   }

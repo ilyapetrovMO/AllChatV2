@@ -90,6 +90,7 @@ import {
   updateCallForegroundService,
 } from '../media/CallForegroundService';
 import { NotificationService } from '../notifications/NotificationService';
+import { cachePushAvatar } from '../notifications/MobilePush';
 import type { InstanceAccount } from '../session/SessionVault';
 import {
   communityStateFromBootstrap,
@@ -4203,9 +4204,11 @@ export async function loadAuthenticatedImage(
     throw new Error(`Image request failed with HTTP ${response.status}`);
   const contentType =
     response.headers.get('Content-Type') || 'application/octet-stream';
-  return `data:${contentType};base64,${bytesToBase64(
+  const dataURI = `data:${contentType};base64,${bytesToBase64(
     new Uint8Array(await response.arrayBuffer()),
   )}`;
+  cachePushAvatar(url, response.headers.get('ETag')?.replaceAll('"', '') || '', dataURI);
+  return dataURI;
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

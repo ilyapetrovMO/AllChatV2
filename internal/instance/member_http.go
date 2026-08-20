@@ -2,6 +2,8 @@
 package instance
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"html/template"
 	"io"
 	"net/http"
@@ -167,6 +169,13 @@ func (i *Instance) memberAvatarAPI(response http.ResponseWriter, request *http.R
 	data, contentType, err := i.identity.Avatar(request.Context(), request.PathValue("memberID"))
 	if err != nil {
 		http.NotFound(response, request)
+		return
+	}
+	digest := sha256.Sum256(data)
+	etag := `"` + base64.RawURLEncoding.EncodeToString(digest[:12]) + `"`
+	response.Header().Set("ETag", etag)
+	if request.Header.Get("If-None-Match") == etag {
+		response.WriteHeader(http.StatusNotModified)
 		return
 	}
 	response.Header().Set("Content-Type", contentType)

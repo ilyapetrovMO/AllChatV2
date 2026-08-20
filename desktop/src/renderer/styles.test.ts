@@ -20,6 +20,11 @@ describe('desktop shared control styling', () => {
     expect(css).toMatch(/\.member-card \.member-card-actions button\s*\{[^}]*width:\s*100%[^}]*text-align:\s*left/s);
   });
 
+  it('keeps image viewer controls below the custom titlebar and above the app shell', () => {
+    expect(css).toMatch(/\.image-lightbox\s*\{[^}]*z-index:\s*2100;[^}]*inset:\s*28px 0 0/s);
+    expect(css).toMatch(/\.image-lightbox-close\s*\{[^}]*position:\s*absolute/s);
+  });
+
   it('styles generic form controls including checkboxes and file inputs', () => {
     expect(css).toContain(':where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
     expect(css).toContain('input[type="checkbox"]');

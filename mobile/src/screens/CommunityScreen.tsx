@@ -2823,13 +2823,7 @@ function AttachmentView({
         originalURL={source.uri}
         onLongPress={save}
         palette={palette}
-        previewURL={attachmentURL(
-          instanceURL,
-          attachment.preview_url ||
-            `${
-              attachment.url || `/api/v1/attachments/${attachment.id}`
-            }/preview`,
-        )}
+        previewURL={mobileAttachmentDisplayURL(instanceURL, attachment)}
         token={token}
       />
     );
@@ -2869,6 +2863,19 @@ function AttachmentView({
         </Text>
       </View>
     </View>
+  );
+}
+
+export function mobileAttachmentDisplayURL(
+  instanceURL: string,
+  attachment: NonNullable<Message['attachments']>[number],
+) {
+  const original = attachment.url || `/api/v1/attachments/${attachment.id}`;
+  return attachmentURL(
+    instanceURL,
+    attachment.content_type.toLowerCase() === 'image/gif'
+      ? original
+      : attachment.preview_url || `${original}/preview`,
   );
 }
 

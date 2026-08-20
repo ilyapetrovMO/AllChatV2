@@ -384,6 +384,11 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.keyDown(messageInput, { key: 'Enter', code: 'Enter', shiftKey: true });
     expect(executeInstance.mock.calls.filter(([, action]) => action.type === 'send_message')).toHaveLength(sendsAfterEnter);
 
+    const pastedImage = new File(['pixels'], 'clipboard.png', { type: 'image/png', lastModified: 2 });
+    fireEvent.paste(messageInput, { clipboardData: { items: [{ kind: 'file', getAsFile: () => pastedImage }] } });
+    expect(screen.getByText('clipboard.png')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove clipboard.png' }));
+
     const composer = screen.getByLabelText('Message lobby').closest('form')!;
     expect(composer).toHaveClass('message-composer');
     expect(composer.querySelector(':scope > .typing-indicator')).toBeNull();
@@ -500,5 +505,9 @@ describe('desktop renderer bootstrap', () => {
     const voiceMenu = screen.getByRole('menu', { name: 'Voice Member actions' });
     fireEvent.click(within(voiceMenu).getByRole('menuitem', { name: 'Profile' }));
     expect(screen.getByRole('dialog', { name: 'Member profile' })).toBeVisible();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Nora Community' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Community Home' }));
+    expect(screen.queryByRole('region', { name: 'Voice controls' })).not.toBeInTheDocument();
   }, 15_000);
 });

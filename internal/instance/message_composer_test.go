@@ -58,3 +58,12 @@ func TestChannelAttachmentButtonIsABareMutedIcon(t *testing.T) {
 		t.Fatalf("attachment button must be a bare muted icon; rule: %s", rule)
 	}
 }
+
+func TestAnimatedGIFUsesOriginalMediaInsteadOfStaticPreview(t *testing.T) {
+	if got := imageSource("image/gif", "/preview", "/original"); got != "/original" {
+		t.Fatalf("GIF source = %q, want original", got)
+	}
+	if got := imageSource("image/png", "/preview", "/original"); got != "/preview" {
+		t.Fatalf("PNG source = %q, want preview", got)
+	}
+}

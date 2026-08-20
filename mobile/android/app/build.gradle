@@ -132,6 +132,7 @@ dependencies {
     // React Native leaves animated WebP decoding optional. Keep this version in
     // sync with node_modules/react-native/gradle/libs.versions.toml.
     implementation("com.facebook.fresco:animated-webp:3.6.0")
+    implementation("com.facebook.fresco:animated-gif:3.6.0")
     implementation("com.facebook.fresco:webpsupport:3.6.0")
 
     if (hermesEnabled.toBoolean()) {

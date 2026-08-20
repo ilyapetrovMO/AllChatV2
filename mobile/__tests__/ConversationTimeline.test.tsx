@@ -12,6 +12,7 @@ import {
   loadAuthenticatedImage,
   mergeMessagePage,
   mediaParticipantAvatarDimension,
+  mobileAttachmentDisplayURL,
   shouldRenderInlineCallBanner,
   MessageRow,
   trimMessageWindow,
@@ -41,6 +42,12 @@ const message: Message = {
 };
 
 describe('native conversation timeline', () => {
+  it('loads animated GIF originals instead of static generated previews', () => {
+    expect(mobileAttachmentDisplayURL('https://chat.example.test', {
+      id: 'gif', name: 'party.gif', content_type: 'image/gif', size: 10,
+      url: '/api/v1/attachments/gif', preview_url: '/api/v1/attachments/gif/preview',
+    })).toBe('https://chat.example.test/api/v1/attachments/gif');
+  });
   it('opens the Direct Message as soon as a Direct Call is accepted', () => {
     expect(acceptedDirectCallConversationID({
       id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-1',

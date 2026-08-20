@@ -624,11 +624,11 @@ a { color: #00a8fc; }
 .message-composer .attachment-preview-remove:hover { color: white; background: var(--red); }
 .attachment-preview-remove .lucide-icon { width: 15px; height: 15px; }
 .attachment-loading { color: var(--muted); }
-.image-lightbox { position: fixed; z-index: 1000; inset: 0; overflow: hidden; background: rgb(0 0 0 / 60%); cursor: grab; touch-action: none; user-select: none; }
+.image-lightbox { position: fixed; z-index: 2100; inset: 28px 0 0; overflow: hidden; background: rgb(0 0 0 / 60%); cursor: grab; touch-action: none; user-select: none; }
 .image-lightbox.dragging { cursor: grabbing; }
 .image-lightbox > img { position: absolute; top: 50%; left: 50%; max-width: none; max-height: none; transform-origin: center; translate: -50% -50%; cursor: inherit; }
-.image-lightbox > output { position: fixed; right: 72px; top: 18px; padding: 7px 10px; border-radius: 14px; color: white; background: rgb(0 0 0 / 55%); font-size: .75rem; }
-.image-lightbox-close { position: fixed; top: 12px; right: 14px; display: grid; place-items: center; width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; color: white; background: rgb(0 0 0 / 55%); }
+.image-lightbox > output { position: absolute; right: 72px; top: 18px; padding: 7px 10px; border-radius: 14px; color: white; background: rgb(0 0 0 / 55%); font-size: .75rem; }
+.image-lightbox-close { position: absolute; top: 12px; right: 14px; display: grid; place-items: center; width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; color: white; background: rgb(0 0 0 / 55%); }
 .image-lightbox-close:hover { background: var(--red); }
 .image-lightbox-close .lucide-icon { width: 22px; height: 22px; }
 

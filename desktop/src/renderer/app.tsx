@@ -850,6 +850,7 @@ function CommunityShell({
                 type="button"
                 role="menuitem"
                 onClick={() => {
+                  setRequestedVoiceRoom(null);
                   setConversation(null);
                   setHomeView("community");
                   setSettingsView(null);
@@ -880,6 +881,7 @@ function CommunityShell({
             className="direct-messages-home"
             type="button"
             onClick={() => {
+              setRequestedVoiceRoom(null);
               setConversation(null);
               setHomeView("direct-messages");
               setSettingsView(null);
@@ -1661,6 +1663,15 @@ function CommunityShell({
                       });
                     }
                   }}
+                  onPaste={(event) => {
+                    const files = [...event.clipboardData.items]
+                      .filter((item) => item.kind === "file")
+                      .map((item) => item.getAsFile())
+                      .filter((file): file is File => Boolean(file));
+                    if (!files.length) return;
+                    event.preventDefault();
+                    setAttachments((current) => appendUniqueFiles(current, files));
+                  }}
                   onClick={(event) => setMentionCaret(event.currentTarget.selectionStart)}
                   onKeyUp={(event) => {
                     if (!["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(event.key)) setMentionCaret(event.currentTarget.selectionStart);
@@ -2075,6 +2086,8 @@ export function DirectCallControls({
   useEffect(() => {
     if (requestedVoiceRoom && voiceRoomRef.current !== requestedVoiceRoom) {
       void joinVoice(requestedVoiceRoom);
+    } else if (!requestedVoiceRoom && voiceRoomRef.current) {
+      leaveVoice();
     }
   }, [requestedVoiceRoom]);
 
@@ -2404,10 +2417,7 @@ function AttachmentView({
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [loadingOriginal, setLoadingOriginal] = useState(false);
-  const path =
-    attachment.preview_url ||
-    attachment.url ||
-    `/api/v1/attachments/${attachment.id}`;
+  const path = desktopAttachmentDisplayPath(attachment);
 
   useEffect(
     () => () => {
@@ -2466,6 +2476,11 @@ function AttachmentView({
       {viewerUrl && <ImageLightbox src={viewerUrl} alt={attachment.name} onClose={() => setViewerUrl(null)} />}
     </figure>
   );
+}
+
+export function desktopAttachmentDisplayPath(attachment: Attachment): string {
+  const original = attachment.url || `/api/v1/attachments/${attachment.id}`;
+  return attachment.content_type.toLowerCase() === "image/gif" ? original : attachment.preview_url || original;
 }
 
 function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose(): void }) {

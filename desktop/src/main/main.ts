@@ -13,6 +13,7 @@ import { SQLiteAssetCache } from './asset-cache';
 import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
 import { createTrayMenu, shouldHideOnClose, type TrayPresence } from './tray-menu';
+import { downloadVerifiedUpdate, findDesktopUpdate } from './desktop-updater';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -33,6 +34,7 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let quitting = false;
 let trayPresence: TrayPresence = 'available';
+let offeredUpdateVersion = '';
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -74,6 +76,65 @@ async function start(): Promise<void> {
   if (process.env.ALLCHAT_DESKTOP_SMOKE_TEST === '1') {
     console.log('AllChat desktop packaged startup: PASS');
     app.quit();
+    return;
+  }
+  scheduleUpdateChecks();
+}
+
+function scheduleUpdateChecks(): void {
+  if (!app.isPackaged) return;
+  const check = () => void checkForDesktopUpdate().catch((error: unknown) => {
+    console.warn('AllChat desktop update check failed:', error instanceof Error ? error.message : String(error));
+  });
+  setTimeout(check, 10_000).unref();
+  setInterval(check, 6 * 60 * 60 * 1_000).unref();
+}
+
+async function checkForDesktopUpdate(): Promise<void> {
+  const window = mainWindow;
+  if (!window || window.isDestroyed()) return;
+  const update = await findDesktopUpdate(app.getVersion(), process.platform, process.arch);
+  if (!update || update.version === offeredUpdateVersion) return;
+  offeredUpdateVersion = update.version;
+  const choice = await dialog.showMessageBox(window, {
+    type: 'info',
+    title: 'AllChat update available',
+    message: `AllChat ${update.version} is available`,
+    detail: `You are using ${app.getVersion()}. Download the verified update now?`,
+    buttons: ['Download update', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+    noLink: true,
+  });
+  if (choice.response !== 0) return;
+  try {
+    const downloaded = await downloadVerifiedUpdate(update, app.getPath('downloads'));
+    if (process.platform === 'win32') {
+      const launch = await dialog.showMessageBox(window, {
+        type: 'info', title: 'Update ready', message: `AllChat ${update.version} was downloaded and verified.`,
+        detail: 'Close AllChat when the installer asks, then complete the upgrade.',
+        buttons: ['Open installer', 'Later'], defaultId: 0, cancelId: 1, noLink: true,
+      });
+      if (launch.response === 0) {
+        const error = await shell.openPath(downloaded);
+        if (error) throw new Error(error);
+      }
+    } else {
+      shell.showItemInFolder(downloaded);
+      await dialog.showMessageBox(window, {
+        type: 'info', title: 'Update downloaded', message: `AllChat ${update.version} was downloaded and verified.`,
+        detail: 'Replace the current application with the downloaded package to finish updating.',
+        buttons: ['OK'], noLink: true,
+      });
+    }
+  } catch (error) {
+    console.error('AllChat desktop update download failed:', error);
+    const failure = await dialog.showMessageBox(window, {
+      type: 'error', title: 'Update failed', message: 'AllChat could not download and verify the update.',
+      detail: error instanceof Error ? error.message : String(error),
+      buttons: ['Open release page', 'Close'], defaultId: 0, cancelId: 1, noLink: true,
+    });
+    if (failure.response === 0) void shell.openExternal(update.pageUrl);
   }
 }
 

@@ -73,8 +73,11 @@ async function start(): Promise<void> {
 }
 
 async function createMainWindow(): Promise<BrowserWindow> {
+  const icon = app.isPackaged
+    ? path.join(process.resourcesPath, 'allchat-icon.png')
+    : path.resolve(app.getAppPath(), '../assets/branding/allchat-icon.png');
   const window = new BrowserWindow(
-    createWindowOptions(path.join(__dirname, 'preload.js')),
+    createWindowOptions(path.join(__dirname, 'preload.js'), icon),
   );
   window.once('ready-to-show', () => window.show());
   window.webContents.setWindowOpenHandler(({ url }) => {

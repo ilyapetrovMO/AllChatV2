@@ -1,6 +1,6 @@
 import type { BrowserWindowConstructorOptions } from 'electron';
 
-export function createWindowOptions(preload: string): BrowserWindowConstructorOptions {
+export function createWindowOptions(preload: string, icon: string): BrowserWindowConstructorOptions {
   return {
     width: 1280,
     height: 800,
@@ -10,6 +10,7 @@ export function createWindowOptions(preload: string): BrowserWindowConstructorOp
     show: false,
     frame: false,
     autoHideMenuBar: true,
+    icon,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

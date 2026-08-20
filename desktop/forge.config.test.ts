@@ -8,6 +8,17 @@ import { describe, expect, it } from 'vitest';
 import config from './forge.config';
 
 describe('Electron Forge configuration', () => {
+  it('packages native application icons for Windows and macOS', () => {
+    const icon = config.packagerConfig?.icon;
+    expect(typeof icon).toBe('string');
+    expect(icon).toMatch(/installer[\\/]allchat$/);
+    expect(fs.readFileSync(`${icon}.ico`).subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
+    expect(fs.readFileSync(`${icon}.icns`).subarray(0, 4).toString('ascii')).toBe('icns');
+    expect(config.packagerConfig?.extraResource).toEqual(
+      expect.arrayContaining([expect.stringMatching(/allchat-icon\.png$/)]),
+    );
+  });
+
   it('builds a traditional Windows wizard with directory and launch choices', async () => {
     const wix = config.makers?.find((maker) => maker instanceof MakerWix);
     if (!(wix instanceof MakerWix)) throw new Error('WiX maker is not configured');

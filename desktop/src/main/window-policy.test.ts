@@ -4,7 +4,7 @@ import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigatio
 
 describe('desktop window policy', () => {
   it('isolates and sandboxes the renderer without Node.js', () => {
-    const options = createWindowOptions('/opt/allchat/preload.js');
+    const options = createWindowOptions('/opt/allchat/preload.js', '/opt/allchat/allchat-icon.png');
 
     expect(options.webPreferences).toMatchObject({
       contextIsolation: true,
@@ -13,7 +13,7 @@ describe('desktop window policy', () => {
       preload: '/opt/allchat/preload.js',
     });
     expect(options.webPreferences?.partition).toBeUndefined();
-    expect(options).toMatchObject({ frame: false, autoHideMenuBar: true });
+    expect(options).toMatchObject({ frame: false, autoHideMenuBar: true, icon: '/opt/allchat/allchat-icon.png' });
   });
 
   it('allows only bundled app navigation', () => {

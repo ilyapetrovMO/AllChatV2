@@ -8,11 +8,15 @@ import { fileURLToPath } from 'node:url';
 const windowsInstallerUI = fileURLToPath(new URL('./installer/windows-ui.xml', import.meta.url));
 const windowsInstallerUIXML = readFileSync(windowsInstallerUI, 'utf8');
 const windowsInstallerIcon = fileURLToPath(new URL('./installer/allchat.ico', import.meta.url));
+const applicationIcon = fileURLToPath(new URL('./installer/allchat', import.meta.url));
+const runtimeIcon = fileURLToPath(new URL('../assets/branding/allchat-icon.png', import.meta.url));
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: 'AllChat',
+    icon: applicationIcon,
+    extraResource: [runtimeIcon],
   },
   makers: [
     new MakerWix({

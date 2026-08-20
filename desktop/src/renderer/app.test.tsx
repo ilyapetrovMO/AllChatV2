@@ -2,13 +2,30 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { App, isCommunitySwitchDisabled } from './app';
+import { App, isCommunitySwitchDisabled, mostRecentEditableMessage } from './app';
 
 describe('community switch Call lock', () => {
   it('allows only the current Community while a Direct Call is active', () => {
     expect(isCommunitySwitchDisabled(true, 'current', 'current')).toBe(false);
     expect(isCommunitySwitchDisabled(true, 'other', 'current')).toBe(true);
     expect(isCommunitySwitchDisabled(false, 'other', 'current')).toBe(false);
+  });
+});
+
+describe('composer keyboard editing', () => {
+  it('only searches the latest ten Messages for the current Member', () => {
+    const messages = Array.from({ length: 11 }, (_, index) => ({
+      id: `message-${index}`,
+      channel_id: 'chat',
+      author_id: index === 0 || index === 9 ? 'me' : 'other',
+      author_name: index === 0 || index === 9 ? 'me' : 'other',
+      sequence: index + 1,
+      body: `body-${index}`,
+      created_at: '2026-08-20T00:00:00Z',
+      deleted: false,
+    }));
+    expect(mostRecentEditableMessage(messages, 'me')?.id).toBe('message-9');
+    expect(mostRecentEditableMessage(messages.slice(0, 9), 'me')?.id).toBe('message-0');
   });
 });
 
@@ -342,6 +359,11 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(within(screen.getByText('Replying to a Message')).getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(screen.getByText('Editing Message')).toBeVisible();
+    fireEvent.click(within(screen.getByText('Editing Message')).getByRole('button', { name: 'Cancel' }));
+    const lobbyComposer = screen.getByLabelText('Message lobby');
+    fireEvent.keyDown(lobbyComposer, { key: 'ArrowUp' });
+    expect(screen.getByText('Editing Message')).toBeVisible();
+    expect((lobbyComposer as HTMLTextAreaElement).value).toContain('Desktop parity starts here');
     fireEvent.click(within(screen.getByText('Editing Message')).getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Pin' }));
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {

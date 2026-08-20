@@ -37,6 +37,9 @@ func TestChannelComposerIsKeyboardOnlyAndMultiline(t *testing.T) {
 	if !strings.Contains(html, `event.key==="Enter"&&!event.shiftKey&&!event.isComposing`) || !strings.Contains(html, `composer.requestSubmit()`) {
 		t.Fatal("channel composer must submit Enter while preserving Shift+Enter and IME composition")
 	}
+	if !strings.Contains(html, `event.key==="ArrowUp"&&!bodyInput.value`) || !strings.Contains(html, `.slice(-10).reverse()`) {
+		t.Fatal("empty channel composer must edit the Member's latest Message within the last ten Messages")
+	}
 }
 
 func TestChannelAttachmentButtonIsABareMutedIcon(t *testing.T) {

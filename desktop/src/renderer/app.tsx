@@ -418,6 +418,16 @@ export function isCommunitySwitchDisabled(callActive: boolean, instanceId: strin
   return callActive && instanceId !== activeInstanceId;
 }
 
+export function mostRecentEditableMessage(
+  messages: InstanceViewState["messages"][string],
+  currentMemberId: string,
+) {
+  return messages
+    .slice(-10)
+    .reverse()
+    .find((message) => message.author_id === currentMemberId && !message.deleted);
+}
+
 function DesktopTitleBar({ onAction }: { onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
   return <header className="desktop-titlebar" aria-label="Window controls">
     <span className="desktop-titlebar-title">AllChat</span>
@@ -1697,6 +1707,19 @@ function CommunityShell({
                       if (event.key === "Escape") {
                         event.preventDefault();
                         setMentionCaret(-1);
+                        return;
+                      }
+                    }
+                    if (event.key === "ArrowUp" && !draft && !editingMessageId && !replyTo) {
+                      const message = mostRecentEditableMessage(allConversationMessages, state.member.id);
+                      if (message) {
+                        event.preventDefault();
+                        setDraft(message.body || "");
+                        setEditingMessageId(message.id);
+                        requestAnimationFrame(() => {
+                          const input = textareaRef.current;
+                          if (input) input.setSelectionRange(input.value.length, input.value.length);
+                        });
                         return;
                       }
                     }

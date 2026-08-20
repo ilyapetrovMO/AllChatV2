@@ -216,6 +216,11 @@ a { color: #00a8fc; }
 
 .desktop-titlebar { position: relative; z-index: 2000; height: 28px; display: flex; align-items: center; justify-content: space-between; padding-left: 10px; border-bottom: 1px solid rgb(255 255 255 / 5%); background: #0d0e11; color: var(--faint); user-select: none; -webkit-app-region: drag; }
 .desktop-titlebar-title { font-size: 11px; font-weight: 700; letter-spacing: .02em; }
+.desktop-update-status { position: absolute; left: 50%; display: flex; align-items: center; height: 100%; color: var(--muted); font-size: 11px; font-weight: 600; transform: translateX(-50%); -webkit-app-region: no-drag; }
+.desktop-update-status:empty { display: none; }
+.desktop-update-status .desktop-upgrade-button { width: auto; height: 22px; min-height: 0; padding: 0 10px; border: 0; border-radius: 4px; color: white; background: #248046; font-size: 11px; font-weight: 700; }
+.desktop-update-status .desktop-upgrade-button:hover { color: white; background: #1a6334; }
+.desktop-update-failed { color: #f0b232; }
 .desktop-titlebar nav { align-self: stretch; display: flex; -webkit-app-region: no-drag; }
 .desktop-titlebar button { width: 38px; min-height: 0; display: grid; place-items: center; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--muted); }
 .desktop-titlebar button:hover { background: var(--bg-hover); color: var(--text); }

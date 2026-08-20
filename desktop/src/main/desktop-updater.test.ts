@@ -37,12 +37,14 @@ describe('desktop updater', () => {
       ? new Response(`${digest}  AllChat-desktop-0.1.59-linux-x64.zip\n`)
       : new Response(bytes)) as typeof fetch;
     const directory = await mkdtemp(path.join(os.tmpdir(), 'allchat-update-test-'));
+    const progress = vi.fn();
     const destination = await downloadVerifiedUpdate({
       version: '0.1.59', pageUrl: '',
       asset: { name: 'AllChat-desktop-0.1.59-linux-x64.zip', browser_download_url: 'https://github.com/package' },
       checksums: { name: 'SHA256SUMS', browser_download_url: 'https://github.com/SHA256SUMS' },
-    }, directory, request);
+    }, directory, request, progress);
     expect(await readFile(destination)).toEqual(bytes);
+    expect(progress).toHaveBeenLastCalledWith({ receivedBytes: bytes.length, totalBytes: null });
   });
 
   it('rejects a corrupted package', async () => {

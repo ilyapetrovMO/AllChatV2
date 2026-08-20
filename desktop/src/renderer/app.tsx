@@ -4,7 +4,7 @@ import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, media
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, desktopMemberOutputVolume, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 import { insertMention, matchMention } from "./mentions";
 
-import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
+import type { DesktopBridge, DesktopUpdateState, ShellState } from "../shared/desktop-bridge";
 import { normalizeInstanceUrl } from "../shared/instance-url";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
 import type {
@@ -23,9 +23,14 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   const [communityHomeRevision, setCommunityHomeRevision] = useState(0);
   const [directCallActive, setDirectCallActive] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register" | "recover">("login");
+  const [updateState, setUpdateState] = useState<DesktopUpdateState>({ status: "idle" });
 
   useEffect(() => {
     void bridge.getShellState().then(setState);
+  }, [bridge]);
+  useEffect(() => {
+    void bridge.getUpdateState?.().then(setUpdateState);
+    return bridge.watchUpdateState?.(setUpdateState);
   }, [bridge]);
   useEffect(() => {
     const update = (event: Event) => setDirectCallActive(Boolean((event as CustomEvent<{ active?: boolean }>).detail?.active));
@@ -265,7 +270,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
 
   return (
     <>
-    <DesktopTitleBar onAction={(action) => void bridge.controlWindow?.(action)} />
+    <DesktopTitleBar updateState={updateState} onInstallUpdate={() => void bridge.installUpdate?.()} onAction={(action) => void bridge.controlWindow?.(action)} />
     <main className="shell">
       <aside className="instance-rail" aria-label="Instances">
         <button
@@ -428,9 +433,17 @@ export function mostRecentEditableMessage(
     .find((message) => message.author_id === currentMemberId && !message.deleted);
 }
 
-function DesktopTitleBar({ onAction }: { onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
+function DesktopTitleBar({ updateState, onInstallUpdate, onAction }: { updateState: DesktopUpdateState; onInstallUpdate(): void; onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
+  const progress = updateState.status === "downloading" && updateState.totalBytes
+    ? Math.min(100, Math.round(updateState.receivedBytes / updateState.totalBytes * 100))
+    : null;
   return <header className="desktop-titlebar" aria-label="Window controls">
     <span className="desktop-titlebar-title">AllChat</span>
+    <div className="desktop-update-status" aria-live="polite">
+      {updateState.status === "downloading" && <span>Downloading {updateState.version}{progress === null ? "…" : ` · ${progress}%`}</span>}
+      {updateState.status === "ready" && <button className="desktop-upgrade-button" type="button" onClick={onInstallUpdate}>Upgrade to {updateState.version}</button>}
+      {updateState.status === "failed" && <span className="desktop-update-failed" title={updateState.message}>Update failed</span>}
+    </div>
     <nav>
       <button type="button" aria-label="Minimize window" title="Minimize" onClick={() => onAction("minimize")}><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8" /></svg></button>
       <button type="button" aria-label="Maximize window" title="Maximize" onClick={() => onAction("toggle-maximize")}><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.25" y="2.25" width="7.5" height="7.5" /></svg></button>

@@ -16,6 +16,13 @@ import type { InstanceAction } from '../shared/instance-actions';
 
 const bridge: DesktopBridge = Object.freeze({
   controlWindow: (action: WindowControlAction) => ipcRenderer.invoke(IPC_CHANNELS.windowControl, action),
+  getUpdateState: () => ipcRenderer.invoke(IPC_CHANNELS.updateGetState),
+  watchUpdateState: (listener: (state: import('../shared/desktop-bridge').DesktopUpdateState) => void) => {
+    const receive = (_event: Electron.IpcRendererEvent, state: import('../shared/desktop-bridge').DesktopUpdateState) => listener(state);
+    ipcRenderer.on(IPC_CHANNELS.updateStateChanged, receive);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.updateStateChanged, receive);
+  },
+  installUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
   setNotificationContext: (instanceId: string, conversationId: string | null) => ipcRenderer.send(IPC_CHANNELS.notificationContext, instanceId, conversationId),
   reportDiagnostic: (event: DesktopDiagnosticEvent, detail: string) => ipcRenderer.send(IPC_CHANNELS.diagnostic, event, detail),
   getShellState: () => ipcRenderer.invoke(IPC_CHANNELS.getShellState) as Promise<ShellState>,

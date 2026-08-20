@@ -44,6 +44,9 @@ export interface ShellState {
 
 export interface DesktopBridge {
   controlWindow?(action: WindowControlAction): Promise<void>;
+  getUpdateState?(): Promise<DesktopUpdateState>;
+  watchUpdateState?(listener: (state: DesktopUpdateState) => void): () => void;
+  installUpdate?(): Promise<void>;
   setNotificationContext?(instanceId: string, conversationId: string | null): void;
   reportDiagnostic?(event: DesktopDiagnosticEvent, detail: string): void;
   getShellState(): Promise<ShellState>;
@@ -62,10 +65,19 @@ export interface DesktopBridge {
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
 export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed';
 
+export type DesktopUpdateState =
+  | { status: 'idle' }
+  | { status: 'downloading'; version: string; receivedBytes: number; totalBytes: number | null }
+  | { status: 'ready'; version: string }
+  | { status: 'failed'; version: string; message: string };
+
 export interface DesktopMediaConnection { send(frame: unknown): void; close(): void }
 
 export const DESKTOP_BRIDGE_METHODS = [
   'controlWindow',
+  'getUpdateState',
+  'watchUpdateState',
+  'installUpdate',
   'setNotificationContext',
   'reportDiagnostic',
   'getShellState',
@@ -83,6 +95,9 @@ export const DESKTOP_BRIDGE_METHODS = [
 
 export const IPC_CHANNELS = {
   windowControl: 'allchat:window:control',
+  updateGetState: 'allchat:update:get-state',
+  updateStateChanged: 'allchat:update:state-changed',
+  updateInstall: 'allchat:update:install',
   notificationContext: 'allchat:notification:context',
   diagnostic: 'allchat:diagnostic',
   getShellState: 'allchat:shell:get-state',

@@ -17,6 +17,11 @@ export interface DesktopUpdate {
   checksums: ReleaseAsset;
 }
 
+export interface DesktopUpdateProgress {
+  receivedBytes: number;
+  totalBytes: number | null;
+}
+
 export function compareVersions(left: string, right: string): number {
   const normalize = (value: string) => value.replace(/^v/, '').split('-')[0].split('.').map((part) => Number(part));
   const a = normalize(left), b = normalize(right);
@@ -60,6 +65,7 @@ export async function downloadVerifiedUpdate(
   update: DesktopUpdate,
   directory: string,
   request: typeof fetch = fetch,
+  onProgress?: (progress: DesktopUpdateProgress) => void,
 ): Promise<string> {
   const checksumsResponse = await request(update.checksums.browser_download_url);
   if (!checksumsResponse.ok) throw new Error(`Checksum download returned HTTP ${checksumsResponse.status}.`);
@@ -71,7 +77,17 @@ export async function downloadVerifiedUpdate(
   const destination = availableDestination(directory, update.asset.name);
   const temporary = `${destination}.part`;
   const hash = createHash('sha256');
-  const meter = new Transform({ transform(chunk, _encoding, callback) { hash.update(chunk); callback(null, chunk); } });
+  const contentLengthHeader = response.headers.get('content-length');
+  const contentLength = contentLengthHeader === null ? Number.NaN : Number(contentLengthHeader);
+  const totalBytes = Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : null;
+  let receivedBytes = 0;
+  onProgress?.({ receivedBytes, totalBytes });
+  const meter = new Transform({ transform(chunk: Buffer, _encoding, callback) {
+    hash.update(chunk);
+    receivedBytes += chunk.length;
+    onProgress?.({ receivedBytes, totalBytes });
+    callback(null, chunk);
+  } });
   try {
     await pipeline(Readable.fromWeb(response.body as import('node:stream/web').ReadableStream), meter, createWriteStream(temporary, { flags: 'wx' }));
     const actual = hash.digest('hex');

@@ -21,6 +21,7 @@ import {
   IPC_CHANNELS,
   type AddInstanceInput,
   type DesktopDiagnosticEvent,
+  type DesktopUpdateState,
   type LoginInstanceInput,
   type RecoverInstanceInput,
   type RegisterInstanceInput,
@@ -39,6 +40,8 @@ let tray: Tray | null = null;
 let quitting = false;
 let trayPresence: TrayPresence = 'available';
 let offeredUpdateVersion = '';
+let desktopUpdateState: DesktopUpdateState = { status: 'idle' };
+let downloadedUpdatePath = '';
 let notificationContext = { instanceId: '', conversationId: '' };
 
 configureApplicationIdentity(app);
@@ -128,33 +131,36 @@ async function checkForDesktopUpdate(): Promise<void> {
   });
   if (choice.response !== 0) return;
   try {
-    const downloaded = await downloadVerifiedUpdate(update, app.getPath('downloads'));
-    if (process.platform === 'win32') {
-      const launch = await dialog.showMessageBox(window, {
-        type: 'info', title: 'Update ready', message: `AllChat ${update.version} was downloaded and verified.`,
-        detail: 'Close AllChat when the installer asks, then complete the upgrade.',
-        buttons: ['Open installer', 'Later'], defaultId: 0, cancelId: 1, noLink: true,
-      });
-      if (launch.response === 0) {
-        const error = await shell.openPath(downloaded);
-        if (error) throw new Error(error);
-      }
-    } else {
-      shell.showItemInFolder(downloaded);
-      await dialog.showMessageBox(window, {
-        type: 'info', title: 'Update downloaded', message: `AllChat ${update.version} was downloaded and verified.`,
-        detail: 'Replace the current application with the downloaded package to finish updating.',
-        buttons: ['OK'], noLink: true,
-      });
-    }
+    setDesktopUpdateState({ status: 'downloading', version: update.version, receivedBytes: 0, totalBytes: null });
+    let lastProgressAt = 0;
+    let lastPercentage = -1;
+    downloadedUpdatePath = await downloadVerifiedUpdate(update, app.getPath('downloads'), fetch, (progress) => {
+      const now = Date.now();
+      const percentage = progress.totalBytes ? Math.floor(progress.receivedBytes / progress.totalBytes * 100) : -1;
+      if (percentage === lastPercentage && now - lastProgressAt < 250 && progress.receivedBytes !== progress.totalBytes) return;
+      lastProgressAt = now;
+      lastPercentage = percentage;
+      setDesktopUpdateState({ status: 'downloading', version: update.version, ...progress });
+    });
+    setDesktopUpdateState({ status: 'ready', version: update.version });
   } catch (error) {
     console.error('AllChat desktop update download failed:', error);
-    const failure = await dialog.showMessageBox(window, {
-      type: 'error', title: 'Update failed', message: 'AllChat could not download and verify the update.',
-      detail: error instanceof Error ? error.message : String(error),
-      buttons: ['Open release page', 'Close'], defaultId: 0, cancelId: 1, noLink: true,
-    });
-    if (failure.response === 0) void shell.openExternal(update.pageUrl);
+    setDesktopUpdateState({ status: 'failed', version: update.version, message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+function setDesktopUpdateState(state: DesktopUpdateState): void {
+  desktopUpdateState = state;
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(IPC_CHANNELS.updateStateChanged, state);
+}
+
+async function installDownloadedUpdate(): Promise<void> {
+  if (desktopUpdateState.status !== 'ready' || !downloadedUpdatePath) throw new Error('No verified update is ready.');
+  const error = await shell.openPath(downloadedUpdatePath);
+  if (error) throw new Error(error);
+  if (process.platform === 'win32') {
+    quitting = true;
+    setTimeout(() => app.quit(), 750).unref();
   }
 }
 
@@ -243,6 +249,11 @@ async function updateTrayPresence(presence: TrayPresence): Promise<void> {
 function registerIpc(): void {
   const realtimeListeners = new Map<string, (state: import('../shared/instance-state').InstanceViewState) => void>();
   ipcMain.handle(IPC_CHANNELS.getShellState, () => registry.state());
+  ipcMain.handle(IPC_CHANNELS.updateGetState, () => desktopUpdateState);
+  ipcMain.handle(IPC_CHANNELS.updateInstall, (event) => {
+    if (event.sender !== mainWindow?.webContents) throw new Error('Update action is not authorized.');
+    return installDownloadedUpdate();
+  });
   ipcMain.on(IPC_CHANNELS.notificationContext, (event, instanceId: string, conversationId: string | null) => {
     if (event.sender !== mainWindow?.webContents) return;
     assertString(instanceId, 'Instance identity');

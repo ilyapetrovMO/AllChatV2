@@ -6,6 +6,9 @@ describe('DesktopBridge', () => {
   it('has a deliberately small, explicit capability list', () => {
     expect(DESKTOP_BRIDGE_METHODS).toEqual([
       'controlWindow',
+      'getUpdateState',
+      'watchUpdateState',
+      'installUpdate',
       'setNotificationContext',
       'reportDiagnostic',
       'getShellState',
@@ -25,6 +28,9 @@ describe('DesktopBridge', () => {
   it('rejects missing and additional renderer capabilities', () => {
     const valid = {
       controlWindow: async () => undefined,
+      getUpdateState: async () => ({ status: 'idle' as const }),
+      watchUpdateState: () => () => undefined,
+      installUpdate: async () => undefined,
       setNotificationContext: () => undefined,
       reportDiagnostic: () => undefined,
       getShellState: async () => ({ instances: [], activeInstanceId: null }),

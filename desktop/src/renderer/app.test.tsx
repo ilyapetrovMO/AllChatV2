@@ -95,11 +95,15 @@ describe('desktop renderer bootstrap', () => {
 
   it('renders the local shell and an empty Instance state', async () => {
     const controlWindow = vi.fn(async (_action: 'minimize' | 'toggle-maximize' | 'close') => undefined);
+    const installUpdate = vi.fn(async () => undefined);
     const addInstance = vi.fn(async () => ({ instances: [], activeInstanceId: null }));
     render(
       <App
         bridge={{
           controlWindow,
+          getUpdateState: async () => ({ status: 'ready', version: '0.1.64' }),
+          watchUpdateState: () => () => undefined,
+          installUpdate,
           getShellState: async () => ({ instances: [], activeInstanceId: null }),
           addInstance,
           selectInstance: async () => ({ instances: [], activeInstanceId: null }),
@@ -115,6 +119,8 @@ describe('desktop renderer bootstrap', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Add your first Instance' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Upgrade to 0.1.64' }));
+    expect(installUpdate).toHaveBeenCalledOnce();
     fireEvent.change(screen.getByLabelText('Community address'), { target: { value: 'ru.elitedarklord.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add Instance' }));
     await waitFor(() => expect(addInstance).toHaveBeenCalledWith({

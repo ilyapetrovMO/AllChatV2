@@ -12,6 +12,7 @@ import {
   loadAuthenticatedImage,
   mergeMessagePage,
   mediaParticipantAvatarDimension,
+  shouldRenderInlineCallBanner,
   MessageRow,
   trimMessageWindow,
   conversationKeyboardBehavior,
@@ -49,6 +50,15 @@ describe('native conversation timeline', () => {
       id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-1',
       recipient_id: 'member-2', state: 'ringing', created_at: '2030-01-01T00:00:00Z',
     })).toBeUndefined();
+  });
+  it('renders an incoming Direct Call only in the global banner', () => {
+    const incoming = {
+      id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-2',
+      recipient_id: 'member-1', state: 'ringing', created_at: '2030-01-01T00:00:00Z',
+    };
+    expect(shouldRenderInlineCallBanner(incoming, 'member-1')).toBe(false);
+    expect(shouldRenderInlineCallBanner(incoming, 'member-2')).toBe(true);
+    expect(shouldRenderInlineCallBanner({...incoming, state: 'accepted'}, 'member-1')).toBe(true);
   });
   it('resizes the conversation above Android keyboards', () => {
     expect(conversationKeyboardBehavior('android')).toBe('height');

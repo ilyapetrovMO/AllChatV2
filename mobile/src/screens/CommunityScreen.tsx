@@ -128,6 +128,10 @@ export function acceptedDirectCallConversationID(call?: DirectCall) {
   return call?.state === 'accepted' ? call.direct_message_id : undefined;
 }
 
+export function shouldRenderInlineCallBanner(call: DirectCall, currentMemberID: string) {
+  return call.state !== 'ringing' || call.recipient_id !== currentMemberID;
+}
+
 export function activeMediaParticipantIDs(
   selfID: string,
   participants: MediaParticipant[],
@@ -1061,7 +1065,7 @@ export function CommunityScreen({
                 <Settings color={palette.text} size={20} />
               </TouchableOpacity>
             </View>
-            {currentCall ? (
+            {currentCall && shouldRenderInlineCallBanner(currentCall, community.member.id) ? (
               <CallBanner
                 call={currentCall}
                 currentMemberID={community.member.id}
@@ -1426,7 +1430,7 @@ export function CommunityScreen({
               <Bell color={palette.text} size={20} />
             </TouchableOpacity>
           </View>
-          {currentCall?.direct_message_id === activeID ? (
+          {currentCall?.direct_message_id === activeID && shouldRenderInlineCallBanner(currentCall, community.member.id) ? (
             <CallBanner
               call={currentCall}
               currentMemberID={community.member.id}

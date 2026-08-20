@@ -15,9 +15,12 @@ describe('Electron Forge configuration', () => {
 
     expect(wix.config.ui).toMatchObject({ chooseDirectory: true });
     expect(wix.config.upgradeCode).toBe('6D524E61-564A-4E39-9D24-0A6D7B4D27EA');
+    expect(wix.config.icon).toMatch(/\.ico$/);
+    expect(fs.readFileSync(wix.config.icon!).subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
     const template = typeof wix.config.ui === 'object' ? wix.config.ui.template : undefined;
     expect(template).toBeTruthy();
-    const xml = fs.readFileSync(template!, 'utf8');
+    expect(template!.trimStart()).toMatch(/^</);
+    const xml = template!;
     expect(xml).toContain('WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch AllChat"');
     expect(xml).toContain('DialogRef Id="ProgressDlg"');
     expect(xml).toContain('Event="DoAction" Value="LaunchAllChat"');

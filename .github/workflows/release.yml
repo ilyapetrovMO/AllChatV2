@@ -20,11 +20,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -43,11 +43,11 @@ jobs:
             artifact_arch: armv7
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -64,7 +64,7 @@ jobs:
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-music-bot-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat-music-bot
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-push-relay-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat-push-relay
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: AllChat-server-linux-${{ matrix.artifact_arch || matrix.goarch }}
           path: dist/*
@@ -114,8 +114,8 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Install Linux GUI headers
@@ -196,7 +196,7 @@ jobs:
           if [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
             xcrun notarytool submit "dist/${executable}.app.zip" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: bootstrap-${{ matrix.platform }}-${{ matrix.goarch }}
           path: dist/*
@@ -210,8 +210,8 @@ jobs:
       ALLCHAT_FIREBASE_PROJECT_ID: ${{ secrets.ALLCHAT_FIREBASE_PROJECT_ID }}
       ALLCHAT_FIREBASE_SENDER_ID: ${{ secrets.ALLCHAT_FIREBASE_SENDER_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -229,7 +229,7 @@ jobs:
           version="${RELEASE_REF#v}"
           mkdir -p dist
           cp mobile/android/app/build/outputs/apk/standalone/app-standalone.apk "dist/AllChat-mobile-${version}-android-universal.apk"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: AllChat-mobile-android-universal
           path: dist/*
@@ -254,8 +254,8 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -287,7 +287,7 @@ jobs:
           source="$(find desktop/out/make -type f -name "*.${extension}" -print -quit)"
           test -n "$source"
           cp "$source" "dist/AllChat-desktop-${version}-${{ matrix.platform }}-${{ matrix.arch }}.${extension}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: AllChat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
@@ -297,10 +297,10 @@ jobs:
     needs: [linux-binaries, bootstrapper, android-apk, desktop]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           path: dist
           merge-multiple: true
@@ -337,7 +337,7 @@ jobs:
             exit 1
           fi
           sha256sum --check SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: AllChat-release-bundle
           path: dist/*
@@ -350,7 +350,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: AllChat-release-bundle
           path: dist

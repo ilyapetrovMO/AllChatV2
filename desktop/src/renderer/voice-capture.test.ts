@@ -58,4 +58,37 @@ describe('desktop voice capture', () => {
     expect(processedTrack.stop).toHaveBeenCalledOnce();
     expect(close).toHaveBeenCalledOnce();
   });
+
+  it('falls back to standard capture when RNNoise cannot initialize', async () => {
+    const firstTrack = { stop: vi.fn() };
+    const fallbackTrack = { stop: vi.fn() };
+    const processedTrack = { stop: vi.fn() };
+    const first = { getAudioTracks: () => [firstTrack], getTracks: () => [firstTrack] } as unknown as MediaStream;
+    const fallback = { getAudioTracks: () => [fallbackTrack], getTracks: () => [fallbackTrack] } as unknown as MediaStream;
+    const processed = { getAudioTracks: () => [processedTrack], getTracks: () => [processedTrack] } as unknown as MediaStream;
+    const connect = vi.fn(function (this: unknown) { return this; });
+    class FailingAudioContext {
+      audioWorklet = { addModule: vi.fn(async () => { throw new Error('worklet unavailable'); }) };
+      currentTime = 0;
+      createMediaStreamSource = () => ({ connect });
+      createGain = () => ({ connect, gain: { value: 1, setTargetAtTime: vi.fn() } });
+      createMediaStreamDestination = () => ({ stream: processed });
+      createAnalyser = () => ({ fftSize: 0, getFloatTimeDomainData: vi.fn() });
+      close = vi.fn(async () => undefined);
+    }
+    vi.stubGlobal('AudioContext', FailingAudioContext);
+    const getUserMedia = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(fallback);
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
+    saveDesktopVoicePreferences('member', {
+      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1,
+      noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
+      noiseGate: false, noiseGateThresholdDB: -50,
+    });
+
+    const capture = await captureDesktopMicrophone('member');
+    expect(capture.stream).toBe(processed);
+    expect(capture.enhanced).toBe(false);
+    expect(capture.compatibilityNotice).toContain('standard WebRTC suppression is active');
+    expect(firstTrack.stop).toHaveBeenCalledOnce();
+  });
 });

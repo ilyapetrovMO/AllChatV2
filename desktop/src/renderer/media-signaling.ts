@@ -17,6 +17,14 @@ export function mediaDisconnectMessage(firstFailure: string, closeReason: string
   return firstFailure || closeReason || 'Media signaling disconnected.';
 }
 
+export function desktopMediaOwnerID(trackID: string, streamID = ''): string {
+  for (const value of [streamID, trackID]) {
+    const match = /^(?:member|audio|screen)-(.+)$/.exec(value);
+    if (match) return match[1];
+  }
+  return '';
+}
+
 export function createMediaFrameQueue(
   peer: RTCPeerConnection,
   send: (frame: object) => void,

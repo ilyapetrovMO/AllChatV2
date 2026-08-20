@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, serializeSessionDescription } from './media-signaling';
+import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription } from './media-signaling';
 
 describe('desktop media signaling', () => {
+  it('attributes SFU media from its authoritative stream identity', () => {
+    expect(desktopMediaOwnerID('chromium-random-id', 'screen-member-2')).toBe('member-2');
+  });
   it('takes over a stale media lease when the user explicitly joins', () => {
     expect(createMediaJoinFrame('voice-room', { type: 'offer', sdp: 'offer' })).toMatchObject({
       type: 'join', room_id: 'voice-room', takeover: true,

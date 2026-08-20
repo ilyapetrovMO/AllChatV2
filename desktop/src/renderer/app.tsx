@@ -1,6 +1,6 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, type DesktopMediaFrame } from "./media-signaling";
+import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 import { insertMention, matchMention } from "./mentions";
 
@@ -21,11 +21,17 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   const [managingCommunities, setManagingCommunities] = useState(false);
   const [addingCommunity, setAddingCommunity] = useState(false);
   const [communityHomeRevision, setCommunityHomeRevision] = useState(0);
+  const [directCallActive, setDirectCallActive] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register" | "recover">("login");
 
   useEffect(() => {
     void bridge.getShellState().then(setState);
   }, [bridge]);
+  useEffect(() => {
+    const update = (event: Event) => setDirectCallActive(Boolean((event as CustomEvent<{ active?: boolean }>).detail?.active));
+    window.addEventListener("allchat:direct-call-active", update);
+    return () => window.removeEventListener("allchat:direct-call-active", update);
+  }, []);
 
   const active = state?.instances.find(
     ({ id }) => id === state.activeInstanceId,
@@ -268,6 +274,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           aria-label="Home"
           title="Home"
           aria-current={managingCommunities ? "page" : undefined}
+          disabled={directCallActive}
+          aria-description={directCallActive ? "End the active Direct Call before leaving this Community" : undefined}
           onClick={() => { setAddingCommunity(false); setManagingCommunities(true); }}
         >
           <Icon name="home" />
@@ -276,6 +284,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           <button
             className="instance-button"
             key={instance.id}
+            disabled={directCallActive}
             onClick={() => void bridge.selectInstance(instance.id).then((next) => {
               setState(next);
               setCommunityHomeRevision((value) => value + 1);
@@ -291,7 +300,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
 			{instance.avatarUrl ? <AuthenticatedImage path={instance.avatarUrl} alt="" className="instance-avatar" fallback={instance.displayName.slice(0, 1).toUpperCase()} onAction={(action) => bridge.executeInstance(instance.id, action)} /> : instance.displayName.slice(0, 1).toUpperCase()}
           </button>
         ))}
-        {state && <button className="instance-button add-instance-button" type="button" aria-label="Add Community" title="Add Community" onClick={() => { setAddingCommunity(true); setManagingCommunities(false); setError(""); }}><Icon name="plus" /></button>}
+        {state && <button className="instance-button add-instance-button" type="button" aria-label="Add Community" title="Add Community" disabled={directCallActive} onClick={() => { setAddingCommunity(true); setManagingCommunities(false); setError(""); }}><Icon name="plus" /></button>}
       </aside>
       <section className="content">
         {!state ? (
@@ -1379,7 +1388,7 @@ function CommunityShell({
                 ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
-                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} key={participant.member_id}>
+                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} data-media-member-id={participant.member_id} key={participant.member_id}>
                     <div className="media-stage-visual"><AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                     <strong>{name}</strong>
                     {participant.screen_sharing && <span>Sharing screen</span>}
@@ -1394,7 +1403,7 @@ function CommunityShell({
                   <div className="media-stage-grid" data-tile-count={2}>
                     {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
                       const name = memberName(participant);
-                      return <article className="media-stage-tile participant-tile" key={participant.id}>
+                      return <article className="media-stage-tile participant-tile" data-media-member-id={participant.id} key={participant.id}>
                         <div className="media-stage-visual"><AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                         <strong>{participant.id === state.member.id ? "You" : name}</strong>
                       </article>;
@@ -1928,9 +1937,15 @@ export function DirectCallControls({
   const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [status, setStatus] = useState("");
   const [muted, setMuted] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [soundboardOpen, setSoundboardOpen] = useState(false);
+  const [sounds, setSounds] = useState<import("../shared/instance-actions").SoundboardSound[]>([]);
+  const [outputVolume, setOutputVolume] = useState(() => loadDesktopVoicePreferences(currentMemberId).outputVolume);
+  const [localScreen, setLocalScreen] = useState<MediaStream | null>(null);
+  const [remoteScreens, setRemoteScreens] = useState<Record<string, MediaStream>>({});
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[]; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[] } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
   const connectionTimeout = useRef<number | null>(null);
@@ -1943,6 +1958,7 @@ export function DirectCallControls({
     active?.socket.close();
     active?.peer.close();
     active?.capture.stop();
+    active?.screen?.getTracks().forEach((track) => track.stop());
     active?.audio.forEach((element) => element.remove());
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
@@ -1950,6 +1966,10 @@ export function DirectCallControls({
     connectionTimeout.current = null;
     connectingRoom.current = null;
     setMuted(false);
+    setSharing(false);
+    setLocalScreen(null);
+    setRemoteScreens({});
+    setSoundboardOpen(false);
   };
 
   async function connect(activeCall: import("../shared/instance-actions").DirectCall): Promise<void> {
@@ -1985,19 +2005,42 @@ export function DirectCallControls({
       onAnswer: () => setStatus("Finishing media connection…"),
     });
     socket = await connectMedia(instanceId, (value) => {
+      const frame = value as DesktopMediaFrame & { sound_url?: string };
+      if (frame.type === "soundboard-played" && frame.sound_url) {
+        void onAction({ type: "load_asset", path: frame.sound_url }).then((result) => {
+          if (result?.type !== "asset") return;
+          const url = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
+          const element = new Audio(url);
+          element.volume = outputVolume;
+          element.onended = () => URL.revokeObjectURL(url);
+          void element.play().catch(() => URL.revokeObjectURL(url));
+        });
+      }
       void signaling.push(value as DesktopMediaFrame).catch((error) => {
         mediaFailure.current = error instanceof Error ? error.message : "Media signaling failed.";
         setStatus(mediaFailure.current);
       });
     }, (reason) => setStatus(mediaDisconnectMessage(mediaFailure.current, reason)));
-    media.current = { stream, capture, peer, socket, audio };
+    media.current = { stream, capture, peer, socket, audio, screenAudioSenders: [] };
     provisionalCapture = null;
     peer.ontrack = ({ streams, track }) => {
+      const remoteStream = streams[0] || new MediaStream([track]);
+      if (track.kind === "video") {
+        const fallbackOwner = activeCall.caller_id === currentMemberId ? activeCall.recipient_id : activeCall.caller_id;
+        const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
+        setRemoteScreens((current) => ({ ...current, [owner]: remoteStream }));
+        const remove = () => setRemoteScreens((current) => { if (current[owner] !== remoteStream) return current; const next = { ...current }; delete next[owner]; return next; });
+        track.addEventListener("ended", remove);
+        track.addEventListener("mute", remove);
+        track.addEventListener("unmute", () => setRemoteScreens((current) => ({ ...current, [owner]: remoteStream })));
+        return;
+      }
       if (track.kind !== "audio") return;
       const element = document.createElement("audio");
       element.autoplay = true;
-      element.srcObject = streams[0] || new MediaStream([track]);
+      element.srcObject = remoteStream;
       applyDesktopOutputPreferences(element, currentMemberId);
+      element.volume = outputVolume;
       document.body.append(element);
       audio.push(element);
       void element.play().catch(() => undefined);
@@ -2099,7 +2142,85 @@ export function DirectCallControls({
     setStatus("");
   }
 
+  async function stopScreenShare(): Promise<void> {
+    const active = media.current;
+    if (!active?.screen) return;
+    const screen = active.screen;
+    active.screen = undefined;
+    setLocalScreen(null);
+    screen.getTracks().forEach((track) => { track.onended = null; track.stop(); });
+    await active.screenSender?.replaceTrack(null);
+    active.screenAudioSenders.forEach((sender) => active.peer.removeTrack(sender));
+    active.screenAudioSenders = [];
+    active.socket.send({ version: 1, type: "video-stopped" });
+    setSharing(false);
+  }
+
+  async function toggleScreenShare(): Promise<void> {
+    const active = media.current;
+    if (!active) return;
+    if (active.screen) return stopScreenShare();
+    if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this operating system.");
+    const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    const video = screen.getVideoTracks()[0];
+    if (!video) { screen.getTracks().forEach((track) => track.stop()); throw new Error("No screen was selected."); }
+    const transceiver = active.screenSender
+      ? null
+      : active.peer.addTransceiver(video, { direction: "sendonly", streams: [screen] });
+    if (active.screenSender) await active.screenSender.replaceTrack(video);
+    active.screen = screen;
+    setLocalScreen(screen);
+    active.screenSender = transceiver?.sender || active.screenSender;
+    active.screenAudioSenders = screen.getAudioTracks().map((track) => active.peer.addTrack(track, screen));
+    video.onended = () => { void stopScreenShare(); };
+    const offer = await active.peer.createOffer();
+    await active.peer.setLocalDescription(offer);
+    await waitForIceGathering(active.peer);
+    active.socket.send({ version: 1, type: "offer", sdp: serializeSessionDescription(active.peer.localDescription) });
+    active.socket.send({ version: 1, type: "video-started" });
+    setSharing(true);
+  }
+
+  async function openSoundboard(): Promise<void> {
+    const result = await onAction({ type: "list_soundboard" });
+    if (result?.type === "soundboard") {
+      setSounds(result.sounds);
+      setSoundboardOpen(true);
+    }
+  }
+
+  function playSound(soundId: string): void {
+    media.current?.socket.send({ version: 1, type: "soundboard-play", sound_id: soundId });
+    setSoundboardOpen(false);
+  }
+
   const incoming = call?.state === "ringing" && call.recipient_id === currentMemberId;
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: Boolean(call) } }));
+    return () => { window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: false } })); };
+  }, [Boolean(call)]);
+  useEffect(() => {
+    if (!incoming || typeof AudioContext === "undefined") return;
+    const context = new AudioContext();
+    const pulse = () => {
+      void context.resume().then(() => {
+        const now = context.currentTime;
+        [523.25, 659.25].forEach((frequency, index) => {
+          const oscillator = context.createOscillator(), gain = context.createGain(), start = now + index * .12;
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(.0001, start);
+          gain.gain.exponentialRampToValueAtTime(.075, start + .02);
+          gain.gain.exponentialRampToValueAtTime(.0001, start + .24);
+          oscillator.connect(gain).connect(context.destination);
+          oscillator.start(start);
+          oscillator.stop(start + .25);
+        });
+      }).catch(() => undefined);
+    };
+    pulse();
+    const timer = window.setInterval(pulse, 2_200);
+    return () => { window.clearInterval(timer); void context.close().catch(() => undefined); };
+  }, [incoming, call?.id]);
   const connected = call?.state === "accepted" || !!voiceRoom;
   const controlSlot = document.getElementById("desktop-call-controls");
   const connectedControls = connected && controlSlot ? createPortal(
@@ -2109,19 +2230,42 @@ export function DirectCallControls({
         <span>{voiceRoom ? requestedVoiceRoomName : conversation?.name || "Direct Call"}</span>
       </div>
       <div className="voice-connection-actions">
+        <label className="voice-volume" title="Call volume"><Icon name="volume" /><input aria-label="Call volume" type="range" min="0" max="1" step="0.05" value={outputVolume} onChange={(event) => { const volume = Number(event.target.value); setOutputVolume(volume); saveDesktopVoicePreferences(currentMemberId, { ...loadDesktopVoicePreferences(currentMemberId), outputVolume: volume }); media.current?.audio.forEach((element) => { element.volume = volume; }); }} /></label>
+        <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
+        <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => setStatus(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>
         <button className={muted ? "voice-mute muted" : "voice-mute"} type="button" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute" : "Mute"} onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}><Icon name="mic" /></button>
         <button className="voice-hangup" type="button" aria-label={voiceRoom ? "Disconnect voice" : "End call"} title={voiceRoom ? "Disconnect Voice" : "End Call"} onClick={() => voiceRoom ? leaveVoice() : void act("end")}><Icon name="phone" /></button>
       </div>
     </section>,
     controlSlot,
   ) : null;
+  const incomingControls = incoming && controlSlot ? createPortal(<section className="voice-connection-panel incoming-call-panel" aria-label="Incoming Call controls"><div><strong>Incoming Direct Call</strong><span>{conversation?.name || "Member"}</span></div><div className="voice-connection-actions"><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></div></section>, controlSlot) : null;
+  const screenPortals = Object.entries({ ...remoteScreens, ...(localScreen ? { [currentMemberId]: localScreen } : {}) }).map(([memberId, stream]) => {
+    const tile = [...document.querySelectorAll<HTMLElement>("[data-media-member-id]")].find((element) => element.dataset.mediaMemberId === memberId);
+    const target = tile?.querySelector(".media-stage-visual");
+    return target ? createPortal(<MediaStreamVideo stream={stream} muted={memberId === currentMemberId} />, target, `screen-${memberId}`) : null;
+  });
   return <>
     {!call && !voiceRoom && conversation?.type === "dm" && <button className="header-button icon-button" type="button" aria-label="Start Call" title="Start Call" onClick={() => void start()}><Icon name="phone" /></button>}
-    {incoming && <><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept Call</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></>}
     {call && !incoming && call.state === "ringing" && <button className="call-end" type="button" onClick={() => void act("end")}>Cancel Call</button>}
     {!connected && status && <span className="call-status" role="status">{status}</span>}
     {connectedControls}
+    {incomingControls}
+    {screenPortals}
+    {soundboardOpen && <div className="desktop-soundboard" role="dialog" aria-label="Community soundboard"><header><strong>Soundboard</strong><button type="button" aria-label="Close soundboard" onClick={() => setSoundboardOpen(false)}><Icon name="x" /></button></header><div>{sounds.length ? sounds.map((sound) => <button type="button" key={sound.id} onClick={() => playSound(sound.id)}><span>{sound.emoji || "▶"}</span><strong>{sound.name}</strong></button>) : <span>No Community sounds have been added yet.</span>}</div></div>}
   </>;
+}
+
+function MediaStreamVideo({ stream, muted }: { stream: MediaStream; muted: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    element.srcObject = stream;
+    void element.play().catch(() => undefined);
+    return () => { if (element.srcObject === stream) element.srcObject = null; };
+  }, [stream]);
+  return <video ref={ref} className="desktop-shared-screen" autoPlay playsInline muted={muted} />;
 }
 
 export function waitForIceGathering(peer: RTCPeerConnection, timeoutMs = 2_000): Promise<void> {
@@ -2510,6 +2654,8 @@ type IconName =
   | "home"
   | "messages"
   | "mic"
+  | "monitor"
+  | "music"
   | "paperclip"
   | "phone"
   | "plus"
@@ -2558,6 +2704,19 @@ function Icon({ name }: { name: IconName }) {
         <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
         <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
         <line x1="12" x2="12" y1="19" y2="22" />
+      </>
+    ),
+    monitor: (
+      <>
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </>
+    ),
+    music: (
+      <>
+        <path d="M9 18V5l11-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="17" cy="16" r="3" />
       </>
     ),
     paperclip: (

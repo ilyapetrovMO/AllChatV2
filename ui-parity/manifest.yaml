@@ -156,6 +156,13 @@ screens:
         status: partial
       - id: active-call
         status: partial
+        evidence: renderer-global-direct-call-controls
+      - id: incoming-ringtone
+        status: partial
+        evidence: renderer-desktop-in-app-ringtone
+      - id: screen-sharing
+        status: partial
+        evidence: renderer-desktop-screen-share-owner-routing
       - id: call-error
         status: partial
 
@@ -173,6 +180,15 @@ screens:
       - id: connected
         status: partial
         evidence: renderer-bottom-left-voice-connection-controls
+      - id: inline-volume
+        status: partial
+        evidence: renderer-bottom-left-call-volume
+      - id: screen-sharing
+        status: partial
+        evidence: renderer-desktop-screen-share-owner-routing
+      - id: soundboard-playback
+        status: partial
+        evidence: renderer-desktop-soundboard-controls
       - id: participant-list
         status: verified
         evidence: renderer-all-voice-channel-participant-polling

@@ -472,6 +472,7 @@ describe('desktop renderer bootstrap', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Start Call' })).toBeVisible());
     fireEvent.click(screen.getByRole('button', { name: 'Start Call' }));
     const directCallGrid = await screen.findByRole('region', { name: 'Direct Call grid' });
+    expect(screen.getByRole('button', { name: 'Home' })).toBeDisabled();
     expect(directCallGrid).toBeVisible();
     expect(directCallGrid.closest('.direct-call-workspace')).toBeTruthy();
     expect(directCallGrid.closest('.message-list')).toBeNull();
@@ -480,6 +481,7 @@ describe('desktop renderer bootstrap', () => {
     expect(within(directCallGrid).getByText('You')).toBeVisible();
     expect(screen.getByLabelText('alex Messages')).toBeVisible();
     fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Home' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Direct Messages' }));
     expect(screen.getByRole('heading', { name: 'Direct Messages', level: 1 })).toBeVisible();
     fireEvent.change(screen.getByLabelText('Start a Direct Message'), { target: { value: 'alex' } });
@@ -492,6 +494,9 @@ describe('desktop renderer bootstrap', () => {
     const voiceControls = screen.getByRole('region', { name: 'Voice controls' });
     expect(within(voiceControls).getByRole('button', { name: 'Disconnect voice' })).toBeVisible();
     expect(within(voiceControls).getByRole('button', { name: 'Mute microphone' })).toBeVisible();
+    expect(within(voiceControls).getByRole('button', { name: 'Share screen' })).toBeVisible();
+    expect(within(voiceControls).getByRole('button', { name: 'Open soundboard' })).toBeVisible();
+    expect(within(voiceControls).getByRole('slider', { name: 'Call volume' })).toBeVisible();
     expect(voiceControls.parentElement?.nextElementSibling).toHaveClass('member-panel');
     const conversationHeader = document.querySelector('.conversation-content > header') as HTMLElement;
     expect(within(conversationHeader).queryByRole('button', { name: 'Disconnect voice' })).not.toBeInTheDocument();

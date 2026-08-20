@@ -36,7 +36,9 @@ Desktop now reports throttled Member activity over realtime, exposes the web-sty
 ### Voice Room
 
 - ✅ First click connects in place, a second click opens the connected room, and participants are polled and shown beneath every Voice Channel without selecting it.
-- ✅ Connected Call and Voice controls occupy the web-style bottom-left connection panel; connected-state actions are absent from the conversation header.
+- ✅ Connected Call and Voice controls occupy the web-style bottom-left connection panel; volume, screen sharing, soundboard, mute, and disconnect are inline there, and connected-state actions are absent from the conversation header.
+- ✅ Going Home explicitly disconnects the active Voice Room instead of leaving stale local membership.
+- ⚠️ Desktop screen-share publication, teardown, authoritative SFU owner attribution, and participant-tile rendering are implemented and unit-verified; a packaged two-peer visual run remains.
 - ⚠️ Participant stage, anchored participant menus, moderation, and disconnect transport exist, but connected and failure states are not visually verified across two packaged clients.
 
 ### Message interactions
@@ -73,7 +75,7 @@ Desktop now reports throttled Member activity over realtime, exposes the web-sty
 ### Direct Messages and calls
 
 - ✅ Default Direct Message layout and visuals pass the packaged cross-client comparison.
-- ⚠️ DM navigation, messaging, outgoing/incoming calls, and media transport exist.
+- ⚠️ DM navigation, messaging, outgoing/incoming calls, ringtone, inline volume, screen sharing, soundboard, and media transport exist. An active Call disables Community switching and exposes persistent sidebar controls; packaged multi-peer verification remains.
 - ⚠️ Blocked-member behavior and DM Home exist; empty and rendered states remain incomplete.
 - ⚠️ Two-client call states and recovery/error behavior need deterministic verification.
 

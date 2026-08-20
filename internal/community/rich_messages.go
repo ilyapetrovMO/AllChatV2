@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"allchat/internal/identity"
@@ -362,15 +361,47 @@ func (s *Service) SetReaction(ctx context.Context, member identity.Member, messa
 }
 
 func validEmoji(value string) bool {
-	if value == "" || utf8.RuneCountInString(value) > 12 {
+	if value == "" || !utf8.ValidString(value) || utf8.RuneCountInString(value) > 12 {
 		return false
 	}
+	hasBase := false
+	hasKeycap := false
 	for _, r := range value {
-		if unicode.Is(unicode.So, r) || unicode.Is(unicode.Sk, r) {
-			return true
+		if emojiBaseRune(r) {
+			hasBase = true
+			continue
+		}
+		if r == '\u20e3' {
+			hasKeycap = true
+			continue
+		}
+		if !emojiComponentRune(r) {
+			return false
 		}
 	}
-	return false
+	if len(value) == 1 && (value[0] == '#' || value[0] == '*' || value[0] >= '0' && value[0] <= '9') {
+		return false
+	}
+	return hasBase && (!strings.ContainsAny(value, "#*0123456789") || hasKeycap)
+}
+
+func emojiBaseRune(r rune) bool {
+	return r == 0x00a9 || r == 0x00ae || r == 0x203c || r == 0x2049 || r == 0x2122 || r == 0x2139 ||
+		inRuneRange(r, 0x2194, 0x2199) || inRuneRange(r, 0x21a9, 0x21aa) ||
+		inRuneRange(r, 0x231a, 0x231b) || r == 0x2328 || r == 0x23cf || inRuneRange(r, 0x23e9, 0x23f3) || inRuneRange(r, 0x23f8, 0x23fa) ||
+		r == 0x24c2 || inRuneRange(r, 0x25aa, 0x25ab) || r == 0x25b6 || r == 0x25c0 || inRuneRange(r, 0x25fb, 0x25fe) ||
+		inRuneRange(r, 0x2600, 0x27ff) || inRuneRange(r, 0x2934, 0x2935) || inRuneRange(r, 0x2b05, 0x2b07) ||
+		inRuneRange(r, 0x2b1b, 0x2b1c) || r == 0x2b50 || r == 0x2b55 || r == 0x3030 || r == 0x303d || r == 0x3297 || r == 0x3299 ||
+		inRuneRange(r, 0x1f000, 0x1faff) || r == '#' || r == '*' || inRuneRange(r, '0', '9')
+}
+
+func emojiComponentRune(r rune) bool {
+	return r == 0x200d || r == 0xfe0e || r == 0xfe0f || inRuneRange(r, 0x1f3fb, 0x1f3ff) ||
+		inRuneRange(r, 0xe0020, 0xe007f)
+}
+
+func inRuneRange(r, first, last rune) bool {
+	return r >= first && r <= last
 }
 
 func (s *Service) SetPinned(ctx context.Context, member identity.Member, messageID string, pinned bool) error {

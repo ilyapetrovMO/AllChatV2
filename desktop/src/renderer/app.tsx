@@ -2070,12 +2070,24 @@ function EmojiPicker({
   reactions: NonNullable<InstanceViewState["messages"][string][number]["reactions"]>;
   onSelect(emoji: string, active: boolean): void;
 }) {
+  const [customEmoji, setCustomEmoji] = useState("");
+  const submitCustomEmoji = () => {
+    const emoji = customEmoji.trim();
+    if (!emoji || Array.from(emoji).length > 12) return;
+    const selected = reactions.some((reaction) => reaction.emoji === emoji && reaction.me);
+    onSelect(emoji, !selected);
+  };
   return (
     <div className="emoji-picker" role="menu" aria-label="Choose a Reaction" data-reaction-picker>
       {reactionEmojis.map((emoji) => {
         const selected = reactions.some((reaction) => reaction.emoji === emoji && reaction.me);
         return <button key={emoji} type="button" role="menuitemcheckbox" aria-checked={selected} aria-label={`${selected ? "Remove" : "Add"} ${emoji} Reaction`} onClick={() => onSelect(emoji, !selected)}>{emoji}</button>;
       })}
+      <label className="emoji-picker-custom">
+        <span className="sr-only">Custom Reaction</span>
+        <input aria-label="Custom Reaction" value={customEmoji} maxLength={32} placeholder="Paste emoji" onChange={(event) => setCustomEmoji(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); submitCustomEmoji(); } }} />
+        <button type="button" aria-label="Add Custom Reaction" disabled={!customEmoji.trim()} onClick={submitCustomEmoji}>+</button>
+      </label>
     </div>
   );
 }

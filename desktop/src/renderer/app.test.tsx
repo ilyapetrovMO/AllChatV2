@@ -186,7 +186,7 @@ describe('desktop renderer bootstrap', () => {
           messages: {
             chat: [{
               id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora',
-              sequence: 1, body: 'Desktop parity starts here https://example.com/story\n```json ["123", "321"] ```', created_at: '2026-08-18T09:00:00Z', deleted: false,
+              sequence: 1, body: 'Desktop parity starts here 🇺🇦 👩🏽‍💻 👨‍👩‍👧‍👦 1️⃣ 🏳️‍🌈 https://example.com/story\n```json ["123", "321"] ```', created_at: '2026-08-18T09:00:00Z', deleted: false,
               attachments: [{ id: 'media-1', name: 'landscape.png', content_type: 'image/png', size: 1024, url: '/api/v1/attachments/media-1', preview_url: '/api/v1/attachments/media-1/preview' }],
             }],
           },
@@ -261,6 +261,7 @@ describe('desktop renderer bootstrap', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'lobby' }));
     expect(screen.getByRole('heading', { name: 'lobby' })).toBeVisible();
+    expect(screen.getByText(/Desktop parity starts here 🇺🇦 👩🏽‍💻 👨‍👩‍👧‍👦 1️⃣ 🏳️‍🌈/)).toBeVisible();
     const messageSearch = screen.getByLabelText('Search Messages');
     fireEvent.focus(messageSearch);
     fireEvent.click(within(screen.getByRole('menu', { name: 'Search filters' })).getByRole('menuitem', { name: /Includes a file/ }));
@@ -330,11 +331,20 @@ describe('desktop renderer bootstrap', () => {
     }));
     expect(screen.queryByRole('button', { name: '👍 1' })).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'React' }));
+    const customReaction = screen.getByLabelText('Custom Reaction');
+    fireEvent.change(customReaction, { target: { value: '🇺🇦' } });
+    fireEvent.keyDown(customReaction, { key: 'Enter', code: 'Enter' });
+    await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
+      type: 'set_reaction', messageId: 'message-1', emoji: '🇺🇦', active: true,
+    }));
+
     const messageInput = screen.getByLabelText('Message lobby');
-    fireEvent.change(messageInput, { target: { value: 'Sent with Enter' } });
+    const emojiMessage = 'Flags 🇺🇦 🇯🇵 · skin 👩🏽‍💻 · family 👨‍👩‍👧‍👦 · keycap 1️⃣ · rainbow 🏳️‍🌈';
+    fireEvent.change(messageInput, { target: { value: emojiMessage } });
     fireEvent.keyDown(messageInput, { key: 'Enter', code: 'Enter' });
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
-      type: 'send_message', conversationId: 'chat', direct: false, body: 'Sent with Enter', attachmentIds: [],
+      type: 'send_message', conversationId: 'chat', direct: false, body: emojiMessage, attachmentIds: [],
     }));
     const sendsAfterEnter = executeInstance.mock.calls.filter(([, action]) => action.type === 'send_message').length;
     fireEvent.change(messageInput, { target: { value: 'First line' } });

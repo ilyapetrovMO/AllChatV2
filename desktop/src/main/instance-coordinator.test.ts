@@ -196,6 +196,7 @@ describe('InstanceCoordinator', () => {
   });
 
   it('publishes a Message through the authenticated action interface', async () => {
+    const emojiMessage = 'Flags 🇺🇦 🇯🇵 · skin 👩🏽‍💻 · family 👨‍👩‍👧‍👦 · keycap 1️⃣ · rainbow 🏳️‍🌈';
     const registry = new InstanceRegistry(() => 'home');
     registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
     registry.setSession('home', 'desktop-session:home', {
@@ -205,32 +206,32 @@ describe('InstanceCoordinator', () => {
     await vault.put('desktop-session:home', 'token');
     const request = vi.fn(async () => new Response(JSON.stringify({
       id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora',
-      sequence: 1, body: 'hello desktop', created_at: '2026-08-18T09:00:00Z', deleted: false,
+      sequence: 1, body: emojiMessage, created_at: '2026-08-18T09:00:00Z', deleted: false,
     }), { status: 200 }));
     const coordinator = new InstanceCoordinator(registry, vault, request);
 
     const result = await coordinator.execute('home', {
-      type: 'send_message', conversationId: 'chat', direct: false, body: 'hello desktop',
+      type: 'send_message', conversationId: 'chat', direct: false, body: emojiMessage,
     });
 
     expect(result.type).toBe('message');
     expect(request).toHaveBeenCalledWith('https://chat.example/api/v1/channels/chat/messages', {
       method: 'POST',
       headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: 'hello desktop' }),
+      body: JSON.stringify({ body: emojiMessage }),
     });
 
-    await coordinator.execute('home', { type: 'set_reaction', messageId: 'message-1', emoji: '👍', active: true });
+    await coordinator.execute('home', { type: 'set_reaction', messageId: 'message-1', emoji: '🇺🇦', active: true });
     expect(request).toHaveBeenLastCalledWith('https://chat.example/api/v1/messages/message-1/reactions', {
       method: 'PUT',
       headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emoji: '👍' }),
+      body: JSON.stringify({ emoji: '🇺🇦' }),
     });
-    await coordinator.execute('home', { type: 'set_reaction', messageId: 'message-1', emoji: '👍', active: false });
+    await coordinator.execute('home', { type: 'set_reaction', messageId: 'message-1', emoji: '🇺🇦', active: false });
     expect(request).toHaveBeenLastCalledWith('https://chat.example/api/v1/messages/message-1/reactions', {
       method: 'DELETE',
       headers: { Authorization: 'Bearer token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emoji: '👍' }),
+      body: JSON.stringify({ emoji: '🇺🇦' }),
     });
   });
 

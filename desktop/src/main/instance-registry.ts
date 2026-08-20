@@ -63,11 +63,11 @@ export class InstanceRegistry {
     this.persist();
   }
 
-  rename(id: string, displayName: string): void {
+  updateCommunityIdentity(id: string, displayName: string, avatarUrl?: string): void {
     const profile = this.get(id);
     const normalized = displayName.trim();
-    if (!normalized || normalized === profile.displayName) return;
-    this.#profiles.set(id, Object.freeze({ ...profile, displayName: normalized }));
+	if (!normalized || (normalized === profile.displayName && avatarUrl === profile.avatarUrl)) return;
+	this.#profiles.set(id, Object.freeze({ ...profile, displayName: normalized, ...(avatarUrl ? { avatarUrl } : { avatarUrl: undefined }) }));
     this.persist();
   }
 

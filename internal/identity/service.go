@@ -51,6 +51,7 @@ type Member struct {
 	AvatarURL   string `json:"avatar_url,omitempty"`
 	BannerURL   string `json:"banner_url,omitempty"`
 	Owner       bool   `json:"owner"`
+	Disabled    bool   `json:"disabled,omitempty"`
 }
 
 type SessionCredentials struct {
@@ -197,19 +198,19 @@ func (s *Service) Authenticate(ctx context.Context, username, password, source, 
 	var member Member
 	var passwordHash string
 	var hasAvatar, hasBanner bool
-	var suspendedUntil sql.NullString
+	var suspendedUntil, disabledAt sql.NullString
 	err := s.db.QueryRowContext(ctx, `
 		SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL, m.password_hash,
-		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id), m.suspended_until
+		       EXISTS(SELECT 1 FROM community c WHERE c.id = 1 AND c.owner_member_id = m.id), m.suspended_until, m.disabled_at
 		FROM members m WHERE m.username_key = ?`, usernameKey(username)).
-		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &passwordHash, &member.Owner, &suspendedUntil)
+		Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &passwordHash, &member.Owner, &suspendedUntil, &disabledAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		passwordHash = s.dummyHash
 	} else if err != nil {
 		return Member{}, SessionCredentials{}, fmt.Errorf("find Member: %w", err)
 	}
 	valid, err := verifyPassword(password, passwordHash)
-	if err != nil || !valid || member.ID == "" || (suspendedUntil.Valid && suspendedUntil.String > databaseTime(s.now())) {
+	if err != nil || !valid || member.ID == "" || disabledAt.Valid || (suspendedUntil.Valid && suspendedUntil.String > databaseTime(s.now())) {
 		s.limiter.Failed(key, s.now())
 		s.limiter.Failed(sourceKey, s.now())
 		return Member{}, SessionCredentials{}, ErrInvalidCredentials
@@ -243,6 +244,7 @@ func (s *Service) MemberForSession(ctx context.Context, token string) (Member, e
 		FROM sessions s JOIN members m ON m.id = s.member_id
 		WHERE s.token_hash = ? AND s.csrf_token_hash IS NOT NULL
 		  AND s.revoked_at IS NULL AND s.expires_at > ?
+		  AND m.disabled_at IS NULL
 		  AND (m.suspended_until IS NULL OR m.suspended_until <= ?)`,
 		hash[:], databaseTime(s.now()), databaseTime(s.now())).Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Owner)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -341,6 +343,7 @@ func (s *Service) MemberProfile(ctx context.Context, memberID string) (Member, e
 
 func (s *Service) ListMembers(ctx context.Context) ([]Member, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT m.id, m.username, COALESCE(m.display_name, ''), m.avatar IS NOT NULL, m.banner IS NOT NULL,
+		m.disabled_at IS NOT NULL,
 		EXISTS(SELECT 1 FROM community c WHERE c.owner_member_id = m.id)
 		FROM members m ORDER BY m.username_key`)
 	if err != nil {
@@ -351,7 +354,7 @@ func (s *Service) ListMembers(ctx context.Context) ([]Member, error) {
 	for rows.Next() {
 		var member Member
 		var hasAvatar, hasBanner bool
-		if err := rows.Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Owner); err != nil {
+		if err := rows.Scan(&member.ID, &member.Username, &member.DisplayName, &hasAvatar, &hasBanner, &member.Disabled, &member.Owner); err != nil {
 			return nil, err
 		}
 		if hasAvatar {
@@ -363,6 +366,104 @@ func (s *Service) ListMembers(ctx context.Context) ([]Member, error) {
 		members = append(members, member)
 	}
 	return members, rows.Err()
+}
+
+func (s *Service) SetMemberDisabled(ctx context.Context, actor, target Member, disabled bool) error {
+	if !actor.Owner || target.Owner || actor.ID == target.ID {
+		return ErrForbidden
+	}
+	value := any(nil)
+	if disabled {
+		value = databaseTime(s.now())
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, "UPDATE members SET disabled_at=? WHERE id=?", value, target.ID); err != nil {
+		return err
+	}
+	if disabled {
+		if _, err = tx.ExecContext(ctx, "UPDATE sessions SET revoked_at=? WHERE member_id=? AND revoked_at IS NULL", databaseTime(s.now()), target.ID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func (s *Service) IsMemberDisabled(ctx context.Context, memberID string) bool {
+	var disabled bool
+	_ = s.db.QueryRowContext(ctx, "SELECT disabled_at IS NOT NULL FROM members WHERE id=?", memberID).Scan(&disabled)
+	return disabled
+}
+
+func (s *Service) DeleteMember(ctx context.Context, actor, target Member) error {
+	if !actor.Owner || target.Owner || actor.ID == target.ID {
+		return ErrForbidden
+	}
+	attachmentFiles, err := memberStorageNames(ctx, s.db, "SELECT storage_name FROM attachments WHERE uploader_id=?", target.ID)
+	if err != nil {
+		return err
+	}
+	soundFiles, err := memberStorageNames(ctx, s.db, "SELECT storage_name FROM soundboard_sounds WHERE uploader_id=?", target.ID)
+	if err != nil {
+		return err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, "UPDATE reports SET resolved_by=NULL WHERE resolved_by=?", target.ID); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, `DELETE FROM moderation_records WHERE report_id IN (SELECT id FROM reports WHERE reporter_id=? OR target_member_id=? OR target_message_id IN (SELECT id FROM messages WHERE author_id=?))`, target.ID, target.ID, target.ID); err != nil {
+		return err
+	}
+	for _, statement := range []string{
+		`DELETE FROM moderation_records WHERE actor_id=? OR target_member_id=?`, `DELETE FROM reports WHERE reporter_id=? OR target_member_id=?`,
+		`DELETE FROM invitations WHERE created_by=?`, `DELETE FROM pinned_messages WHERE pinned_by=?`, `DELETE FROM soundboard_sounds WHERE uploader_id=?`,
+		`DELETE FROM reports WHERE target_message_id IN (SELECT id FROM messages WHERE author_id=?)`, `DELETE FROM attachments WHERE uploader_id=?`,
+		`DELETE FROM messages WHERE author_id=?`, `DELETE FROM members WHERE id=?`,
+	} {
+		args := []any{target.ID}
+		if strings.Contains(statement, " OR ") {
+			args = []any{target.ID, target.ID}
+		}
+		if _, err = tx.ExecContext(ctx, statement, args...); err != nil {
+			return fmt.Errorf("delete Member data: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	for _, name := range attachmentFiles {
+		_ = os.Remove(filepath.Join(s.dataDir, "attachments", name))
+		_ = os.Remove(filepath.Join(s.dataDir, "attachments", name+".preview.jpg"))
+		_ = os.Remove(filepath.Join(s.dataDir, "attachments", name+".preview.png"))
+	}
+	for _, name := range soundFiles {
+		_ = os.Remove(filepath.Join(s.dataDir, "soundboard", name))
+	}
+	return nil
+}
+
+func memberStorageNames(ctx context.Context, db *sql.DB, query, memberID string) ([]string, error) {
+	rows, err := db.QueryContext(ctx, query, memberID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		names = append(names, name)
+	}
+	return names, rows.Err()
 }
 
 func (s *Service) UpdateProfile(ctx context.Context, memberID, username, displayName string) (Member, error) {

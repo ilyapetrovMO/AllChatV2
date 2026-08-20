@@ -40,7 +40,7 @@ func (s *Service) ListSounds(ctx context.Context, member identity.Member) ([]Sou
 	if err != nil {
 		return nil, settings, err
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT id,name,emoji,content_type,size,duration_ms,position FROM soundboard_sounds ORDER BY position,name`)
+	rows, err := s.db.QueryContext(ctx, `SELECT soundboard_sounds.id,name,emoji,content_type,size,duration_ms,position FROM soundboard_sounds JOIN members uploader ON uploader.id=soundboard_sounds.uploader_id WHERE uploader.disabled_at IS NULL ORDER BY position,name`)
 	if err != nil {
 		return nil, settings, err
 	}
@@ -162,7 +162,7 @@ func (s *Service) DeleteSound(ctx context.Context, actor identity.Member, id str
 }
 func (s *Service) sound(ctx context.Context, id string) (SoundboardSound, error) {
 	var item SoundboardSound
-	err := s.db.QueryRowContext(ctx, "SELECT id,name,emoji,content_type,size,duration_ms,position FROM soundboard_sounds WHERE id=?", id).Scan(&item.ID, &item.Name, &item.Emoji, &item.ContentType, &item.Size, &item.DurationMS, &item.Position)
+	err := s.db.QueryRowContext(ctx, "SELECT soundboard_sounds.id,name,emoji,content_type,size,duration_ms,position FROM soundboard_sounds JOIN members uploader ON uploader.id=soundboard_sounds.uploader_id WHERE soundboard_sounds.id=? AND uploader.disabled_at IS NULL", id).Scan(&item.ID, &item.Name, &item.Emoji, &item.ContentType, &item.Size, &item.DurationMS, &item.Position)
 	if err != nil {
 		return item, ErrNotFound
 	}

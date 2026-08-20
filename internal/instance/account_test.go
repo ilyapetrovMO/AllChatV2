@@ -65,6 +65,62 @@ func TestAccountDeletionAnonymizesMemberRevokesAccessAndPreservesMessages(t *tes
 	}
 }
 
+func TestOwnerCanDisableRestoreAndPermanentlyDeleteMember(t *testing.T) {
+	directory := t.TempDir()
+	db, err := openDatabase(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err = initializeSchema(db); err != nil {
+		t.Fatal(err)
+	}
+	ident, err := identity.New(db, directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token, _ := ident.BootstrapToken(context.Background())
+	owner, _, err := ident.Bootstrap(context.Background(), token, "owner-user", "owner password long enough", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	communityService := community.New(db, directory)
+	defer communityService.Close()
+	invite, err := communityService.CreateInvitation(context.Background(), owner, community.InvitationInput{ExpiresInMinutes: 60, MaxUses: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	member, credentials, err := ident.Register(context.Background(), invite.Token, "member-user", "member password long enough", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = ident.SetMemberDisabled(context.Background(), owner, member, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ident.MemberForSession(context.Background(), credentials.Token); err != identity.ErrInvalidCredentials {
+		t.Fatalf("disabled Session error=%v", err)
+	}
+	if _, _, err = ident.Authenticate(context.Background(), member.Username, "member password long enough", "test", "test"); err != identity.ErrInvalidCredentials {
+		t.Fatalf("disabled login error=%v", err)
+	}
+	if err = ident.SetMemberDisabled(context.Background(), owner, member, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = ident.Authenticate(context.Background(), member.Username, "member password long enough", "test", "test"); err != nil {
+		t.Fatalf("restored login: %v", err)
+	}
+	if err = ident.DeleteMember(context.Background(), owner, member); err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	if err = db.QueryRow("SELECT COUNT(*) FROM members WHERE id=?", member.ID).Scan(&count); err != nil || count != 0 {
+		t.Fatalf("deleted Member count=%d error=%v", count, err)
+	}
+	if err = ident.DeleteMember(context.Background(), owner, owner); err != identity.ErrForbidden {
+		t.Fatalf("Owner deletion error=%v", err)
+	}
+}
+
 func TestMemberExportExcludesAuthoredMessagesInHiddenChannels(t *testing.T) {
 	directory := t.TempDir()
 	db, err := openDatabase(directory)

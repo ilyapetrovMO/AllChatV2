@@ -3,15 +3,18 @@ package instance
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
 	"html/template"
+	"io"
 	"net/http"
 	"strconv"
 )
 
 type communitySettingsView struct {
 	Name             string `json:"name"`
+	AvatarURL        string `json:"avatar_url,omitempty"`
 	MaxAttachmentMiB int64  `json:"max_attachment_mib"`
 	HomeMarkdown     string `json:"home_markdown"`
 	PushRelayURL     string `json:"push_relay_url"`
@@ -44,10 +47,75 @@ func (i *Instance) communitySettingsAPI(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, communitySettingsView{
-		Name: name, MaxAttachmentMiB: i.community.MaxAttachmentBytes() / (1 << 20), HomeMarkdown: home,
+		Name: name, AvatarURL: communityAvatarURL(i.community.HasCommunityAvatar(r.Context())), MaxAttachmentMiB: i.community.MaxAttachmentBytes() / (1 << 20), HomeMarkdown: home,
 		PushRelayURL: relayURL, PushKeyID: i.mobilePush.keyID,
 		PushPublicKey: base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey),
 	})
+}
+
+func communityAvatarURL(exists bool) string {
+	if exists {
+		return "/api/v1/community-avatar"
+	}
+	return ""
+}
+
+func (i *Instance) updateCommunityAvatarAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticatedCSRF(w, r)
+	if !ok {
+		return
+	}
+	if !member.Owner {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "permission denied"})
+		return
+	}
+	data, err := io.ReadAll(io.LimitReader(r.Body, (8<<20)+1))
+	if err != nil {
+		writeJSON(w, 400, map[string]string{"error": "invalid avatar"})
+		return
+	}
+	if err := i.community.SetCommunityAvatar(r.Context(), http.DetectContentType(data), data); err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (i *Instance) removeCommunityAvatarAPI(w http.ResponseWriter, r *http.Request) {
+	member, _, ok := i.authenticatedCSRF(w, r)
+	if !ok {
+		return
+	}
+	if !member.Owner {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "permission denied"})
+		return
+	}
+	if err := i.community.RemoveCommunityAvatar(r.Context()); err != nil {
+		writeCommunityError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (i *Instance) communityAvatarAPI(w http.ResponseWriter, r *http.Request) {
+	if _, _, ok := i.authenticated(w, r); !ok {
+		return
+	}
+	data, contentType, err := i.community.CommunityAvatar(r.Context())
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	digest := sha256.Sum256(data)
+	etag := `"` + base64.RawURLEncoding.EncodeToString(digest[:12]) + `"`
+	w.Header().Set("ETag", etag)
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "private, max-age=3600")
+	_, _ = w.Write(data)
 }
 
 func (i *Instance) updateCommunitySettingsAPI(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +154,7 @@ func (i *Instance) updateCommunitySettingsAPI(w http.ResponseWriter, r *http.Req
 		return
 	}
 	input.PushRelayURL = pushConfig.PushRelayURL
+	input.AvatarURL = communityAvatarURL(i.community.HasCommunityAvatar(r.Context()))
 	input.PushKeyID = i.mobilePush.keyID
 	input.PushPublicKey = base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey)
 	writeJSON(w, http.StatusOK, input)

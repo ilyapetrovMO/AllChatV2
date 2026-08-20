@@ -30,7 +30,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 27
+const schemaVersion = 28
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -937,10 +937,46 @@ func initializeSchema(db *sql.DB) error {
 			return fmt.Errorf("record Community name migration: %w", err)
 		}
 	}
+	if currentVersion < 28 {
+		for _, column := range []struct{ table, name, definition string }{{"community", "avatar", "BLOB"}, {"community", "avatar_content_type", "TEXT"}, {"members", "disabled_at", "TEXT"}} {
+			exists, err := schemaColumnExists(ctx, tx, column.table, column.name)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				if _, err := tx.ExecContext(ctx, "ALTER TABLE "+column.table+" ADD COLUMN "+column.name+" "+column.definition); err != nil {
+					return fmt.Errorf("add %s.%s: %w", column.table, column.name, err)
+				}
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 28, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return err
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
 	return nil
+}
+
+func schemaColumnExists(ctx context.Context, tx *sql.Tx, table, wanted string) (bool, error) {
+	rows, err := tx.QueryContext(ctx, "PRAGMA table_info("+table+")")
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid, notNull, primaryKey int
+		var name, kind string
+		var defaultValue any
+		if err := rows.Scan(&cid, &name, &kind, &notNull, &defaultValue, &primaryKey); err != nil {
+			return false, err
+		}
+		if name == wanted {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
 }
 
 func (i *Instance) routes() http.Handler {
@@ -952,6 +988,9 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/admin/dashboard", i.adminDashboardAPI)
 	mux.HandleFunc("GET /api/v1/admin/settings", i.communitySettingsAPI)
 	mux.HandleFunc("PUT /api/v1/admin/settings", i.updateCommunitySettingsAPI)
+	mux.HandleFunc("PUT /api/v1/admin/community-avatar", i.updateCommunityAvatarAPI)
+	mux.HandleFunc("DELETE /api/v1/admin/community-avatar", i.removeCommunityAvatarAPI)
+	mux.HandleFunc("GET /api/v1/community-avatar", i.communityAvatarAPI)
 	if i.config.MetricsEnabled {
 		mux.HandleFunc("GET /metrics", i.metrics)
 	}
@@ -981,6 +1020,9 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /api/v1/members", i.membersAPI)
 	mux.HandleFunc("GET /api/v1/members/{memberID}/avatar", i.memberAvatarAPI)
 	mux.HandleFunc("GET /api/v1/members/{memberID}/banner", i.memberBannerAPI)
+	mux.HandleFunc("PUT /api/v1/admin/members/{memberID}/disabled", i.disableMemberAPI)
+	mux.HandleFunc("DELETE /api/v1/admin/members/{memberID}/disabled", i.disableMemberAPI)
+	mux.HandleFunc("DELETE /api/v1/admin/members/{memberID}", i.deleteMemberAPI)
 	mux.HandleFunc("PATCH /api/v1/profile", i.updateProfileAPI)
 	mux.HandleFunc("PUT /api/v1/profile/avatar", i.updateAvatarAPI)
 	mux.HandleFunc("DELETE /api/v1/profile/avatar", i.removeAvatarAPI)

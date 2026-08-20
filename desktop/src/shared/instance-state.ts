@@ -79,7 +79,7 @@ export interface NotificationSetting {
 export interface InstanceViewState {
   connection: 'online' | 'offline';
   version: 1;
-  community: { name: string };
+  community: { name: string; avatar_url?: string };
   member: MemberSummary;
   members: MemberSummary[];
   categories: Category[];

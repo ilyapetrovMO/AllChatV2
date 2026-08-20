@@ -52,6 +52,12 @@ function reduceEvent(state: InstanceViewState, event: RealtimeEvent): InstanceVi
       channel_states: state.channel_states.filter(({ channel_id }) => channel_id !== event.channel_id),
     };
   }
+	if (event.type === 'pin.updated' && event.channel_id && event.payload && typeof event.payload === 'object') {
+	  const payload = event.payload as { message_id?: unknown; pinned?: unknown };
+	  if (typeof payload.message_id === 'string' && typeof payload.pinned === 'boolean') {
+		return { ...state, connection: 'online', cursor, messages: { ...state.messages, [event.channel_id]: (state.messages[event.channel_id] || []).map((message) => message.id === payload.message_id ? { ...message, pinned: payload.pinned as boolean } : message) } };
+	  }
+	}
   if (!event.type.startsWith('message.') || !isMessage(event.payload) || !event.channel_id) {
     return { ...state, connection: 'online', cursor };
   }

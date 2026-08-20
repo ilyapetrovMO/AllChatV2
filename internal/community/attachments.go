@@ -310,7 +310,7 @@ func (s *Service) AttachmentDownload(ctx context.Context, member identity.Member
 	var item Attachment
 	var channelID, storageName string
 	err := s.db.QueryRowContext(ctx, `SELECT a.id, a.message_id, a.original_name, a.content_type, a.size, a.storage_name, msg.channel_id
-		FROM attachments a JOIN messages msg ON msg.id = a.message_id WHERE a.id = ? AND a.state = 'published'`, attachmentID).
+		FROM attachments a JOIN messages msg ON msg.id = a.message_id JOIN members uploader ON uploader.id=a.uploader_id WHERE a.id = ? AND a.state = 'published' AND uploader.disabled_at IS NULL`, attachmentID).
 		Scan(&item.ID, &item.MessageID, &item.Name, &item.ContentType, &item.Size, &storageName, &channelID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Attachment{}, "", ErrNotFound

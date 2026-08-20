@@ -29,6 +29,47 @@ func (i *Instance) membersAPI(response http.ResponseWriter, request *http.Reques
 	writeJSON(response, http.StatusOK, map[string]any{"members": members})
 }
 
+func (i *Instance) disableMemberAPI(response http.ResponseWriter, request *http.Request) {
+	actor, _, ok := i.authenticatedCSRF(response, request)
+	if !ok {
+		return
+	}
+	target, err := i.identity.MemberProfile(request.Context(), request.PathValue("memberID"))
+	if err != nil {
+		http.NotFound(response, request)
+		return
+	}
+	if err := i.identity.SetMemberDisabled(request.Context(), actor, target, request.Method == http.MethodPut); err != nil {
+		writeIdentityError(response, err)
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (i *Instance) deleteMemberAPI(response http.ResponseWriter, request *http.Request) {
+	actor, _, ok := i.authenticatedCSRF(response, request)
+	if !ok {
+		return
+	}
+	var input struct {
+		Confirmation string `json:"confirmation"`
+	}
+	if decodeJSON(request, &input) != nil || input.Confirmation != "understood" {
+		writeJSON(response, http.StatusBadRequest, map[string]string{"error": "confirmation must be understood"})
+		return
+	}
+	target, err := i.identity.MemberProfile(request.Context(), request.PathValue("memberID"))
+	if err != nil {
+		http.NotFound(response, request)
+		return
+	}
+	if err := i.identity.DeleteMember(request.Context(), actor, target); err != nil {
+		writeIdentityError(response, err)
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
 func (i *Instance) registerAPI(response http.ResponseWriter, request *http.Request) {
 	var input credentials
 	if err := decodeJSON(request, &input); err != nil {
@@ -166,6 +207,10 @@ func (i *Instance) memberAvatarAPI(response http.ResponseWriter, request *http.R
 	if _, _, ok := i.authenticated(response, request); !ok {
 		return
 	}
+	if i.identity.IsMemberDisabled(request.Context(), request.PathValue("memberID")) {
+		http.NotFound(response, request)
+		return
+	}
 	data, contentType, err := i.identity.Avatar(request.Context(), request.PathValue("memberID"))
 	if err != nil {
 		http.NotFound(response, request)
@@ -216,6 +261,10 @@ func (i *Instance) removeBannerAPI(response http.ResponseWriter, request *http.R
 
 func (i *Instance) memberBannerAPI(response http.ResponseWriter, request *http.Request) {
 	if _, _, ok := i.authenticated(response, request); !ok {
+		return
+	}
+	if i.identity.IsMemberDisabled(request.Context(), request.PathValue("memberID")) {
+		http.NotFound(response, request)
 		return
 	}
 	data, contentType, err := i.identity.Banner(request.Context(), request.PathValue("memberID"))

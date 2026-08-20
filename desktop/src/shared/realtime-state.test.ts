@@ -23,4 +23,14 @@ describe('realtime Instance state', () => {
     expect(result.channel_states[0]?.unread).toBe(1);
     expect(result.cursor).toBe(3);
   });
+
+  it('applies the compact pin update emitted by the Instance', () => {
+	const state: InstanceViewState = {
+	  connection: 'online', version: 1, community: { name: 'Home' }, member: { id: 'me', username: 'nora', owner: false }, members: [], categories: [], channels: [], direct_messages: [],
+	  messages: { chat: [{ id: 'm1', channel_id: 'chat', author_id: 'me', author_name: 'nora', sequence: 1, created_at: '', deleted: false }] }, channel_states: [], presence: {}, typing: [],
+	  notifications: { current_member_id: 'me', community: { level: 'default', muted: false }, channels: {}, muted_channel_ids: [] }, media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1,
+	};
+	const result = reduceRealtimeFrame(state, { type: 'pin.updated', cursor: 2, channel_id: 'chat', payload: { message_id: 'm1', pinned: true } });
+	expect(result.messages.chat?.[0]?.pinned).toBe(true);
+  });
 });

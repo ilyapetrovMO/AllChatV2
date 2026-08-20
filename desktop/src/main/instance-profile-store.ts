@@ -40,11 +40,13 @@ export class SQLiteInstanceProfileStore implements InstanceProfileStore {
         value TEXT NOT NULL
       ) STRICT;
     `);
+	const columns = this.#database.prepare('PRAGMA table_info(desktop_instance_profiles)').all() as Array<{ name: string }>;
+	if (!columns.some(({ name }) => name === 'avatar_url')) this.#database.exec('ALTER TABLE desktop_instance_profiles ADD COLUMN avatar_url TEXT');
   }
 
   load(): ShellState {
     const instances = this.#database
-      .prepare(`SELECT id, display_name, base_url, partition_name, credential_ref, session_json
+	  .prepare(`SELECT id, display_name, avatar_url, base_url, partition_name, credential_ref, session_json
                 FROM desktop_instance_profiles ORDER BY rowid`)
       .all()
       .map((row) => rowToProfile(row as Record<string, unknown>));
@@ -62,13 +64,14 @@ export class SQLiteInstanceProfileStore implements InstanceProfileStore {
     try {
       this.#database.exec('DELETE FROM desktop_instance_profiles');
       const insert = this.#database.prepare(`
-        INSERT INTO desktop_instance_profiles(id, display_name, base_url, partition_name, credential_ref, session_json)
-        VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO desktop_instance_profiles(id, display_name, avatar_url, base_url, partition_name, credential_ref, session_json)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       for (const profile of state.instances) {
         insert.run(
           profile.id,
           profile.displayName,
+		  profile.avatarUrl || null,
           profile.baseUrl,
           profile.partition,
           profile.credentialRef,
@@ -98,6 +101,7 @@ function rowToProfile(row: Record<string, unknown>): InstanceProfile {
   return {
     id: String(row.id),
     displayName: String(row.display_name),
+	...(typeof row.avatar_url === 'string' ? { avatarUrl: row.avatar_url } : {}),
     baseUrl: String(row.base_url),
     partition: String(row.partition_name),
     credentialRef: row.credential_ref === null ? null : String(row.credential_ref),

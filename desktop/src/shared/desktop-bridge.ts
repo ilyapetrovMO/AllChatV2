@@ -1,6 +1,7 @@
 export interface InstanceProfile {
   id: string;
   displayName: string;
+	avatarUrl?: string;
   baseUrl: string;
   partition: string;
   credentialRef: string | null;
@@ -14,6 +15,7 @@ export interface MemberSummary {
   avatarUrl?: string;
   bannerUrl?: string;
   owner: boolean;
+	disabled?: boolean;
 }
 
 export interface DesktopSessionSummary {

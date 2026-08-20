@@ -284,7 +284,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
               instance.id === state.activeInstanceId ? "page" : undefined
             }
           >
-            {instance.displayName.slice(0, 1).toUpperCase()}
+			{instance.avatarUrl ? <AuthenticatedImage path={instance.avatarUrl} alt="" className="instance-avatar" fallback={instance.displayName.slice(0, 1).toUpperCase()} onAction={(action) => bridge.executeInstance(instance.id, action)} /> : instance.displayName.slice(0, 1).toUpperCase()}
           </button>
         ))}
         {state && <button className="instance-button add-instance-button" type="button" aria-label="Add Community" title="Add Community" onClick={() => { setAddingCommunity(true); setManagingCommunities(false); setError(""); }}><Icon name="plus" /></button>}
@@ -438,6 +438,7 @@ function CommunityShell({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFiltersOpen, setSearchFiltersOpen] = useState(false);
   const [showPins, setShowPins] = useState(false);
+	const [pinnedMessages, setPinnedMessages] = useState<import("../shared/instance-state").Message[] | null>(null);
   const [membersOpen, setMembersOpen] = useState(true);
   const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
@@ -544,6 +545,8 @@ function CommunityShell({
         : "",
     );
     setEditingMessageId(null);
+	setShowPins(false);
+	setPinnedMessages(null);
     if (conversation && conversation.type !== "voice") {
       const messages = state.messages[conversation.id] || [];
       historyExhausted.current[conversation.id] = (messages[0]?.sequence || 1) <= 1;
@@ -1095,7 +1098,12 @@ function CommunityShell({
                 type="button"
                 aria-label="Pinned Messages"
                 title="Pinned Messages"
-                onClick={() => setShowPins((value) => !value)}
+				onClick={() => {
+				  if (showPins) { setShowPins(false); return; }
+				  void onAction({ type: "list_pins", channelId: conversation.id }).then((result) => {
+					if (result?.type === "messages") { setPinnedMessages(result.page.messages); setShowPins(true); }
+				  });
+				}}
               >
                 <Icon name="pin" />
               </button>
@@ -1350,8 +1358,7 @@ function CommunityShell({
                 }
               }}
             >
-              {renderedConversationMessages
-                .filter((message) => !showPins || message.pinned)
+			  {(showPins ? (pinnedMessages || []) : renderedConversationMessages)
                 .map((message) => (
                   <article className="message" key={message.id}>
                     <AuthenticatedImage
@@ -1577,6 +1584,7 @@ function CommunityShell({
                     }
                   />
                 </label>
+				<small className="typing-indicator">{typingSummary(state.typing.filter((item) => item.channel_id === conversation.id && item.member_id !== state.member.id).map((item) => item.member_name))}</small>
                 <button
                   type="submit"
                   aria-label={
@@ -1710,7 +1718,7 @@ function CommunityShell({
                 onAction={onAction}
               />
               <h3>{memberName(member)}</h3>
-              <p>@{member.username}</p>
+			  <p>@{member.username}{member.disabled ? " · Disabled" : ""}</p>
               {member.id !== state.member.id && (
                 <>
                   <button
@@ -1747,6 +1755,10 @@ function CommunityShell({
                   >
                     {dm?.blocked_by_me ? "Unblock" : "Block"}
                   </button>
+				  {state.member.owner && !member.owner && <>
+					<button type="button" onClick={() => void onAction({ type: "set_member_disabled", memberId: member.id, disabled: !member.disabled }).then(() => setMemberPopover(null))}>{member.disabled ? "Restore" : "Disable"}</button>
+					<button className="danger-button" type="button" onClick={() => { const confirmation = window.prompt(`Permanently delete ${memberName(member)} and everything tied to this Member? Type understood to continue.`); if (confirmation !== "understood") return; void onAction({ type: "delete_member", memberId: member.id, confirmation }).then(() => setMemberPopover(null)); }}>Delete Member</button>
+				  </>}
                 </>
               )}
             </section>,
@@ -2026,6 +2038,13 @@ export function waitForIceGathering(peer: RTCPeerConnection, timeoutMs = 2_000):
 
 function memberName(member: InstanceViewState["member"]): string {
   return member.displayName || member.username;
+}
+
+function typingSummary(names: string[]): string {
+  const unique = [...new Set(names)];
+  if (!unique.length) return "";
+  if (unique.length > 3) return "Several people are typing…";
+  return `${unique.join(", ")}${unique.length === 1 ? " is" : " are"} typing…`;
 }
 
 function byPosition<T extends { position: number }>(left: T, right: T): number {
@@ -2624,6 +2643,7 @@ function CommunityAdministration({
       <nav aria-label="Community settings">
         {(["dashboard", "general", "channels", "roles", "invitations", "soundboard"] as const).map((item) => <button type="button" key={item} aria-current={section === item ? "page" : undefined} onClick={() => select(item)}>{item === "general" ? "General" : item[0].toUpperCase() + item.slice(1)}</button>)}
       </nav>
+	  {section === "general" && communitySettings && <CommunityAvatarSetting settings={communitySettings} onAction={onAction} onChange={setCommunitySettings} />}
       {section === "general" && <section className="settings-panel administration-list"><h2>General</h2><p>Manage {state.community.name} from the desktop client.</p>{!communitySettings && !error && <p>Loading Community settings…</p>}{error && <p role="alert" className="notice-error">{error}</p>}{communitySettings && <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "update_community_settings", name: String(data.get("name") || ""), maxAttachmentMiB: Number(data.get("maxAttachmentMiB")), homeMarkdown: String(data.get("homeMarkdown") || ""), pushRelayURL: String(data.get("pushRelayURL") || "") }).then((result) => { if (result?.type === "community_settings") setCommunitySettings(result.settings); }).catch(() => setError("Could not save Community settings.")); }}><label>Community name<input name="name" maxLength={100} defaultValue={communitySettings.name} required /></label><label>Maximum attachment size (MiB)<input name="maxAttachmentMiB" type="number" min="1" max="256" defaultValue={communitySettings.max_attachment_mib} required /></label><p>Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Community Guide<textarea name="homeMarkdown" rows={8} defaultValue={communitySettings.home_markdown} /></label><label>Mobile push relay<input name="pushRelayURL" type="url" defaultValue={communitySettings.push_relay_url} placeholder="https://push.example.com" /></label><p>Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p>Key ID: <code>{communitySettings.push_key_id}</code></p><textarea readOnly rows={3} value={communitySettings.push_public_key} aria-label="Relay public key" /></details><button type="submit">Save settings</button></form>}</section>}
       {section === "dashboard" && <AdminDashboardView dashboard={dashboard} history={dashboardHistory} error={error} />}
       {section === "channels" && <section className="settings-panel administration-list"><h2>Channels</h2><p>Create and archive Community Categories and Channels.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_category", name: String(data.get("name") || ""), position: adminCategories.length }).then((result) => { if (result?.type === "category") setAdminCategories((current) => [...current, result.category]); }); event.currentTarget.reset(); }}><label>Category name<input name="name" required /></label><button type="submit">Create Category</button></form><form className="administration-inline-form channel-create-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_channel", categoryId: String(data.get("category")), name: String(data.get("name") || ""), channelType: String(data.get("type")) as "text" | "voice", position: adminChannels.length }).then((result) => { if (result?.type === "channel") setAdminChannels((current) => [...current, result.channel]); }); event.currentTarget.reset(); }}><label>Category<select name="category" required>{adminCategories.filter(({ archived }) => !archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Channel name<input name="name" required /></label><label>Type<select name="type"><option value="text">Text</option><option value="voice">Voice</option></select></label><button type="submit">Create Channel</button></form>{adminCategories.map((category) => <section className="admin-category" key={category.id}><h3>{category.name}</h3>{adminChannels.filter(({ category_id }) => category_id === category.id).map((channel) => <AdminChannelRow key={channel.id} channel={channel} roles={roles || []} onAction={onAction} onUpdate={(updated) => setAdminChannels((current) => updated ? current.map((item) => item.id === channel.id ? updated : item) : current.filter(({ id }) => id !== channel.id))} />)}</section>)}</section>}
@@ -2632,6 +2652,14 @@ function CommunityAdministration({
       {section === "soundboard" && <section className="settings-panel administration-list"><h2>Soundboard</h2><p>Upload and manage sounds available in Voice Rooms.</p><form onSubmit={(event) => { event.preventDefault(); const form = event.currentTarget; const data = new FormData(form); const file = data.get("file"); if (!(file instanceof File)) return; void file.arrayBuffer().then((bytes) => onAction({ type: "upload_sound", name: String(data.get("name") || ""), emoji: String(data.get("emoji") || ""), position: sounds?.length || 0, contentType: file.type || "application/octet-stream", data: new Uint8Array(bytes) })).then((result) => { if (result?.type === "sound") setSounds((current) => [...(current || []), result.sound]); }); form.reset(); }}><label>Name<input name="name" required /></label><label>Emoji<input name="emoji" maxLength={8} /></label><label>Audio (MP3, WAV, Ogg; up to 1 MiB)<input name="file" type="file" accept="audio/mpeg,audio/wav,audio/ogg" required /></label><button type="submit">Upload sound</button></form><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const seconds = Number(new FormData(event.currentTarget).get("seconds")); void onAction({ type: "set_soundboard_limit", maxDurationMs: seconds * 1000 }).then(() => setSoundLimit(seconds * 1000)); }}><label>Maximum clip length (seconds)<input name="seconds" type="number" min="1" max="30" defaultValue={Math.round(soundLimit / 1000)} required /></label><button type="submit">Save limit</button></form>{!sounds && !error && <p>Loading sounds…</p>}{sounds?.length === 0 && <p>No sounds uploaded.</p>}{sounds?.map((sound) => <article key={sound.id}><span><strong>{sound.emoji} {sound.name}</strong><small>{(sound.duration_ms / 1000).toFixed(1)}s · {formatBytes(sound.size)}</small></span><div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Sound name", sound.name); if (!name) return; const emoji = window.prompt("Sound emoji", sound.emoji || "") ?? sound.emoji ?? ""; void onAction({ type: "update_sound", soundId: sound.id, name, emoji, position: sound.position }).then((result) => { if (result?.type === "sound") setSounds((current) => current?.map((item) => item.id === sound.id ? result.sound : item) || null); }); }}>Edit</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Delete ${sound.name}?`)) return; void onAction({ type: "delete_sound", soundId: sound.id }).then(() => setSounds((current) => current?.filter(({ id }) => id !== sound.id) || null)); }}>Delete</button></div></article>)}</section>}
     </section>
   );
+}
+
+function CommunityAvatarSetting({ settings, onAction, onChange }: { settings: import("../shared/instance-actions").CommunitySettings; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>; onChange(settings: import("../shared/instance-actions").CommunitySettings): void }) {
+  return <div className="community-avatar-setting">
+	{settings.avatar_url ? <AuthenticatedImage path={settings.avatar_url} alt="Community avatar" className="community-settings-avatar" fallback={settings.name.slice(0, 1).toUpperCase()} onAction={onAction} /> : <span className="community-settings-avatar">{settings.name.slice(0, 1).toUpperCase()}</span>}
+	<label>Choose Community avatar<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_community_avatar", contentType: file.type, data: new Uint8Array(bytes) })).then(() => onChange({ ...settings, avatar_url: `/api/v1/community-avatar?v=${Date.now()}` })); }} /></label>
+	{settings.avatar_url && <button type="button" onClick={() => void onAction({ type: "remove_community_avatar" }).then(() => onChange({ ...settings, avatar_url: undefined }))}>Remove avatar</button>}
+  </div>;
 }
 
 function AdminChannelRow({ channel, roles, onAction, onUpdate }: {

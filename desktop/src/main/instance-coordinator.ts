@@ -60,7 +60,7 @@ export class InstanceCoordinator {
       throw new Error('Instance returned an unsupported bootstrap contract.');
     }
     const state = normalizeMembers(body);
-	this.registry.rename(instanceId, state.community.name);
+	this.registry.updateCommunityIdentity(instanceId, state.community.name, state.community.avatar_url);
     this.#states.set(instanceId, state);
     this.cache.put(instanceId, state);
     return state;
@@ -167,6 +167,11 @@ export class InstanceCoordinator {
         method: action.active ? 'PUT' : 'DELETE', headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Could not update the Pinned Message.');
+	  const current = this.#states.get(instanceId);
+	  if (current) {
+		const state = { ...current, messages: Object.fromEntries(Object.entries(current.messages).map(([conversationId, messages]) => [conversationId, messages.map((message) => message.id === action.messageId ? { ...message, pinned: action.active } : message)])) };
+		this.#states.set(instanceId, state); this.cache.put(instanceId, state); this.publish(instanceId, state);
+	  }
       return { type: 'accepted' };
     }
     if (action.type === 'set_community_notifications') {
@@ -222,6 +227,7 @@ export class InstanceCoordinator {
     if (action.type === 'load_asset') {
       const assetUrl = new URL(action.path, profile.baseUrl);
       const cacheable = /^\/api\/v1\/members\/[^/]+\/(avatar|banner)$/.test(assetUrl.pathname) ||
+		assetUrl.pathname === '/api/v1/community-avatar' ||
         /^\/api\/v1\/attachments\/[^/]+(?:\/preview)?$/.test(assetUrl.pathname);
       const cacheKey = `${assetUrl.pathname}${assetUrl.search}`;
       const cached = cacheable ? this.assetCache.get(instanceId, cacheKey) : null;
@@ -296,6 +302,21 @@ export class InstanceCoordinator {
       if (!response.ok) throw new Error(`Could not ${action.blocked ? 'Block' : 'Unblock'} the Member.`);
       return { type: 'accepted' };
     }
+	if (action.type === 'set_member_disabled' || action.type === 'delete_member') {
+	  const response = await this.request(`${profile.baseUrl}/api/v1/admin/members/${encodeURIComponent(action.memberId)}${action.type === 'set_member_disabled' ? '/disabled' : ''}`, {
+		method: action.type === 'delete_member' ? 'DELETE' : action.disabled ? 'PUT' : 'DELETE',
+		headers: { Authorization: `Bearer ${token}`, ...(action.type === 'delete_member' ? { 'Content-Type': 'application/json' } : {}) },
+		...(action.type === 'delete_member' ? { body: JSON.stringify({ confirmation: action.confirmation }) } : {}),
+	  });
+	  const errorBody: unknown = response.ok ? undefined : await response.json().catch(() => undefined);
+	  if (!response.ok) throw new Error(readError(errorBody, action.type === 'delete_member' ? 'Could not delete Member.' : 'Could not update Member.'));
+	  const current = this.#states.get(instanceId);
+	  if (current) {
+		const state = action.type === 'delete_member' ? { ...current, members: current.members.filter(({ id }) => id !== action.memberId) } : { ...current, members: current.members.map((member) => member.id === action.memberId ? { ...member, disabled: action.disabled } : member) };
+		this.#states.set(instanceId, state); this.cache.put(instanceId, state); this.publish(instanceId, state);
+	  }
+	  return { type: 'accepted' };
+	}
     if (action.type === 'list_sessions') {
       const response = await this.request(`${profile.baseUrl}/api/v1/sessions`, { headers: { Authorization: `Bearer ${token}` } });
       const body: unknown = await response.json().catch(() => undefined);
@@ -452,12 +473,28 @@ export class InstanceCoordinator {
 	  if (current) {
 		const state = { ...current, community: { ...current.community, name: response.body.name } };
 		this.#states.set(instanceId, state);
-		this.registry.rename(instanceId, response.body.name);
+		this.registry.updateCommunityIdentity(instanceId, response.body.name, response.body.avatar_url);
 		this.cache.put(instanceId, state);
 		this.publish(instanceId, state);
 	  }
       return { type: 'community_settings', settings: response.body };
     }
+	if (action.type === 'update_community_avatar' || action.type === 'remove_community_avatar') {
+	  const response = await this.request(`${profile.baseUrl}/api/v1/admin/community-avatar`, {
+		method: action.type === 'update_community_avatar' ? 'PUT' : 'DELETE',
+		headers: { Authorization: `Bearer ${token}`, ...(action.type === 'update_community_avatar' ? { 'Content-Type': action.contentType } : {}) },
+		...(action.type === 'update_community_avatar' ? { body: Buffer.from(action.data) as unknown as BodyInit } : {}),
+	  });
+	  if (!response.ok) throw new Error('Could not update the Community avatar.');
+	  this.assetCache.clearInstance(instanceId);
+	  const current = this.#states.get(instanceId);
+	  if (current) {
+		const avatarUrl = action.type === 'update_community_avatar' ? `/api/v1/community-avatar?v=${Date.now()}` : undefined;
+		const state = { ...current, community: { ...current.community, ...(avatarUrl ? { avatar_url: avatarUrl } : { avatar_url: undefined }) } };
+		this.#states.set(instanceId, state); this.registry.updateCommunityIdentity(instanceId, state.community.name, avatarUrl); this.cache.put(instanceId, state); this.publish(instanceId, state);
+	  }
+	  return { type: 'accepted' };
+	}
     if (action.type === 'community_home') {
       const response = await this.request(`${profile.baseUrl}/api/v1/community-home`, { headers: { Authorization: `Bearer ${token}` } });
       const body: unknown = await response.json().catch(() => undefined);
@@ -718,7 +755,7 @@ function isSoundboardSound(value: unknown): value is import('../shared/instance-
 }
 
 function isCommunitySettings(value: unknown): value is import('../shared/instance-actions').CommunitySettings {
-  return !!value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string' && typeof (value as { max_attachment_mib?: unknown }).max_attachment_mib === 'number' &&
+  return !!value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string' && ((value as { avatar_url?: unknown }).avatar_url === undefined || typeof (value as { avatar_url?: unknown }).avatar_url === 'string') && typeof (value as { max_attachment_mib?: unknown }).max_attachment_mib === 'number' &&
     typeof (value as { home_markdown?: unknown }).home_markdown === 'string' && typeof (value as { push_relay_url?: unknown }).push_relay_url === 'string' &&
     typeof (value as { push_key_id?: unknown }).push_key_id === 'string' && typeof (value as { push_public_key?: unknown }).push_public_key === 'string';
 }
@@ -729,6 +766,7 @@ function normalizeCommunitySettings(value: unknown): import('../shared/instance-
   if (typeof settings.name !== 'string' || typeof settings.max_attachment_mib !== 'number' || typeof settings.home_markdown !== 'string' || typeof settings.push_relay_url !== 'string') return undefined;
   return {
     name: settings.name,
+	...(typeof settings.avatar_url === 'string' ? { avatar_url: settings.avatar_url } : {}),
     max_attachment_mib: settings.max_attachment_mib,
     home_markdown: settings.home_markdown,
     push_relay_url: settings.push_relay_url,
@@ -774,5 +812,6 @@ function normalizeMember(member: InstanceViewState['member']): InstanceViewState
     ...(source.display_name ? { displayName: source.display_name } : {}),
     ...(source.avatar_url ? { avatarUrl: source.avatar_url } : {}),
     ...(source.banner_url ? { bannerUrl: source.banner_url } : {}),
+	...(source.disabled ? { disabled: true } : {}),
   };
 }

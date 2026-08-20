@@ -17,7 +17,7 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {AllChatClient} from './src/client/AllChatClient';
 import {normalizeInstanceURL} from './src/domain/instance';
@@ -32,6 +32,10 @@ const defaultVault = new KeychainSessionVault();
 const voiceSettingsStore = new KeychainVoiceVideoSettingsStore();
 
 export type AppProps = {vault?: SessionVault};
+
+export function globalCallTopPadding(safeAreaTop: number) {
+  return safeAreaTop + 8;
+}
 
 function App({vault = defaultVault}: AppProps): React.JSX.Element {
   return (
@@ -153,6 +157,7 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   onSelectAccount(account: InstanceAccount): void; onSignOut(): void; onVoiceSettingsChange(settings: VoiceVideoSettings): void;
   palette: Palette; status: string; submitting: boolean; voiceSettings: VoiceVideoSettings; voiceSettingsOpen: boolean;
 }) {
+  const insets = useSafeAreaInsets();
   const [incomingCall, setIncomingCall] = useState<GlobalIncomingCall>();
   useEffect(() => {
     syncMobilePush(account).catch(() => {});
@@ -189,7 +194,7 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
       </SafeAreaView>}
     </Modal>
     <Modal animationType="fade" onRequestClose={() => incomingCall?.onAction('decline')} statusBarTranslucent transparent visible={Boolean(incomingCall)}>
-      <View pointerEvents="box-none" style={styles.globalCallLayer}>
+      <View pointerEvents="box-none" style={[styles.globalCallLayer, {paddingTop: globalCallTopPadding(insets.top)}]}>
         {incomingCall ? <CallBanner call={incomingCall.call} currentMemberID={incomingCall.currentMemberID} onAction={incomingCall.onAction} onOpen={incomingCall.onOpen} palette={palette} /> : null}
       </View>
     </Modal>
@@ -251,7 +256,7 @@ const darkPalette = {background: '#191a1f', field: '#25272e', border: '#393c46',
 const lightPalette = {background: '#f4f5f8', field: '#ffffff', border: '#d8dbe4', text: '#171820', muted: '#5e6370', placeholder: '#858a97', accent: '#4752c4'};
 
 const styles = StyleSheet.create({
-  globalCallLayer: {justifyContent: 'flex-start', flex: 1, paddingTop: 8},
+  globalCallLayer: {justifyContent: 'flex-start', flex: 1},
   screen: {flex: 1}, centered: {alignItems: 'center', flex: 1, justifyContent: 'center'}, grow: {flex: 1},
   form: {flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 14},
   accountHeader: {alignItems: 'center', flexDirection: 'row', gap: 16, padding: 24},

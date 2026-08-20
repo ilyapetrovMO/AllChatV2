@@ -17,5 +17,10 @@ describe('desktop renderer production bundle', () => {
     expect(source).toContain('allchat-desktop-rnnoise');
     expect(source).toContain('typeof globalThis');
     expect(source).not.toContain('typeof WorkerGlobalScope');
+    expect(/typeof ([\w$]+)==`string`&&\1\.startsWith\(`file:\/\/`\)/.test(source)).toBe(true);
+
+    const html = result.output.find((entry) => entry.fileName === 'index.html');
+    const htmlSource = html?.type === 'asset' ? String(html.source) : '';
+    expect(htmlSource).toContain("script-src 'self' 'wasm-unsafe-eval'");
   });
 });

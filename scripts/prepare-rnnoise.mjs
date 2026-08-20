@@ -12,14 +12,23 @@ const targetDirectory = resolve(root, 'internal/instance/web/assets/vendor');
 await mkdir(targetDirectory, {recursive: true});
 const sourceCode = await readFile(source, 'utf8');
 const environmentCheck = 'typeof window == "object" || typeof WorkerGlobalScope < "u"';
+const fileURICheck = '(A) => A.startsWith("file://")';
 if (!sourceCode.includes(environmentCheck)) {
   throw new Error('The pinned RNNoise runtime changed its environment check; review the AudioWorklet compatibility patch.');
+}
+if (!sourceCode.includes(fileURICheck)) {
+  throw new Error('The pinned RNNoise runtime changed its file-URI check; review the embedded-Wasm error patch.');
 }
 
 // AudioWorkletGlobalScope intentionally exposes neither `window` nor
 // `WorkerGlobalScope`. The runtime otherwise only needs standard globals that
 // AudioWorklet provides, and embeds its Wasm payload in this module.
-const workletCompatibleSource = sourceCode.replace(environmentCheck, 'typeof globalThis == "object"');
+const workletCompatibleSource = sourceCode
+  .replace(environmentCheck, 'typeof globalThis == "object"')
+  // The embedded Wasm payload is a Uint8Array. If instantiation fails,
+  // Emscripten passes that payload through this warning path; checking it as
+  // a string masks the original WebAssembly error with `.startsWith`.
+  .replace(fileURICheck, '(A) => typeof A === "string" && A.startsWith("file://")');
 const webpIndex = (await readFile(resolve(webpDirectory, 'index.js'), 'utf8'))
   .replace("from './webp-wasm'", "from './webp-wasm.js'");
 

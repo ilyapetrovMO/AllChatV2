@@ -1,6 +1,6 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
+import { createMediaConnectionWatchdog, createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, desktopMemberOutputVolume, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 import { insertMention, matchMention } from "./mentions";
 
@@ -2051,9 +2051,13 @@ export function DirectCallControls({
   const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[] } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
-  const connectionTimeout = useRef<number | null>(null);
+  const connectionWatchdog = useRef<ReturnType<typeof createMediaConnectionWatchdog> | null>(null);
   const mediaFailure = useRef("");
   transientStatus.current ||= createTransientCallStatusController(setStatus, () => media.current?.peer.connectionState === "connected" ? "Call connected" : null);
+  connectionWatchdog.current ||= createMediaConnectionWatchdog(setStatus, () => ({
+    connection: media.current?.peer.connectionState || "closed",
+    ice: media.current?.peer.iceConnectionState || "closed",
+  }));
 
   const cleanup = () => {
     transientStatus.current?.clear();
@@ -2067,8 +2071,7 @@ export function DirectCallControls({
     active?.audio.forEach((elements) => elements.forEach((element) => element.remove()));
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
-    if (connectionTimeout.current !== null) window.clearTimeout(connectionTimeout.current);
-    connectionTimeout.current = null;
+    connectionWatchdog.current?.stop();
     connectingRoom.current = null;
     setMuted(false);
     setSharing(false);
@@ -2125,7 +2128,12 @@ export function DirectCallControls({
         mediaFailure.current = error instanceof Error ? error.message : "Media signaling failed.";
         setStatus(mediaFailure.current);
       });
-    }, (reason) => setStatus(mediaDisconnectMessage(mediaFailure.current, reason)));
+    }, (reason) => {
+      if (media.current?.socket !== socket) return;
+      const message = mediaDisconnectMessage(mediaFailure.current, reason);
+      cleanup();
+      setStatus(message);
+    });
     media.current = { stream, capture, peer, socket, audio, screenAudioSenders: [] };
     provisionalCapture = null;
     peer.ontrack = ({ streams, track }) => {
@@ -2152,23 +2160,13 @@ export function DirectCallControls({
       });
       void element.play().catch(() => undefined);
     };
-    const updateConnectionState = () => {
-      if (peer.connectionState === "connected") {
-        if (connectionTimeout.current !== null) window.clearTimeout(connectionTimeout.current);
-        connectionTimeout.current = null;
-        setStatus("Call connected");
-      } else if (peer.connectionState === "failed" || peer.connectionState === "disconnected" || peer.iceConnectionState === "failed") {
-        setStatus(`Media ${peer.connectionState || peer.iceConnectionState}`);
-      }
-    };
+    const updateConnectionState = () => connectionWatchdog.current?.stateChanged();
     peer.onconnectionstatechange = updateConnectionState;
     peer.oniceconnectionstatechange = updateConnectionState;
     socket.send(createMediaJoinFrame(activeCall.id, peer.localDescription));
     pendingCandidates.splice(0).forEach((candidate) => socket!.send({ version: 1, type: "candidate", candidate }));
     heartbeat.current = window.setInterval(() => socket?.send({ version: 1, type: "heartbeat" }), 1_000);
-    connectionTimeout.current = window.setTimeout(() => {
-      if (peer.connectionState !== "connected") setStatus(`Media connection timed out (${peer.iceConnectionState || peer.connectionState || "unknown"}).`);
-    }, 15_000);
+    connectionWatchdog.current?.start();
     setStatus("Connecting…");
     } catch (error) {
       provisionalCapture?.stop();

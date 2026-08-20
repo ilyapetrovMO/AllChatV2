@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription } from './media-signaling';
+import { createMediaConnectionWatchdog, createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription } from './media-signaling';
 
 describe('desktop media signaling', () => {
   it('attributes SFU media from its authoritative stream identity', () => {
@@ -24,6 +24,24 @@ describe('desktop media signaling', () => {
     expect(mediaDisconnectMessage('Voice Room unavailable', 'WebSocket closed (1008)'))
       .toBe('Voice Room unavailable');
     expect(mediaDisconnectMessage('', 'WebSocket closed (1006)')).toBe('WebSocket closed (1006)');
+  });
+  it('does not emit timeout or peer failure after a signaling disconnect ends the attempt', () => {
+    vi.useFakeTimers();
+    const setStatus = vi.fn();
+    const mediaState: { connection: RTCPeerConnectionState; ice: RTCIceConnectionState } = { connection: 'connecting', ice: 'checking' };
+    const watchdog = createMediaConnectionWatchdog(setStatus, () => mediaState);
+    watchdog.start();
+    mediaState.connection = 'disconnected';
+    watchdog.stateChanged();
+    expect(setStatus).toHaveBeenLastCalledWith('Media disconnected');
+
+    watchdog.stop();
+    vi.advanceTimersByTime(15_000);
+    mediaState.connection = 'failed';
+    mediaState.ice = 'failed';
+    watchdog.stateChanged();
+    expect(setStatus.mock.calls.map(([status]) => status)).toEqual(['Media disconnected']);
+    vi.useRealTimers();
   });
   it('waits for the SDP answer before applying an immediately following ICE candidate', async () => {
     let finishRemoteDescription!: () => void;

@@ -17,6 +17,47 @@ export function mediaDisconnectMessage(firstFailure: string, closeReason: string
   return firstFailure || closeReason || 'Media signaling disconnected.';
 }
 
+export function createMediaConnectionWatchdog(
+  setStatus: (status: string) => void,
+  state: () => { connection: RTCPeerConnectionState; ice: RTCIceConnectionState },
+  timeoutMs = 15_000,
+  schedule: (callback: () => void, delay: number) => number = window.setTimeout,
+  cancel: (timer: number) => void = window.clearTimeout,
+) {
+  let timer: number | null = null;
+  let active = false;
+  const clear = () => {
+    if (timer !== null) cancel(timer);
+    timer = null;
+  };
+  return {
+    start() {
+      clear();
+      active = true;
+      timer = schedule(() => {
+        timer = null;
+        if (!active || state().connection === 'connected') return;
+        const current = state();
+        setStatus(`Media connection timed out (${current.ice || current.connection || 'unknown'}).`);
+      }, timeoutMs);
+    },
+    stateChanged() {
+      if (!active) return;
+      const current = state();
+      if (current.connection === 'connected') {
+        clear();
+        setStatus('Call connected');
+      } else if (current.connection === 'failed' || current.connection === 'disconnected' || current.ice === 'failed') {
+        setStatus(`Media ${current.connection || current.ice}`);
+      }
+    },
+    stop() {
+      active = false;
+      clear();
+    },
+  };
+}
+
 export function desktopMediaOwnerID(trackID: string, streamID = ''): string {
   for (const value of [streamID, trackID]) {
     const match = /^(?:member|audio|screen)-(.+)$/.exec(value);

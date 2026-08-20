@@ -1,6 +1,9 @@
 // AudioWorklet globals are provided by Chromium at runtime, outside the DOM typings.
 // @ts-nocheck
-import { Rnnoise } from '@shiguredo/rnnoise-wasm';
+// The upstream loader rejects AudioWorkletGlobalScope because it exposes
+// neither `window` nor `WorkerGlobalScope`. The prepared runtime keeps the
+// pinned dependency intact except for its reviewed global-scope check.
+import { Rnnoise } from '../../../internal/instance/web/assets/vendor/rnnoise.js';
 
 class AllChatDesktopRNNoiseProcessor extends AudioWorkletProcessor {
   frameSize = 480;

@@ -40,6 +40,9 @@ func TestChannelComposerIsKeyboardOnlyAndMultiline(t *testing.T) {
 	if !strings.Contains(html, `event.key==="ArrowUp"&&!bodyInput.value`) || !strings.Contains(html, `.slice(-10).reverse()`) {
 		t.Fatal("empty channel composer must edit the Member's latest Message within the last ten Messages")
 	}
+	if !strings.Contains(html, `button.closest(".message")?.scrollIntoView({block:"center"})`) {
+		t.Fatal("keyboard Message editing must reveal the selected Message")
+	}
 }
 
 func TestChannelAttachmentButtonIsABareMutedIcon(t *testing.T) {

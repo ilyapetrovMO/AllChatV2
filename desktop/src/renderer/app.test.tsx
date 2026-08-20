@@ -361,9 +361,14 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.getByText('Editing Message')).toBeVisible();
     fireEvent.click(within(screen.getByText('Editing Message')).getByRole('button', { name: 'Cancel' }));
     const lobbyComposer = screen.getByLabelText('Message lobby');
+    const editedMessage = screen.getByText(/Desktop parity starts here/).closest('.message') as HTMLElement;
+    const revealEditedMessage = vi.fn();
+    editedMessage.scrollIntoView = revealEditedMessage;
     fireEvent.keyDown(lobbyComposer, { key: 'ArrowUp' });
     expect(screen.getByText('Editing Message')).toBeVisible();
     expect((lobbyComposer as HTMLTextAreaElement).value).toContain('Desktop parity starts here');
+    await waitFor(() => expect(revealEditedMessage).toHaveBeenCalledWith({ block: 'center' }));
+    expect(lobbyComposer).toHaveFocus();
     fireEvent.click(within(screen.getByText('Editing Message')).getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Pin' }));
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {

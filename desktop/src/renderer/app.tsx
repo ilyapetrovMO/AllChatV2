@@ -802,6 +802,17 @@ function CommunityShell({
     setAttachments([]);
     localStorage.removeItem(draftKey(instanceId, conversation.id));
   }
+  function beginEditingMessage(message: InstanceViewState["messages"][string][number]): void {
+    setDraft(message.body || "");
+    setEditingMessageId(message.id);
+    requestAnimationFrame(() => {
+      document.getElementById(`message-${message.id}`)?.scrollIntoView({ block: "center" });
+      const input = textareaRef.current;
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  }
   const memberGroups = [
     {
       label: "Owner",
@@ -1497,7 +1508,7 @@ function CommunityShell({
             >
 			  {(showPins ? (pinnedMessages || []) : renderedConversationMessages)
                 .map((message) => (
-                  <article className="message" key={message.id}>
+                  <article className="message" id={`message-${message.id}`} key={message.id}>
                     <AuthenticatedImage
                       path={message.author_avatar_url}
                       alt=""
@@ -1607,10 +1618,7 @@ function CommunityShell({
                             <>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setDraft(message.body || "");
-                                  setEditingMessageId(message.id);
-                                }}
+                                onClick={() => beginEditingMessage(message)}
                               >
                                 Edit
                               </button>
@@ -1714,12 +1722,7 @@ function CommunityShell({
                       const message = mostRecentEditableMessage(allConversationMessages, state.member.id);
                       if (message) {
                         event.preventDefault();
-                        setDraft(message.body || "");
-                        setEditingMessageId(message.id);
-                        requestAnimationFrame(() => {
-                          const input = textareaRef.current;
-                          if (input) input.setSelectionRange(input.value.length, input.value.length);
-                        });
+                        beginEditingMessage(message);
                         return;
                       }
                     }

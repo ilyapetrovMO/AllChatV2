@@ -127,8 +127,8 @@ native AllChat bootstrapper for Windows, macOS, and Linux on `amd64` and
 
 ```sh
 sha256sum --check SHA256SUMS --ignore-missing
-chmod +x allchat_1.2.3_linux_amd64
-./allchat_1.2.3_linux_amd64 version
+chmod +x AllChat-server-1.2.3-linux-amd64
+./AllChat-server-1.2.3-linux-amd64 version
 ```
 
 The bootstrapper configures an **existing** Debian 12+ or Ubuntu 22.04+ VPS over

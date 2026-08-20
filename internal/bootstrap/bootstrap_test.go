@@ -46,13 +46,19 @@ func TestConfigDefaultsToLatestRelease(t *testing.T) {
 }
 
 func TestAndroidAssetUsesReleaseVersion(t *testing.T) {
-	if got := AndroidAsset("v1.2.3"); got != "allchat_1.2.3_android_universal.apk" {
+	if got := AndroidAsset("v1.2.3"); got != "AllChat-mobile-1.2.3-android-universal.apk" {
 		t.Fatalf("Android asset=%q", got)
 	}
 }
 
+func TestInstanceAssetUsesServerFamily(t *testing.T) {
+	if got := InstanceAsset("v1.2.3", "amd64"); got != "AllChat-server-1.2.3-linux-amd64" {
+		t.Fatalf("Instance asset=%q", got)
+	}
+}
+
 func TestRelayAssetUsesReleaseVersion(t *testing.T) {
-	if got := RelayAsset("v1.2.3", "arm64"); got != "allchat-push-relay_1.2.3_linux_arm64" {
+	if got := RelayAsset("v1.2.3", "arm64"); got != "AllChat-server-push-relay-1.2.3-linux-arm64" {
 		t.Fatalf("Relay asset=%q", got)
 	}
 }
@@ -136,12 +142,28 @@ func TestDownloadInstanceVerifiedDiscoversLatestVersionedAsset(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 		body := content
 		if strings.HasSuffix(request.URL.Path, "/SHA256SUMS") {
-			body = []byte(fmt.Sprintf("%x  ./allchat_2.4.6_linux_amd64\n", digest))
+			body = []byte(fmt.Sprintf("%x  ./AllChat-server-2.4.6-linux-amd64\n", digest))
 		}
 		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(strings.NewReader(string(body))), Header: make(http.Header)}, nil
 	})}
 	asset, got, err := DownloadInstanceVerified(context.Background(), client, "", "amd64")
-	if err != nil || asset != "allchat_2.4.6_linux_amd64" || string(got) != string(content) {
+	if err != nil || asset != "AllChat-server-2.4.6-linux-amd64" || string(got) != string(content) {
+		t.Fatalf("asset=%q content=%q err=%v", asset, got, err)
+	}
+}
+
+func TestDownloadInstanceVerifiedReadsLegacyPinnedRelease(t *testing.T) {
+	content := []byte("legacy server binary")
+	digest := sha256.Sum256(content)
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		body := content
+		if strings.HasSuffix(request.URL.Path, "/SHA256SUMS") {
+			body = []byte(fmt.Sprintf("%x  ./allchat_1.2.3_linux_amd64\n", digest))
+		}
+		return &http.Response{StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(strings.NewReader(string(body))), Header: make(http.Header)}, nil
+	})}
+	asset, got, err := DownloadInstanceVerified(context.Background(), client, "v1.2.3", "amd64")
+	if err != nil || asset != "allchat_1.2.3_linux_amd64" || string(got) != string(content) {
 		t.Fatalf("asset=%q content=%q err=%v", asset, got, err)
 	}
 }

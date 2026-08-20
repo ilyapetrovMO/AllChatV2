@@ -21,6 +21,6 @@ export function isNewerVersion(server: string, client = APP_VERSION): boolean {
 
 export async function downloadUpdate(instanceURL: string, token: string, version: string): Promise<string> {
   if (!nativeUpdater) throw new Error('Android updates are unavailable in this build.');
-  const filename = `allchat_${version.replace(/^v/, '')}_android_universal.apk`;
+  const filename = `AllChat-mobile-${version.replace(/^v/, '')}-android-universal.apk`;
   return nativeUpdater.download(`${instanceURL}/api/v1/updates/android.apk`, token, filename);
 }

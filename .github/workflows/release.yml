@@ -61,12 +61,12 @@ jobs:
           version="${RELEASE_REF#v}"
           built="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           ldflags="-s -w -X allchat/internal/buildinfo.Version=$RELEASE_REF -X allchat/internal/buildinfo.Commit=$GITHUB_SHA -X allchat/internal/buildinfo.BuildDate=$built"
-          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat
-          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat-music-bot_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat-music-bot
-          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/allchat-push-relay_${version}_linux_${ARTIFACT_ARCH}" ./cmd/allchat-push-relay
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-music-bot-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat-music-bot
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="$ldflags" -o "dist/AllChat-server-push-relay-${version}-linux-${ARTIFACT_ARCH}" ./cmd/allchat-push-relay
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ matrix.artifact_arch || matrix.goarch }}
+          name: AllChat-server-linux-${{ matrix.artifact_arch || matrix.goarch }}
           path: dist/*
 
   bootstrapper:
@@ -228,10 +228,10 @@ jobs:
         run: |
           version="${RELEASE_REF#v}"
           mkdir -p dist
-          cp mobile/android/app/build/outputs/apk/standalone/app-standalone.apk "dist/allchat_${version}_android_universal.apk"
+          cp mobile/android/app/build/outputs/apk/standalone/app-standalone.apk "dist/AllChat-mobile-${version}-android-universal.apk"
       - uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: AllChat-mobile-android-universal
           path: dist/*
 
   desktop:
@@ -280,11 +280,16 @@ jobs:
       - name: Stage desktop distribution
         shell: bash
         run: |
+          version="${RELEASE_REF#v}"
           mkdir -p dist
-          find desktop/out/make -type f \( -name '*.zip' -o -name '*.msi' \) -exec cp {} dist/ \;
+          extension=zip
+          if [ "${{ matrix.platform }}" = windows ]; then extension=msi; fi
+          source="$(find desktop/out/make -type f -name "*.${extension}" -print -quit)"
+          test -n "$source"
+          cp "$source" "dist/AllChat-desktop-${version}-${{ matrix.platform }}-${{ matrix.arch }}.${extension}"
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          name: AllChat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
           if-no-files-found: error
 
@@ -310,19 +315,19 @@ jobs:
           require_file() { test -f "$1" || { echo "Missing release artifact: $1" >&2; exit 1; }; }
           require_glob() { compgen -G "$1" >/dev/null || { echo "Missing release artifact matching: $1" >&2; exit 1; }; }
           for arch in amd64 arm64 armv7; do
-            require_file "dist/allchat_${version}_linux_${arch}"
-            require_file "dist/allchat-music-bot_${version}_linux_${arch}"
-            require_file "dist/allchat-push-relay_${version}_linux_${arch}"
+            require_file "dist/AllChat-server-${version}-linux-${arch}"
+            require_file "dist/AllChat-server-music-bot-${version}-linux-${arch}"
+            require_file "dist/AllChat-server-push-relay-${version}-linux-${arch}"
           done
-          require_file "dist/allchat_${version}_android_universal.apk"
+          require_file "dist/AllChat-mobile-${version}-android-universal.apk"
           require_file "dist/allchat_${version}_source.zip"
           require_glob 'dist/allchat-bootstrap_*_linux_*'
           require_glob 'dist/allchat-bootstrap_*_windows_*.exe'
           require_glob 'dist/allchat-bootstrap_*_darwin_*.app.zip'
-          require_glob 'dist/*linux*x64*.zip'
-          require_glob 'dist/*darwin*x64*.zip'
-          require_glob 'dist/*darwin*arm64*.zip'
-          require_glob 'dist/*.msi'
+          require_file "dist/AllChat-desktop-${version}-linux-x64.zip"
+          require_file "dist/AllChat-desktop-${version}-macos-x64.zip"
+          require_file "dist/AllChat-desktop-${version}-macos-arm64.zip"
+          require_file "dist/AllChat-desktop-${version}-windows-x64.msi"
       - name: Generate checksums
         run: |
           cd dist
@@ -334,7 +339,7 @@ jobs:
           sha256sum --check SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: release-bundle
+          name: AllChat-release-bundle
           path: dist/*
           if-no-files-found: error
 
@@ -347,7 +352,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: release-bundle
+          name: AllChat-release-bundle
           path: dist
       - uses: softprops/action-gh-release@v2
         with:

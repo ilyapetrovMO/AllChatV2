@@ -64,11 +64,16 @@ jobs:
       - name: Stage desktop distribution
         shell: bash
         run: |
+          version="$(node -p "require('./desktop/package.json').version")"
           mkdir -p dist
-          find desktop/out/make -type f \( -name '*.zip' -o -name '*.msi' \) -exec cp {} dist/ \;
+          extension=zip
+          if [ "${{ matrix.platform }}" = windows ]; then extension=msi; fi
+          source="$(find desktop/out/make -type f -name "*.${extension}" -print -quit)"
+          test -n "$source"
+          cp "$source" "dist/AllChat-desktop-${version}-${{ matrix.platform }}-${{ matrix.arch }}.${extension}"
       - name: Upload desktop distribution
         uses: actions/upload-artifact@v4
         with:
-          name: allchat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          name: AllChat-desktop-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
           if-no-files-found: error

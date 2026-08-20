@@ -70,12 +70,13 @@ describe('desktop renderer bootstrap', () => {
 
   it('renders the local shell and an empty Instance state', async () => {
     const controlWindow = vi.fn(async (_action: 'minimize' | 'toggle-maximize' | 'close') => undefined);
+    const addInstance = vi.fn(async () => ({ instances: [], activeInstanceId: null }));
     render(
       <App
         bridge={{
           controlWindow,
           getShellState: async () => ({ instances: [], activeInstanceId: null }),
-          addInstance: async () => ({ instances: [], activeInstanceId: null }),
+          addInstance,
           selectInstance: async () => ({ instances: [], activeInstanceId: null }),
           loginInstance: async () => ({ instances: [], activeInstanceId: null }),
           registerInstance: async () => ({ instances: [], activeInstanceId: null }),
@@ -89,6 +90,12 @@ describe('desktop renderer bootstrap', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'Add your first Instance' })).toBeVisible();
+    fireEvent.change(screen.getByLabelText('Community address'), { target: { value: 'ru.elitedarklord.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add Instance' }));
+    await waitFor(() => expect(addInstance).toHaveBeenCalledWith({
+      displayName: 'ru.elitedarklord.com',
+      baseUrl: 'https://ru.elitedarklord.com',
+    }));
     expect(screen.getByRole('button', { name: 'Add Instance' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Minimize window' }));
     fireEvent.click(screen.getByRole('button', { name: 'Maximize window' }));

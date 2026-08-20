@@ -10,6 +10,7 @@ import {
   MemoryInstanceProfileStore,
   type InstanceProfileStore,
 } from './instance-profile-store';
+import { normalizeInstanceUrl } from '../shared/instance-url';
 
 const FORBIDDEN_CREDENTIAL_FIELDS = ['token', 'password', 'secret', 'credential'];
 
@@ -91,19 +92,4 @@ export class InstanceRegistry {
   private persist(): void {
     this.store.save(this.state());
   }
-}
-
-function normalizeInstanceUrl(value: string): string {
-  const url = new URL(value);
-  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && isLoopback(url.hostname))) {
-    throw new Error('An Instance must use HTTPS outside local development');
-  }
-  url.pathname = url.pathname.replace(/\/+$/, '');
-  url.search = '';
-  url.hash = '';
-  return url.toString().replace(/\/$/, '');
-}
-
-function isLoopback(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 }

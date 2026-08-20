@@ -5,6 +5,7 @@ import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktop
 import { insertMention, matchMention } from "./mentions";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
+import { normalizeInstanceUrl } from "../shared/instance-url";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
 import type {
   InstanceAction,
@@ -66,7 +67,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
     setError("");
     const values = new FormData(event.currentTarget);
     try {
-      const baseUrl = String(values.get("baseUrl") ?? "");
+      const baseUrl = normalizeInstanceUrl(String(values.get("baseUrl") ?? ""));
       setState(
         await bridge.addInstance({
           displayName: new URL(baseUrl).host,
@@ -309,8 +310,10 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
                 Community address
                 <input
                   name="baseUrl"
-                  type="url"
-                  placeholder="https://chat.example"
+                  type="text"
+                  inputMode="url"
+                  spellCheck={false}
+                  placeholder="chat.example"
                   required
                 />
               </label>

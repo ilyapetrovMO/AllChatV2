@@ -17,6 +17,15 @@ describe('InstanceRegistry', () => {
     });
   });
 
+  it('infers HTTPS when an Instance is added using only its hostname', () => {
+    const registry = new InstanceRegistry(() => 'instance-bare-host');
+
+    const profile = registry.add({ displayName: '', baseUrl: 'ru.elitedarklord.com' });
+
+    expect(profile.displayName).toBe('ru.elitedarklord.com');
+    expect(profile.baseUrl).toBe('https://ru.elitedarklord.com');
+  });
+
   it('never accepts or returns a raw credential', () => {
     const registry = new InstanceRegistry(() => 'instance-two');
 

@@ -715,8 +715,52 @@ function CommunityShell({
     });
   };
   return (
-    <div className={`community-shell${settingsView === "community" ? " community-settings-open" : ""}`}>
+    <div className={`community-shell${settingsView === "community" ? " community-settings-open" : settingsView ? " member-settings-open" : ""}`}>
       <aside className="conversation-sidebar">
+        {settingsView && settingsView !== "community" && (
+          <>
+            <div className="member-settings-heading">Member Settings</div>
+            <nav className="member-settings-navigation" aria-label="User settings">
+              <button
+                aria-current={settingsView === "profile" ? "page" : undefined}
+                onClick={() => setSettingsView("profile")}
+              >My Account</button>
+              <button
+                aria-current={settingsView === "voice" ? "page" : undefined}
+                onClick={() => setSettingsView("voice")}
+              >Voice &amp; Video</button>
+              <button
+                aria-current={settingsView === "notifications" ? "page" : undefined}
+                onClick={() => setSettingsView("notifications")}
+              >Notifications</button>
+              <button
+                type="button"
+                aria-current={settingsView === "sessions" ? "page" : undefined}
+                onClick={() => {
+                  setSettingsView("sessions");
+                  void onAction({ type: "list_sessions" }).then((result) => {
+                    if (result?.type === "sessions") setSessions(result.sessions);
+                  });
+                }}
+              >Sessions</button>
+              <button
+                type="button"
+                aria-current={settingsView === "safety" ? "page" : undefined}
+                onClick={() => {
+                  setSettingsView("safety");
+                  void onAction({ type: "list_reports" }).then((result) => {
+                    if (result?.type === "reports") setReports(result.reports);
+                  });
+                  if (state.member.owner) void onAction({ type: "list_moderation_records" }).then((result) => {
+                    if (result?.type === "moderation_records") setRecords(result.records);
+                  });
+                }}
+              >Safety</button>
+              <div className="member-settings-separator" />
+              <button type="button" onClick={() => setSettingsView(null)}>Back to Community</button>
+            </nav>
+          </>
+        )}
         <div className="community-switcher">
           <button
             className="community-header"
@@ -895,8 +939,16 @@ function CommunityShell({
             )}
             {settingsView === "community"
               ? communitySettingsSection === "dashboard" ? "Admin Dashboard" : "Community Settings"
-              : settingsView
-                ? "User Settings"
+              : settingsView === "profile"
+                ? "My Account"
+                : settingsView === "voice"
+                  ? "Voice & Video"
+                  : settingsView === "notifications"
+                    ? "Notifications"
+                    : settingsView === "sessions"
+                      ? "Sessions"
+                      : settingsView === "safety"
+                        ? "Safety"
                 : conversation?.name || (homeView === "direct-messages" ? "Direct Messages" : "Home")}
           </h1>
           {conversation?.type === "text" && conversation.topic && (
@@ -1073,7 +1125,7 @@ function CommunityShell({
                 name="query"
                 type="search"
                 aria-label="Search Messages"
-                placeholder="Search"
+                placeholder={settingsView ? "Search Community" : "Search"}
                 maxLength={200}
                 required
                 value={searchQuery}
@@ -1090,56 +1142,10 @@ function CommunityShell({
           </div>
         ) : (
           <div className="settings-layout">
-            <nav aria-label="User settings">
-              <button
-                aria-current={settingsView === "profile" ? "page" : undefined}
-                onClick={() => setSettingsView("profile")}
-              >Profile</button>
-              <button
-                aria-current={settingsView === "voice" ? "page" : undefined}
-                onClick={() => setSettingsView("voice")}
-              >Voice &amp; Video</button>
-              <button
-                aria-current={settingsView === "notifications" ? "page" : undefined}
-                onClick={() => setSettingsView("notifications")}
-              >Notifications</button>
-              <button
-                type="button"
-                aria-current={settingsView === "sessions" ? "page" : undefined}
-                onClick={() => {
-                  setSettingsView("sessions");
-                  void onAction({ type: "list_sessions" }).then((result) => {
-                    if (result?.type === "sessions")
-                      setSessions(result.sessions);
-                  });
-                }}
-              >
-                Sessions
-              </button>
-              <button
-                type="button"
-                aria-current={settingsView === "safety" ? "page" : undefined}
-                onClick={() => {
-                  setSettingsView("safety");
-                  void onAction({ type: "list_reports" }).then((result) => {
-                    if (result?.type === "reports") setReports(result.reports);
-                  });
-                  if (state.member.owner)
-                    void onAction({ type: "list_moderation_records" }).then(
-                      (result) => {
-                        if (result?.type === "moderation_records")
-                          setRecords(result.records);
-                      },
-                    );
-                }}
-              >
-                Safety
-              </button>
-            </nav>
-            <section>
-              <p className="eyebrow">Member settings</p>
+            <section className="settings-content">
               {settingsView === "profile" && <>
               <h2>Profile</h2>
+              <p className="settings-description">Control how other Members recognize you.</p>
               <ProfileImages member={state.member} onAction={onAction} />
               <form
                 className="profile-form"
@@ -2967,50 +2973,22 @@ function ProfileImages({
   }
   return (
     <div className="profile-images">
-      <AuthenticatedImage
-        path={member.bannerUrl}
-        alt="Profile banner"
-        className="profile-banner"
-        onAction={onAction}
-      />
-      <AuthenticatedImage
-        path={member.avatarUrl}
-        alt="Profile avatar"
-        className="profile-avatar"
-        onAction={onAction}
-      />
-      <label>
-        Avatar
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => choose("avatar", event.target.files?.[0])}
-        />
-      </label>
-      <button
-        type="button"
-        onClick={() =>
-          void onAction({ type: "remove_profile_image", kind: "avatar" })
-        }
-      >
-        Remove Avatar
-      </button>
-      <label>
-        Banner
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => choose("banner", event.target.files?.[0])}
-        />
-      </label>
-      <button
-        type="button"
-        onClick={() =>
-          void onAction({ type: "remove_profile_image", kind: "banner" })
-        }
-      >
-        Remove Banner
-      </button>
+      <fieldset className="profile-image-field profile-avatar-field">
+        <legend>Avatar</legend>
+        <AuthenticatedImage path={member.avatarUrl} alt="Profile avatar" className="profile-avatar" onAction={onAction} />
+        <div className="profile-image-actions">
+          <label>Choose image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => choose("avatar", event.target.files?.[0])} /></label>
+          <button type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "avatar" })}>Remove avatar</button>
+        </div>
+      </fieldset>
+      <fieldset className="profile-image-field profile-banner-field">
+        <legend>Profile banner</legend>
+        <AuthenticatedImage path={member.bannerUrl} alt="Profile banner" className="profile-banner" onAction={onAction} />
+        <div className="profile-image-actions">
+          <label>Choose image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => choose("banner", event.target.files?.[0])} /></label>
+          <button type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "banner" })}>Remove banner</button>
+        </div>
+      </fieldset>
       <p className="profile-image-status" role="status">{status}</p>
       {editor && createPortal(<section className="image-crop-dialog" role="dialog" aria-modal="true" aria-label={`Crop ${editor.kind}`}><h2>Crop {editor.kind === "avatar" ? "Avatar" : "Profile Banner"}</h2><div className={`image-crop-preview image-crop-${editor.kind}`}><img src={editor.url} alt="Crop preview" style={{ transform: `scale(${editor.zoom})` }} /></div><label>Zoom<input aria-label="Crop zoom" type="range" min="1" max="3" step="0.05" value={editor.zoom} onChange={(event) => setEditor({ ...editor, zoom: Number(event.target.value) })} /></label><div className="dialog-actions"><button type="button" onClick={() => void uploadCrop()}>Upload {editor.kind}</button><button type="button" onClick={() => setEditor(null)}>Cancel</button></div></section>, document.body)}
     </div>

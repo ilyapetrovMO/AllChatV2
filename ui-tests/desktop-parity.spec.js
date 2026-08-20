@@ -33,6 +33,7 @@ const directMessageDefault = parityScenario('desktop-direct-message-default');
 const communityHomeDefault = parityScenario('desktop-community-home-default');
 const directMessagesHomeDefault = parityScenario('desktop-direct-messages-home-default');
 const adminDashboardHealthy = parityScenario('desktop-admin-dashboard-healthy');
+const profileSettingsDefault = parityScenario('desktop-profile-settings-default');
 
 async function csrf(context) {
   const state = await context.storageState();
@@ -73,9 +74,9 @@ test.beforeAll(async () => {
 
 function executablePath() {
   const root = path.resolve(__dirname, '..', 'desktop', 'out');
-  if (process.platform === 'win32') return path.join(root, '@allchat-desktop-win32-x64', 'AllChat.exe');
-  if (process.platform === 'darwin') return path.join(root, '@allchat-desktop-darwin-x64', 'AllChat.app', 'Contents', 'MacOS', 'AllChat');
-  return path.join(root, '@allchat-desktop-linux-x64', 'AllChat');
+  if (process.platform === 'win32') return path.join(root, 'AllChat-win32-x64', 'AllChat.exe');
+  if (process.platform === 'darwin') return path.join(root, 'AllChat-darwin-x64', 'AllChat.app', 'Contents', 'MacOS', 'AllChat');
+  return path.join(root, 'AllChat-linux-x64', 'AllChat');
 }
 
 function collectElectronErrors(app, page) {
@@ -176,6 +177,22 @@ test('packaged Desktop Admin Dashboard remains visually aligned with web', async
     await expect(desktopPage.getByRole('heading', { name: 'Admin Dashboard', level: 1 })).toBeVisible();
     const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
     await recordComparison(page, testInfo, adminDashboardHealthy, 'Admin Dashboard', web, desktop);
+    assertNoErrors();
+  } finally { await app.close(); }
+});
+
+test('packaged Desktop Profile Settings remains visually aligned with web', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: profileSettingsDefault.width, height: profileSettingsDefault.height });
+  await page.context().addCookies(fixture.ownerState.cookies);
+  await page.goto(profileSettingsDefault.webPath);
+  await page.locator('.settings-layout, .content-shell').first().waitFor();
+  const web = await page.screenshot({ animations: 'disabled', caret: 'hide' });
+  const { app, desktopPage, assertNoErrors } = await launchSignedInDesktop(profileSettingsDefault, 'allchat-desktop-parity-profile-');
+  try {
+    await desktopPage.getByRole('button', { name: 'User Settings' }).click();
+    await desktopPage.getByRole('navigation', { name: 'User settings' }).waitFor();
+    const desktop = await desktopPage.locator('.shell').screenshot({ animations: 'disabled', caret: 'hide' });
+    await recordComparison(page, testInfo, profileSettingsDefault, 'Profile Settings', web, desktop);
     assertNoErrors();
   } finally { await app.close(); }
 });

@@ -195,7 +195,8 @@ screens:
     overall: partial
     states:
       - id: default
-        status: partial
+        status: verified
+        evidence: desktop-profile-settings-default
       - id: avatar-upload
         status: partial
         evidence: renderer-profile-image-upload
@@ -504,3 +505,11 @@ automation:
     height: 720
     max_meaningful_pixel_difference: 0.05
     evidence_directory: .scratch/desktop-visual-parity/admin-dashboard
+  desktop-profile-settings-default:
+    screen: profile-settings
+    state: default
+    web_path: /profile
+    width: 1280
+    height: 720
+    max_meaningful_pixel_difference: 0.051
+    evidence_directory: .scratch/desktop-visual-parity/profile-settings

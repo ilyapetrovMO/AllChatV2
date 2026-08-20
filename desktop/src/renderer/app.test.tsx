@@ -369,8 +369,8 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close Search' }));
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Voice & Video' }));
-    expect(screen.getByRole('heading', { name: 'Voice & Video' })).toBeVisible();
     const voiceSettings = document.querySelector('[data-voice-settings]') as HTMLElement;
+    expect(within(voiceSettings).getByRole('heading', { name: 'Voice & Video' })).toBeVisible();
     expect(within(voiceSettings).getByLabelText('Microphone')).toBeVisible();
     expect(within(voiceSettings).getByLabelText('Speaker')).toBeVisible();
     expect(within(voiceSettings).getByLabelText('Camera')).toBeVisible();
@@ -381,8 +381,8 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(within(voiceSettings).getByRole('button', { name: 'Reset' }));
     expect(voiceSettings.querySelector('.voice-settings-notice')).toHaveTextContent('Voice & Video settings were reset.');
     fireEvent.click(within(screen.getByRole('navigation', { name: 'User settings' })).getByRole('button', { name: 'Notifications' }));
-    expect(screen.getByRole('heading', { name: 'Notifications' })).toBeVisible();
     const notificationSettings = document.querySelector('[data-notification-settings]') as HTMLElement;
+    expect(within(notificationSettings).getByRole('heading', { name: 'Notifications' })).toBeVisible();
     expect(within(notificationSettings).getByText('Native notifications enabled')).toBeVisible();
     fireEvent.change(within(notificationSettings).getByLabelText('Community notification level'), { target: { value: 'all_messages' } });
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
@@ -393,9 +393,9 @@ describe('desktop renderer bootstrap', () => {
       type: 'set_channel_notifications', channelId: 'chat', level: 'nothing', muted: false,
     }));
     fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
-    expect(screen.getByRole('heading', { name: 'Sessions' })).toBeVisible();
+    expect(screen.getAllByRole('heading', { name: 'Sessions' })).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Safety' }));
-    expect(screen.getByRole('heading', { name: 'Safety' })).toBeVisible();
+    expect(screen.getAllByRole('heading', { name: 'Safety' })).toHaveLength(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'lobby' }));
     const alexMember = within(screen.getByRole('complementary', { name: 'Members' }))

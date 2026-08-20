@@ -354,11 +354,35 @@ a { color: #00a8fc; }
 .member-card-avatar { border-color: var(--bg-sidebar); background: var(--brand); }
 .member-card p { color: var(--muted); }
 
-.settings-layout { grid-template-columns: minmax(180px, 240px) minmax(0, 720px); gap: 32px; overflow: auto; padding: 28px 32px 80px; }
-.settings-layout nav { gap: 2px; }
-.settings-layout nav button { padding: 7px 10px; border-radius: 4px; color: var(--muted); }
-.settings-layout nav button:hover, .settings-layout nav button[aria-current="page"] { background: var(--bg-active); color: var(--text); }
+.settings-layout { display: block; min-height: 0; overflow: auto; padding: 28px 32px 80px; scrollbar-width: none; }
+.settings-layout::-webkit-scrollbar { display: none; }
+.settings-content { width: min(100%, 896px); }
 .settings-layout h2 { margin: 0 0 .4rem; font-size: 1.5rem; }
+.settings-description { margin: 0 0 24px; color: var(--muted); }
+.member-settings-open .community-switcher,
+.member-settings-open .conversation-nav,
+.member-settings-open #desktop-call-controls,
+.member-settings-open .member-panel { display: none; }
+.member-settings-heading { display: flex; align-items: center; height: 48px; padding: 0 16px; border-bottom: 1px solid rgb(255 255 255 / 6%); background: #101115; font-weight: 700; }
+.member-settings-navigation { display: grid; align-content: start; gap: 2px; padding: 12px 8px; }
+.member-settings-navigation button { min-height: 0; padding: 8px 10px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; text-align: left; }
+.member-settings-navigation button:hover,
+.member-settings-navigation button[aria-current="page"] { color: var(--text); background: var(--bg-active); }
+.member-settings-separator { height: 1px; margin: 8px 10px; background: var(--border); }
+.profile-images { position: static; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin: 0 0 18px; padding: 20px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-sidebar); }
+.profile-image-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 16px; width: auto; min-width: 0; min-height: 164px; margin: 0; padding: 18px 14px; border: 1px solid var(--border); }
+.profile-image-field legend { padding: 0 2px; color: var(--text); }
+.profile-avatar { position: static; width: 72px; height: 72px; border: 0; border-radius: 50%; object-fit: cover; background: var(--brand); }
+.profile-banner { position: static; width: 96px; height: 42px; border: 0; border-radius: 5px; object-fit: cover; background: var(--bg-input); }
+.profile-image-actions { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 10px; min-width: 0; }
+.profile-image-actions label { min-width: 0; }
+.profile-image-actions input { width: 100%; min-width: 0; padding: 8px 10px; border-radius: 4px; background: var(--bg-input); color: var(--text); }
+.profile-image-actions button { min-height: 40px; justify-self: start; padding: 8px 14px; border: 0; color: var(--muted); background: transparent; }
+.profile-image-actions button:hover { color: var(--text); background: var(--bg-hover); }
+.profile-form { margin-top: 0; padding: 0 22px 20px; border: solid var(--border); border-width: 0 1px 1px; border-radius: 0 0 var(--radius) var(--radius); background: var(--bg-sidebar); }
+.profile-images + .profile-form { margin-top: -19px; }
+.profile-form button[type="submit"] { justify-self: start; }
+.presence-controls { padding: 18px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-sidebar); }
 .settings-panel { color: var(--muted); }
 .settings-panel dl { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 10px 18px; margin-top: 24px; }
 .settings-panel dt { color: var(--faint); font-weight: 700; }

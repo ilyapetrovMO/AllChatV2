@@ -1,6 +1,6 @@
 # Web → Electron Parity
 
-Last checked: 2026-08-18
+Last checked: 2026-08-20
 
 ## Summary
 
@@ -12,7 +12,7 @@ Last checked: 2026-08-18
 | Direct Message | ✅ | ✅ | ⚠️ | ⚠️ | ⚠️ |
 | Voice Room | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
 | Search | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
-| Profile Settings | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
+| Profile Settings | ✅ | ✅ | ⚠️ | ⚠️ | ⚠️ |
 | Voice & Video Settings | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
 | Notification Settings | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
 | Sessions | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
@@ -27,7 +27,7 @@ Last checked: 2026-08-18
 
 ✅ verified parity · ⚠️ partial or not fully verified · ❌ missing/materially different · ➖ intentional
 
-The default Community Home, Direct Messages Home, Text Channel, and Direct Message states are verified against both rendered clients at 1280×720. The current packaged-app checks measured 2.78%, 3.96%, 2.71%, and 3.66% meaningful pixel difference respectively against a 5% budget. The Text Channel fixture also verifies clickable URL rendering and that an unavailable link preview does not emit an Electron handler or renderer error. Other rows remain conservative until equivalent evidence exists.
+The default Community Home, Direct Messages Home, Text Channel, Direct Message, and Profile Settings states are verified against both rendered clients at 1280×720. The current packaged-app checks measured 2.78%, 3.96%, 2.71%, 3.66%, and 5.07% meaningful pixel difference respectively. Profile Settings uses a 5.1% budget for the intentional desktop-only Instance rail; the other screens use 5%. The Text Channel fixture also verifies clickable URL rendering and that an unavailable link preview does not emit an Electron handler or renderer error. Other rows remain conservative until equivalent evidence exists.
 
 ## Highest-impact gaps
 
@@ -47,7 +47,8 @@ The default Community Home, Direct Messages Home, Text Channel, and Direct Messa
 
 ### Settings and administration
 
-- ⚠️ Profile, Sessions, and Safety have partial native views.
+- ✅ The default Profile screen now uses the canonical Member Settings shell, hierarchy, spacing, media rows, form layout, and settings search copy; the packaged comparison is verified at 1280×720.
+- ⚠️ Profile upload/editor/error states, Sessions, and Safety still need complete rendered-state coverage.
 - ✅ The Community header menu contains only Community Home and owner-only Community Settings; user settings remain on the bottom-left cog.
 - ✅ Community Administration uses a dedicated navigation shell; Profile, Voice & Video, Notifications, Sessions, and Safety are no longer shown alongside it.
 - ⚠️ Profile image upload now includes a native crop/zoom preview; rendered crop output still needs cross-client verification.

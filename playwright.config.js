@@ -11,7 +11,7 @@ module.exports = defineConfig({
   webServer: {
     command: 'node ui-tests/start-server.js',
     url: 'http://127.0.0.1:4173/login',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 120_000,
   },
   projects: [

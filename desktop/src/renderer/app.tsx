@@ -1961,6 +1961,7 @@ export function DirectCallControls({
 }) {
   const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [status, setStatus] = useState("");
+  const transientStatus = useRef<ReturnType<typeof createTransientCallStatusController> | null>(null);
   const [muted, setMuted] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [soundboardOpen, setSoundboardOpen] = useState(false);
@@ -1975,8 +1976,10 @@ export function DirectCallControls({
   const heartbeat = useRef<number | null>(null);
   const connectionTimeout = useRef<number | null>(null);
   const mediaFailure = useRef("");
+  transientStatus.current ||= createTransientCallStatusController(setStatus, () => media.current?.peer.connectionState === "connected" ? "Call connected" : null);
 
   const cleanup = () => {
+    transientStatus.current?.clear();
     const active = media.current;
     media.current = null;
     active?.socket.send({ version: 1, type: "leave" });
@@ -2280,7 +2283,7 @@ export function DirectCallControls({
       </div>
       <div className="voice-connection-actions">
         <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
-        <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => setStatus(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>
+        <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => transientStatus.current?.show(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>
         <button className={muted ? "voice-mute muted" : "voice-mute"} type="button" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute" : "Mute"} onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}><Icon name="mic" /></button>
         <button className="voice-hangup" type="button" aria-label={voiceRoom ? "Disconnect voice" : "End call"} title={voiceRoom ? "Disconnect Voice" : "End Call"} onClick={() => voiceRoom ? leaveVoice() : void act("end")}><Icon name="phone" /></button>
       </div>
@@ -2328,6 +2331,31 @@ export function waitForIceGathering(peer: RTCPeerConnection, timeoutMs = 2_000):
     const timer = window.setTimeout(finish, timeoutMs);
     peer.addEventListener("icegatheringstatechange", changed);
   });
+}
+
+export function createTransientCallStatusController(
+  setStatus: (value: string) => void,
+  connectedStatus: () => string | null,
+  delayMs = 3_000,
+  schedule: (callback: () => void, delay: number) => number = window.setTimeout,
+  cancel: (timer: number) => void = window.clearTimeout,
+) {
+  let timer: number | null = null;
+  return {
+    show(message: string) {
+      if (timer !== null) cancel(timer);
+      setStatus(message);
+      timer = schedule(() => {
+        timer = null;
+        const restored = connectedStatus();
+        if (restored) setStatus(restored);
+      }, delayMs);
+    },
+    clear() {
+      if (timer !== null) cancel(timer);
+      timer = null;
+    },
+  };
 }
 
 function memberName(member: InstanceViewState["member"]): string {

@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
-import { DirectCallControls } from './app';
+import { createTransientCallStatusController, DirectCallControls } from './app';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -65,5 +65,39 @@ describe('DirectCallControls remote lifecycle', () => {
     render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
     expect(await screen.findByRole('region', {name: 'Incoming Call controls'})).toBeVisible();
     expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'});
+  });
+});
+
+describe('transient Call status', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('restores the connected label after temporary action feedback', () => {
+    vi.useFakeTimers();
+    const setStatus = vi.fn();
+    const controller = createTransientCallStatusController(setStatus, () => 'Call connected');
+
+    controller.show('Not supported.');
+    expect(setStatus).toHaveBeenLastCalledWith('Not supported.');
+    vi.advanceTimersByTime(2_999);
+    expect(setStatus).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1);
+    expect(setStatus).toHaveBeenLastCalledWith('Call connected');
+  });
+
+  it('does not hide a real disconnection and cancels restoration on cleanup', () => {
+    vi.useFakeTimers();
+    const setStatus = vi.fn();
+    let connected = true;
+    const controller = createTransientCallStatusController(setStatus, () => connected ? 'Call connected' : null);
+    controller.show('Screen sharing failed.');
+    connected = false;
+    vi.advanceTimersByTime(3_000);
+    expect(setStatus).toHaveBeenCalledTimes(1);
+
+    connected = true;
+    controller.show('Not supported.');
+    controller.clear();
+    vi.advanceTimersByTime(3_000);
+    expect(setStatus).toHaveBeenLastCalledWith('Not supported.');
   });
 });

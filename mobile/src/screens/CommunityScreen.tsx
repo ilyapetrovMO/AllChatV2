@@ -80,6 +80,7 @@ import {
   type VoiceVideoSettings,
 } from '../media/VoiceVideoSettings';
 import {
+  setCallMicrophoneMuted,
   startCallAudioSession,
   stopCallAudioSession,
 } from '../media/CallAudioSession';
@@ -1938,6 +1939,16 @@ function MediaRoomScreen({
     session.current?.stop();
     onLeave();
   }
+  async function setMicrophoneMuted(next: boolean) {
+    try {
+      await session.current?.setMuted(next);
+      setCallMicrophoneMuted(next);
+      setMuted(next);
+    } catch (caught) {
+      setCallMicrophoneMuted(muted);
+      setError(caught instanceof Error ? caught.message : 'Could not update microphone mute.');
+    }
+  }
   if (minimized)
     return (
       <View style={styles.voiceStatusStrip}>
@@ -1962,8 +1973,7 @@ function MediaRoomScreen({
             accessibilityLabel={muted ? 'Unmute microphone' : 'Mute microphone'}
             onPress={() => {
               const next = !muted;
-              session.current?.setMuted(next);
-              setMuted(next);
+              void setMicrophoneMuted(next);
             }}
             style={[
               styles.voiceStatusButton,
@@ -2193,8 +2203,7 @@ function MediaRoomScreen({
         <TouchableOpacity
           onPress={() => {
             const next = !muted;
-            session.current?.setMuted(next);
-            setMuted(next);
+            void setMicrophoneMuted(next);
           }}
           style={[
             styles.mediaControl,

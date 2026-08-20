@@ -295,9 +295,7 @@ func (m *Manager) Participants(roomID string) []Participant {
 	sort.Slice(sessions, func(first, second int) bool { return sessions[first].joinOrder < sessions[second].joinOrder })
 	items := make([]Participant, 0, len(sessions))
 	for _, item := range sessions {
-		participant := item.participant
-		participant.ScreenSharing = m.screenTracks[roomID][participant.MemberID] != nil
-		items = append(items, participant)
+		items = append(items, item.participant)
 	}
 	return items
 }

@@ -22,6 +22,7 @@
   };
   const icon=(name, className="")=>{const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");svg.setAttribute("data-lucide",name);svg.setAttribute("class",`lucide-icon ${className}`.trim());svg.innerHTML=iconPaths[name]||"";return svg};
   const setIcon=(element,name)=>{if(!element)return;element.replaceChildren(icon(name))};
+  window.allchatMediaOwnerID ||= (trackID="",streamID="")=>{for(const value of [streamID,trackID]){const match=/^(?:member|audio|screen)-(.+)$/.exec(value);if(match)return match[1]}return ""};
   const installIcons=(root=document)=>{
     for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"],[".attachment-button","paperclip"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
     root.querySelectorAll?.('[data-community-menu-toggle] > [aria-hidden="true"]').forEach(element=>setIcon(element,"chevron-down"));

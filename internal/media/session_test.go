@@ -264,6 +264,34 @@ func TestScreenVisibilitySignalsAdaptiveLayerChoice(t *testing.T) {
 	manager.mu.Unlock()
 }
 
+func TestScreenPublishingStatusClearsWhileNegotiatedTrackRemains(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("sharer", "room"); err != nil {
+		t.Fatal(err)
+	}
+	manager.mu.Lock()
+	manager.screenTracks["room"] = map[string]*webrtc.TrackLocalStaticRTP{"sharer": nil}
+	manager.mu.Unlock()
+	if err := manager.SetScreenPublishing("sharer", true); err != nil {
+		t.Fatal(err)
+	}
+	if participants := manager.Participants("room"); len(participants) != 1 || !participants[0].ScreenSharing {
+		t.Fatalf("publishing participants = %#v", participants)
+	}
+	if err := manager.SetScreenPublishing("sharer", false); err != nil {
+		t.Fatal(err)
+	}
+	if participants := manager.Participants("room"); len(participants) != 1 || participants[0].ScreenSharing {
+		t.Fatalf("stopped participants = %#v", participants)
+	}
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+	if _, retained := manager.screenTracks["room"]["sharer"]; !retained {
+		t.Fatal("stopping publication must retain the negotiated track for restart")
+	}
+}
+
 func TestScreenVisibilityBeforeTrackSelectsHighLayerWhenTrackAppears(t *testing.T) {
 	manager := NewManager(time.Second)
 	defer manager.Close()

@@ -48,7 +48,7 @@
     if(sequence!==stageRenderSequence||active!==session||!grid.isConnected)return;
     const existing=new Map([...grid.children].map(node=>[node.dataset.stageKey,node])),desired=[],screensByMember=new Map(),unmatchedScreens=[];
     if(session.screenStream){let local=session.localScreenVideo;if(!local){local=document.createElement("video");local.autoplay=true;local.muted=true;local.playsInline=true;session.localScreenVideo=local}if(local.srcObject!==session.screenStream)local.srcObject=session.screenStream;screensByMember.set(session.profile.id,local)}
-    const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const [trackID,video] of session.remoteVideos||[]){if(video.dataset.stopped==="true")continue;const memberID=trackID.startsWith("screen-")?trackID.slice(7):"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
+    const participantIDs=new Set((state.participants||[]).map(participant=>participant.member_id));for(const video of session.remoteVideos?.values()||[]){if(video.dataset.stopped==="true")continue;const memberID=video.dataset.memberId||"";if(participantIDs.has(memberID))screensByMember.set(memberID,video);else unmatchedScreens.push(video)}
     for(const participant of state.participants||[]){const key=`participant:${participant.member_id}`,profile=state.members?.[participant.member_id]||{},screenStopped=session.stoppedVideoMembers.has(participant.member_id),screen=screensByMember.get(participant.member_id)||(!screenStopped&&participant.screen_sharing?unmatchedScreens.shift():null);let tile=existing.get(key);if(!tile){tile=document.createElement("article");tile.className="media-stage-tile participant-tile";tile.dataset.stageKey=key;const visual=document.createElement("div");visual.className="media-stage-visual";tile.append(visual,document.createElement("strong"))}const visual=tile.querySelector(".media-stage-visual"),sharing=!!screen;tile.classList.toggle("speaking",!!participant.speaking);tile.classList.toggle("sharing",sharing);tile.onclick=sharing?()=>tile.classList.toggle("expanded"):null;if(sharing){if(screen.parentElement!==visual)visual.replaceChildren(screen)}else{tile.classList.remove("expanded");let avatar=visual.firstElementChild;if(!avatar||avatar.matches("video")){avatar=document.createElement(profile.avatar_url?"img":"span");visual.replaceChildren(avatar)}const wantsImage=!!profile.avatar_url;if(wantsImage!==avatar.matches("img")){const replacement=document.createElement(wantsImage?"img":"span");avatar.replaceWith(replacement);avatar=replacement}if(wantsImage){avatar.className="";avatar.src=profile.avatar_url;avatar.alt=""}else{avatar.className="media-stage-avatar-fallback";avatar.textContent=Array.from(profile.display_name||profile.username||"?")[0].toUpperCase()}}tile.querySelector("strong").textContent=participant.member_id===session.profile.id?"You":profile.display_name||profile.username||state.names?.[participant.member_id]||"Member";let badge=tile.querySelector(".screen-sharing-badge"),reportedSharing=!screenStopped&&participant.screen_sharing;if((sharing||reportedSharing)&&!badge){badge=document.createElement("span");badge.className="screen-sharing-badge";badge.textContent="Sharing screen";tile.append(badge)}else if(!sharing&&!reportedSharing){badge?.remove()}desired.push(tile)}
     if(!desired.length){let empty=existing.get("empty");if(!empty){empty=document.createElement("p");empty.className="media-stage-empty";empty.dataset.stageKey="empty";empty.textContent="No one is connected to this Voice Room."}desired.push(empty)}
     desired.forEach((node,index)=>{if(grid.children[index]!==node)grid.insertBefore(node,grid.children[index]||null)});
@@ -164,7 +164,7 @@
           const video = document.createElement("video");
           video.autoplay = true; video.playsInline = true; video.className = "shared-screen";
           video.srcObject = event.streams[0] || new MediaStream([event.track]);
-          const memberID=(event.track.id||event.streams[0]?.id||"").replace(/^screen-/,"");
+          const memberID=window.allchatMediaOwnerID?.(event.track.id,event.streams[0]?.id)||"";
           session.stoppedVideoMembers.delete(memberID);
           for(const [id,old] of session.remoteVideos)if(old.dataset.memberId===memberID){session.remoteVideos.delete(id);old.remove()}
           video.dataset.memberId=memberID;session.remoteVideos.set(event.track.id, video);
@@ -174,7 +174,7 @@
         }
         let audio = session.remoteAudios.get(event.track);
         if (!audio) {
-          audio = document.createElement("audio"); audio.autoplay = true; window.AllChatVoiceSettings.applyOutput(audio,(event.track.id||event.streams[0]?.id||"").replace(/^(?:audio|member)-/,""));
+          audio = document.createElement("audio"); audio.autoplay = true; window.AllChatVoiceSettings.applyOutput(audio,window.allchatMediaOwnerID?.(event.track.id,event.streams[0]?.id)||"");
           session.remoteAudios.set(event.track, audio); document.body.append(audio);
           event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
         }

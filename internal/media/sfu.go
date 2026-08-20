@@ -343,6 +343,7 @@ func (m *Manager) SetScreenPublishing(memberID string, publishing bool) error {
 		return ErrNotPresent
 	}
 	roomID := item.participant.RoomID
+	item.participant.ScreenSharing = publishing
 	track := m.screenTracks[roomID][memberID]
 	if track == nil {
 		m.mu.Unlock()
@@ -454,6 +455,9 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 		m.screenTracks[source.roomID] = map[string]*webrtc.TrackLocalStaticRTP{}
 	}
 	m.screenTracks[source.roomID][source.memberID] = local
+	if item := m.byMember[source.memberID]; item != nil {
+		item.participant.ScreenSharing = true
+	}
 	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
@@ -495,6 +499,9 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 		m.mu.Lock()
 		if m.screenTracks[source.roomID][source.memberID] == local {
 			delete(m.screenTracks[source.roomID], source.memberID)
+			if item := m.byMember[source.memberID]; item != nil {
+				item.participant.ScreenSharing = false
+			}
 		}
 		for memberID := range m.rooms[source.roomID] {
 			if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {

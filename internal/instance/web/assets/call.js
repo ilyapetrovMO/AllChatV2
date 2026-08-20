@@ -168,7 +168,7 @@
     if (event.track.kind === "video") {
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
-      video.dataset.memberId=(event.track.id||stream.id||"").replace(/^screen-/,"");
+      video.dataset.memberId=window.allchatMediaOwnerID?.(event.track.id,stream.id)||"";
       const id=event.track.id||crypto.randomUUID(),remove=()=>{if(remoteVideo.get(id)===video)remoteVideo.delete(id);video.remove();renderMedia()},publish=()=>{
         // A Direct Call has one remote Member and one active video source.
         for(const old of remoteVideo.values())old.remove();remoteVideo.clear();remoteVideo.set(id,video);renderMedia();video.play().catch(()=>{});
@@ -176,7 +176,7 @@
       event.track.addEventListener("ended",remove);event.track.addEventListener("mute",remove);event.track.addEventListener("unmute",publish);
       if(!event.track.muted)publish();return;
     }
-    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream; window.AllChatVoiceSettings?.applyOutput(audio,(event.track.id||stream.id||"").replace(/^(?:audio|member)-/,""));
+    const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream; window.AllChatVoiceSettings?.applyOutput(audio,window.allchatMediaOwnerID?.(event.track.id,stream.id)||"");
     remoteAudio.set(event.track, audio); document.body.append(audio);
     audio.play().catch(() => {});
     event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});

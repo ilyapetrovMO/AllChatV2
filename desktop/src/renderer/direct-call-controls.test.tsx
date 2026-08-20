@@ -66,6 +66,31 @@ describe('DirectCallControls remote lifecycle', () => {
     expect(await screen.findByRole('region', {name: 'Incoming Call controls'})).toBeVisible();
     expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'});
   });
+
+  it('keeps the active DM name when another channel is selected', async () => {
+    const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => {
+      if (action.type === 'current_call') return {type: 'call', call: {id:'call-mobile',direct_message_id:'dm-mobile',caller_id:'me',recipient_id:'mobile',state:'accepted',created_at:'2026-08-20T10:00:00Z'}};
+      return {type:'accepted'};
+    });
+    render(<>
+      <div id="desktop-call-controls" />
+      <DirectCallControls
+        conversation={{id:'text-channel',name:'text channel',type:'text'}}
+        directCallNames={{'dm-mobile':'mobile'}}
+        currentMemberId="me"
+        instanceId="instance-1"
+        onAction={onAction}
+        requestedVoiceRoom={null}
+        requestedVoiceRoomName=""
+        onVoiceRoomChange={vi.fn()}
+        onCallChange={vi.fn()}
+      />
+    </>);
+
+    const controls = await screen.findByRole('region', {name:'Call controls'});
+    expect(controls).toHaveTextContent('mobile');
+    expect(controls).not.toHaveTextContent('text channel');
+  });
 });
 
 describe('transient Call status', () => {

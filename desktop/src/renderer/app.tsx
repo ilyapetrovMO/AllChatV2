@@ -1060,6 +1060,7 @@ function CommunityShell({
             )}
             <DirectCallControls
               conversation={directMessageBlocked ? null : conversation}
+              directCallNames={Object.fromEntries(state.direct_messages.map((directMessage) => [directMessage.id, directMessage.other.displayName || directMessage.other.username]))}
               currentMemberId={state.member.id}
               instanceId={instanceId}
               onAction={onAction}
@@ -1940,6 +1941,7 @@ function CommunityShell({
 
 export function DirectCallControls({
   conversation,
+  directCallNames = {},
   currentMemberId,
   instanceId,
   onAction,
@@ -1950,6 +1952,7 @@ export function DirectCallControls({
   onCallChange,
 }: {
   conversation: { id: string; name?: string; type: "text" | "voice" | "dm" } | null;
+  directCallNames?: Record<string, string>;
   currentMemberId: string;
   instanceId: string;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
@@ -2274,12 +2277,13 @@ export function DirectCallControls({
     return () => { disposed = true; if (timer !== undefined) window.clearInterval(timer); customAudio?.pause(); if (customURL) URL.revokeObjectURL(customURL); if (context) void context.close().catch(() => undefined); };
   }, [incoming, call?.id]);
   const connected = call?.state === "accepted" || !!voiceRoom;
+  const directCallName = call ? directCallNames[call.direct_message_id] || (conversation?.type === "dm" && conversation.id === call.direct_message_id ? conversation.name : "") || "Direct Call" : "Direct Call";
   const controlSlot = document.getElementById("desktop-call-controls");
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
       <div>
         <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : status || (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
-        <span>{voiceRoom ? requestedVoiceRoomName : conversation?.name || "Direct Call"}</span>
+        <span>{voiceRoom ? requestedVoiceRoomName : directCallName}</span>
       </div>
       <div className="voice-connection-actions">
         <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
@@ -2290,7 +2294,7 @@ export function DirectCallControls({
     </section>,
     controlSlot,
   ) : null;
-  const incomingControls = incoming && controlSlot ? createPortal(<section className="voice-connection-panel incoming-call-panel" aria-label="Incoming Call controls"><div><strong>Incoming Direct Call</strong><span>{conversation?.name || "Member"}</span></div><div className="voice-connection-actions"><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></div></section>, controlSlot) : null;
+  const incomingControls = incoming && controlSlot ? createPortal(<section className="voice-connection-panel incoming-call-panel" aria-label="Incoming Call controls"><div><strong>Incoming Direct Call</strong><span>{directCallName}</span></div><div className="voice-connection-actions"><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></div></section>, controlSlot) : null;
   const screenPortals = Object.entries({ ...remoteScreens, ...(localScreen ? { [currentMemberId]: localScreen } : {}) }).map(([memberId, stream]) => {
     const tile = [...document.querySelectorAll<HTMLElement>("[data-media-member-id]")].find((element) => element.dataset.mediaMemberId === memberId);
     const target = tile?.querySelector(".media-stage-visual");

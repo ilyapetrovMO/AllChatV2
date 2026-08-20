@@ -414,6 +414,8 @@ describe('desktop renderer bootstrap', () => {
     expect(directCallGrid).toBeVisible();
     expect(directCallGrid.closest('.direct-call-workspace')).toBeTruthy();
     expect(directCallGrid.closest('.message-list')).toBeNull();
+    expect(directCallGrid.querySelector('.media-stage-grid')).toHaveAttribute('data-tile-count', '2');
+    expect(directCallGrid.querySelectorAll('.media-stage-visual')).toHaveLength(2);
     expect(within(directCallGrid).getByText('You')).toBeVisible();
     expect(screen.getByLabelText('alex Messages')).toBeVisible();
     fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));

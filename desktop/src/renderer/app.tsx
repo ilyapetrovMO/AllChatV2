@@ -1250,14 +1250,14 @@ function CommunityShell({
         ) : conversation ? (
           conversation.type === "voice" ? (
             <section className="media-stage">
-              <div className="media-stage-grid">
+              <div className="media-stage-grid" data-tile-count={visibleVoiceParticipants.length}>
                 {visibleVoiceParticipants.length === 0 ? (
                   <p className="media-stage-empty">No one is connected to this Voice Room.</p>
                 ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
                   return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} key={participant.member_id}>
-                    <AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                    <div className="media-stage-visual"><AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                     <strong>{name}</strong>
                     {participant.screen_sharing && <span>Sharing screen</span>}
                   </article>;
@@ -1268,11 +1268,11 @@ function CommunityShell({
             <section className={directCallActive ? "conversation-workspace direct-call-workspace" : "conversation-workspace"}>
               {directCallActive && (
                 <section className="media-stage direct-call-stage" aria-label="Direct Call grid">
-                  <div className="media-stage-grid">
+                  <div className="media-stage-grid" data-tile-count={2}>
                     {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
                       const name = memberName(participant);
                       return <article className="media-stage-tile participant-tile" key={participant.id}>
-                        <AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                        <div className="media-stage-visual"><AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                         <strong>{participant.id === state.member.id ? "You" : name}</strong>
                       </article>;
                     })}

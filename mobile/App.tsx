@@ -21,7 +21,7 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 
 import {AllChatClient} from './src/client/AllChatClient';
 import {normalizeInstanceURL} from './src/domain/instance';
-import {CommunityScreen} from './src/screens/CommunityScreen';
+import {CallBanner, CommunityScreen, type GlobalIncomingCall} from './src/screens/CommunityScreen';
 import {VoiceVideoSettingsScreen} from './src/screens/VoiceVideoSettingsScreen';
 import {InstanceAccount, KeychainSessionVault, SessionVault} from './src/session/SessionVault';
 import {DEFAULT_VOICE_VIDEO_SETTINGS, KeychainVoiceVideoSettingsStore, type VoiceVideoSettings} from './src/media/VoiceVideoSettings';
@@ -153,6 +153,7 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   onSelectAccount(account: InstanceAccount): void; onSignOut(): void; onVoiceSettingsChange(settings: VoiceVideoSettings): void;
   palette: Palette; status: string; submitting: boolean; voiceSettings: VoiceVideoSettings; voiceSettingsOpen: boolean;
 }) {
+  const [incomingCall, setIncomingCall] = useState<GlobalIncomingCall>();
   useEffect(() => {
     syncMobilePush(account).catch(() => {});
     const subscription = AppState.addEventListener('change', state => {
@@ -164,7 +165,7 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
   const shellStyle = [styles.screen, {backgroundColor: palette.background}];
   return <SafeAreaView style={shellStyle}>
     <StatusBar barStyle={dark ? 'light-content' : 'dark-content'} />
-    <CommunityScreen account={account} onManage={onManage} onVoiceSettingsChange={onVoiceSettingsChange} palette={palette} voiceSettings={voiceSettings} />
+    <CommunityScreen account={account} onGlobalIncomingCallChange={setIncomingCall} onManage={onManage} onVoiceSettingsChange={onVoiceSettingsChange} palette={palette} voiceSettings={voiceSettings} />
     <UpdatePrompt account={account} palette={palette} />
     <Modal animationType="slide" onRequestClose={voiceSettingsOpen ? onCloseSettings : onOpenCommunity} visible={managing}>
       {voiceSettingsOpen ? <SafeAreaView style={shellStyle}><VoiceVideoSettingsScreen initial={voiceSettings} onBack={onCloseSettings} onChange={onVoiceSettingsChange} palette={palette} /></SafeAreaView> : <SafeAreaView style={shellStyle}>
@@ -186,6 +187,11 @@ function ActiveCommunity({account, accounts, dark, managing, onAdd, onCloseSetti
           <TouchableOpacity accessibilityRole="button" disabled={submitting} onPress={onSignOut} style={styles.dangerButton}><Text style={styles.dangerText}>{submitting ? 'Signing out…' : 'Sign out of this Instance'}</Text></TouchableOpacity>
         </View>
       </SafeAreaView>}
+    </Modal>
+    <Modal animationType="fade" onRequestClose={() => incomingCall?.onAction('decline')} statusBarTranslucent transparent visible={Boolean(incomingCall)}>
+      <View pointerEvents="box-none" style={styles.globalCallLayer}>
+        {incomingCall ? <CallBanner call={incomingCall.call} currentMemberID={incomingCall.currentMemberID} onAction={incomingCall.onAction} onOpen={incomingCall.onOpen} palette={palette} /> : null}
+      </View>
     </Modal>
   </SafeAreaView>;
 }
@@ -245,6 +251,7 @@ const darkPalette = {background: '#191a1f', field: '#25272e', border: '#393c46',
 const lightPalette = {background: '#f4f5f8', field: '#ffffff', border: '#d8dbe4', text: '#171820', muted: '#5e6370', placeholder: '#858a97', accent: '#4752c4'};
 
 const styles = StyleSheet.create({
+  globalCallLayer: {justifyContent: 'flex-start', flex: 1, paddingTop: 8},
   screen: {flex: 1}, centered: {alignItems: 'center', flex: 1, justifyContent: 'center'}, grow: {flex: 1},
   form: {flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 14},
   accountHeader: {alignItems: 'center', flexDirection: 'row', gap: 16, padding: 24},

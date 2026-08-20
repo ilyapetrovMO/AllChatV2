@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, Image, Modal } from 'react-native';
+import { FlatList, Image, Modal, Text } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 
 import {
@@ -8,6 +8,7 @@ import {
   formatMessageTime,
   homeDirectMessages,
   IncomingCallChime,
+  FormattedBody,
   loadAuthenticatedImage,
   mergeMessagePage,
   MessageRow,
@@ -91,6 +92,26 @@ describe('native conversation timeline', () => {
       tree.update(<IncomingCallChime active={false} />);
     });
     expect(tree.toJSON()).toBeNull();
+  });
+
+  it('renders fenced JSON as a labelled, syntax-highlighted code block', () => {
+    let tree!: renderer.ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(
+        <FormattedBody body={'before\n```json\n{"ready": true, "count": 2}\n```\nafter'} color="#fff" />,
+      );
+    });
+    const block = tree.root.findByProps({accessibilityLabel: 'Code block, json'});
+    expect(block).toBeTruthy();
+    expect(block.findAllByType(Text).map(node => node.props.children).flat(Infinity).join('')).toContain('"ready": true');
+  });
+
+  it('supports compact same-line fenced code used by existing messages', () => {
+    let tree!: renderer.ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(<FormattedBody body={'```json ["123", "321"] ```'} color="#fff" />);
+    });
+    expect(tree.root.findByProps({accessibilityLabel: 'Code block, json'})).toBeTruthy();
   });
 
   it('anchors the newest Message at the bottom without waiting for layout callbacks', () => {

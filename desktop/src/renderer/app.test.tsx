@@ -95,6 +95,9 @@ describe('desktop renderer bootstrap', () => {
 
   it('renders authenticated Community navigation from the versioned bootstrap contract', async () => {
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:allchat-media'), revokeObjectURL: vi.fn() }));
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
+      getUserMedia: vi.fn(async () => ({ getTracks: () => [{ stop: vi.fn() }] })),
+    }});
     let holdReaction = false;
     let resolveReaction: ((value: { type: 'accepted' }) => void) | undefined;
     const executeInstance = vi.fn(async (_instanceId: string, action: { type: string }) => {
@@ -135,6 +138,8 @@ describe('desktop renderer bootstrap', () => {
       if (action.type === 'community_home') return { type: 'community_home' as const, markdown: '# Welcome to Nora Community\n\nChoose a Channel to begin.' };
       if (action.type === 'search_messages') return { type: 'search_results' as const, results: [{ message: { id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora', sequence: 1, body: 'Global result', created_at: '2026-08-18T09:00:00Z', deleted: false }, channel_name: 'lobby', category_name: 'General', snippet: 'Global result', url: '/channels/chat#message-1' }] };
       if (action.type === 'load_asset') return { type: 'asset' as const, contentType: 'image/png', data: new Uint8Array([1, 2, 3]) };
+      if (action.type === 'start_call') return { type: 'call' as const, call: { id: 'call-alex', direct_message_id: 'dm-alex', caller_id: 'me', recipient_id: 'alex', state: 'accepted' as const, created_at: '2026-08-18T09:00:00Z' } };
+      if (action.type === 'call_action') return { type: 'call' as const, call: null };
       if (action.type === 'set_reaction' && holdReaction) return await new Promise<{ type: 'accepted' }>((resolve) => { resolveReaction = resolve; });
       return { type: 'accepted' as const };
     });
@@ -404,6 +409,10 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.queryByRole('button', { name: 'Start Call' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Unblock' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Start Call' })).toBeVisible());
+    fireEvent.click(screen.getByRole('button', { name: 'Start Call' }));
+    expect(await screen.findByRole('region', { name: 'Direct Call grid' })).toBeVisible();
+    expect(within(screen.getByRole('region', { name: 'Direct Call grid' })).getByText('You')).toBeVisible();
+    fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));
     fireEvent.click(screen.getByRole('button', { name: 'Direct Messages' }));
     expect(screen.getByRole('heading', { name: 'Direct Messages', level: 1 })).toBeVisible();
     fireEvent.change(screen.getByLabelText('Start a Direct Message'), { target: { value: 'alex' } });

@@ -390,6 +390,7 @@ function CommunityShell({
   const [communityGuide, setCommunityGuide] = useState<string | null>(null);
   const [voiceParticipantsByChannel, setVoiceParticipantsByChannel] = useState<Record<string, import("../shared/instance-actions").VoiceParticipant[]>>({});
   const [requestedVoiceRoom, setRequestedVoiceRoom] = useState<string | null>(null);
+  const [directCall, setDirectCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [settingsView, setSettingsView] = useState<
     "profile" | "voice" | "notifications" | "sessions" | "safety" | "community" | null
   >(null);
@@ -898,6 +899,7 @@ function CommunityShell({
               requestedVoiceRoom={requestedVoiceRoom}
               requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
               onVoiceRoomChange={setRequestedVoiceRoom}
+              onCallChange={setDirectCall}
             />
             {state.connection === "offline" && (
               <span className="offline-badge">Offline</span>
@@ -1287,6 +1289,19 @@ function CommunityShell({
                 }
               }}
             >
+              {directCall?.state === "accepted" && conversation.type === "dm" && directCall.direct_message_id === conversation.id && (
+                <section className="media-stage direct-call-stage" aria-label="Direct Call grid">
+                  <div className="media-stage-grid">
+                    {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
+                      const name = memberName(participant);
+                      return <article className="media-stage-tile participant-tile" key={participant.id}>
+                        <AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                        <strong>{participant.id === state.member.id ? "You" : name}</strong>
+                      </article>;
+                    })}
+                  </div>
+                </section>
+              )}
               {renderedConversationMessages
                 .filter((message) => !showPins || message.pinned)
                 .map((message) => (
@@ -1737,6 +1752,7 @@ function DirectCallControls({
   requestedVoiceRoom,
   requestedVoiceRoomName,
   onVoiceRoomChange,
+  onCallChange,
 }: {
   conversation: { id: string; name?: string; type: "text" | "voice" | "dm" } | null;
   currentMemberId: string;
@@ -1746,6 +1762,7 @@ function DirectCallControls({
   requestedVoiceRoom: string | null;
   requestedVoiceRoomName: string;
   onVoiceRoomChange(roomId: string | null): void;
+  onCallChange(call: import("../shared/instance-actions").DirectCall | null): void;
 }) {
   const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [status, setStatus] = useState("");
@@ -1753,6 +1770,7 @@ function DirectCallControls({
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
   const media = useRef<{ stream: MediaStream; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
+  const heartbeat = useRef<number | null>(null);
 
   const cleanup = () => {
     const active = media.current;
@@ -1762,6 +1780,8 @@ function DirectCallControls({
     active?.peer.close();
     active?.stream.getTracks().forEach((track) => track.stop());
     active?.audio.forEach((element) => element.remove());
+    if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
+    heartbeat.current = null;
     setMuted(false);
   };
 
@@ -1773,9 +1793,19 @@ function DirectCallControls({
     if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
     const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
     const audio: HTMLAudioElement[] = [];
+    const pendingCandidates: RTCIceCandidateInit[] = [];
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
     peer.addTransceiver("audio", { direction: "sendrecv" });
-    let socket: import("../shared/desktop-bridge").DesktopMediaConnection;
+    let socket: import("../shared/desktop-bridge").DesktopMediaConnection | null = null;
+    peer.onicecandidate = ({ candidate }) => {
+      if (!candidate) return;
+      const encoded = candidate.toJSON();
+      if (socket) socket.send({ version: 1, type: "candidate", candidate: encoded });
+      else pendingCandidates.push(encoded);
+    };
+    const offer = await peer.createOffer();
+    await peer.setLocalDescription(offer);
+    await waitForIceGathering(peer);
     socket = await connectMedia(instanceId, (value) => {
       const frame = value as { type?: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit; error?: string };
       if (frame.type === "answer" && frame.sdp) void peer.setRemoteDescription(frame.sdp);
@@ -1784,14 +1814,11 @@ function DirectCallControls({
         await peer.setRemoteDescription(frame.sdp!);
         const answer = await peer.createAnswer();
         await peer.setLocalDescription(answer);
-        socket.send({ version: 1, type: "answer", sdp: peer.localDescription });
+        socket?.send({ version: 1, type: "answer", sdp: peer.localDescription });
       })();
       if (frame.type === "error") setStatus(frame.error || "Call connection failed.");
     }, (reason) => setStatus(reason || "Call disconnected."));
     media.current = { stream, peer, socket, audio };
-    peer.onicecandidate = ({ candidate }) => {
-      if (candidate) socket.send({ version: 1, type: "candidate", candidate: candidate.toJSON() });
-    };
     peer.ontrack = ({ streams, track }) => {
       if (track.kind !== "audio") return;
       const element = document.createElement("audio");
@@ -1802,9 +1829,9 @@ function DirectCallControls({
       void element.play().catch(() => undefined);
     };
     peer.onconnectionstatechange = () => setStatus(peer.connectionState === "connected" ? "Call connected" : `Call ${peer.connectionState}`);
-    const offer = await peer.createOffer();
-    await peer.setLocalDescription(offer);
     socket.send({ version: 1, type: "join", room_id: activeCall.id, sdp: peer.localDescription });
+    pendingCandidates.splice(0).forEach((candidate) => socket!.send({ version: 1, type: "candidate", candidate }));
+    heartbeat.current = window.setInterval(() => socket?.send({ version: 1, type: "heartbeat" }), 1_000);
     setStatus("Connecting Call…");
   }
 
@@ -1813,6 +1840,7 @@ function DirectCallControls({
     const poll = () => void onAction({ type: "current_call" }).then((result) => {
       if (!current || result?.type !== "call") return;
       setCall(result.call);
+      onCallChange(result.call);
       if (!result.call && !voiceRoomRef.current) cleanup();
       else if (result.call?.state === "accepted") void connect(result.call).catch((error) => setStatus(error instanceof Error ? error.message : "Call failed."));
     });
@@ -1826,15 +1854,15 @@ function DirectCallControls({
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => stream.getTracks().forEach((track) => track.stop()));
       const result = await onAction({ type: "start_call", directMessageId: conversation.id });
-      if (result?.type === "call") { setCall(result.call); setStatus("Calling…"); }
+      if (result?.type === "call") { setCall(result.call); onCallChange(result.call); setStatus("Calling…"); }
     } catch (error) { setStatus(error instanceof Error ? error.message : "Could not start Call."); }
   }
 
   async function act(action: "accept" | "decline" | "end"): Promise<void> {
     if (!call) return;
     const result = await onAction({ type: "call_action", callId: call.id, action });
-    if (result?.type === "call") setCall(result.call);
-    if (action === "decline" || action === "end") { cleanup(); setCall(null); setStatus(""); }
+    if (result?.type === "call") { setCall(result.call); onCallChange(result.call); }
+    if (action === "decline" || action === "end") { cleanup(); setCall(null); onCallChange(null); setStatus(""); }
   }
 
   async function joinVoice(room: string): Promise<void> {
@@ -1890,6 +1918,20 @@ function DirectCallControls({
     {!connected && status && <span className="call-status" role="status">{status}</span>}
     {connectedControls}
   </>;
+}
+
+export function waitForIceGathering(peer: RTCPeerConnection, timeoutMs = 2_000): Promise<void> {
+  if (peer.iceGatheringState === "complete") return Promise.resolve();
+  return new Promise((resolve) => {
+    const finish = () => {
+      peer.removeEventListener("icegatheringstatechange", changed);
+      window.clearTimeout(timer);
+      resolve();
+    };
+    const changed = () => { if (peer.iceGatheringState === "complete") finish(); };
+    const timer = window.setTimeout(finish, timeoutMs);
+    peer.addEventListener("icegatheringstatechange", changed);
+  });
 }
 
 function memberName(member: InstanceViewState["member"]): string {

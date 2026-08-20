@@ -97,7 +97,7 @@ import {
   type CommunityState,
 } from '../state/CommunityState';
 
-type Palette = {
+export type Palette = {
   background: string;
   field: string;
   border: string;
@@ -105,6 +105,13 @@ type Palette = {
   muted: string;
   placeholder: string;
   accent: string;
+};
+
+export type GlobalIncomingCall = {
+  call: DirectCall;
+  currentMemberID: string;
+  onAction(action: 'accept' | 'decline' | 'end'): void;
+  onOpen(): void;
 };
 
 export function mergeMessagePage(current: Message[], page: Message[]) {
@@ -150,12 +157,14 @@ export function CommunityScreen({
   account,
   palette,
   onManage,
+  onGlobalIncomingCallChange,
   onVoiceSettingsChange = () => {},
   voiceSettings = DEFAULT_VOICE_VIDEO_SETTINGS,
 }: {
   account: InstanceAccount;
   palette: Palette;
   onManage(): void;
+  onGlobalIncomingCallChange?(call?: GlobalIncomingCall): void;
   onVoiceSettingsChange?(settings: VoiceVideoSettings): void;
   voiceSettings?: VoiceVideoSettings;
 }): React.JSX.Element {
@@ -814,6 +823,20 @@ export function CommunityScreen({
       );
     }
   }
+
+  useEffect(() => {
+    const incoming = currentCall?.state === 'ringing' &&
+      currentCall.recipient_id === community?.member.id;
+    onGlobalIncomingCallChange?.(incoming ? {
+      call: currentCall,
+      currentMemberID: community!.member.id,
+      onAction: callAction,
+      onOpen: () => openConversation(currentCall.direct_message_id, true),
+    } : undefined);
+    return () => onGlobalIncomingCallChange?.(undefined);
+    // Call actions deliberately capture the current call; refresh only when its identity/state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCall?.id, currentCall?.state, community?.member.id, onGlobalIncomingCallChange]);
 
   async function chooseAttachments() {
     setError('');
@@ -1593,7 +1616,7 @@ export function CommunityScreen({
   );
 }
 
-function CallBanner({
+export function CallBanner({
   call,
   currentMemberID,
   onAction,
@@ -2900,7 +2923,38 @@ export function formatMessageTime(value: string, now = new Date()) {
     : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function FormattedBody({ body, color }: { body: string; color: string }) {
+export function FormattedBody({ body, color }: { body: string; color: string }) {
+  const blocks: Array<{kind: 'text' | 'code'; value: string; language?: string}> = [];
+  const fence = /```([A-Za-z0-9_+-]+)?(?:\r?\n|[ \t]+)?([\s\S]*?)```/g;
+  let offset = 0;
+  for (const match of body.matchAll(fence)) {
+    const index = match.index || 0;
+    if (index > offset) blocks.push({kind: 'text', value: body.slice(offset, index)});
+    blocks.push({kind: 'code', language: match[1]?.toLowerCase(), value: match[2].replace(/^\s+|\s+$/g, '')});
+    offset = index + match[0].length;
+  }
+  if (offset < body.length) blocks.push({kind: 'text', value: body.slice(offset)});
+  if (!blocks.length) blocks.push({kind: 'text', value: body});
+  return <View style={styles.formattedBody}>{blocks.map((block, index) => block.kind === 'code' ? (
+    <View accessibilityLabel={`Code block${block.language ? `, ${block.language}` : ''}`} key={index} style={styles.codeBlock}>
+      {block.language ? <Text style={styles.codeLanguage}>{block.language}</Text> : null}
+      <Text style={styles.codeBlockText}>{highlightCode(block.value, block.language)}</Text>
+    </View>
+  ) : <InlineFormattedText body={block.value} color={color} key={index} />)}</View>;
+}
+
+function highlightCode(code: string, language?: string) {
+  if (language !== 'json' && language !== 'javascript' && language !== 'js' && language !== 'typescript' && language !== 'ts') return code;
+  return code.split(/("(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|\b(?:true|false|null)\b|-?\b\d+(?:\.\d+)?\b)/g).map((token, index) => {
+    const style = /^".*"(?=\s*:)/.test(token) ? styles.syntaxKey
+      : /^"/.test(token) ? styles.syntaxString
+      : /^(true|false|null)$/.test(token) ? styles.syntaxKeyword
+      : /^-?\d/.test(token) ? styles.syntaxNumber : undefined;
+    return <Text key={index} style={style}>{token}</Text>;
+  });
+}
+
+function InlineFormattedText({ body, color }: { body: string; color: string }) {
   const pieces = body
     .split(/(https?:\/\/[^\s]+|`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g)
     .filter(Boolean);
@@ -4343,12 +4397,39 @@ const styles = StyleSheet.create({
   authorLine: { alignItems: 'center', flexDirection: 'row' },
   author: { fontSize: 13, fontWeight: '800', marginBottom: 2 },
   messageBody: { fontSize: 16, lineHeight: 22 },
+  formattedBody: { alignItems: 'stretch' },
   bold: { fontWeight: '800' },
   italic: { fontStyle: 'italic' },
   code: {
     fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier',
     fontSize: 15,
   },
+  codeBlock: {
+    backgroundColor: '#0d1117',
+    borderColor: '#30363d',
+    borderRadius: 7,
+    borderWidth: 1,
+    marginVertical: 6,
+    overflow: 'hidden',
+    padding: 11,
+  },
+  codeLanguage: {
+    color: '#8b949e',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  codeBlockText: {
+    color: '#c9d1d9',
+    fontFamily: Platform.OS === 'android' ? 'monospace' : 'Courier',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  syntaxKey: { color: '#79c0ff' },
+  syntaxString: { color: '#a5d6ff' },
+  syntaxKeyword: { color: '#ff7b72' },
+  syntaxNumber: { color: '#d2a8ff' },
   link: { color: '#00a8fc', textDecorationLine: 'underline' },
   replyPreview: { borderLeftWidth: 2, marginBottom: 4, paddingLeft: 8 },
   reactions: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 7 },

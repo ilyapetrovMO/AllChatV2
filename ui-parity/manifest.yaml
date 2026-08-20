@@ -1,6 +1,6 @@
 version: 1
 canonical_client: web
-last_checked: 2026-08-18
+last_checked: 2026-08-20
 
 viewports:
   desktop:
@@ -71,6 +71,12 @@ screens:
       - id: composer-file-drag-active
         status: partial
         evidence: renderer-file-drop-preview-remove
+      - id: mention-suggestions-open
+        status: partial
+        evidence: web-desktop-and-mobile-mention-completion-tests
+      - id: structured-mention-rendered
+        status: partial
+        evidence: web-desktop-and-mobile-structured-mention-tests
       - id: link-embed-loaded
         status: partial
       - id: plain-link-clickable
@@ -85,6 +91,9 @@ screens:
       - id: notification-menu-open
         status: partial
         evidence: renderer-notification-menu-and-persistence
+      - id: mentions-only-native-notification
+        status: partial
+        evidence: server-web-desktop-and-mobile-notification-policy-tests
       - id: pinned-messages-open
         status: partial
         evidence: renderer-pinned-message-filter

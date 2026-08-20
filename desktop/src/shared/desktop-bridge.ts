@@ -44,6 +44,7 @@ export interface ShellState {
 
 export interface DesktopBridge {
   controlWindow?(action: WindowControlAction): Promise<void>;
+  setNotificationContext?(instanceId: string, conversationId: string | null): void;
   getShellState(): Promise<ShellState>;
   addInstance(input: AddInstanceInput): Promise<ShellState>;
   selectInstance(id: string): Promise<ShellState>;
@@ -63,6 +64,7 @@ export interface DesktopMediaConnection { send(frame: unknown): void; close(): v
 
 export const DESKTOP_BRIDGE_METHODS = [
   'controlWindow',
+  'setNotificationContext',
   'getShellState',
   'addInstance',
   'selectInstance',
@@ -78,6 +80,7 @@ export const DESKTOP_BRIDGE_METHODS = [
 
 export const IPC_CHANNELS = {
   windowControl: 'allchat:window:control',
+  notificationContext: 'allchat:notification:context',
   getShellState: 'allchat:shell:get-state',
   addInstance: 'allchat:instance:add',
   selectInstance: 'allchat:instance:select',

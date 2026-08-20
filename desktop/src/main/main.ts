@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell, Tray } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, safeStorage, session, shell, Tray } from 'electron';
 import WebSocket from 'ws';
 
 import { DesktopAccountManager } from './desktop-account-manager';
@@ -14,6 +14,7 @@ import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
 import { createTrayMenu, shouldHideOnClose, type TrayPresence } from './tray-menu';
 import { downloadVerifiedUpdate, findDesktopUpdate } from './desktop-updater';
+import { notificationPreview, shouldNotifyForMessage } from '../shared/notification-policy';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -35,6 +36,7 @@ let tray: Tray | null = null;
 let quitting = false;
 let trayPresence: TrayPresence = 'available';
 let offeredUpdateVersion = '';
+let notificationContext = { instanceId: '', conversationId: '' };
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -68,6 +70,19 @@ async function start(): Promise<void> {
     new SQLiteInstanceStateCache(databasePath),
     new SQLiteAssetCache(databasePath),
   );
+  coordinator.onMessage = (_instanceId, message, state) => {
+    const activeConversation = notificationContext.instanceId === _instanceId ? notificationContext.conversationId : '';
+    if (!Notification.isSupported() || !shouldNotifyForMessage(message, state, Boolean(mainWindow?.isFocused()), activeConversation)) return;
+    const direct = state.direct_messages.some(({ id }) => id === message.channel_id);
+    const channelName = state.channels.find(({ id }) => id === message.channel_id)?.name;
+    const notification = new Notification({
+      title: direct || !channelName ? message.author_name : `${message.author_name} · #${channelName}`,
+      body: notificationPreview(message),
+      silent: state.notifications.community.sound_enabled === false,
+    });
+    notification.on('click', showMainWindow);
+    notification.show();
+  };
   void accounts.validateStoredSessions();
   registerIpc();
   lockPermissions();
@@ -216,6 +231,12 @@ async function updateTrayPresence(presence: TrayPresence): Promise<void> {
 function registerIpc(): void {
   const realtimeListeners = new Map<string, (state: import('../shared/instance-state').InstanceViewState) => void>();
   ipcMain.handle(IPC_CHANNELS.getShellState, () => registry.state());
+  ipcMain.on(IPC_CHANNELS.notificationContext, (event, instanceId: string, conversationId: string | null) => {
+    if (event.sender !== mainWindow?.webContents) return;
+    assertString(instanceId, 'Instance identity');
+    if (conversationId !== null) assertString(conversationId, 'Conversation identity');
+    notificationContext = { instanceId, conversationId: conversationId || '' };
+  });
   ipcMain.handle(IPC_CHANNELS.windowControl, (event, action: import('../shared/desktop-bridge').WindowControlAction) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (!window || !['minimize', 'toggle-maximize', 'close'].includes(action)) throw new Error('Invalid window action');

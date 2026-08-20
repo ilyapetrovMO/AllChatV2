@@ -334,7 +334,7 @@ a { color: #00a8fc; }
 .emoji-picker-custom button { color: var(--text); background: var(--brand); }
 .pinned { color: var(--yellow); }
 .message-composer-wrap { position: sticky; z-index: 2; bottom: 0; flex: 0 0 auto; margin: auto 6px 2px; }
-.message-composer { position: static; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 4px 6px; border: 1px solid var(--border); border-radius: 10px; background: #222329; box-shadow: 0 1px 2px rgb(0 0 0 / 28%); }
+.message-composer { position: relative; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 4px 6px; border: 1px solid var(--border); border-radius: 10px; background: #222329; box-shadow: 0 1px 2px rgb(0 0 0 / 28%); }
 .message-composer.file-drag-active { border-color: var(--brand); box-shadow: 0 0 0 2px rgb(109 117 232 / 35%); }
 .message-composer textarea { height: 34px; min-height: 34px; max-height: 180px; padding: 6px 4px; border: 0; border-radius: 4px; resize: none; background: transparent; color: var(--text); outline: 0; }
 .message-composer button { min-height: 34px; padding: .5rem .8rem; border-radius: 50%; background: var(--brand); font-weight: 600; }
@@ -343,6 +343,11 @@ a { color: #00a8fc; }
 .composer-context { color: var(--muted); }
 .jump-to-present { position: sticky; z-index: 3; right: 24px; bottom: 68px; align-self: flex-end; min-height: 32px; margin: -40px 24px 8px; padding: 6px 12px; border-radius: 16px; background: var(--brand); box-shadow: var(--shadow); font-size: .78rem; }
 .typing-indicator { display: block; min-height: 16px; padding: 2px 8px 0; color: var(--muted); font-size: 12px; }
+.message-composer .mention-suggestions { position: absolute; z-index: 12; left: 6px; bottom: calc(100% + 8px); display: grid; width: min(360px, calc(100% - 12px)); max-height: 280px; overflow: auto; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elevated); box-shadow: var(--shadow); }
+.message-composer .mention-suggestions button { display: grid; min-height: 0; padding: 8px 10px; border-radius: 5px; color: var(--text); background: transparent; text-align: left; }
+.message-composer .mention-suggestions button:hover, .message-composer .mention-suggestions button[aria-selected="true"] { background: var(--bg-hover); }
+.message-composer .mention-suggestions small { color: var(--muted); font-weight: 500; }
+.message-body .mention { border-radius: 3px; padding: 0 2px; background: rgb(88 101 242 / 30%); color: #c9cdfb; }
 .blocked-conversation { position: sticky; bottom: 8px; margin: auto 16px 8px; padding: 10px 12px; border-radius: 6px; background: rgb(242 63 66 / 16%); color: var(--muted); text-align: center; }
 
 .member-directory { grid-column: 3; grid-row: 2; width: 240px; min-height: 0; padding: 18px 8px; border-left: 1px solid rgb(0 0 0 / 28%); background: var(--bg-main); }

@@ -1,7 +1,8 @@
-import { FormEvent, Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, type DesktopMediaFrame } from "./media-signaling";
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
+import { insertMention, matchMention } from "./mentions";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
@@ -375,6 +376,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             state={instanceState}
             onAction={executeAction}
             connectMedia={bridge.connectMedia}
+            onConversationChange={(conversationId) => bridge.setNotificationContext?.(active!.id, conversationId)}
           />
         ) : (
           <div className="empty-state">
@@ -404,11 +406,13 @@ function CommunityShell({
   state,
   onAction,
   connectMedia,
+  onConversationChange,
 }: {
   instanceId: string;
   state: InstanceViewState;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   connectMedia?: DesktopBridge["connectMedia"];
+  onConversationChange?(conversationId: string | null): void;
 }) {
   const [conversation, setConversation] = useState<{
     id: string;
@@ -427,6 +431,8 @@ function CommunityShell({
   >(null);
   const [communitySettingsSection, setCommunitySettingsSection] = useState("general");
   const [draft, setDraft] = useState("");
+  const [mentionCaret, setMentionCaret] = useState(-1);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -500,6 +506,23 @@ function CommunityShell({
     ? state.direct_messages.find(({ id }) => id === conversation.id)
     : undefined;
   const directMessageBlocked = !!(activeDirectMessage?.blocked_by_me || activeDirectMessage?.blocked_me);
+  useEffect(() => {
+    onConversationChange?.(conversation && conversation.type !== "voice" ? conversation.id : null);
+    return () => onConversationChange?.(null);
+  }, [conversation?.id, conversation?.type, onConversationChange]);
+  const mentionMatch = useMemo(() => matchMention(draft, mentionCaret, state.members.map((member) => ({ id: member.id, username: member.username, displayName: member.displayName }))), [draft, mentionCaret, state.members]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const chooseMention = (username: string) => {
+    if (!mentionMatch) return;
+    const insertion = insertMention(draft, mentionMatch, username);
+    setDraft(insertion.value);
+    setMentionCaret(-1);
+    setMentionIndex(0);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(insertion.caret, insertion.caret);
+    });
+  };
   const directCallActive = !!(directCall?.state === "accepted" && conversation?.type === "dm" && directCall.direct_message_id === conversation.id);
   useEffect(() => {
     if (!memberPopover) return;
@@ -1381,7 +1404,7 @@ function CommunityShell({
                             : message.reply.body}
                         </blockquote>
                       )}
-                      <div className="message-body">{message.deleted ? "Message deleted" : <MessageBody body={message.body || ""} />}</div>
+                      <div className="message-body">{message.deleted ? "Message deleted" : <MessageBody body={message.body || ""} mentions={message.mentions || []} />}</div>
                       {message.body && (
                         <LinkPreview body={message.body} onAction={onAction} />
                       )}
@@ -1551,16 +1574,36 @@ function CommunityShell({
                   </div>
                 )}
                 <textarea
+                  ref={textareaRef}
                   aria-label={`Message ${conversation.name}`}
                   placeholder={`Message #${conversation.name}`}
                   value={draft}
                   onKeyDown={(event) => {
+                    if (mentionMatch) {
+                      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setMentionIndex((current) => (current + (event.key === "ArrowDown" ? 1 : -1) + mentionMatch.members.length) % mentionMatch.members.length);
+                        return;
+                      }
+                      if (event.key === "Tab" || event.key === "Enter") {
+                        event.preventDefault();
+                        chooseMention(mentionMatch.members[Math.min(mentionIndex, mentionMatch.members.length - 1)].username);
+                        return;
+                      }
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        setMentionCaret(-1);
+                        return;
+                      }
+                    }
                     if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
                     event.preventDefault();
                     event.currentTarget.form?.requestSubmit();
                   }}
                   onChange={(event) => {
                     setDraft(event.target.value);
+                    setMentionCaret(event.target.selectionStart);
+                    setMentionIndex(0);
                     localStorage.setItem(
                       draftKey(instanceId, conversation.id),
                       event.target.value,
@@ -1573,7 +1616,12 @@ function CommunityShell({
                       });
                     }
                   }}
+                  onClick={(event) => setMentionCaret(event.currentTarget.selectionStart)}
+                  onKeyUp={(event) => {
+                    if (!["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(event.key)) setMentionCaret(event.currentTarget.selectionStart);
+                  }}
                 />
+                {mentionMatch && <div className="mention-suggestions" role="listbox" aria-label="Mention a Member">{mentionMatch.members.map((member, index) => <button type="button" role="option" aria-selected={index === mentionIndex} key={member.id} onMouseDown={(event) => event.preventDefault()} onClick={() => chooseMention(member.username)}><strong>{member.displayName || member.username}</strong><small>@{member.username}</small></button>)}</div>}
                 <label className="attach-button">
                   <Icon name="paperclip" />
                   <span className="sr-only">Attach</span>
@@ -2174,24 +2222,34 @@ function formatBytes(size: number): string {
   return `${value.toFixed(index ? 1 : 0)} ${units[index]}`;
 }
 
-function LinkifiedText({ body }: { body: string }) {
-  const parts: Array<string | { url: string }> = [];
-  const pattern = /https?:\/\/[^\s<]+/g;
+function LinkifiedText({ body, mentions = [] }: { body: string; mentions?: Array<{ username: string }> }) {
+  const mentionNames = new Set(mentions.map(({ username }) => username.toLocaleLowerCase()));
+  const parts: Array<string | { url: string } | { mention: string }> = [];
+  const pattern = /https?:\/\/[^\s<]+|(^|[^\p{L}\p{N}._-])@([\p{L}\p{N}._-]{3,32})/gu;
   let offset = 0;
   for (const match of body.matchAll(pattern)) {
     const index = match.index || 0;
     if (index > offset) parts.push(body.slice(offset, index));
     const raw = match[0];
+    if (!raw.startsWith("http")) {
+      const prefix = match[1] || "";
+      if (prefix) parts.push(prefix);
+      const username = match[2];
+      if (mentionNames.has(username.toLocaleLowerCase())) parts.push({ mention: username });
+      else parts.push(`@${username}`);
+      offset = index + raw.length;
+      continue;
+    }
     const url = raw.replace(/[),.!?;:]+$/, "");
     parts.push({ url });
     if (url.length < raw.length) parts.push(raw.slice(url.length));
     offset = index + raw.length;
   }
   if (offset < body.length) parts.push(body.slice(offset));
-  return <>{parts.map((part, index) => typeof part === "string" ? <Fragment key={index}>{part}</Fragment> : <a className="message-link" key={index} href={part.url} target="_blank" rel="noreferrer">{part.url}</a>)}</>;
+  return <>{parts.map((part, index) => typeof part === "string" ? <Fragment key={index}>{part}</Fragment> : "mention" in part ? <mark className="mention" key={index}>@{part.mention}</mark> : <a className="message-link" key={index} href={part.url} target="_blank" rel="noreferrer">{part.url}</a>)}</>;
 }
 
-function MessageBody({ body }: { body: string }) {
+function MessageBody({ body, mentions }: { body: string; mentions: Array<{ username: string }> }) {
   const parts: Array<{ code?: string; language?: string; text?: string }> = [];
   const pattern = /```(?:([A-Za-z0-9_+-]+)(?:[ \t]+|\r?\n))?([\s\S]*?)```/g;
   let offset = 0;
@@ -2202,10 +2260,10 @@ function MessageBody({ body }: { body: string }) {
     offset = index + match[0].length;
   }
   if (offset < body.length) parts.push({ text: body.slice(offset) });
-  if (!parts.length) return <LinkifiedText body={body} />;
+  if (!parts.length) return <LinkifiedText body={body} mentions={mentions} />;
   return <>{parts.map((part, index) => part.code !== undefined
     ? <pre key={index}><code className={part.language ? `language-${part.language}` : undefined}><SyntaxHighlightedCode language={part.language || ""} code={part.code} /></code></pre>
-    : <LinkifiedText key={index} body={part.text || ""} />)}</>;
+    : <LinkifiedText key={index} body={part.text || ""} mentions={mentions} />)}</>;
 }
 
 function SyntaxHighlightedCode({ language, code }: { language: string; code: string }) {

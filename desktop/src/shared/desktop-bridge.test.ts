@@ -6,6 +6,7 @@ describe('DesktopBridge', () => {
   it('has a deliberately small, explicit capability list', () => {
     expect(DESKTOP_BRIDGE_METHODS).toEqual([
       'controlWindow',
+      'setNotificationContext',
       'getShellState',
       'addInstance',
       'selectInstance',
@@ -23,6 +24,7 @@ describe('DesktopBridge', () => {
   it('rejects missing and additional renderer capabilities', () => {
     const valid = {
       controlWindow: async () => undefined,
+      setNotificationContext: () => undefined,
       getShellState: async () => ({ instances: [], activeInstanceId: null }),
       addInstance: async () => undefined,
       selectInstance: async () => undefined,

@@ -186,7 +186,8 @@ describe('desktop renderer bootstrap', () => {
           messages: {
             chat: [{
               id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora',
-              sequence: 1, body: 'Desktop parity starts here 🇺🇦 👩🏽‍💻 👨‍👩‍👧‍👦 1️⃣ 🏳️‍🌈 https://example.com/story\n```json ["123", "321"] ```', created_at: '2026-08-18T09:00:00Z', deleted: false,
+              sequence: 1, body: '@alex Desktop parity starts here 🇺🇦 👩🏽‍💻 👨‍👩‍👧‍👦 1️⃣ 🏳️‍🌈 https://example.com/story\n```json ["123", "321"] ```', created_at: '2026-08-18T09:00:00Z', deleted: false,
+              mentions: [{ member_id: 'alex', username: 'alex' }],
               attachments: [{ id: 'media-1', name: 'landscape.png', content_type: 'image/png', size: 1024, url: '/api/v1/attachments/media-1', preview_url: '/api/v1/attachments/media-1/preview' }],
             }],
           },
@@ -260,6 +261,7 @@ describe('desktop renderer bootstrap', () => {
       return this.classList.contains('message-list') ? 1_000 : 0;
     });
     fireEvent.click(screen.getByRole('button', { name: 'lobby' }));
+    expect(document.querySelector('.message-body .mention')).toHaveTextContent('@alex');
     expect(screen.getByRole('heading', { name: 'lobby' })).toBeVisible();
     expect(screen.getByText(/Desktop parity starts here 🇺🇦 👩🏽‍💻 👨‍👩‍👧‍👦 1️⃣ 🏳️‍🌈/)).toBeVisible();
     const messageSearch = screen.getByLabelText('Search Messages');
@@ -340,6 +342,10 @@ describe('desktop renderer bootstrap', () => {
     }));
 
     const messageInput = screen.getByLabelText('Message lobby');
+    fireEvent.change(messageInput, { target: { value: 'Hello @al', selectionStart: 9 } });
+    expect(screen.getByRole('listbox', { name: 'Mention a Member' })).toBeVisible();
+    fireEvent.keyDown(messageInput, { key: 'Tab', code: 'Tab' });
+    expect(messageInput).toHaveValue('Hello @alex ');
     const emojiMessage = 'Flags 🇺🇦 🇯🇵 · skin 👩🏽‍💻 · family 👨‍👩‍👧‍👦 · keycap 1️⃣ · rainbow 🏳️‍🌈';
     fireEvent.change(messageInput, { target: { value: emojiMessage } });
     fireEvent.keyDown(messageInput, { key: 'Enter', code: 'Enter' });

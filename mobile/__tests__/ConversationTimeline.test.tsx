@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, Image, Modal, Text } from 'react-native';
+import { FlatList, Image, Modal, StyleSheet, Text } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 
 import {
@@ -163,6 +163,16 @@ describe('native conversation timeline', () => {
           node.children.includes('bold'),
       ),
     ).toHaveLength(1);
+  });
+
+  it('styles only structured Member mentions', () => {
+    let tree!: renderer.ReactTestRenderer;
+    act(() => {
+      tree = renderer.create(
+        <FormattedBody body="Hello @mobile" color="#fff" mentions={[{username: 'mobile'}]} />,
+      );
+    });
+    expect(tree.root.findAll(node => StyleSheet.flatten(node.props.style)?.fontWeight === '600' && node.children.includes('@mobile'))).toHaveLength(1);
   });
 
   it('loads protected image bytes before passing them to the native decoder', async () => {

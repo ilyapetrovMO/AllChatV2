@@ -90,6 +90,7 @@ import {
   updateCallForegroundService,
 } from '../media/CallForegroundService';
 import { NotificationService } from '../notifications/NotificationService';
+import {insertMention, matchMention} from '../mentions';
 import { cachePushAvatar } from '../notifications/MobilePush';
 import type { InstanceAccount } from '../session/SessionVault';
 import {
@@ -186,6 +187,7 @@ export function CommunityScreen({
   const [status, setStatus] = useState<RealtimeStatus>('connecting');
   const [error, setError] = useState('');
   const [draft, setDraft] = useState('');
+  const [draftSelection, setDraftSelection] = useState({start: 0, end: 0});
   const [sending, setSending] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<DocumentPickerResponse[]>(
     [],
@@ -232,10 +234,23 @@ export function CommunityScreen({
     [community?.channels],
   );
   const communityRef = useRef<CommunityState | undefined>(undefined);
+  const composerInput = useRef<TextInput | null>(null);
   const activeIDRef = useRef('');
   const appFocused = useRef(AppState.currentState === 'active');
   communityRef.current = community;
   activeIDRef.current = activeID;
+  const mentionMatch = useMemo(
+    () => matchMention(draft, draftSelection.start, community?.members || []),
+    [community?.members, draft, draftSelection.start],
+  );
+
+  function chooseMention(username: string) {
+    if (!mentionMatch) return;
+    const insertion = insertMention(draft, mentionMatch, username);
+    setDraft(insertion.value);
+    setDraftSelection({start: insertion.caret, end: insertion.caret});
+    requestAnimationFrame(() => composerInput.current?.focus());
+  }
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', state => {
@@ -1527,6 +1542,16 @@ export function CommunityScreen({
               </TouchableOpacity>
             </View>
           ) : null}
+          {mentionMatch ? (
+            <View accessibilityLabel="Mention a Member" style={[styles.mentionSuggestions, {backgroundColor: palette.field, borderColor: palette.border}]}>
+              {mentionMatch.members.map(member => (
+                <TouchableOpacity accessibilityRole="button" key={member.id} onPress={() => chooseMention(member.username)} style={styles.mentionSuggestion}>
+                  <Text numberOfLines={1} style={{color: palette.text, fontWeight: '700'}}>{member.display_name || member.username}</Text>
+                  <Text style={{color: palette.muted}}>@{member.username}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
           <View style={[styles.composer, { borderTopColor: palette.border }]}>
             <TouchableOpacity
               accessibilityLabel="Add Attachments"
@@ -1544,6 +1569,7 @@ export function CommunityScreen({
               </Text>
             </TouchableOpacity>
             <TextInput
+              ref={composerInput}
               accessibilityLabel="Message"
               editable={!direct?.blocked_by_me && !direct?.blocked_me}
               multiline
@@ -1551,6 +1577,7 @@ export function CommunityScreen({
                 setDraft(value);
                 if (value) realtime.current?.sendTyping(activeID);
               }}
+              onSelectionChange={event => setDraftSelection(event.nativeEvent.selection)}
               placeholder={`Message ${title}`}
               placeholderTextColor={palette.placeholder}
               style={[
@@ -2692,7 +2719,7 @@ export function MessageRow({
         </Text>
       ) : (
         <>
-          <FormattedBody body={message.body || ''} color={palette.text} />
+          <FormattedBody body={message.body || ''} color={palette.text} mentions={message.mentions || []} />
           <MessageLinkPreview
             body={message.body || ''}
             instanceURL={instanceURL}
@@ -2968,7 +2995,7 @@ export function formatMessageTime(value: string, now = new Date()) {
     : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export function FormattedBody({ body, color }: { body: string; color: string }) {
+export function FormattedBody({ body, color, mentions = [] }: { body: string; color: string; mentions?: Array<{username: string}> }) {
   const blocks: Array<{kind: 'text' | 'code'; value: string; language?: string}> = [];
   const fence = /```([A-Za-z0-9_+-]+)?(?:\r?\n|[ \t]+)?([\s\S]*?)```/g;
   let offset = 0;
@@ -2985,7 +3012,7 @@ export function FormattedBody({ body, color }: { body: string; color: string }) 
       {block.language ? <Text style={styles.codeLanguage}>{block.language}</Text> : null}
       <Text style={styles.codeBlockText}>{highlightCode(block.value, block.language)}</Text>
     </View>
-  ) : <InlineFormattedText body={block.value} color={color} key={index} />)}</View>;
+  ) : <InlineFormattedText body={block.value} color={color} key={index} mentions={mentions} />)}</View>;
 }
 
 function highlightCode(code: string, language?: string) {
@@ -2999,9 +3026,10 @@ function highlightCode(code: string, language?: string) {
   });
 }
 
-function InlineFormattedText({ body, color }: { body: string; color: string }) {
+function InlineFormattedText({ body, color, mentions }: { body: string; color: string; mentions: Array<{username: string}> }) {
+  const mentioned = new Set(mentions.map(item => item.username.toLocaleLowerCase()));
   const pieces = body
-    .split(/(https?:\/\/[^\s]+|`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g)
+    .split(/(https?:\/\/[^\s]+|`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*|@[\p{L}\p{N}._-]{3,32})/gu)
     .filter(Boolean);
   return (
     <Text style={[styles.messageBody, { color }]}>
@@ -3017,6 +3045,8 @@ function InlineFormattedText({ body, color }: { body: string; color: string }) {
               {piece}
             </Text>
           );
+        if (piece.startsWith('@') && mentioned.has(piece.slice(1).toLocaleLowerCase()))
+          return <Text key={index} style={[styles.mention, {color}]}>{piece}</Text>;
         if (piece.startsWith('**') && piece.endsWith('**'))
           return (
             <Text key={index} style={styles.bold}>
@@ -4591,6 +4621,16 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 10,
   },
+  mentionSuggestions: {
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 10,
+    maxHeight: 240,
+    overflow: 'hidden',
+    padding: 5,
+  },
+  mentionSuggestion: {borderRadius: 6, paddingHorizontal: 10, paddingVertical: 8},
+  mention: {backgroundColor: 'rgba(88,101,242,0.3)', fontWeight: '600'},
   attach: {
     alignItems: 'center',
     borderRadius: 22,

@@ -41,8 +41,10 @@ The default Community Home, Direct Messages Home, Text Channel, Direct Message, 
 
 - ✅ Default Text Channel shell and message feed visual comparison.
 - ✅ Language-tagged fenced code blocks, including compact single-line fences, receive JSON/shell syntax highlighting on web and desktop.
+- ✅ Web, desktop, and mobile derive notifications from structured Member IDs; `mentions_only` ignores raw `@text`, respects Community/conversation overrides and mutes, and now produces native desktop notifications while the active conversation is focused.
+- ⚠️ Desktop and mobile now provide Member mention suggestions and render structured mentions. Keyboard/touch behavior is covered, while open-suggestion rendered screenshot parity remains incomplete.
 - ⚠️ Links are clickable; reactions update immediately and survive subsequent realtime frames; images have a cached-original viewer. Channel and DM history use bounded bidirectional pagination, preserve prepend anchors, restore forward history, and re-anchor after delayed media sizing while following present. Reply/edit/delete, pins, link embeds, notification policy, and several rendered states still need complete coverage.
-- ⚠️ Native notification status is exposed; recent history and several keyboard/error states remain incomplete.
+- ⚠️ Native desktop notification delivery is implemented; recent history, operating-system rendered appearance, and several error states remain incomplete.
 - ✅ The shared Search control and filter menu are available from every authenticated screen; complete rendered search-state coverage remains tracked under Search.
 
 ### Settings and administration

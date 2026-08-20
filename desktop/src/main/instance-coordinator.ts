@@ -11,6 +11,7 @@ const ASSET_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
 interface RealtimeDriver { start(): void; stop(): void; sendTyping(conversationId: string): void }
 
 export class InstanceCoordinator {
+  onMessage?: (instanceId: string, message: import('../shared/instance-state').Message, state: InstanceViewState) => void;
   readonly #states = new Map<string, InstanceViewState>();
   readonly #listeners = new Map<string, Set<(state: InstanceViewState) => void>>();
   readonly #connections = new Map<string, RealtimeDriver>();
@@ -181,6 +182,8 @@ export class InstanceCoordinator {
         body: JSON.stringify({ level: action.level, muted: action.muted, sound_enabled: action.soundEnabled }),
       });
       if (!response.ok) throw new Error('Could not update notification settings.');
+      const current = this.#states.get(instanceId);
+      if (current) this.storeAndPublish(instanceId, { ...current, notifications: { ...current.notifications, community: { level: action.level, muted: action.muted, sound_enabled: action.soundEnabled } } });
       return { type: 'accepted' };
     }
     if (action.type === 'set_channel_notifications') {
@@ -190,6 +193,8 @@ export class InstanceCoordinator {
         body: JSON.stringify({ level: action.level, muted: action.muted }),
       });
       if (!response.ok) throw new Error('Could not update conversation notification settings.');
+      const current = this.#states.get(instanceId);
+      if (current) this.storeAndPublish(instanceId, { ...current, notifications: { ...current.notifications, channels: { ...current.notifications.channels, [action.channelId]: { level: action.level, muted: action.muted } } } });
       return { type: 'accepted' };
     }
     if (action.type === 'list_pins') {
@@ -608,7 +613,9 @@ export class InstanceCoordinator {
           void this.load(instanceId).then((snapshot) => this.publish(instanceId, snapshot));
           return;
         }
-        state = reduceRealtimeFrame(this.#states.get(instanceId) || state, frame);
+        const previous = this.#states.get(instanceId) || state;
+        for (const message of createdMessages(frame)) this.onMessage?.(instanceId, message, previous);
+        state = reduceRealtimeFrame(previous, frame);
         this.#states.set(instanceId, state);
         this.cache.put(instanceId, state);
         this.publish(instanceId, state);
@@ -639,6 +646,17 @@ export class InstanceCoordinator {
   private publish(instanceId: string, state: InstanceViewState): void {
     this.#listeners.get(instanceId)?.forEach((listener) => listener(state));
   }
+
+  private storeAndPublish(instanceId: string, state: InstanceViewState): void {
+    this.#states.set(instanceId, state);
+    this.cache.put(instanceId, state);
+    this.publish(instanceId, state);
+  }
+}
+
+function createdMessages(frame: import('../shared/realtime-state').RealtimeFrame): import('../shared/instance-state').Message[] {
+  const events = frame.type === 'events' ? frame.events || [] : [{ type: frame.type, payload: frame.payload }];
+  return events.filter((event) => event.type === 'message.created' && isMessage(event.payload)).map((event) => event.payload as import('../shared/instance-state').Message);
 }
 
 function updateReaction(

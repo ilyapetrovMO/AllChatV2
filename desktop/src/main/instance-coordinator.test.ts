@@ -94,6 +94,25 @@ describe('InstanceCoordinator', () => {
     expect(listener.mock.calls.at(-1)?.[0].messages.chat[0].reactions).toEqual([{ emoji: '👍', count: 1, me: true }]);
   });
 
+  it('applies notification policy changes to the authoritative realtime state immediately', async () => {
+    const registry = new InstanceRegistry(() => 'home'); registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
+    const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home', 'token');
+    const bootstrap = { version: 1, community: { name: 'Community' }, member: { id: 'me', username: 'nora', owner: false }, members: [], categories: [], channels: [], direct_messages: [], messages: {}, channel_states: [], presence: {}, typing: [], notifications: { current_member_id: 'me', community: { level: 'all_messages', muted: false, sound_enabled: true }, channels: {}, muted_channel_ids: [] }, media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1 };
+    const request: typeof fetch = vi.fn(async (input: URL | RequestInfo) => String(input).includes('/mobile/bootstrap') ? new Response(JSON.stringify(bootstrap), { status: 200 }) : new Response(null, { status: 204 }));
+    const coordinator = new InstanceCoordinator(registry, vault, request, new MemoryInstanceStateCache(), new MemoryAssetCache(), () => ({ start: vi.fn(), stop: vi.fn(), sendTyping: vi.fn() }));
+    await coordinator.load('home');
+    const listener = vi.fn(); coordinator.watch('home', listener);
+
+    await coordinator.execute('home', { type: 'set_community_notifications', level: 'mentions_only', muted: false, soundEnabled: false });
+    await coordinator.execute('home', { type: 'set_channel_notifications', channelId: 'chat', level: 'nothing', muted: true });
+
+    expect(listener.mock.calls.at(-1)?.[0].notifications).toMatchObject({
+      community: { level: 'mentions_only', muted: false, sound_enabled: false },
+      channels: { chat: { level: 'nothing', muted: true } },
+    });
+  });
+
   it('reuses cached avatars across refreshes and coordinator restarts', async () => {
     const registry = new InstanceRegistry(() => 'home');
     registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });

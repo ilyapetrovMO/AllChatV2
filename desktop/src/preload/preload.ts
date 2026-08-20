@@ -15,6 +15,7 @@ import type { InstanceAction } from '../shared/instance-actions';
 
 const bridge: DesktopBridge = Object.freeze({
   controlWindow: (action: WindowControlAction) => ipcRenderer.invoke(IPC_CHANNELS.windowControl, action),
+  setNotificationContext: (instanceId: string, conversationId: string | null) => ipcRenderer.send(IPC_CHANNELS.notificationContext, instanceId, conversationId),
   getShellState: () => ipcRenderer.invoke(IPC_CHANNELS.getShellState) as Promise<ShellState>,
   addInstance: (input: AddInstanceInput) => ipcRenderer.invoke(IPC_CHANNELS.addInstance, input),
   selectInstance: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.selectInstance, id),

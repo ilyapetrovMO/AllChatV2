@@ -1,5 +1,6 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { createMediaFrameQueue, createMediaJoinFrame, type DesktopMediaFrame } from "./media-signaling";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
@@ -1770,7 +1771,9 @@ function DirectCallControls({
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
   const media = useRef<{ stream: MediaStream; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
+  const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
+  const connectionTimeout = useRef<number | null>(null);
 
   const cleanup = () => {
     const active = media.current;
@@ -1782,13 +1785,20 @@ function DirectCallControls({
     active?.audio.forEach((element) => element.remove());
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
+    if (connectionTimeout.current !== null) window.clearTimeout(connectionTimeout.current);
+    connectionTimeout.current = null;
+    connectingRoom.current = null;
     setMuted(false);
   };
 
   async function connect(activeCall: import("../shared/instance-actions").DirectCall): Promise<void> {
-    if (media.current || !connectMedia) return;
+    if (media.current || connectingRoom.current || !connectMedia) return;
+    connectingRoom.current = activeCall.id;
+    let provisionalStream: MediaStream | null = null;
+    try {
     setStatus("Requesting microphone permission…");
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    provisionalStream = stream;
     const credentials = await onAction({ type: "turn_credentials" });
     if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
     const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
@@ -1796,6 +1806,7 @@ function DirectCallControls({
     const pendingCandidates: RTCIceCandidateInit[] = [];
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
     peer.addTransceiver("audio", { direction: "sendrecv" });
+    peer.addTransceiver("video", { direction: "recvonly" });
     let socket: import("../shared/desktop-bridge").DesktopMediaConnection | null = null;
     peer.onicecandidate = ({ candidate }) => {
       if (!candidate) return;
@@ -1806,19 +1817,16 @@ function DirectCallControls({
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     await waitForIceGathering(peer);
+    const signaling = createMediaFrameQueue(peer, (frame) => socket?.send(frame), {
+      onAnswer: () => setStatus("Finishing media connection…"),
+    });
     socket = await connectMedia(instanceId, (value) => {
-      const frame = value as { type?: string; sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit; error?: string };
-      if (frame.type === "answer" && frame.sdp) void peer.setRemoteDescription(frame.sdp);
-      if (frame.type === "candidate" && frame.candidate) void peer.addIceCandidate(frame.candidate);
-      if (frame.type === "offer" && frame.sdp) void (async () => {
-        await peer.setRemoteDescription(frame.sdp!);
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        socket?.send({ version: 1, type: "answer", sdp: peer.localDescription });
-      })();
-      if (frame.type === "error") setStatus(frame.error || "Call connection failed.");
-    }, (reason) => setStatus(reason || "Call disconnected."));
+      void signaling.push(value as DesktopMediaFrame).catch((error) => {
+        setStatus(error instanceof Error ? error.message : "Media signaling failed.");
+      });
+    }, (reason) => setStatus(reason || "Media signaling disconnected."));
     media.current = { stream, peer, socket, audio };
+    provisionalStream = null;
     peer.ontrack = ({ streams, track }) => {
       if (track.kind !== "audio") return;
       const element = document.createElement("audio");
@@ -1828,11 +1836,31 @@ function DirectCallControls({
       audio.push(element);
       void element.play().catch(() => undefined);
     };
-    peer.onconnectionstatechange = () => setStatus(peer.connectionState === "connected" ? "Call connected" : `Call ${peer.connectionState}`);
-    socket.send({ version: 1, type: "join", room_id: activeCall.id, sdp: peer.localDescription });
+    const updateConnectionState = () => {
+      if (peer.connectionState === "connected") {
+        if (connectionTimeout.current !== null) window.clearTimeout(connectionTimeout.current);
+        connectionTimeout.current = null;
+        setStatus("Call connected");
+      } else if (peer.connectionState === "failed" || peer.connectionState === "disconnected" || peer.iceConnectionState === "failed") {
+        setStatus(`Media ${peer.connectionState || peer.iceConnectionState}`);
+      }
+    };
+    peer.onconnectionstatechange = updateConnectionState;
+    peer.oniceconnectionstatechange = updateConnectionState;
+    socket.send(createMediaJoinFrame(activeCall.id, peer.localDescription));
     pendingCandidates.splice(0).forEach((candidate) => socket!.send({ version: 1, type: "candidate", candidate }));
     heartbeat.current = window.setInterval(() => socket?.send({ version: 1, type: "heartbeat" }), 1_000);
+    connectionTimeout.current = window.setTimeout(() => {
+      if (peer.connectionState !== "connected") setStatus(`Media connection timed out (${peer.iceConnectionState || peer.connectionState || "unknown"}).`);
+    }, 15_000);
     setStatus("Connecting Call…");
+    } catch (error) {
+      provisionalStream?.getTracks().forEach((track) => track.stop());
+      cleanup();
+      throw error;
+    } finally {
+      connectingRoom.current = null;
+    }
   }
 
   useEffect(() => {
@@ -1901,7 +1929,7 @@ function DirectCallControls({
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
       <div>
-        <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
+        <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : status || (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
         <span>{voiceRoom ? requestedVoiceRoomName : conversation?.name || "Direct Call"}</span>
       </div>
       <div className="voice-connection-actions">

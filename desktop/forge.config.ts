@@ -1,14 +1,30 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerWix } from '@electron-forge/maker-wix';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
+import { fileURLToPath } from 'node:url';
+
+const windowsInstallerUI = fileURLToPath(new URL('./installer/windows-ui.xml', import.meta.url));
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: 'AllChat',
   },
-  makers: [new MakerSquirrel({ name: 'AllChat' }), new MakerZIP({}, ['darwin', 'linux'])],
+  makers: [
+    new MakerWix({
+      name: 'AllChat',
+      manufacturer: 'AllChat contributors',
+      description: 'Native desktop client for AllChat',
+      exe: 'AllChat.exe',
+      programFilesFolderName: 'AllChat',
+      shortcutFolderName: 'AllChat',
+      shortcutName: 'AllChat',
+      upgradeCode: '6D524E61-564A-4E39-9D24-0A6D7B4D27EA',
+      ui: { chooseDirectory: true, template: windowsInstallerUI },
+    }),
+    new MakerZIP({}, ['darwin', 'linux']),
+  ],
   plugins: [
     new VitePlugin({
       build: [

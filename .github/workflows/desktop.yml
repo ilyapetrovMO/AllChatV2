@@ -48,6 +48,10 @@ jobs:
         if: matrix.platform == 'linux'
         run: command -v zip && command -v xvfb-run
       - run: npm ci
+      - name: Install WiX Toolset
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: choco install wixtoolset --version=3.14.0 -y --no-progress
       - name: Test desktop application
         run: npm test --workspace @allchat/desktop
       - name: Create desktop distribution
@@ -58,7 +62,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          find desktop/out/make -type f \( -name '*.zip' -o -name '*.exe' -o -name '*.nupkg' -o -name 'RELEASES' \) -exec cp {} dist/ \;
+          find desktop/out/make -type f \( -name '*.zip' -o -name '*.msi' \) -exec cp {} dist/ \;
       - name: Upload desktop distribution
         uses: actions/upload-artifact@v4
         with:

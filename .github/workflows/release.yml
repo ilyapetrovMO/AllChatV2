@@ -263,6 +263,10 @@ jobs:
         if: matrix.platform == 'linux'
         run: command -v zip && command -v xvfb-run
       - run: npm ci
+      - name: Install WiX Toolset
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: choco install wixtoolset --version=3.14.0 -y --no-progress
       - name: Apply release version
         shell: bash
         run: npm version "${RELEASE_REF#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version
@@ -274,7 +278,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          find desktop/out/make -type f \( -name '*.zip' -o -name '*.exe' -o -name '*.nupkg' -o -name 'RELEASES' \) -exec cp {} dist/ \;
+          find desktop/out/make -type f \( -name '*.zip' -o -name '*.msi' \) -exec cp {} dist/ \;
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
@@ -315,9 +319,7 @@ jobs:
           require_glob 'dist/*linux*x64*.zip'
           require_glob 'dist/*darwin*x64*.zip'
           require_glob 'dist/*darwin*arm64*.zip'
-          require_glob 'dist/*Setup.exe'
-          require_glob 'dist/*.nupkg'
-          require_file 'dist/RELEASES'
+          require_glob 'dist/*.msi'
       - name: Generate checksums
         run: |
           cd dist

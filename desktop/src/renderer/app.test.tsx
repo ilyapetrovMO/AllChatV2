@@ -118,6 +118,14 @@ describe('desktop renderer bootstrap', () => {
     }});
     let holdReaction = false;
     let resolveReaction: ((value: { type: 'accepted' }) => void) | undefined;
+    const selectInstance = vi.fn(async () => ({
+      activeInstanceId: 'home',
+      instances: [{
+        id: 'home', displayName: 'Home', avatarUrl: '/api/v1/community-avatar?v=42', baseUrl: 'https://chat.example',
+        partition: 'persist:allchat-home', credentialRef: 'desktop-session:home',
+        session: { member: { id: 'me', username: 'nora', owner: true }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' },
+      }],
+    }));
     const executeInstance = vi.fn(async (_instanceId: string, action: { type: string }) => {
       if (action.type === 'link_preview') return {
         type: 'link_preview' as const,
@@ -179,14 +187,7 @@ describe('desktop renderer bootstrap', () => {
           }],
         }),
         addInstance: async () => { throw new Error('unused'); },
-        selectInstance: async () => ({
-          activeInstanceId: 'home',
-          instances: [{
-            id: 'home', displayName: 'Home', avatarUrl: '/api/v1/community-avatar?v=42', baseUrl: 'https://chat.example',
-            partition: 'persist:allchat-home', credentialRef: 'desktop-session:home',
-            session: { member: { id: 'me', username: 'nora', owner: true }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' },
-          }],
-        }),
+        selectInstance,
         loginInstance: async () => { throw new Error('unused'); },
         registerInstance: async () => { throw new Error('unused'); },
         recoverInstance: async () => { throw new Error('unused'); },
@@ -500,6 +501,12 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.contextMenu(directCallGrid.querySelector('[data-media-member-id="alex"]') as HTMLElement, { clientX: 420, clientY: 260 });
     expect(screen.getByRole('slider', { name: 'alex volume' })).toBeVisible();
     fireEvent.mouseDown(document.body);
+    const activeCallControls = screen.getByRole('region', { name: 'Call controls' });
+    selectInstance.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Home Instance' }));
+    expect(selectInstance).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Call controls' })).toBe(activeCallControls);
+    expect(screen.getByRole('heading', { name: 'Welcome to Nora Community' })).toBeVisible();
     fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Home' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Direct Messages' }));

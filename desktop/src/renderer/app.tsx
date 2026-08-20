@@ -285,13 +285,22 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             className="instance-button"
             key={instance.id}
             disabled={isCommunitySwitchDisabled(directCallActive, instance.id, state.activeInstanceId)}
-            onClick={() => void bridge.selectInstance(instance.id).then((next) => {
+            onClick={() => {
+              if (instance.id === state.activeInstanceId) {
+                setCommunityHomeRevision((value) => value + 1);
+                setManagingCommunities(false);
+                setAddingCommunity(false);
+                setError("");
+                return;
+              }
+              void bridge.selectInstance(instance.id).then((next) => {
               setState(next);
               setCommunityHomeRevision((value) => value + 1);
               setManagingCommunities(false);
               setAddingCommunity(false);
               setError("");
-            })}
+              });
+            }}
             aria-label={`${instance.displayName} Instance`}
             aria-current={
               instance.id === state.activeInstanceId ? "page" : undefined
@@ -385,9 +394,10 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           </div>
         ) : instanceState ? (
           <CommunityShell
-            key={`${active!.id}:${communityHomeRevision}`}
+            key={active!.id}
             instanceId={active!.id}
             state={instanceState}
+            homeRequestRevision={communityHomeRevision}
             onAction={executeAction}
             connectMedia={bridge.connectMedia}
             onConversationChange={(conversationId) => bridge.setNotificationContext?.(active!.id, conversationId)}
@@ -422,12 +432,14 @@ function DesktopTitleBar({ onAction }: { onAction(action: import("../shared/desk
 function CommunityShell({
   instanceId,
   state,
+  homeRequestRevision,
   onAction,
   connectMedia,
   onConversationChange,
 }: {
   instanceId: string;
   state: InstanceViewState;
+  homeRequestRevision: number;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   connectMedia?: DesktopBridge["connectMedia"];
   onConversationChange?(conversationId: string | null): void;
@@ -489,6 +501,16 @@ function CommunityShell({
   const [records, setRecords] = useState<
     import("../shared/instance-actions").ModerationRecord[] | null
   >(null);
+
+  useEffect(() => {
+    setConversation(null);
+    setHomeView("community");
+    setSettingsView(null);
+    setCommunityMenuOpen(false);
+    setMemberMenuOpen(false);
+    setSearchResults(null);
+    setShowPins(false);
+  }, [homeRequestRevision]);
 
   useEffect(() => {
     if (!reactionPickerMessageId) return;

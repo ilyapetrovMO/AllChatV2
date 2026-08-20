@@ -5,8 +5,12 @@ export type DesktopMediaFrame = {
   error?: string;
 };
 
+export function serializeSessionDescription(sdp: RTCSessionDescriptionInit | null) {
+  return sdp ? { type: sdp.type, sdp: sdp.sdp || '' } : null;
+}
+
 export function createMediaJoinFrame(roomID: string, sdp: RTCSessionDescriptionInit | null) {
-  return { version: 1, type: 'join', room_id: roomID, takeover: true, sdp } as const;
+  return { version: 1, type: 'join', room_id: roomID, takeover: true, sdp: serializeSessionDescription(sdp) } as const;
 }
 
 export function mediaDisconnectMessage(firstFailure: string, closeReason: string): string {
@@ -46,11 +50,11 @@ export function createMediaFrameQueue(
       await flushRemote();
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
-      send({ version: 1, type: 'answer', sdp: peer.localDescription });
+      send({ version: 1, type: 'answer', sdp: serializeSessionDescription(peer.localDescription) });
       if (retryLocalOffer) {
         const offer = await peer.createOffer();
         await peer.setLocalDescription(offer);
-        send({ version: 1, type: 'offer', sdp: peer.localDescription });
+        send({ version: 1, type: 'offer', sdp: serializeSessionDescription(peer.localDescription) });
       }
     }
   };

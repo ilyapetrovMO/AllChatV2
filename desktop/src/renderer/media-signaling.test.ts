@@ -1,11 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage } from './media-signaling';
+import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, serializeSessionDescription } from './media-signaling';
 
 describe('desktop media signaling', () => {
   it('takes over a stale media lease when the user explicitly joins', () => {
     expect(createMediaJoinFrame('voice-room', { type: 'offer', sdp: 'offer' })).toMatchObject({
       type: 'join', room_id: 'voice-room', takeover: true,
+    });
+  });
+  it('copies native SDP fields into an IPC-safe plain object', () => {
+    const nativeLike = Object.create({ type: 'offer', sdp: 'v=0\r\n' }) as RTCSessionDescription;
+    const encoded = serializeSessionDescription(nativeLike);
+    expect(encoded).toEqual({ type: 'offer', sdp: 'v=0\r\n' });
+    expect(JSON.parse(JSON.stringify(createMediaJoinFrame('voice-room', nativeLike)))).toEqual({
+      version: 1, type: 'join', room_id: 'voice-room', takeover: true,
+      sdp: { type: 'offer', sdp: 'v=0\r\n' },
     });
   });
   it('does not overwrite a useful signaling failure when the socket closes', () => {

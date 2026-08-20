@@ -155,9 +155,7 @@ async function checkForDesktopUpdate(): Promise<void> {
 }
 
 async function createMainWindow(): Promise<BrowserWindow> {
-  const icon = app.isPackaged
-    ? path.join(process.resourcesPath, 'allchat-icon.png')
-    : path.resolve(app.getAppPath(), '../assets/branding/allchat-icon.png');
+  const icon = runtimeApplicationIcon();
   const window = new BrowserWindow(
     createWindowOptions(path.join(__dirname, 'preload.js'), icon),
   );
@@ -195,13 +193,22 @@ function showMainWindow(): void {
 
 function createApplicationTray(): void {
   if (tray) return;
-  const icon = app.isPackaged
-    ? path.join(process.resourcesPath, 'allchat-icon.png')
-    : path.resolve(app.getAppPath(), '../assets/branding/allchat-icon.png');
+  const icon = runtimeApplicationIcon();
   tray = new Tray(icon);
   tray.setToolTip('AllChat');
   tray.on('click', showMainWindow);
   refreshTrayMenu();
+}
+
+function runtimeApplicationIcon(): string {
+  if (process.platform === 'win32') {
+    return app.isPackaged
+      ? path.join(process.resourcesPath, 'allchat.ico')
+      : path.resolve(app.getAppPath(), 'installer/allchat.ico');
+  }
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'allchat-icon.png')
+    : path.resolve(app.getAppPath(), '../assets/branding/allchat-icon.png');
 }
 
 function refreshTrayMenu(): void {

@@ -15,8 +15,16 @@ describe('Electron Forge configuration', () => {
     expect(fs.readFileSync(`${icon}.ico`).subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
     expect(fs.readFileSync(`${icon}.icns`).subarray(0, 4).toString('ascii')).toBe('icns');
     expect(config.packagerConfig?.extraResource).toEqual(
-      expect.arrayContaining([expect.stringMatching(/allchat-icon\.png$/)]),
+      expect.arrayContaining([
+        expect.stringMatching(/allchat-icon\.png$/),
+        expect.stringMatching(/allchat\.ico$/),
+      ]),
     );
+
+    const ico = fs.readFileSync(`${icon}.ico`);
+    expect(ico.readUInt16LE(4)).toBeGreaterThanOrEqual(8);
+    expect([...Array(ico.readUInt16LE(4))].map((_, index) => ico[6 + index * 16] || 256))
+      .toEqual(expect.arrayContaining([16, 20, 24, 32, 40, 48, 64, 128, 256]));
   });
 
   it('builds a traditional Windows wizard with directory and launch choices', async () => {

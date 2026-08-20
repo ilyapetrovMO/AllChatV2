@@ -16,7 +16,7 @@ const config: ForgeConfig = {
     asar: true,
     executableName: 'AllChat',
     icon: applicationIcon,
-    extraResource: [runtimeIcon],
+    extraResource: [runtimeIcon, windowsInstallerIcon],
   },
   makers: [
     new MakerWix({

@@ -23,7 +23,7 @@
   const icon=(name, className="")=>{const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 24 24");svg.setAttribute("aria-hidden","true");svg.setAttribute("data-lucide",name);svg.setAttribute("class",`lucide-icon ${className}`.trim());svg.innerHTML=iconPaths[name]||"";return svg};
   const setIcon=(element,name)=>{if(!element)return;element.replaceChildren(icon(name))};
   const installIcons=(root=document)=>{
-    for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"],[".attachment-button","plus"],["#composer-submit","send"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
+    for(const [selector,name] of [[".mobile-menu","menu"],[".dm-rail-mark","messages"],[".member-settings","settings"],[".notification-bell","bell"],[".mobile-members","users"],[".media-stage-view .hash","volume"],[".attachment-button","paperclip"]])root.querySelectorAll?.(selector).forEach(element=>setIcon(element,name));
     root.querySelectorAll?.('[data-community-menu-toggle] > [aria-hidden="true"]').forEach(element=>setIcon(element,"chevron-down"));
     root.querySelectorAll?.('.community-mark[href="/"]:not(.dm-rail-mark)').forEach(element=>{setIcon(element,"home");if(!element.getAttribute("aria-label"))element.setAttribute("aria-label","Community Home");if(!element.getAttribute("title"))element.setAttribute("title","Community Home")});
     root.querySelectorAll?.(".message-attachment").forEach(link=>{if(link.querySelector("svg"))return;link.textContent=link.textContent.replace(/^📎\s*/,"");link.prepend(icon("paperclip"))});

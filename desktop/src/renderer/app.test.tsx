@@ -368,6 +368,7 @@ describe('desktop renderer bootstrap', () => {
     }));
 
     const messageInput = screen.getByLabelText('Message lobby');
+    expect(screen.queryByRole('button', { name: 'Send Message' })).not.toBeInTheDocument();
     fireEvent.change(messageInput, { target: { value: 'Hello @al', selectionStart: 9 } });
     expect(screen.getByRole('listbox', { name: 'Mention a Member' })).toBeVisible();
     fireEvent.keyDown(messageInput, { key: 'Tab', code: 'Tab' });

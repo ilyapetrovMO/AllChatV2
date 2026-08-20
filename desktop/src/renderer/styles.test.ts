@@ -9,6 +9,11 @@ describe('desktop shared control styling', () => {
     expect(css).toMatch(/\.message-composer-wrap\s*\{[^}]*background:\s*#222329/s);
   });
 
+  it('renders attachment selection as a bare muted icon', () => {
+    expect(css).toMatch(/\.attach-button\s*\{[^}]*background:\s*transparent;[^}]*color:\s*var\(--muted\)/s);
+    expect(css).not.toContain('.message-composer > button[type="submit"]');
+  });
+
   it('styles generic form controls including checkboxes and file inputs', () => {
     expect(css).toContain(':where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
     expect(css).toContain('input[type="checkbox"]');

@@ -1676,17 +1676,6 @@ function CommunityShell({
                     }
                   />
                 </label>
-                <button
-                  type="submit"
-                  aria-label={
-                    editingMessageId ? "Save Message" : "Send Message"
-                  }
-                >
-                  <Icon name="send" />
-                  <span className="sr-only">
-                    {editingMessageId ? "Save" : "Send"}
-                  </span>
-                </button>
                 {attachments.length > 0 && <AttachmentPreviewList files={attachments} onRemove={(index) => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} />}
                 </form>
                 <small className="typing-indicator" aria-live="polite">{typingSummary(state.typing.filter((item) => item.channel_id === conversation.id && item.member_id !== state.member.id).map((item) => item.member_name))}</small>

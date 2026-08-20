@@ -80,6 +80,9 @@ screens:
       - id: composer-file-drag-active
         status: partial
         evidence: renderer-file-drop-preview-remove
+      - id: composer-keyboard-send
+        status: verified
+        evidence: web-desktop-enter-send-shift-enter-newline
       - id: mention-suggestions-open
         status: partial
         evidence: web-desktop-and-mobile-mention-completion-tests

@@ -8,6 +8,7 @@
   let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0, mediaPreparation = null;
   let ringContext = null, ringTimer = null, ringAudio = null, ringAudioURL = "", ringGeneration = 0;
   let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
+  let mediaIceServers = null;
   const remoteAudio = new Map(), remoteVideo = new Map();
   const panel = document.createElement("section");
   panel.className = "call-banner";
@@ -153,7 +154,7 @@
     stopRinging();
     generation++;
     connection?.stop({explicit}); connection = null;
-    microphoneCapture?.stop?.(); microphoneCapture = null; microphone?.getTracks().forEach(track => track.stop()); microphone = null;
+    microphoneCapture?.stop?.(); microphoneCapture = null; microphone?.getTracks().forEach(track => track.stop()); microphone = null; mediaIceServers = null;
     stopScreen({renegotiate: false}).catch(() => {});
     clearRemoteMedia(); restoreConversation();
   };
@@ -220,7 +221,7 @@
       }
     };
     const progress = message => { if (!connection || connection.state !== "connected") { panel.hidden=false;panel.innerHTML='<span class="call-progress"></span>';panel.firstElementChild.textContent=message;attachPanel(); } };
-    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
+    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, fetchCredentials: async()=>mediaIceServers||[], resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
     await connection.start();
   };
 
@@ -229,15 +230,18 @@
     if (!mediaPreparation) {
       mediaPreparation = (async () => {
         panel.hidden=false;panel.innerHTML='<span class="call-progress">Requesting microphone permission…</span>';attachPanel();
-        if (!window.AllChatRNNoise) await import("/assets/rnnoise.js");
-        if (!window.AllChatVoiceSettings) await import("/assets/voice-settings.js");
-        if (!window.AllChatVoiceConnection) await import("/assets/voice-connection.js");
-        const [capture, config] = await Promise.all([
+        await Promise.all([
+          window.AllChatRNNoise ? null : import("/assets/rnnoise.js"),
+          window.AllChatVoiceSettings ? null : import("/assets/voice-settings.js"),
+          window.AllChatVoiceConnection ? null : import("/assets/voice-connection.js"),
+        ]);
+        const [capture, config, iceServers] = await Promise.all([
           window.AllChatVoiceSettings.capture(),
           fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
+          fetch("/api/v1/turn-credentials").then(async response => {if(!response.ok)throw new Error("TURN credentials unavailable");return (await response.json()).ice_servers||[]}),
         ]);
         if (expectedGeneration !== generation) { capture.stop(); throw new Error("Direct Call preparation cancelled"); }
-        microphoneCapture=capture;microphone=capture.stream;mediaConfig=config;
+        microphoneCapture=capture;microphone=capture.stream;mediaConfig=config;mediaIceServers=iceServers;
       })().finally(() => { mediaPreparation=null; });
     }
     await mediaPreparation;

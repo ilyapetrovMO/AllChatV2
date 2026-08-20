@@ -48,6 +48,34 @@ func TestWebParticipantMenusControlIndividualVolume(t *testing.T) {
 	}
 }
 
+func TestWebCallPreparationDoesNotSerializeIndependentWork(t *testing.T) {
+	app, err := embeddedWeb.ReadFile("web/assets/app.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(app), `Promise.all([`) || !strings.Contains(string(app), `import("/assets/voice-connection.js")`) {
+		t.Fatal("web app must preload independent voice modules concurrently")
+	}
+
+	call, err := embeddedWeb.ReadFile("web/assets/call.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(call), `await Promise.all([`) || !strings.Contains(string(call), `window.AllChatVoiceSettings ? null`) {
+		t.Fatal("Direct Call must load independent media modules concurrently")
+	}
+
+	sidebar, err := embeddedWeb.ReadFile("web/assets/voice-sidebar.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`const [microphoneCapture, mediaConfig, iceServers] = await Promise.all([`, `window.AllChatVoiceSettings.capture()`, `fetch("/api/v1/media/config")`, `fetch("/api/v1/turn-credentials")`, `fetchCredentials:async()=>iceServers`} {
+		if !strings.Contains(string(sidebar), want) {
+			t.Fatalf("Voice Room connection critical path is serialized: missing %q", want)
+		}
+	}
+}
+
 func TestWebCallRingtoneUsesResolvedMemberPolicyWithToneFallback(t *testing.T) {
 	call, err := embeddedWeb.ReadFile("web/assets/call.js")
 	if err != nil {

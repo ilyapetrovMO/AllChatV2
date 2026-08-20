@@ -155,9 +155,14 @@
     });
     try {
       status.textContent = "Requesting microphone";
-      session.microphoneCapture = await window.AllChatVoiceSettings.capture(); session.stream = session.microphoneCapture.stream;
+      const [microphoneCapture, mediaConfig, iceServers] = await Promise.all([
+        window.AllChatVoiceSettings.capture(),
+        fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig),
+        fetch("/api/v1/turn-credentials").then(async response => {if(!response.ok)throw new Error("TURN credentials unavailable");return (await response.json()).ice_servers||[]}),
+      ]);
+      session.microphoneCapture = microphoneCapture; session.stream = microphoneCapture.stream;
       if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
-      session.mediaConfig = await fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig);
+      session.mediaConfig = mediaConfig;
       const resumeKey = `allchat-media-resume:${roomID}`;
       const receiveTrack = event => {
         if (event.track.kind === "video") {
@@ -228,7 +233,7 @@
 	  };
 	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};
 	  window.allchatClearVoiceDiagnostics=()=>localStorage.removeItem("allchat:voice-diagnostics");
-      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onProgress:connectionProgress,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
+      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,fetchCredentials:async()=>iceServers,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onProgress:connectionProgress,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
       await session.connection.start();
     } catch (error) {
       if (active === session) {

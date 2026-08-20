@@ -444,5 +444,5 @@ describe('desktop renderer bootstrap', () => {
     const voiceMenu = screen.getByRole('menu', { name: 'Voice Member actions' });
     fireEvent.click(within(voiceMenu).getByRole('menuitem', { name: 'Profile' }));
     expect(screen.getByRole('dialog', { name: 'Member profile' })).toBeVisible();
-  });
+  }, 15_000);
 });

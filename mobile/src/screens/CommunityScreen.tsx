@@ -4384,7 +4384,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   compactConversation: { gap: 10, minHeight: 42, paddingHorizontal: 10 },
-  conversationName: { flex: 1, fontSize: 16, fontWeight: '600' },
+  conversationName: { flex: 1, marginLeft: 8, fontSize: 16, fontWeight: '600' },
   unreadDot: {
     backgroundColor: '#ed4245',
     borderRadius: 4,

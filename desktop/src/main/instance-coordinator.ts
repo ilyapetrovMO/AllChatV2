@@ -60,6 +60,7 @@ export class InstanceCoordinator {
       throw new Error('Instance returned an unsupported bootstrap contract.');
     }
     const state = normalizeMembers(body);
+	this.registry.rename(instanceId, state.community.name);
     this.#states.set(instanceId, state);
     this.cache.put(instanceId, state);
     return state;
@@ -445,8 +446,16 @@ export class InstanceCoordinator {
       return { type: 'community_settings', settings };
     }
     if (action.type === 'update_community_settings') {
-      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/admin/settings', 'PUT', { max_attachment_mib: action.maxAttachmentMiB, home_markdown: action.homeMarkdown, push_relay_url: action.pushRelayURL });
+      const response = await this.jsonRequest(profile.baseUrl, token, '/api/v1/admin/settings', 'PUT', { name: action.name, max_attachment_mib: action.maxAttachmentMiB, home_markdown: action.homeMarkdown, push_relay_url: action.pushRelayURL });
       if (!response.ok || !isCommunitySettings(response.body)) throw new Error(readError(response.body, 'Could not save Community settings.'));
+	  const current = this.#states.get(instanceId);
+	  if (current) {
+		const state = { ...current, community: { ...current.community, name: response.body.name } };
+		this.#states.set(instanceId, state);
+		this.registry.rename(instanceId, response.body.name);
+		this.cache.put(instanceId, state);
+		this.publish(instanceId, state);
+	  }
       return { type: 'community_settings', settings: response.body };
     }
     if (action.type === 'community_home') {
@@ -709,7 +718,7 @@ function isSoundboardSound(value: unknown): value is import('../shared/instance-
 }
 
 function isCommunitySettings(value: unknown): value is import('../shared/instance-actions').CommunitySettings {
-  return !!value && typeof value === 'object' && typeof (value as { max_attachment_mib?: unknown }).max_attachment_mib === 'number' &&
+  return !!value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string' && typeof (value as { max_attachment_mib?: unknown }).max_attachment_mib === 'number' &&
     typeof (value as { home_markdown?: unknown }).home_markdown === 'string' && typeof (value as { push_relay_url?: unknown }).push_relay_url === 'string' &&
     typeof (value as { push_key_id?: unknown }).push_key_id === 'string' && typeof (value as { push_public_key?: unknown }).push_public_key === 'string';
 }
@@ -717,8 +726,9 @@ function isCommunitySettings(value: unknown): value is import('../shared/instanc
 function normalizeCommunitySettings(value: unknown): import('../shared/instance-actions').CommunitySettings | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const settings = value as Partial<import('../shared/instance-actions').CommunitySettings>;
-  if (typeof settings.max_attachment_mib !== 'number' || typeof settings.home_markdown !== 'string' || typeof settings.push_relay_url !== 'string') return undefined;
+  if (typeof settings.name !== 'string' || typeof settings.max_attachment_mib !== 'number' || typeof settings.home_markdown !== 'string' || typeof settings.push_relay_url !== 'string') return undefined;
   return {
+    name: settings.name,
     max_attachment_mib: settings.max_attachment_mib,
     home_markdown: settings.home_markdown,
     push_relay_url: settings.push_relay_url,

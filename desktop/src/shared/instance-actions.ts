@@ -10,7 +10,7 @@ export interface AdminDashboard { checked_at: string; uptime_seconds: number; he
 export interface CommunityRole { id: string; name: string; position: number; default: boolean; owner: boolean; permissions: string[] }
 export interface CommunityInvitation { id: string; token?: string; expires_at: string; max_uses: number; use_count: number; revoked: boolean }
 export interface SoundboardSound { id: string; name: string; emoji?: string; content_type: string; size: number; duration_ms: number; position: number; audio_url: string }
-export interface CommunitySettings { max_attachment_mib: number; home_markdown: string; push_relay_url: string; push_key_id: string; push_public_key: string }
+export interface CommunitySettings { name: string; max_attachment_mib: number; home_markdown: string; push_relay_url: string; push_key_id: string; push_public_key: string }
 
 export type InstanceAction =
   | { type: 'load_messages'; conversationId: string; direct: boolean; before?: number; after?: number; limit?: number }
@@ -70,7 +70,7 @@ export type InstanceAction =
   | { type: 'delete_sound'; soundId: string }
   | { type: 'set_soundboard_limit'; maxDurationMs: number }
   | { type: 'get_community_settings' }
-  | { type: 'update_community_settings'; maxAttachmentMiB: number; homeMarkdown: string; pushRelayURL: string }
+  | { type: 'update_community_settings'; name: string; maxAttachmentMiB: number; homeMarkdown: string; pushRelayURL: string }
   | { type: 'community_home' };
 
 export type MessagePage = { messages: Message[]; has_more: boolean; next_before?: number; next_after?: number };

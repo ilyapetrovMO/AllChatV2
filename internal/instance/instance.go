@@ -30,7 +30,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 26
+const schemaVersion = 27
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -909,6 +909,32 @@ func initializeSchema(db *sql.DB) error {
 		}
 		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 26, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
 			return fmt.Errorf("record mobile push settings schema: %w", err)
+		}
+	}
+	if currentVersion < 27 {
+		rows, err := tx.QueryContext(ctx, "PRAGMA table_info(community)")
+		if err != nil {
+			return fmt.Errorf("inspect Community name schema: %w", err)
+		}
+		hasName := false
+		for rows.Next() {
+			var cid, notNull, primaryKey int
+			var name, kind string
+			var defaultValue any
+			if scanErr := rows.Scan(&cid, &name, &kind, &notNull, &defaultValue, &primaryKey); scanErr != nil {
+				rows.Close()
+				return scanErr
+			}
+			hasName = hasName || name == "name"
+		}
+		rows.Close()
+		if !hasName {
+			if _, err := tx.ExecContext(ctx, `ALTER TABLE community ADD COLUMN name TEXT NOT NULL DEFAULT 'AllChat Community';`); err != nil {
+				return fmt.Errorf("add Community name: %w", err)
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 27, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return fmt.Errorf("record Community name migration: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {

@@ -63,6 +63,14 @@ export class InstanceRegistry {
     this.persist();
   }
 
+  rename(id: string, displayName: string): void {
+    const profile = this.get(id);
+    const normalized = displayName.trim();
+    if (!normalized || normalized === profile.displayName) return;
+    this.#profiles.set(id, Object.freeze({ ...profile, displayName: normalized }));
+    this.persist();
+  }
+
   setSession(id: string, credentialRef: string, session: DesktopSessionSummary): void {
     const profile = this.get(id);
     this.#profiles.set(id, Object.freeze({ ...profile, credentialRef, session }));

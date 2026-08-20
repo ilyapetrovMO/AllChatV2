@@ -34,9 +34,9 @@ describe('InstanceCoordinator', () => {
     const registry = new InstanceRegistry(() => 'home'); registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
     registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: true }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
     const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home', 'token');
-    const coordinator = new InstanceCoordinator(registry, vault, async () => new Response(JSON.stringify({ max_attachment_mib: 64, home_markdown: '# Welcome', push_relay_url: '' }), { status: 200 }));
+    const coordinator = new InstanceCoordinator(registry, vault, async () => new Response(JSON.stringify({ name: 'Home', max_attachment_mib: 64, home_markdown: '# Welcome', push_relay_url: '' }), { status: 200 }));
 
-    await expect(coordinator.execute('home', { type: 'get_community_settings' })).resolves.toEqual({ type: 'community_settings', settings: { max_attachment_mib: 64, home_markdown: '# Welcome', push_relay_url: '', push_key_id: '', push_public_key: '' } });
+    await expect(coordinator.execute('home', { type: 'get_community_settings' })).resolves.toEqual({ type: 'community_settings', settings: { name: 'Home', max_attachment_mib: 64, home_markdown: '# Welcome', push_relay_url: '', push_key_id: '', push_public_key: '' } });
   });
 
   it('identifies an Instance version that predates the Community settings API', async () => {

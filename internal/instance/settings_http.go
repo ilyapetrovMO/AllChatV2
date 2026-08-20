@@ -11,6 +11,7 @@ import (
 )
 
 type communitySettingsView struct {
+	Name             string `json:"name"`
 	MaxAttachmentMiB int64  `json:"max_attachment_mib"`
 	HomeMarkdown     string `json:"home_markdown"`
 	PushRelayURL     string `json:"push_relay_url"`
@@ -32,13 +33,18 @@ func (i *Instance) communitySettingsAPI(w http.ResponseWriter, r *http.Request) 
 		writeCommunityError(w, err)
 		return
 	}
+	name, err := i.community.CommunityName(r.Context())
+	if err != nil {
+		writeCommunityError(w, err)
+		return
+	}
 	relayURL, err := i.mobilePushRelayURL(r.Context())
 	if err != nil {
 		writeCommunityError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, communitySettingsView{
-		MaxAttachmentMiB: i.community.MaxAttachmentBytes() / (1 << 20), HomeMarkdown: home,
+		Name: name, MaxAttachmentMiB: i.community.MaxAttachmentBytes() / (1 << 20), HomeMarkdown: home,
 		PushRelayURL: relayURL, PushKeyID: i.mobilePush.keyID,
 		PushPublicKey: base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey),
 	})
@@ -56,6 +62,10 @@ func (i *Instance) updateCommunitySettingsAPI(w http.ResponseWriter, r *http.Req
 	var input communitySettingsView
 	if decodeJSON(r, &input) != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return
+	}
+	if err := i.community.UpdateCommunityName(r.Context(), member, input.Name); err != nil {
+		writeCommunityError(w, err)
 		return
 	}
 	if err := i.community.UpdateMaxAttachmentBytes(r.Context(), member, input.MaxAttachmentMiB<<20); err != nil {
@@ -92,8 +102,9 @@ func (i *Instance) communitySettingsPage(w http.ResponseWriter, r *http.Request)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	home, _ := i.community.CommunityHomeMarkdown(r.Context())
+	name, _ := i.community.CommunityName(r.Context())
 	relayURL, _ := i.mobilePushRelayURL(r.Context())
-	_ = communitySettingsTemplate.Execute(w, map[string]any{"CSRF": csrfCookieValue(r), "MaxAttachmentMiB": i.community.MaxAttachmentBytes() / (1 << 20), "HomeMarkdown": home, "PushRelayURL": relayURL, "PushKeyID": i.mobilePush.keyID, "PushPublicKey": base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey)})
+	_ = communitySettingsTemplate.Execute(w, map[string]any{"CSRF": csrfCookieValue(r), "Name": name, "MaxAttachmentMiB": i.community.MaxAttachmentBytes() / (1 << 20), "HomeMarkdown": home, "PushRelayURL": relayURL, "PushKeyID": i.mobilePush.keyID, "PushPublicKey": base64.RawURLEncoding.EncodeToString(i.mobilePush.publicKey)})
 }
 
 func (i *Instance) updateCommunitySettingsWeb(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +117,10 @@ func (i *Instance) updateCommunitySettingsWeb(w http.ResponseWriter, r *http.Req
 		return
 	}
 	_ = r.ParseForm()
+	if err := i.community.UpdateCommunityName(r.Context(), member, r.FormValue("name")); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	maximumMiB, err := strconv.ParseInt(r.FormValue("max_attachment_mib"), 10, 64)
 	if err != nil || i.community.UpdateMaxAttachmentBytes(r.Context(), member, maximumMiB<<20) != nil {
 		http.Error(w, "attachment limit must be between 1 and 256 MiB", http.StatusBadRequest)
@@ -148,4 +163,4 @@ func (i *Instance) communityHomeAPI(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"markdown": value})
 }
 
-var communitySettingsTemplate = template.Must(template.New("community-settings").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Community Settings — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script></head><body><div class="app-shell"><aside class="community-rail"><a class="community-mark" href="/">AC</a></aside><aside class="channel-sidebar"><div class="community-header">Community Settings</div><nav class="channel-nav settings-nav"><a href="/admin/settings" aria-current="page">General</a><a href="/admin/channels">Channels</a><a href="/admin/roles">Roles</a><a href="/admin/invitations">Invitations</a><a href="/admin/soundboard">Soundboard</a></nav></aside><main class="content-shell"><header class="content-header"><h1>Community Settings</h1></header><section class="content"><h2 class="page-title">General</h2><form class="card" method="post" action="/admin/settings"><input type="hidden" name="csrf_token" value="{{.CSRF}}"><label>Maximum attachment size (MiB)<input name="max_attachment_mib" type="number" min="1" max="256" step="1" value="{{.MaxAttachmentMiB}}" required></label><p class="muted">Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Mobile push relay<input name="push_relay_url" type="url" value="{{.PushRelayURL}}" placeholder="https://ru.elitedarklord.com"></label><p class="muted">Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p class="muted">Key ID: <code>{{.PushKeyID}}</code></p><textarea readonly rows="3">{{.PushPublicKey}}</textarea></details><button>Save settings</button></form></section></main></div></body></html>`))
+var communitySettingsTemplate = template.Must(template.New("community-settings").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Community Settings — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/app.js" defer></script></head><body><div class="app-shell"><aside class="community-rail"><a class="community-mark" href="/">AC</a></aside><aside class="channel-sidebar"><div class="community-header">Community Settings</div><nav class="channel-nav settings-nav"><a href="/admin/settings" aria-current="page">General</a><a href="/admin/channels">Channels</a><a href="/admin/roles">Roles</a><a href="/admin/invitations">Invitations</a><a href="/admin/soundboard">Soundboard</a></nav></aside><main class="content-shell"><header class="content-header"><h1>Community Settings</h1></header><section class="content"><h2 class="page-title">General</h2><form class="card" method="post" action="/admin/settings"><input type="hidden" name="csrf_token" value="{{.CSRF}}"><label>Community name<input name="name" maxlength="100" value="{{.Name}}" required></label><label>Maximum attachment size (MiB)<input name="max_attachment_mib" type="number" min="1" max="256" step="1" value="{{.MaxAttachmentMiB}}" required></label><p class="muted">Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Mobile push relay<input name="push_relay_url" type="url" value="{{.PushRelayURL}}" placeholder="https://ru.elitedarklord.com"></label><p class="muted">Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p class="muted">Key ID: <code>{{.PushKeyID}}</code></p><textarea readonly rows="3">{{.PushPublicKey}}</textarea></details><button>Save settings</button></form></section></main></div></body></html>`))

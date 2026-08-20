@@ -2,6 +2,7 @@
 package instance
 
 import (
+	"bytes"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -215,7 +216,10 @@ func (i *Instance) channelPage(w http.ResponseWriter, r *http.Request) {
 	if len(messages) > 0 {
 		firstSequence = messages[0].Sequence
 	}
-	_ = channelTemplate.Execute(w, map[string]any{"Channel": channel, "Messages": messages, "Member": m, "Members": members, "Presence": presence, "Overview": overview, "DirectMessages": directMessages, "DirectMessage": directMessage, "Direct": directMessage != nil, "CSRF": csrfCookieValue(r), "LastSequence": lastSequence, "FirstSequence": firstSequence, "MaxAttachmentBytes": i.community.MaxAttachmentBytes()})
+	var page bytes.Buffer
+	_ = channelTemplate.Execute(&page, map[string]any{"Channel": channel, "Messages": messages, "Member": m, "Members": members, "Presence": presence, "Overview": overview, "DirectMessages": directMessages, "DirectMessage": directMessage, "Direct": directMessage != nil, "CSRF": csrfCookieValue(r), "LastSequence": lastSequence, "FirstSequence": firstSequence, "MaxAttachmentBytes": i.community.MaxAttachmentBytes()})
+	communityName, _ := i.community.CommunityName(r.Context())
+	_, _ = w.Write([]byte(strings.ReplaceAll(page.String(), "AllChat Community", template.HTMLEscapeString(communityName))))
 }
 func (i *Instance) publishMessageWeb(w http.ResponseWriter, r *http.Request) {
 	m, _, ok := i.authenticatedCSRF(w, r)

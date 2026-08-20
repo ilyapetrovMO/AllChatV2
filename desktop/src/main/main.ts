@@ -486,7 +486,7 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'delete_sound') { assertString(value.soundId, 'Sound identity'); return; }
   if (value.type === 'set_soundboard_limit') { if (!Number.isInteger(value.maxDurationMs) || value.maxDurationMs < 1_000 || value.maxDurationMs > 30_000) throw new Error('Soundboard limit is invalid'); return; }
   if (value.type === 'update_community_settings') {
-    if (!Number.isInteger(value.maxAttachmentMiB) || value.maxAttachmentMiB < 1 || value.maxAttachmentMiB > 256 || typeof value.homeMarkdown !== 'string' || value.homeMarkdown.length > 100_000 || typeof value.pushRelayURL !== 'string') throw new Error('Community settings are invalid');
+    if (typeof value.name !== 'string' || value.name.trim().length < 1 || [...value.name].length > 100 || !Number.isInteger(value.maxAttachmentMiB) || value.maxAttachmentMiB < 1 || value.maxAttachmentMiB > 256 || typeof value.homeMarkdown !== 'string' || value.homeMarkdown.length > 100_000 || typeof value.pushRelayURL !== 'string') throw new Error('Community settings are invalid');
     if (value.pushRelayURL) { const relay = new URL(value.pushRelayURL); if (relay.protocol !== 'https:' && relay.protocol !== 'http:') throw new Error('Push relay URL is invalid'); }
     return;
   }

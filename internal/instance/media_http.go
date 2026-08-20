@@ -2,11 +2,13 @@
 package instance
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"html/template"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -232,7 +234,10 @@ func mustJSON(value any) []byte { encoded, _ := json.Marshal(value); return enco
 
 func (i *Instance) renderVoiceRoom(w http.ResponseWriter, r *http.Request, member identity.Member, channel community.Channel, overview community.ChannelOverview) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = voiceRoomTemplate.Execute(w, map[string]any{"Member": member, "Channel": channel, "Overview": overview, "CSRF": csrfCookieValue(r)})
+	var page bytes.Buffer
+	_ = voiceRoomTemplate.Execute(&page, map[string]any{"Member": member, "Channel": channel, "Overview": overview, "CSRF": csrfCookieValue(r)})
+	communityName, _ := i.community.CommunityName(r.Context())
+	_, _ = w.Write([]byte(strings.ReplaceAll(page.String(), "AllChat Community", template.HTMLEscapeString(communityName))))
 }
 
 var voiceRoomTemplate = template.Must(template.New("voice-room").Parse(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{.Channel.Name}} — AllChat Voice</title><link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/channel.css"><script src="/assets/app.js" defer></script></head><body data-member-id="{{.Member.ID}}" data-channel-id="{{.Channel.ID}}"><div class="app-shell"><aside class="community-rail"><a class="community-mark dm-rail-mark" href="/dms">✦</a><span class="rail-separator"></span><a class="community-mark" href="/">AC</a></aside><aside class="channel-sidebar"><div class="community-header">AllChat Community</div><nav class="channel-nav">{{range .Overview.Categories}}<h2 class="channel-category">{{.Name}}</h2>{{end}}{{range .Overview.Channels}}<a class="channel-link {{if eq .Type "voice"}}voice-link{{end}}" href="/channels/{{.ID}}" {{if eq .ID $.Channel.ID}}aria-current="page"{{end}}>{{.Name}}</a>{{end}}</nav></aside><main class="content-shell media-stage-view" data-media-stage="{{.Channel.ID}}"><header class="content-header"><button class="mobile-menu" type="button" data-sidebar-toggle>☰</button><span class="hash">🔊</span><h1>{{.Channel.Name}}</h1><span class="media-stage-status">Voice Room</span></header><section class="media-stage"><div class="media-stage-grid" data-media-stage-grid><p class="media-stage-empty">Join this Voice Room from the sidebar to see participants here.</p></div></section></main></div></body></html>`))

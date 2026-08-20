@@ -72,8 +72,8 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	if err := json.NewDecoder(healthResponse.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response: %v", err)
 	}
-	if health.Status != "ok" || health.SchemaVersion != 26 {
-		t.Fatalf("health = %+v, want status ok at schema version 26", health)
+	if health.Status != "ok" || health.SchemaVersion != 27 {
+		t.Fatalf("health = %+v, want status ok at schema version 27", health)
 	}
 
 	client := newClient(t)
@@ -307,7 +307,7 @@ func TestInstanceRestartsUsingTheSameInitializedData(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&health); err != nil {
 		t.Fatalf("decode health response after restart: %v", err)
 	}
-	if health["status"] != "ok" || health["schema_version"] != float64(26) {
+	if health["status"] != "ok" || health["schema_version"] != float64(27) {
 		t.Fatalf("health after restart = %#v", health)
 	}
 }

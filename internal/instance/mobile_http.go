@@ -68,9 +68,14 @@ func (i *Instance) mobileBootstrapAPI(response http.ResponseWriter, request *htt
 		return
 	}
 	presence, typing := i.authorizedEphemeralState(request.Context(), member)
+	communityName, err := i.community.CommunityName(request.Context())
+	if err != nil {
+		writeCommunityError(response, err)
+		return
+	}
 	response.Header().Set("Cache-Control", "no-store")
 	writeJSON(response, http.StatusOK, mobileBootstrapResponse{
-		Version: 1, Community: mobileCommunity{Name: "AllChat Community"}, Member: member, Members: nonNilSlice(members),
+		Version: 1, Community: mobileCommunity{Name: communityName}, Member: member, Members: nonNilSlice(members),
 		Categories: nonNilSlice(overview.Categories), Channels: nonNilSlice(overview.Channels), DirectMessages: nonNilSlice(snapshot.DirectMessages),
 		Messages: snapshot.Messages, ChannelStates: nonNilSlice(states), Presence: presence, Typing: nonNilSlice(typing), Notifications: notifications,
 		Media: mobileMediaConfig{AudioBitrate: i.config.MediaAudioBitrate, ScreenBitrate: i.config.MediaScreenBitrate}, Cursor: snapshot.Cursor,

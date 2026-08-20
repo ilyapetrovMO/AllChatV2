@@ -195,8 +195,10 @@ func (i *Instance) renderHome(w http.ResponseWriter, r *http.Request, member ide
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var page bytes.Buffer
 	_ = homeTemplate.Execute(&page, map[string]any{"Member": member, "Members": members, "Overview": overview, "DirectMessages": directMessages, "CSRF": csrfCookieValue(r)})
-	body := strings.Replace(page.String(), `<h1>Home</h1>`, `<h1>Community Guide</h1>`, 1)
-	start := `<p class="eyebrow">AllChat Community</p>`
+	communityName, _ := i.community.CommunityName(r.Context())
+	body := strings.ReplaceAll(page.String(), "AllChat Community", template.HTMLEscapeString(communityName))
+	body = strings.Replace(body, `<h1>Home</h1>`, `<h1>Community Guide</h1>`, 1)
+	start := `<p class="eyebrow">` + template.HTMLEscapeString(communityName) + `</p>`
 	end := `<form class="card form-row"`
 	if left, right := strings.Index(body, start), strings.Index(body, end); left >= 0 && right > left {
 		content := body[left:right]

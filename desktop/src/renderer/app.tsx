@@ -20,6 +20,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   );
   const [managingCommunities, setManagingCommunities] = useState(false);
   const [addingCommunity, setAddingCommunity] = useState(false);
+  const [communityHomeRevision, setCommunityHomeRevision] = useState(0);
   const [authMode, setAuthMode] = useState<"login" | "register" | "recover">("login");
 
   useEffect(() => {
@@ -277,6 +278,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             key={instance.id}
             onClick={() => void bridge.selectInstance(instance.id).then((next) => {
               setState(next);
+              setCommunityHomeRevision((value) => value + 1);
               setManagingCommunities(false);
               setAddingCommunity(false);
               setError("");
@@ -374,7 +376,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           </div>
         ) : instanceState ? (
           <CommunityShell
-            key={active!.id}
+            key={`${active!.id}:${communityHomeRevision}`}
             instanceId={active!.id}
             state={instanceState}
             onAction={executeAction}
@@ -450,6 +452,8 @@ function CommunityShell({
 	const [pinnedMessages, setPinnedMessages] = useState<import("../shared/instance-state").Message[] | null>(null);
   const [membersOpen, setMembersOpen] = useState(true);
   const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
+  const [memberMenuOpen, setMemberMenuOpen] = useState(false);
+  const [presenceOverride, setPresenceOverride] = useState<"online" | "dnd" | null>(null);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const [memberPopover, setMemberPopover] = useState<{
     memberId: string;
@@ -488,9 +492,43 @@ function CommunityShell({
     };
   }, [reactionPickerMessageId]);
   useEffect(() => {
+    if (!memberMenuOpen) return;
+    const dismiss = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".member-menu-anchor")) setMemberMenuOpen(false);
+    };
+    const dismissWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMemberMenuOpen(false);
+    };
+    document.addEventListener("mousedown", dismiss);
+    document.addEventListener("keydown", dismissWithKeyboard);
+    return () => {
+      document.removeEventListener("mousedown", dismiss);
+      document.removeEventListener("keydown", dismissWithKeyboard);
+    };
+  }, [memberMenuOpen]);
+  useEffect(() => {
     void onAction({ type: "community_home" }).then((result) => {
       if (result?.type === "community_home") setCommunityGuide(result.markdown);
     }).catch(() => setCommunityGuide(""));
+  }, [instanceId]);
+  useEffect(() => {
+    let lastActivitySent = 0;
+    const reportActivity = () => {
+      const now = Date.now();
+      if (document.hidden || now - lastActivitySent < 10_000) return;
+      lastActivitySent = now;
+      void onAction({ type: "report_activity", active: true });
+    };
+    document.addEventListener("pointerdown", reportActivity, { capture: true, passive: true });
+    document.addEventListener("keydown", reportActivity, { capture: true });
+    window.addEventListener("focus", reportActivity);
+    reportActivity();
+    return () => {
+      document.removeEventListener("pointerdown", reportActivity, { capture: true });
+      document.removeEventListener("keydown", reportActivity, { capture: true });
+      window.removeEventListener("focus", reportActivity);
+    };
   }, [instanceId]);
   const lastTypingAt = useRef(0);
   const messageListRef = useRef<HTMLDivElement | null>(null);
@@ -940,17 +978,19 @@ function CommunityShell({
         </nav>
         <div id="desktop-call-controls" />
         <footer className="member-panel">
-          <AuthenticatedImage
-            path={state.member.avatarUrl}
-            alt=""
-            className="avatar"
-            fallback={memberName(state.member).slice(0, 1).toUpperCase()}
-            onAction={onAction}
-          />
-          <span>
-            <strong>{memberName(state.member)}</strong>
-            <small>@{state.member.username}</small>
-          </span>
+          <div className="member-menu-anchor">
+            <button className="member-summary" type="button" aria-label="Open Member menu" aria-haspopup="menu" aria-expanded={memberMenuOpen} onClick={() => setMemberMenuOpen((value) => !value)}>
+              <span className="member-summary-avatar">
+                <AuthenticatedImage path={state.member.avatarUrl} alt="" className="avatar" fallback={memberName(state.member).slice(0, 1).toUpperCase()} onAction={onAction} />
+                <span className={`presence-dot ${presenceOverride || state.presence[state.member.id] || "offline"}`} />
+              </span>
+              <span className="member-identity"><strong>{memberName(state.member)}</strong><small>@{state.member.username}</small></span>
+            </button>
+            {memberMenuOpen && <nav className="desktop-member-menu" role="menu" aria-label="Presence status">
+              <button type="button" role="menuitem" onClick={() => { setPresenceOverride("online"); setMemberMenuOpen(false); void onAction({ type: "set_presence", mode: "available" }); }}><span className="presence-choice online" />Online</button>
+              <button type="button" role="menuitem" onClick={() => { setPresenceOverride("dnd"); setMemberMenuOpen(false); void onAction({ type: "set_presence", mode: "dnd" }); }}><span className="presence-choice dnd" />Do Not Disturb</button>
+            </nav>}
+          </div>
           <button
             type="button"
             aria-label="User Settings"

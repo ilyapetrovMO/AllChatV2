@@ -19,6 +19,7 @@ export type InstanceAction =
   | { type: 'delete_message'; messageId: string; conversationId: string }
   | { type: 'update_read_position'; conversationId: string; direct: boolean; sequence: number }
   | { type: 'send_typing'; conversationId: string }
+  | { type: 'report_activity'; active: boolean }
   | { type: 'set_reaction'; messageId: string; emoji: string; active: boolean }
   | { type: 'set_pinned'; messageId: string; active: boolean }
   | { type: 'set_community_notifications'; level: 'all_messages' | 'mentions_only' | 'nothing'; muted: boolean; soundEnabled: boolean }

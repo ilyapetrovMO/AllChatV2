@@ -67,7 +67,6 @@ button { font: inherit; }
 .avatar { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%; color: white; background: #5965f2; font-size: 12px; font-weight: 800; }
 .unread { margin-left: auto; min-width: 20px; padding: 2px 6px; border-radius: 10px; color: white; background: #e44d65; font-size: 11px; text-align: center; }
 .member-panel { display: flex; align-items: center; gap: 9px; padding: 10px; background: #121520; }
-.member-panel > span:nth-child(2) { display: grid; min-width: 0; flex: 1; }
 .member-panel strong, .member-panel small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .member-panel small { color: #8f96aa; }
 .member-panel button { border: 0; color: #b7bdcf; background: transparent; }
@@ -370,10 +369,12 @@ a { color: #00a8fc; }
 .member-directory-group > button { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; text-align: left; }
 .member-directory-group > button:hover { background: var(--bg-hover); color: var(--text); }
 .member-directory-group > button small { grid-column: 2; color: var(--faint); font-size: .65rem; }
-.presence-dot { width: 11px; height: 11px; border: 3px solid var(--bg-main); background: var(--faint); }
+.presence-dot { width: 14px; height: 14px; border: 3px solid var(--bg-main); border-radius: 50%; background: var(--faint); }
 .presence-dot.online, .presence-dot.mobile { background: var(--green); }
 .presence-dot.idle { background: var(--yellow); }
 .presence-dot.dnd { background: var(--red); }
+.presence-dot.mobile { width: 10px; height: 16px; border-width: 2px; border-radius: 3px; }
+.presence-dot.mobile::after { position: absolute; left: 50%; bottom: 1px; width: 3px; height: 1px; border-radius: 1px; background: var(--bg-main); content: ""; transform: translateX(-50%); }
 .member-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-sidebar); box-shadow: var(--shadow); }
 .member-card-avatar { border-color: var(--bg-sidebar); background: var(--brand); }
 .member-card p { color: var(--muted); }
@@ -586,6 +587,18 @@ a { color: #00a8fc; }
 .avatar { overflow: hidden; object-fit: cover; }
 .conversation-nav button > .lucide-icon { width: 20px; height: 20px; color: var(--faint); }
 .member-panel > button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; }
+.member-menu-anchor { position: relative; min-width: 0; flex: 1; }
+.member-summary { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 4px; border: 0; border-radius: 4px; color: var(--text); background: transparent; text-align: left; }
+.member-summary:hover { background: var(--bg-hover); }
+.member-summary-avatar { position: relative; flex: 0 0 32px; }
+.member-summary-avatar .presence-dot { position: absolute; right: -3px; bottom: -2px; border-color: #0e0f12; }
+.member-identity { display: grid; min-width: 0; }
+.desktop-member-menu { position: absolute; z-index: 30; right: 0; bottom: calc(100% + 8px); left: 0; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elevated); box-shadow: var(--shadow); }
+.desktop-member-menu button { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 34px; padding: 6px 8px; color: var(--text); background: transparent; text-align: left; }
+.desktop-member-menu button:hover { background: var(--brand); }
+.presence-choice { width: 12px; height: 12px; flex: 0 0 12px; border-radius: 50%; }
+.presence-choice.online { background: var(--green); }
+.presence-choice.dnd { background: var(--red); }
 .member-directory-avatar { position: relative; grid-row: 1 / 3; }
 .member-directory-avatar .avatar { width: 32px; height: 32px; }
 .member-directory-avatar .presence-dot { position: absolute; right: -2px; bottom: -1px; margin: 0; border-color: var(--bg-main); }

@@ -84,7 +84,7 @@ describe('InstanceCoordinator', () => {
     const bootstrap = { version: 1, community: { name: 'Community' }, member: { id: 'me', username: 'nora', owner: false }, members: [], categories: [], channels: [], direct_messages: [], messages: { chat: [{ id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora', sequence: 1, body: 'hello', created_at: '2026-08-18T09:00:00Z', deleted: false }] }, channel_states: [], presence: {}, typing: [], notifications: { current_member_id: 'me', community: { level: 'default', muted: false }, channels: {}, muted_channel_ids: [] }, media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1 };
     const request: typeof fetch = vi.fn(async (input: URL | RequestInfo) => String(input).includes('/reactions') ? new Response(null, { status: 204 }) : new Response(JSON.stringify(bootstrap), { status: 200 }));
     let realtime: RealtimeConnectionOptions | undefined;
-    const coordinator = new InstanceCoordinator(registry, vault, request, new MemoryInstanceStateCache(), new MemoryAssetCache(), (options) => { realtime = options; return { start: vi.fn(), stop: vi.fn(), sendTyping: vi.fn() }; });
+    const coordinator = new InstanceCoordinator(registry, vault, request, new MemoryInstanceStateCache(), new MemoryAssetCache(), (options) => { realtime = options; return { start: vi.fn(), stop: vi.fn(), sendTyping: vi.fn(), sendActivity: vi.fn() }; });
     await coordinator.load('home');
     const listener = vi.fn(); coordinator.watch('home', listener);
     await vi.waitFor(() => expect(realtime).toBeDefined());
@@ -94,13 +94,30 @@ describe('InstanceCoordinator', () => {
     expect(listener.mock.calls.at(-1)?.[0].messages.chat[0].reactions).toEqual([{ emoji: '👍', count: 1, me: true }]);
   });
 
+  it('forwards renderer activity to the active realtime connection', async () => {
+    const registry = new InstanceRegistry(() => 'home'); registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
+    const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home', 'token');
+    const bootstrap = { version: 1, community: { name: 'Community' }, member: { id: 'me', username: 'nora', owner: false }, members: [], categories: [], channels: [], direct_messages: [], messages: {}, channel_states: [], presence: { me: 'idle' }, typing: [], notifications: { current_member_id: 'me', community: { level: 'default', muted: false }, channels: {}, muted_channel_ids: [] }, media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1 };
+    const sendActivity = vi.fn();
+    const start = vi.fn();
+    const coordinator = new InstanceCoordinator(registry, vault, async () => new Response(JSON.stringify(bootstrap), { status: 200 }), new MemoryInstanceStateCache(), new MemoryAssetCache(), () => ({ start, stop: vi.fn(), sendTyping: vi.fn(), sendActivity }));
+    await coordinator.load('home');
+    coordinator.watch('home', vi.fn());
+    await vi.waitFor(() => expect(start).toHaveBeenCalled());
+
+    await coordinator.execute('home', { type: 'report_activity', active: true });
+
+    expect(sendActivity).toHaveBeenCalledWith(true);
+  });
+
   it('applies notification policy changes to the authoritative realtime state immediately', async () => {
     const registry = new InstanceRegistry(() => 'home'); registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
     registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
     const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home', 'token');
     const bootstrap = { version: 1, community: { name: 'Community' }, member: { id: 'me', username: 'nora', owner: false }, members: [], categories: [], channels: [], direct_messages: [], messages: {}, channel_states: [], presence: {}, typing: [], notifications: { current_member_id: 'me', community: { level: 'all_messages', muted: false, sound_enabled: true }, channels: {}, muted_channel_ids: [] }, media: { audio_bitrate: 64000, screen_bitrate: 2500000 }, cursor: 1 };
     const request: typeof fetch = vi.fn(async (input: URL | RequestInfo) => String(input).includes('/mobile/bootstrap') ? new Response(JSON.stringify(bootstrap), { status: 200 }) : new Response(null, { status: 204 }));
-    const coordinator = new InstanceCoordinator(registry, vault, request, new MemoryInstanceStateCache(), new MemoryAssetCache(), () => ({ start: vi.fn(), stop: vi.fn(), sendTyping: vi.fn() }));
+    const coordinator = new InstanceCoordinator(registry, vault, request, new MemoryInstanceStateCache(), new MemoryAssetCache(), () => ({ start: vi.fn(), stop: vi.fn(), sendTyping: vi.fn(), sendActivity: vi.fn() }));
     await coordinator.load('home');
     const listener = vi.fn(); coordinator.watch('home', listener);
 

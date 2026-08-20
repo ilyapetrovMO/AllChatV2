@@ -439,6 +439,7 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   }
   if (value.type === 'remove_profile_image') { if (value.kind !== 'avatar' && value.kind !== 'banner') throw new Error('Profile image kind is invalid'); return; }
   if (value.type === 'set_presence') { if (value.mode !== 'available' && value.mode !== 'dnd') throw new Error('Presence mode is invalid'); return; }
+  if (value.type === 'report_activity') { if (typeof value.active !== 'boolean') throw new Error('Activity state is invalid'); return; }
   if (value.type === 'open_dm' || value.type === 'set_block') { assertString(value.memberId, 'Member identity'); if (value.type === 'set_block' && typeof value.blocked !== 'boolean') throw new Error('Block state is invalid'); return; }
   if (value.type === 'list_sessions') return;
   if (value.type === 'current_call' || value.type === 'turn_credentials') return;

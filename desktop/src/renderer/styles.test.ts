@@ -23,4 +23,10 @@ describe('desktop shared control styling', () => {
   it('does not inset Community avatars with native button padding', () => {
     expect(css).toMatch(/\.brand-mark, \.instance-button\s*\{[^}]*padding:\s*0/s);
   });
+
+  it('uses larger circles and a phone-shaped mobile Presence indicator', () => {
+    expect(css).toMatch(/\.presence-dot\s*\{[^}]*width:\s*14px[^}]*height:\s*14px/s);
+    expect(css).toMatch(/\.presence-dot\.mobile\s*\{[^}]*width:\s*10px[^}]*height:\s*16px[^}]*border-radius:\s*3px/s);
+    expect(css).toContain('.presence-dot.mobile::after');
+  });
 });

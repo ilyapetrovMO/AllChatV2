@@ -22,6 +22,15 @@ screens:
       - id: guide-content
         status: partial
         evidence: renderer-community-guide
+      - id: member-presence-menu
+        status: verified
+        evidence: renderer-member-presence-controls
+      - id: mobile-presence
+        status: verified
+        evidence: desktop-mobile-presence-style-contract
+      - id: return-from-settings
+        status: verified
+        evidence: renderer-community-rail-navigation
       - id: loading
         status: partial
       - id: error

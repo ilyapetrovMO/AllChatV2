@@ -15,10 +15,13 @@ describe('RealtimeConnection', () => {
     });
 
     connection.start();
+    socket.readyState = 1;
+    connection.sendActivity(true);
     socket.onmessage?.({ data: JSON.stringify({ type: 'message.created', cursor: 9, channel_id: 'chat', payload: {} }) });
 
     expect(createSocket).toHaveBeenCalledWith('wss://chat.example/api/v1/realtime?cursor=8', 'secret');
     expect(onFrame).toHaveBeenCalledWith({ type: 'message.created', cursor: 9, channel_id: 'chat', payload: {} });
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'activity', active: true }));
     connection.stop();
   });
 });

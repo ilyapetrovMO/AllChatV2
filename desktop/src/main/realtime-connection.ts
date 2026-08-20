@@ -59,6 +59,12 @@ export class RealtimeConnection {
     }
   }
 
+  sendActivity(active: boolean): void {
+    if (this.#socket?.readyState === 1) {
+      this.#socket.send(JSON.stringify({ type: 'activity', active }));
+    }
+  }
+
   private connect(status: 'connecting' | 'reconnecting'): void {
     if (this.#stopped) return;
     this.options.onStatus?.(status);

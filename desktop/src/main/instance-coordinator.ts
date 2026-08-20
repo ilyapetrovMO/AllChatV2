@@ -8,7 +8,7 @@ import type { InstanceAction, InstanceActionResult } from '../shared/instance-ac
 import { MemoryAssetCache, type AssetCache, type CachedAsset } from './asset-cache';
 
 const ASSET_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
-interface RealtimeDriver { start(): void; stop(): void; sendTyping(conversationId: string): void }
+interface RealtimeDriver { start(): void; stop(): void; sendTyping(conversationId: string): void; sendActivity(active: boolean): void }
 
 export class InstanceCoordinator {
   onMessage?: (instanceId: string, message: import('../shared/instance-state').Message, state: InstanceViewState) => void;
@@ -79,6 +79,10 @@ export class InstanceCoordinator {
     const token = await this.credential(profile.credentialRef);
     if (action.type === 'send_typing') {
       this.#connections.get(instanceId)?.sendTyping(action.conversationId);
+      return { type: 'accepted' };
+    }
+    if (action.type === 'report_activity') {
+      this.#connections.get(instanceId)?.sendActivity(action.active);
       return { type: 'accepted' };
     }
     if (action.type === 'load_messages') {

@@ -29,6 +29,8 @@ Last checked: 2026-08-20
 
 The default Community Home, Direct Messages Home, Text Channel, Direct Message, and Profile Settings states are verified against both rendered clients at 1280×720. The current packaged-app checks measured 2.78%, 3.96%, 2.71%, 3.66%, and 5.07% meaningful pixel difference respectively. Profile Settings uses a 5.1% budget for the intentional desktop-only Instance rail; the other screens use 5%. The Text Channel fixture also verifies clickable URL rendering and that an unavailable link preview does not emit an Electron handler or renderer error. Other rows remain conservative until equivalent evidence exists.
 
+Desktop now reports throttled Member activity over realtime, exposes the web-style Presence menu from the bottom-left identity, renders larger phone-shaped mobile Presence indicators, and treats a Community-rail click as navigation back to that Community's Home even from settings.
+
 ## Highest-impact gaps
 
 ### Voice Room

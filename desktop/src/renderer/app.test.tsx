@@ -167,7 +167,14 @@ describe('desktop renderer bootstrap', () => {
           }],
         }),
         addInstance: async () => { throw new Error('unused'); },
-        selectInstance: async () => { throw new Error('unused'); },
+        selectInstance: async () => ({
+          activeInstanceId: 'home',
+          instances: [{
+            id: 'home', displayName: 'Home', avatarUrl: '/api/v1/community-avatar?v=42', baseUrl: 'https://chat.example',
+            partition: 'persist:allchat-home', credentialRef: 'desktop-session:home',
+            session: { member: { id: 'me', username: 'nora', owner: true }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' },
+          }],
+        }),
         loginInstance: async () => { throw new Error('unused'); },
         registerInstance: async () => { throw new Error('unused'); },
         recoverInstance: async () => { throw new Error('unused'); },
@@ -198,7 +205,7 @@ describe('desktop renderer bootstrap', () => {
               attachments: [{ id: 'media-1', name: 'landscape.png', content_type: 'image/png', size: 1024, url: '/api/v1/attachments/media-1', preview_url: '/api/v1/attachments/media-1/preview' }],
             }],
           },
-          channel_states: [], presence: {}, typing: [],
+          channel_states: [], presence: { me: 'idle', alex: 'mobile' }, typing: [],
           notifications: {
             current_member_id: 'me', community: { level: 'default', muted: false },
             channels: {}, muted_channel_ids: [],
@@ -224,6 +231,12 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.getByRole('button', { name: 'Add Community' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Direct Messages' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
+    expect(document.querySelector('.presence-dot.mobile')).toBeInTheDocument();
+    await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', { type: 'report_activity', active: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Member menu' }));
+    fireEvent.click(within(screen.getByRole('menu', { name: 'Presence status' })).getByRole('menuitem', { name: 'Online' }));
+    expect(document.querySelector('.member-summary-avatar .presence-dot.online')).toBeInTheDocument();
+    expect(executeInstance).toHaveBeenCalledWith('home', { type: 'set_presence', mode: 'available' });
     const initialVoiceMembers = await screen.findByRole('list', { name: 'Lounge participants' });
     expect(within(initialVoiceMembers).getByText('nora')).toBeVisible();
 
@@ -237,6 +250,10 @@ describe('desktop renderer bootstrap', () => {
     const communityAdministration = document.querySelector('[data-community-administration]') as HTMLElement;
     expect(await within(communityAdministration).findByRole('heading', { name: 'General' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Home Instance' }));
+    expect(await screen.findByRole('heading', { name: 'Welcome to Nora Community' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Nora Community' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Community Settings' }));
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Community settings' })).getByRole('button', { name: 'Dashboard' }));
     expect(await screen.findByRole('heading', { name: 'Instance overview' })).toBeVisible();
     expect(await screen.findByText('42')).toBeVisible();

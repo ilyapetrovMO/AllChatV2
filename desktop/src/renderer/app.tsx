@@ -1,6 +1,7 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, type DesktopMediaFrame } from "./media-signaling";
+import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
@@ -1806,7 +1807,7 @@ export function DirectCallControls({
   const [muted, setMuted] = useState(false);
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: HTMLAudioElement[] } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
   const connectionTimeout = useRef<number | null>(null);
@@ -1818,7 +1819,7 @@ export function DirectCallControls({
     active?.socket.send({ version: 1, type: "leave" });
     active?.socket.close();
     active?.peer.close();
-    active?.stream.getTracks().forEach((track) => track.stop());
+    active?.capture.stop();
     active?.audio.forEach((element) => element.remove());
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
@@ -1832,11 +1833,13 @@ export function DirectCallControls({
     if (media.current || connectingRoom.current || !connectMedia) return;
     connectingRoom.current = activeCall.id;
     mediaFailure.current = "";
-    let provisionalStream: MediaStream | null = null;
+    let provisionalCapture: DesktopMicrophoneCapture | null = null;
     try {
     setStatus("Requesting microphone permission…");
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    provisionalStream = stream;
+    const capture = await captureDesktopMicrophone(currentMemberId);
+    const stream = capture.stream;
+    provisionalCapture = capture;
+    if (capture.compatibilityNotice) setStatus(capture.compatibilityNotice);
     const credentials = await onAction({ type: "turn_credentials" });
     if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
     const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
@@ -1864,13 +1867,14 @@ export function DirectCallControls({
         setStatus(mediaFailure.current);
       });
     }, (reason) => setStatus(mediaDisconnectMessage(mediaFailure.current, reason)));
-    media.current = { stream, peer, socket, audio };
-    provisionalStream = null;
+    media.current = { stream, capture, peer, socket, audio };
+    provisionalCapture = null;
     peer.ontrack = ({ streams, track }) => {
       if (track.kind !== "audio") return;
       const element = document.createElement("audio");
       element.autoplay = true;
       element.srcObject = streams[0] || new MediaStream([track]);
+      applyDesktopOutputPreferences(element, currentMemberId);
       document.body.append(element);
       audio.push(element);
       void element.play().catch(() => undefined);
@@ -1894,7 +1898,7 @@ export function DirectCallControls({
     }, 15_000);
     setStatus("Connecting Call…");
     } catch (error) {
-      provisionalStream?.getTracks().forEach((track) => track.stop());
+      provisionalCapture?.stop();
       cleanup();
       throw error;
     } finally {
@@ -2518,34 +2522,6 @@ function AuthenticatedImage({
   );
 }
 
-type VoiceVideoPreferences = {
-  version: 1;
-  microphoneID: string;
-  speakerID: string;
-  cameraID: string;
-  inputGain: number;
-  outputVolume: number;
-  noiseSuppressionMode: "standard" | "enhanced" | "off";
-  echoCancellation: boolean;
-  autoGainControl: boolean;
-  noiseGate: boolean;
-  noiseGateThresholdDB: number;
-};
-
-const defaultVoiceVideoPreferences: VoiceVideoPreferences = {
-  version: 1,
-  microphoneID: "",
-  speakerID: "",
-  cameraID: "",
-  inputGain: 1,
-  outputVolume: 1,
-  noiseSuppressionMode: "standard",
-  echoCancellation: true,
-  autoGainControl: false,
-  noiseGate: true,
-  noiseGateThresholdDB: -50,
-};
-
 function CommunityAdministration({
   state,
   onAction,
@@ -2800,17 +2776,7 @@ function NotificationSettings({
 }
 
 function VoiceVideoSettings({ memberId }: { memberId: string }) {
-  const storageKey = `allchat:voice-video:v1:desktop:${memberId}`;
-  const [preferences, setPreferences] = useState<VoiceVideoPreferences>(() => {
-    try {
-      return {
-        ...defaultVoiceVideoPreferences,
-        ...JSON.parse(localStorage.getItem(storageKey) || "null"),
-      };
-    } catch {
-      return defaultVoiceVideoPreferences;
-    }
-  });
+  const [preferences, setPreferences] = useState<DesktopVoicePreferences>(() => loadDesktopVoicePreferences(memberId));
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [notice, setNotice] = useState("");
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -2828,29 +2794,19 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
     return () => cameraStream?.getTracks().forEach((track) => track.stop());
   }, [cameraStream]);
 
-  function save(next: VoiceVideoPreferences): void {
-    setPreferences(next);
-    localStorage.setItem(storageKey, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent("allchat:voice-settings", { detail: next }));
+  function save(next: DesktopVoicePreferences): void {
+    setPreferences(saveDesktopVoicePreferences(memberId, next));
   }
 
-  function patch(next: Partial<VoiceVideoPreferences>): void {
+  function patch(next: Partial<DesktopVoicePreferences>): void {
     save({ ...preferences, ...next });
   }
 
   async function testMicrophone(): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          ...(preferences.microphoneID ? { deviceId: { ideal: preferences.microphoneID } } : {}),
-          echoCancellation: preferences.echoCancellation,
-          noiseSuppression: preferences.noiseSuppressionMode === "standard",
-          autoGainControl: preferences.autoGainControl,
-        },
-        video: false,
-      });
-      setNotice("Microphone is working.");
-      window.setTimeout(() => stream.getTracks().forEach((track) => track.stop()), 1_000);
+      const capture = await captureDesktopMicrophone(memberId);
+      setNotice(capture.compatibilityNotice || (capture.enhanced ? "Microphone is working with RNNoise." : "Microphone is working."));
+      window.setTimeout(() => capture.stop(), 1_000);
     } catch {
       setNotice("Microphone permission was denied or the selected device is unavailable.");
     }
@@ -2909,7 +2865,7 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
       </section>
       <section className="voice-settings-section">
         <h3>Input processing</h3>
-        <label className="setting-row"><span><strong>Noise suppression</strong><small>Enhanced uses local RNNoise; Standard uses WebRTC.</small></span><select aria-label="Noise suppression" value={preferences.noiseSuppressionMode} onChange={(event) => patch({ noiseSuppressionMode: event.target.value as VoiceVideoPreferences["noiseSuppressionMode"] })}><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
+        <label className="setting-row"><span><strong>Noise suppression</strong><small>Enhanced uses local RNNoise; Standard uses WebRTC.</small></span><select aria-label="Noise suppression" value={preferences.noiseSuppressionMode} onChange={(event) => patch({ noiseSuppressionMode: event.target.value as DesktopVoicePreferences["noiseSuppressionMode"] })}><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
         <label className="setting-row setting-toggle"><span><strong>Echo cancellation</strong><small>Reduces sound from your speakers returning through the microphone.</small></span><input type="checkbox" checked={preferences.echoCancellation} onChange={(event) => patch({ echoCancellation: event.target.checked })} /></label>
         <label className="setting-row setting-toggle"><span><strong>Automatic gain control</strong><small>Compensates for microphones that are unusually quiet.</small></span><input type="checkbox" checked={preferences.autoGainControl} onChange={(event) => patch({ autoGainControl: event.target.checked })} /></label>
         <label className="setting-row setting-toggle"><span><strong>Noise gate</strong><small>Closes the microphone below the sensitivity threshold.</small></span><input type="checkbox" checked={preferences.noiseGate} onChange={(event) => patch({ noiseGate: event.target.checked })} /></label>
@@ -2924,7 +2880,7 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
       <section className="voice-settings-section">
         <h3>Advanced</h3>
         <div className="setting-row"><span><strong>Speaker test</strong><small>Play a short tone through the selected output device.</small></span><button type="button" onClick={playSpeakerTest}>Play sound</button></div>
-        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save(defaultVoiceVideoPreferences); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
+        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save(defaultDesktopVoicePreferences); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
       </section>
       <p className="voice-settings-notice" role="status" aria-live="polite">{notice}</p>
     </section>

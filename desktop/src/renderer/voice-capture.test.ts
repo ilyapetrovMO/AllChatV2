@@ -1,0 +1,61 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { captureDesktopMicrophone, desktopVoiceConstraints, loadDesktopVoicePreferences, saveDesktopVoicePreferences } from './voice-capture';
+
+describe('desktop voice capture', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('persists normalized preferences and builds standard WebRTC constraints', () => {
+    const saved = saveDesktopVoicePreferences('member', {
+      version: 1, microphoneID: 'microphone', speakerID: '', cameraID: '', inputGain: 9, outputVolume: -2,
+      noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
+      noiseGate: true, noiseGateThresholdDB: -50,
+    });
+    expect(saved).toMatchObject({ inputGain: 2, outputVolume: 0 });
+    expect(loadDesktopVoicePreferences('member')).toEqual(saved);
+    expect(desktopVoiceConstraints(saved)).toEqual({
+      deviceId: { ideal: 'microphone' }, echoCancellation: true, noiseSuppression: true, autoGainControl: false,
+    });
+  });
+
+  it('routes enhanced microphone audio through the RNNoise worklet', async () => {
+    const rawTrack = { stop: vi.fn() };
+    const processedTrack = { stop: vi.fn() };
+    const raw = { getAudioTracks: () => [rawTrack], getTracks: () => [rawTrack] } as unknown as MediaStream;
+    const processed = { getAudioTracks: () => [processedTrack], getTracks: () => [processedTrack] } as unknown as MediaStream;
+    const addModule = vi.fn(async () => undefined);
+    const connect = vi.fn(function (this: unknown) { return this; });
+    const close = vi.fn(async () => undefined);
+    class FakeAudioContext {
+      audioWorklet = { addModule };
+      currentTime = 0;
+      createMediaStreamSource = () => ({ connect });
+      createGain = () => ({ connect, gain: { value: 1, setTargetAtTime: vi.fn() } });
+      createMediaStreamDestination = () => ({ stream: processed });
+      createAnalyser = () => ({ fftSize: 0, getFloatTimeDomainData: vi.fn() });
+      close = close;
+    }
+    class FakeWorkletNode {
+      port = { onmessage: null as ((event: MessageEvent) => void) | null, postMessage: vi.fn() };
+      connect = connect;
+      constructor() { queueMicrotask(() => this.port.onmessage?.({ data: { type: 'ready' } } as MessageEvent)); }
+    }
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    vi.stubGlobal('AudioWorkletNode', FakeWorkletNode);
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: vi.fn(async () => raw) } });
+    saveDesktopVoicePreferences('member', {
+      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1,
+      noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
+      noiseGate: false, noiseGateThresholdDB: -50,
+    });
+
+    const capture = await captureDesktopMicrophone('member');
+    expect(capture.enhanced).toBe(true);
+    expect(capture.stream).toBe(processed);
+    expect(addModule).toHaveBeenCalledOnce();
+    capture.stop();
+    expect(rawTrack.stop).toHaveBeenCalledOnce();
+    expect(processedTrack.stop).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
+  });
+});

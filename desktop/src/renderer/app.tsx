@@ -469,6 +469,7 @@ function CommunityShell({
     ? state.direct_messages.find(({ id }) => id === conversation.id)
     : undefined;
   const directMessageBlocked = !!(activeDirectMessage?.blocked_by_me || activeDirectMessage?.blocked_me);
+  const directCallActive = !!(directCall?.state === "accepted" && conversation?.type === "dm" && directCall.direct_message_id === conversation.id);
   useEffect(() => {
     if (!memberPopover) return;
     const dismiss = (event: MouseEvent) => {
@@ -1264,8 +1265,22 @@ function CommunityShell({
               </div>
             </section>
           ) : (
+            <section className={directCallActive ? "conversation-workspace direct-call-workspace" : "conversation-workspace"}>
+              {directCallActive && (
+                <section className="media-stage direct-call-stage" aria-label="Direct Call grid">
+                  <div className="media-stage-grid">
+                    {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
+                      const name = memberName(participant);
+                      return <article className="media-stage-tile participant-tile" key={participant.id}>
+                        <AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
+                        <strong>{participant.id === state.member.id ? "You" : name}</strong>
+                      </article>;
+                    })}
+                  </div>
+                </section>
+              )}
             <div
-              className="message-list"
+              className={directCallActive ? "message-list direct-call-chat" : "message-list"}
               aria-label={`${conversation.name} Messages`}
               ref={messageListRef}
               onLoadCapture={() => {
@@ -1290,19 +1305,6 @@ function CommunityShell({
                 }
               }}
             >
-              {directCall?.state === "accepted" && conversation.type === "dm" && directCall.direct_message_id === conversation.id && (
-                <section className="media-stage direct-call-stage" aria-label="Direct Call grid">
-                  <div className="media-stage-grid">
-                    {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
-                      const name = memberName(participant);
-                      return <article className="media-stage-tile participant-tile" key={participant.id}>
-                        <AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} />
-                        <strong>{participant.id === state.member.id ? "You" : name}</strong>
-                      </article>;
-                    })}
-                  </div>
-                </section>
-              )}
               {renderedConversationMessages
                 .filter((message) => !showPins || message.pinned)
                 .map((message) => (
@@ -1544,6 +1546,7 @@ function CommunityShell({
                 {attachments.length > 0 && <AttachmentPreviewList files={attachments} onRemove={(index) => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} />}
               </form>}
             </div>
+            </section>
           )
         ) : homeView === "direct-messages" ? (
           <section className="dm-home">

@@ -270,6 +270,16 @@ a { color: #00a8fc; }
 .dm-start-form button { min-height: 40px; padding: 7px 14px; border-radius: 4px; background: var(--brand); }
 
 .message-list { min-height: 0; padding: 16px 0 2px; }
+.conversation-workspace { min-width: 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; }
+.conversation-workspace > .message-list { min-width: 0; min-height: 0; }
+.direct-call-workspace { grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); }
+.conversation-workspace > .direct-call-stage { min-width: 0; min-height: 0; padding: 0; border-right: 1px solid rgb(0 0 0 / 35%); }
+.direct-call-stage > .media-stage-grid { min-height: 0; padding: 16px; background: #111214; }
+.direct-call-chat { min-width: 0; min-height: 0; }
+@media (max-width: 900px) {
+  .direct-call-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(180px, 42%) minmax(0, 58%); }
+  .conversation-workspace > .direct-call-stage { border-right: 0; border-bottom: 1px solid rgb(0 0 0 / 35%); }
+}
 .message { position: relative; grid-template-columns: 40px minmax(0, 1fr); flex: 0 0 auto; gap: 16px; min-height: 44px; padding: 4px 48px 4px 16px; }
 .message:hover { background: rgb(4 4 5 / 8%); }
 .message > .avatar { width: 40px; height: 40px; flex-basis: 40px; font-size: .9rem; }

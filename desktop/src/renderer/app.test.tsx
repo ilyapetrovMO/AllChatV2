@@ -410,8 +410,12 @@ describe('desktop renderer bootstrap', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Unblock' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Start Call' })).toBeVisible());
     fireEvent.click(screen.getByRole('button', { name: 'Start Call' }));
-    expect(await screen.findByRole('region', { name: 'Direct Call grid' })).toBeVisible();
-    expect(within(screen.getByRole('region', { name: 'Direct Call grid' })).getByText('You')).toBeVisible();
+    const directCallGrid = await screen.findByRole('region', { name: 'Direct Call grid' });
+    expect(directCallGrid).toBeVisible();
+    expect(directCallGrid.closest('.direct-call-workspace')).toBeTruthy();
+    expect(directCallGrid.closest('.message-list')).toBeNull();
+    expect(within(directCallGrid).getByText('You')).toBeVisible();
+    expect(screen.getByLabelText('alex Messages')).toBeVisible();
     fireEvent.click(within(screen.getByRole('region', { name: 'Call controls' })).getByRole('button', { name: 'End call' }));
     fireEvent.click(screen.getByRole('button', { name: 'Direct Messages' }));
     expect(screen.getByRole('heading', { name: 'Direct Messages', level: 1 })).toBeVisible();

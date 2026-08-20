@@ -14,4 +14,8 @@ describe('desktop shared control styling', () => {
     expect(css).toContain('input[type="checkbox"]');
     expect(css).toContain('::file-selector-button');
   });
+
+  it('does not inset Community avatars with native button padding', () => {
+    expect(css).toMatch(/\.brand-mark, \.instance-button\s*\{[^}]*padding:\s*0/s);
+  });
 });

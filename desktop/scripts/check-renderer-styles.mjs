@@ -61,6 +61,31 @@ try {
       `Desktop stylesheet did not load: ${JSON.stringify({ ...actual, styleErrors })}`,
     );
   }
+  const searchAlignment = await page.evaluate(() => {
+    const form = document.createElement("form");
+    form.className = "header-search";
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.classList.add("lucide-icon");
+    const input = document.createElement("input");
+    input.type = "search";
+    form.append(icon, input);
+    document.body.append(form);
+    const iconBox = icon.getBoundingClientRect();
+    const inputBox = input.getBoundingClientRect();
+    const inputStyle = getComputedStyle(input);
+    return {
+      iconCenter: iconBox.top + iconBox.height / 2,
+      inputCenter: inputBox.top + inputBox.height / 2,
+      iconRight: iconBox.right,
+      textStart: inputBox.left + Number.parseFloat(inputStyle.paddingLeft),
+    };
+  });
+  if (
+    Math.abs(searchAlignment.iconCenter - (searchAlignment.inputCenter - 1)) > 0.25 ||
+    searchAlignment.textStart - searchAlignment.iconRight < 5
+  ) {
+    throw new Error(`Desktop Search icon and text are misaligned: ${JSON.stringify(searchAlignment)}`);
+  }
   const blobImageLoaded = await page.evaluate(async () => {
     const url = URL.createObjectURL(
       new Blob(

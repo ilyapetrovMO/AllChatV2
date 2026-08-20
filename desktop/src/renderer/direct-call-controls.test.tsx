@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
-import { createTransientCallStatusController, DirectCallControls } from './app';
+import { bindRemoteScreenTrack, createTransientCallStatusController, DirectCallControls } from './app';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -95,6 +95,35 @@ describe('DirectCallControls remote lifecycle', () => {
     expect(controls).not.toHaveTextContent('text channel');
     fireEvent.click(screen.getByRole('button', {name:'Return to Direct Message with mobile'}));
     expect(onOpenDirectCall).toHaveBeenCalledWith('dm-mobile');
+  });
+});
+
+describe('remote screen track lifecycle', () => {
+  it('does not render an initially muted video transceiver as screen sharing', () => {
+    const track = new EventTarget() as MediaStreamTrack;
+    Object.defineProperties(track, {
+      muted: { configurable: true, value: true, writable: true },
+      readyState: { configurable: true, value: 'live', writable: true },
+    });
+    const stream = {} as MediaStream;
+    let screens: Record<string, MediaStream> = {};
+    const update = (updater: (current: Record<string, MediaStream>) => Record<string, MediaStream>) => {
+      screens = updater(screens);
+    };
+
+    bindRemoteScreenTrack(track, stream, 'mobile', update);
+    expect(screens).toEqual({});
+
+    Object.defineProperty(track, 'muted', { configurable: true, value: false, writable: true });
+    track.dispatchEvent(new Event('unmute'));
+    expect(screens.mobile).toBe(stream);
+
+    track.dispatchEvent(new Event('mute'));
+    expect(screens).toEqual({});
+
+    Object.defineProperty(track, 'readyState', { configurable: true, value: 'ended', writable: true });
+    track.dispatchEvent(new Event('unmute'));
+    expect(screens).toEqual({});
   });
 });
 

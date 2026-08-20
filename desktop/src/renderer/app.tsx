@@ -2117,11 +2117,7 @@ export function DirectCallControls({
       if (track.kind === "video") {
         const fallbackOwner = activeCall.caller_id === currentMemberId ? activeCall.recipient_id : activeCall.caller_id;
         const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
-        setRemoteScreens((current) => ({ ...current, [owner]: remoteStream }));
-        const remove = () => setRemoteScreens((current) => { if (current[owner] !== remoteStream) return current; const next = { ...current }; delete next[owner]; return next; });
-        track.addEventListener("ended", remove);
-        track.addEventListener("mute", remove);
-        track.addEventListener("unmute", () => setRemoteScreens((current) => ({ ...current, [owner]: remoteStream })));
+        bindRemoteScreenTrack(track, remoteStream, owner, setRemoteScreens);
         return;
       }
       if (track.kind !== "audio") return;
@@ -2370,6 +2366,28 @@ export function DirectCallControls({
     {screenPortals}
     {soundboardOpen && <div className="desktop-soundboard" role="dialog" aria-label="Community soundboard"><header><strong>Soundboard</strong><button type="button" aria-label="Close soundboard" onClick={() => setSoundboardOpen(false)}><Icon name="x" /></button></header><div>{sounds.length ? sounds.map((sound) => <button type="button" key={sound.id} onClick={() => playSound(sound.id)}><span>{sound.emoji || "▶"}</span><strong>{sound.name}</strong></button>) : <span>No Community sounds have been added yet.</span>}</div></div>}
   </>;
+}
+
+export function bindRemoteScreenTrack(
+  track: MediaStreamTrack,
+  stream: MediaStream,
+  owner: string,
+  update: (updater: (current: Record<string, MediaStream>) => Record<string, MediaStream>) => void,
+): void {
+  const add = () => {
+    if (track.readyState !== "live" || track.muted) return;
+    update((current) => ({ ...current, [owner]: stream }));
+  };
+  const remove = () => update((current) => {
+    if (current[owner] !== stream) return current;
+    const next = { ...current };
+    delete next[owner];
+    return next;
+  });
+  track.addEventListener("ended", remove);
+  track.addEventListener("mute", remove);
+  track.addEventListener("unmute", add);
+  add();
 }
 
 function MediaStreamVideo({ stream, muted }: { stream: MediaStream; muted: boolean }) {

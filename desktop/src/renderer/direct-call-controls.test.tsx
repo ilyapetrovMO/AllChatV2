@@ -1,0 +1,58 @@
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
+import { DirectCallControls } from './app';
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+describe('DirectCallControls remote lifecycle', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('does not restore connected controls when an older accepted poll resolves after remote hangup', async () => {
+    vi.useFakeTimers();
+    const staleAccepted = deferred<InstanceActionResult | undefined>();
+    const remoteHangup = deferred<InstanceActionResult | undefined>();
+    let currentCallRequests = 0;
+    const onAction = vi.fn((_action: InstanceAction) => {
+      currentCallRequests += 1;
+      return currentCallRequests === 1 ? staleAccepted.promise : remoteHangup.promise;
+    });
+
+    render(<>
+      <div id="desktop-call-controls" />
+      <DirectCallControls
+        conversation={{ id: 'dm-alex', name: 'Alex', type: 'dm' }}
+        currentMemberId="me"
+        instanceId="instance-1"
+        onAction={onAction}
+        requestedVoiceRoom={null}
+        requestedVoiceRoomName=""
+        onVoiceRoomChange={vi.fn()}
+        onCallChange={vi.fn()}
+      />
+    </>);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+    expect(currentCallRequests).toBe(2);
+
+    await act(async () => { remoteHangup.resolve({ type: 'call', call: null }); });
+    expect(screen.queryByRole('region', { name: 'Call controls' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      staleAccepted.resolve({
+        type: 'call',
+        call: {
+          id: 'call-alex', direct_message_id: 'dm-alex', caller_id: 'me', recipient_id: 'alex',
+          state: 'accepted', created_at: '2026-08-20T10:00:00Z',
+        },
+      });
+    });
+
+    expect(screen.queryByRole('region', { name: 'Call controls' })).not.toBeInTheDocument();
+  });
+});

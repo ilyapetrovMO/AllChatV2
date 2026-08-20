@@ -1747,7 +1747,7 @@ function CommunityShell({
   );
 }
 
-function DirectCallControls({
+export function DirectCallControls({
   conversation,
   currentMemberId,
   instanceId,
@@ -1871,13 +1871,21 @@ function DirectCallControls({
 
   useEffect(() => {
     let current = true;
-    const poll = () => void onAction({ type: "current_call" }).then((result) => {
-      if (!current || result?.type !== "call") return;
-      setCall(result.call);
-      onCallChange(result.call);
-      if (!result.call && !voiceRoomRef.current) cleanup();
-      else if (result.call?.state === "accepted") void connect(result.call).catch((error) => setStatus(error instanceof Error ? error.message : "Call failed."));
-    });
+    let latestPoll = 0;
+    const poll = () => {
+      const pollId = ++latestPoll;
+      void onAction({ type: "current_call" }).then((result) => {
+        if (!current || pollId !== latestPoll || result?.type !== "call") return;
+        setCall(result.call);
+        onCallChange(result.call);
+        if (!result.call && !voiceRoomRef.current) {
+          cleanup();
+          setStatus("");
+        } else if (result.call?.state === "accepted") {
+          void connect(result.call).catch((error) => setStatus(error instanceof Error ? error.message : "Call failed."));
+        }
+      });
+    };
     poll();
     const timer = window.setInterval(poll, 1_000);
     return () => { current = false; window.clearInterval(timer); cleanup(); };

@@ -1514,7 +1514,8 @@ function CommunityShell({
                     : "This Member is not accepting Messages."}
                 </div>
               )}
-              {!directMessageBlocked && <form
+              {!directMessageBlocked && <div className="message-composer-wrap">
+                <form
                 className={`message-composer${draggingFiles ? " file-drag-active" : ""}`}
                 onSubmit={(event) => void sendMessage(event)}
                 onDragEnter={(event) => { event.preventDefault(); if (event.dataTransfer.types.includes("Files")) setDraggingFiles(true); }}
@@ -1584,7 +1585,6 @@ function CommunityShell({
                     }
                   />
                 </label>
-				<small className="typing-indicator">{typingSummary(state.typing.filter((item) => item.channel_id === conversation.id && item.member_id !== state.member.id).map((item) => item.member_name))}</small>
                 <button
                   type="submit"
                   aria-label={
@@ -1597,7 +1597,9 @@ function CommunityShell({
                   </span>
                 </button>
                 {attachments.length > 0 && <AttachmentPreviewList files={attachments} onRemove={(index) => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))} />}
-              </form>}
+                </form>
+                <small className="typing-indicator" aria-live="polite">{typingSummary(state.typing.filter((item) => item.channel_id === conversation.id && item.member_id !== state.member.id).map((item) => item.member_name))}</small>
+              </div>}
             </div>
             </section>
           )

@@ -352,6 +352,10 @@ describe('desktop renderer bootstrap', () => {
     expect(executeInstance.mock.calls.filter(([, action]) => action.type === 'send_message')).toHaveLength(sendsAfterEnter);
 
     const composer = screen.getByLabelText('Message lobby').closest('form')!;
+    expect(composer).toHaveClass('message-composer');
+    expect(composer.querySelector(':scope > .typing-indicator')).toBeNull();
+    expect(composer.parentElement).toHaveClass('message-composer-wrap');
+    expect(composer.parentElement?.querySelector(':scope > .typing-indicator')).toBeInTheDocument();
     const firstFile = new File(['notes'], 'notes.txt', { type: 'text/plain', lastModified: 1 });
     fireEvent.drop(composer, { dataTransfer: { files: [firstFile], types: ['Files'], dropEffect: 'none' } });
     expect(screen.getByRole('region', { name: 'Files ready to send' })).toBeVisible();

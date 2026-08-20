@@ -22,6 +22,8 @@ interface NativeSessionResponse {
   expires_at: string;
 }
 
+const SUPPORTED_INSTANCE_PROTOCOL = 1;
+
 export class DesktopAccountManager {
   constructor(
     private readonly registry: InstanceRegistry,
@@ -69,10 +71,31 @@ export class DesktopAccountManager {
       throw new Error('Could not reach the Instance. Check its address and HTTPS certificate.');
     }
     const session = await decodeNativeSession(response);
+    await this.assertCompatible(profile.baseUrl, session.session_token);
     const credentialRef = `desktop-session:${profile.id}`;
     await this.vault.put(credentialRef, session.session_token);
     this.registry.setSession(profile.id, credentialRef, toSummary(session));
     return this.registry.state();
+  }
+
+  private async assertCompatible(baseUrl: string, token: string): Promise<void> {
+    let response: Response;
+    try {
+      response = await this.request(`${baseUrl}/api/v1/mobile/bootstrap?history=none`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      throw new Error('Could not verify Instance compatibility. Check its connection and try again.');
+    }
+    const body: unknown = await response.json().catch(() => undefined);
+    const version = body && typeof body === 'object' ? (body as { version?: unknown }).version : undefined;
+    if (!response.ok || version !== SUPPORTED_INSTANCE_PROTOCOL) {
+      await this.request(`${baseUrl}/api/v1/auth/logout`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+      const found = typeof version === 'number' ? `version ${version}` : 'an unknown version';
+      throw new Error(`Incompatible Instance protocol: ${found}. This desktop app supports version ${SUPPORTED_INSTANCE_PROTOCOL}.`);
+    }
   }
 
   async logout(instanceId: string): Promise<ShellState> {

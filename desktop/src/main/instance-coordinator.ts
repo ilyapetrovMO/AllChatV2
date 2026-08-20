@@ -52,7 +52,13 @@ export class InstanceCoordinator {
         : 'Could not synchronize the Instance.';
       throw new Error(message);
     }
-    if (!isInstanceViewState(body)) throw new Error('Instance returned an unsupported bootstrap contract.');
+    if (!isInstanceViewState(body)) {
+      const version = body && typeof body === 'object' ? (body as { version?: unknown }).version : undefined;
+      if (typeof version === 'number') {
+        throw new Error(`Incompatible Instance protocol: version ${version}. This desktop app supports version 1.`);
+      }
+      throw new Error('Instance returned an unsupported bootstrap contract.');
+    }
     const state = normalizeMembers(body);
     this.#states.set(instanceId, state);
     this.cache.put(instanceId, state);

@@ -63,6 +63,9 @@ describe('desktop renderer bootstrap', () => {
     await waitFor(() => {
       expect(executeInstance.mock.calls.filter(([, action]) => action.type === 'get_community_settings')).toHaveLength(1);
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Home' }));
+    expect(screen.getByRole('heading', { name: 'Communities' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   });
 
   it('renders the local shell and an empty Instance state', async () => {
@@ -207,7 +210,8 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.getByRole('button', { name: 'Hide Members' })).toBeVisible();
     expect(document.querySelector('[data-lucide="users"]')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Home' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Home Instance' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Home Instance' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Add Community' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Direct Messages' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
     const initialVoiceMembers = await screen.findByRole('list', { name: 'Lounge participants' });

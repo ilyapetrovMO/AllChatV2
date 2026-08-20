@@ -8,6 +8,18 @@ import { MemoryAssetCache } from './asset-cache';
 import type { RealtimeConnectionOptions } from './realtime-connection';
 
 describe('InstanceCoordinator', () => {
+  it('reports the incompatible protocol version for a saved Community', async () => {
+    const registry = new InstanceRegistry(() => 'home');
+    registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: false }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });
+    const vault = new MemoryDesktopCredentialVault();
+    await vault.put('desktop-session:home', 'token');
+    const coordinator = new InstanceCoordinator(registry, vault, async () => new Response(JSON.stringify({ version: 2 }), { status: 200 }));
+
+    await expect(coordinator.load('home')).rejects.toThrow(
+      'Incompatible Instance protocol: version 2. This desktop app supports version 1.',
+    );
+  });
   it('accepts the canonical Admin Dashboard response shape', async () => {
     const registry = new InstanceRegistry(() => 'home'); registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
     registry.setSession('home', 'desktop-session:home', { member: { id: 'me', username: 'nora', owner: true }, sessionId: 'session-1', expiresAt: '2026-09-18T00:00:00Z' });

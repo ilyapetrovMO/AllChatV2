@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, session, shell, Tray } from 'electron';
 import WebSocket from 'ws';
 
 import { DesktopAccountManager } from './desktop-account-manager';
@@ -12,6 +12,7 @@ import { SQLiteInstanceStateCache } from './instance-state-cache';
 import { SQLiteAssetCache } from './asset-cache';
 import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
+import { createTrayMenu, shouldHideOnClose, type TrayPresence } from './tray-menu';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -28,20 +29,23 @@ let accounts: DesktopAccountManager;
 let coordinator: InstanceCoordinator;
 let vault: DesktopCredentialVault;
 const mediaSockets = new Map<string, { owner: number; socket: WebSocket }>();
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let quitting = false;
+let trayPresence: TrayPresence = 'available';
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => BrowserWindow.getAllWindows()[0]?.show());
+  app.on('second-instance', showMainWindow);
+  app.on('before-quit', () => { quitting = true; });
   app.whenReady().then(start).catch((error: unknown) => {
     const message = error instanceof Error ? error.stack || error.message : String(error);
     console.error('AllChat desktop failed to start:', message);
     dialog.showErrorBox('AllChat could not start', message);
     app.quit();
   });
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
-  });
+  app.on('activate', showMainWindow);
 }
 
 async function start(): Promise<void> {
@@ -65,7 +69,8 @@ async function start(): Promise<void> {
   void accounts.validateStoredSessions();
   registerIpc();
   lockPermissions();
-  await createMainWindow();
+  mainWindow = await createMainWindow();
+  createApplicationTray();
   if (process.env.ALLCHAT_DESKTOP_SMOKE_TEST === '1') {
     console.log('AllChat desktop packaged startup: PASS');
     app.quit();
@@ -79,6 +84,12 @@ async function createMainWindow(): Promise<BrowserWindow> {
   const window = new BrowserWindow(
     createWindowOptions(path.join(__dirname, 'preload.js'), icon),
   );
+  window.on('close', (event) => {
+    if (!shouldHideOnClose(quitting)) return;
+    event.preventDefault();
+    window.hide();
+  });
+  window.on('closed', () => { if (mainWindow === window) mainWindow = null; });
   window.once('ready-to-show', () => window.show());
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (isAllowedExternalNavigation(url)) void shell.openExternal(url);
@@ -98,6 +109,49 @@ async function createMainWindow(): Promise<BrowserWindow> {
   return window;
 }
 
+function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function createApplicationTray(): void {
+  if (tray) return;
+  const icon = app.isPackaged
+    ? path.join(process.resourcesPath, 'allchat-icon.png')
+    : path.resolve(app.getAppPath(), '../assets/branding/allchat-icon.png');
+  tray = new Tray(icon);
+  tray.setToolTip('AllChat');
+  tray.on('click', showMainWindow);
+  refreshTrayMenu();
+}
+
+function refreshTrayMenu(): void {
+  tray?.setContextMenu(Menu.buildFromTemplate(createTrayMenu(
+    trayPresence,
+    (presence) => void updateTrayPresence(presence),
+    showMainWindow,
+    () => { quitting = true; app.quit(); },
+  )));
+}
+
+async function updateTrayPresence(presence: TrayPresence): Promise<void> {
+  const active = registry.state().activeInstanceId;
+  const profile = active ? registry.get(active) : null;
+  if (!active || !profile?.session) {
+    showMainWindow();
+    return;
+  }
+  try {
+    await coordinator.execute(active, { type: 'set_presence', mode: presence });
+    trayPresence = presence;
+    refreshTrayMenu();
+  } catch (error) {
+    dialog.showErrorBox('Could not change status', error instanceof Error ? error.message : 'The Instance rejected the status change.');
+  }
+}
+
 function registerIpc(): void {
   const realtimeListeners = new Map<string, (state: import('../shared/instance-state').InstanceViewState) => void>();
   ipcMain.handle(IPC_CHANNELS.getShellState, () => registry.state());
@@ -110,7 +164,8 @@ function registerIpc(): void {
   });
   ipcMain.handle(IPC_CHANNELS.addInstance, (_event, input: AddInstanceInput) => {
     assertAddInstanceInput(input);
-    registry.add(input);
+    const profile = registry.add(input);
+    registry.select(profile.id);
     return registry.state();
   });
   ipcMain.handle(IPC_CHANNELS.selectInstance, (_event, id: string) => {
@@ -158,10 +213,15 @@ function registerIpc(): void {
     if (listener) coordinator.unwatch(id, listener);
     realtimeListeners.delete(key);
   });
-  ipcMain.handle(IPC_CHANNELS.executeInstance, (_event, id: string, action: import('../shared/instance-actions').InstanceAction) => {
+  ipcMain.handle(IPC_CHANNELS.executeInstance, async (_event, id: string, action: import('../shared/instance-actions').InstanceAction) => {
     assertString(id, 'Instance identity');
     assertInstanceAction(action);
-    return coordinator.execute(id, action);
+    const result = await coordinator.execute(id, action);
+    if (action.type === 'set_presence' && id === registry.state().activeInstanceId) {
+      trayPresence = action.mode;
+      refreshTrayMenu();
+    }
+    return result;
   });
   ipcMain.handle(IPC_CHANNELS.mediaOpen, async (event, id: string) => {
     assertString(id, 'Instance identity');

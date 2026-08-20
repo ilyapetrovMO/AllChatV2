@@ -9,7 +9,7 @@ describe('DesktopAccountManager', () => {
     const registry = new InstanceRegistry(() => 'home');
     registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
     const vault = new MemoryDesktopCredentialVault();
-    const request = async () => new Response(JSON.stringify({
+    const request = async (input: URL | RequestInfo) => new Response(JSON.stringify(String(input).includes('/mobile/bootstrap') ? { version: 1 } : {
       member: { id: 'member-1', username: 'nora', owner: false },
       session_token: 'raw-secret-token',
       session_id: 'session-1',
@@ -57,6 +57,7 @@ describe('DesktopAccountManager', () => {
     const requests: Array<{ url: string; body: unknown }> = [];
     const accounts = new DesktopAccountManager(registry, vault, async (input, init) => {
       requests.push({ url: String(input), body: JSON.parse(String(init?.body || '{}')) });
+      if (String(input).includes('/mobile/bootstrap')) return new Response(JSON.stringify({ version: 1 }), { status: 200 });
       if (String(input).endsWith('/recover')) return new Response(null, { status: 204 });
       return new Response(JSON.stringify({ member: { id: 'member-2', username: 'alex', owner: false }, session_token: 'register-secret', session_id: 'session-2', expires_at: '2026-09-18T00:00:00Z' }), { status: 201, headers: { 'Content-Type': 'application/json' } });
     });
@@ -64,10 +65,26 @@ describe('DesktopAccountManager', () => {
     await accounts.register({ instanceId: 'home', invitationToken: 'invite', username: 'alex', password: 'twelve-characters' });
     await accounts.recover({ instanceId: 'home', recoveryToken: 'recovery', password: 'replacement-pass' });
 
-    expect(requests).toEqual([
+    expect(requests.filter(({ url }) => !url.includes('/mobile/bootstrap'))).toEqual([
       { url: 'https://chat.example/api/v1/auth/native/register', body: { token: 'invite', username: 'alex', password: 'twelve-characters' } },
       { url: 'https://chat.example/api/v1/auth/recover', body: { token: 'recovery', password: 'replacement-pass' } },
     ]);
+  });
+
+  it('rejects an incompatible Instance before storing its Session', async () => {
+    const registry = new InstanceRegistry(() => 'home');
+    registry.add({ displayName: 'Home', baseUrl: 'https://chat.example' });
+    const vault = new MemoryDesktopCredentialVault();
+    const accounts = new DesktopAccountManager(registry, vault, async (input) => {
+      if (String(input).includes('/mobile/bootstrap')) return new Response(JSON.stringify({ version: 2 }), { status: 200 });
+      if (String(input).endsWith('/logout')) return new Response(null, { status: 204 });
+      return new Response(JSON.stringify({ member: { id: 'member-1', username: 'nora', owner: false }, session_token: 'unsupported-token', session_id: 'session-1', expires_at: '2026-09-18T00:00:00Z' }), { status: 200 });
+    });
+
+    await expect(accounts.login({ instanceId: 'home', username: 'nora', password: 'secret' }))
+      .rejects.toThrow('Incompatible Instance protocol: version 2');
+    expect(registry.get('home').session).toBeUndefined();
+    expect(await vault.get('desktop-session:home')).toBeNull();
   });
 });
 // @vitest-environment node

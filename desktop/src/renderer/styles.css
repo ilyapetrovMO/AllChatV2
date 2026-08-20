@@ -204,11 +204,24 @@ a { color: #00a8fc; }
 .instance-rail { gap: 10px; padding: 12px 0; border: 0; background: var(--bg-rail); }
 .brand-mark, .instance-button { width: 48px; height: 48px; border-radius: 16px; background: var(--brand); font-size: 15px; transition: border-radius .15s, background .15s; }
 .instance-button:hover, .instance-button[aria-current="page"] { border-radius: 12px; background: var(--brand-hover); }
+.add-instance-button { margin-top: auto; color: var(--muted); background: var(--bg-hover); }
+.add-instance-button:hover { color: var(--text); background: var(--brand); }
+.add-instance-button .lucide-icon { width: 22px; height: 22px; }
 .instance-button[aria-current="page"]::before { position: absolute; left: 0; width: 4px; height: 40px; border-radius: 0 4px 4px 0; background: white; content: ""; }
 .content { height: calc(100vh - 28px); min-height: 0; background: var(--bg-main); }
 .content > .empty-state { margin: 0 auto; }
 .empty-state { width: min(100%, 480px); padding: 32px; border-radius: 8px; background: var(--bg-main); box-shadow: var(--shadow); }
 .content:has(> .empty-state) { display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #404eed 0, transparent 38%), var(--bg-rail); }
+.content:has(> .community-manager) { overflow: auto; background: var(--bg-main); }
+.community-manager { width: min(760px, calc(100% - 48px)); margin: 48px auto; }
+.community-manager > h1 { margin: 6px 0; }
+.community-manager > p { color: var(--muted); }
+.community-account-list { display: grid; gap: 8px; margin: 24px 0; }
+.community-account-list article { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 12px; border-radius: 8px; background: var(--bg-sidebar); }
+.community-account-list article > span:nth-child(2) { display: grid; min-width: 0; }
+.community-account-list small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.community-manager button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 4px; color: white; background: var(--brand); font-weight: 600; }
+.community-manager .danger-button { background: var(--red); }
 .empty-state h1 { margin: 0 0 8px; font-size: 28px; }
 .empty-state p { margin: 0 0 24px; color: var(--muted); }
 .empty-state button, .onboarding-form button { min-height: 40px; margin: 0; padding: .65rem 1rem; border-radius: 4px; background: var(--brand); }

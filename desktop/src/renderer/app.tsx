@@ -15,7 +15,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
   const [instanceState, setInstanceState] = useState<InstanceViewState | null>(
     null,
   );
-  const [homeVersion, setHomeVersion] = useState(0);
+  const [managingCommunities, setManagingCommunities] = useState(false);
+  const [addingCommunity, setAddingCommunity] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register" | "recover">("login");
 
   useEffect(() => {
@@ -64,6 +65,8 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           baseUrl: String(values.get("baseUrl") ?? ""),
         }),
       );
+      setAddingCommunity(false);
+      setManagingCommunities(false);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not add the Instance.",
@@ -84,6 +87,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           password: String(values.get("password") ?? ""),
         }),
       );
+      setManagingCommunities(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not sign in.");
     }
@@ -253,17 +257,21 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           type="button"
           aria-label="Home"
           title="Home"
-          onClick={() => setHomeVersion((version) => version + 1)}
+          aria-current={managingCommunities ? "page" : undefined}
+          onClick={() => { setAddingCommunity(false); setManagingCommunities(true); }}
         >
           <Icon name="home" />
         </button>
-        {state && state.instances.length > 1 && state.instances.map((instance) => (
+        {state && state.instances.map((instance) => (
           <button
             className="instance-button"
             key={instance.id}
-            onClick={() =>
-              void bridge.selectInstance(instance.id).then(setState)
-            }
+            onClick={() => void bridge.selectInstance(instance.id).then((next) => {
+              setState(next);
+              setManagingCommunities(false);
+              setAddingCommunity(false);
+              setError("");
+            })}
             aria-label={`${instance.displayName} Instance`}
             aria-current={
               instance.id === state.activeInstanceId ? "page" : undefined
@@ -272,14 +280,15 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             {instance.displayName.slice(0, 1).toUpperCase()}
           </button>
         ))}
+        {state && <button className="instance-button add-instance-button" type="button" aria-label="Add Community" title="Add Community" onClick={() => { setAddingCommunity(true); setManagingCommunities(false); setError(""); }}><Icon name="plus" /></button>}
       </aside>
       <section className="content">
         {!state ? (
           <p>Starting AllChat…</p>
-        ) : state.instances.length === 0 ? (
+        ) : state.instances.length === 0 || addingCommunity ? (
           <div className="empty-state">
             <p className="eyebrow">Desktop Canary</p>
-            <h1>Add your first Instance</h1>
+            <h1>{state.instances.length === 0 ? "Add your first Instance" : "Add a Community"}</h1>
             <p>
               Connect an AllChat Community to start messaging from the desktop
               client.
@@ -303,6 +312,24 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
               </label>
               <button type="submit">Add Instance</button>
             </form>
+            {error && <p role="alert">{error}</p>}
+          </div>
+        ) : managingCommunities ? (
+          <div className="community-manager">
+            <p className="eyebrow">AllChat Desktop</p>
+            <h1>Communities</h1>
+            <p>Switch between your Communities or sign out of an account on this device.</p>
+            <div className="community-account-list">
+              {state.instances.map((instance) => (
+                <article key={instance.id}>
+                  <span className="instance-button" aria-hidden="true">{instance.displayName.slice(0, 1).toUpperCase()}</span>
+                  <span><strong>{instance.displayName}</strong><small>{instance.session?.member.displayName || instance.session?.member.username || "Signed out"}<br />{instance.baseUrl}</small></span>
+                  <button type="button" onClick={() => void bridge.selectInstance(instance.id).then((next) => { setState(next); setManagingCommunities(false); setError(""); })}>{instance.id === state.activeInstanceId ? "Open" : "Switch"}</button>
+                  {instance.session && <button className="danger-button" type="button" onClick={() => void bridge.logoutInstance(instance.id).then(setState).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not sign out."))}>Sign Out</button>}
+                </article>
+              ))}
+            </div>
+            <button type="button" onClick={() => { setAddingCommunity(true); setManagingCommunities(false); }}>Add Community</button>
             {error && <p role="alert">{error}</p>}
           </div>
         ) : active && !active.session ? (
@@ -340,7 +367,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
           </div>
         ) : instanceState ? (
           <CommunityShell
-            key={`${active!.id}:${homeVersion}`}
+            key={active!.id}
             instanceId={active!.id}
             state={instanceState}
             onAction={executeAction}
@@ -2319,6 +2346,7 @@ type IconName =
   | "mic"
   | "paperclip"
   | "phone"
+  | "plus"
   | "pin"
   | "search"
   | "send"
@@ -2378,6 +2406,7 @@ function Icon({ name }: { name: IconName }) {
       </>
     ),
     phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z" />,
+    plus: <path d="M12 5v14M5 12h14" />,
     search: (
       <>
         <circle cx="11" cy="11" r="8" />

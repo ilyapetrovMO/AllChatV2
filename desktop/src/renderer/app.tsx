@@ -1067,6 +1067,13 @@ function CommunityShell({
               connectMedia={connectMedia}
               requestedVoiceRoom={requestedVoiceRoom}
               requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
+              onOpenDirectCall={(directMessageId) => {
+                const directMessage = state.direct_messages.find(({ id }) => id === directMessageId);
+                if (!directMessage) return;
+                setSettingsView(null);
+                setHomeView("direct-messages");
+                setConversation({ id: directMessage.id, name: memberName(directMessage.other), type: "dm" });
+              }}
               onVoiceRoomChange={(roomId) => {
                 const previousRoom = requestedVoiceRoom;
                 setRequestedVoiceRoom(roomId);
@@ -1948,6 +1955,7 @@ export function DirectCallControls({
   connectMedia,
   requestedVoiceRoom,
   requestedVoiceRoomName,
+  onOpenDirectCall,
   onVoiceRoomChange,
   onCallChange,
 }: {
@@ -1959,6 +1967,7 @@ export function DirectCallControls({
   connectMedia?: DesktopBridge["connectMedia"];
   requestedVoiceRoom: string | null;
   requestedVoiceRoomName: string;
+  onOpenDirectCall?(directMessageId: string): void;
   onVoiceRoomChange(roomId: string | null): void;
   onCallChange(call: import("../shared/instance-actions").DirectCall | null): void;
 }) {
@@ -2281,10 +2290,13 @@ export function DirectCallControls({
   const controlSlot = document.getElementById("desktop-call-controls");
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
-      <div>
+      {voiceRoom ? <div>
         <strong>{status === "Call connected" ? (voiceRoom ? "Voice Connected" : "Call Connected") : status || (voiceRoom ? "Voice Connecting" : "Call Connecting")}</strong>
-        <span>{voiceRoom ? requestedVoiceRoomName : directCallName}</span>
-      </div>
+        <span>{requestedVoiceRoomName}</span>
+      </div> : <button className="voice-connection-identity" type="button" aria-label={`Return to Direct Message with ${directCallName}`} title={`Return to Direct Message with ${directCallName}`} onClick={() => call && onOpenDirectCall?.(call.direct_message_id)}>
+        <strong>{status === "Call connected" ? "Call Connected" : status || "Call Connecting"}</strong>
+        <span>{directCallName}</span>
+      </button>}
       <div className="voice-connection-actions">
         <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
         <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => transientStatus.current?.show(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>

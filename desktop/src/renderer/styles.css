@@ -275,7 +275,9 @@ a { color: #00a8fc; }
 .member-panel small { color: var(--faint); }
 #desktop-call-controls:empty { display: none; }
 .voice-connection-panel { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 7px 8px 7px 12px; border-top: 1px solid rgb(0 0 0 / 35%); background: rgb(0 0 0 / 20%); }
-.voice-connection-panel > div:first-child { display: grid; min-width: 0; }
+.voice-connection-panel > div:first-child, .voice-connection-identity { display: grid; min-width: 0; }
+.voice-connection-identity { justify-items: start; padding: 0; border: 0; background: transparent; text-align: left; }
+.voice-connection-identity:hover span { color: var(--text); text-decoration: underline; }
 .voice-connection-panel strong { color: var(--green); font-size: .78rem; }
 .voice-connection-panel span { overflow: hidden; color: var(--muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
 .voice-connection-actions { display: flex; gap: 2px; }

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
@@ -68,6 +68,7 @@ describe('DirectCallControls remote lifecycle', () => {
   });
 
   it('keeps the active DM name when another channel is selected', async () => {
+    const onOpenDirectCall = vi.fn();
     const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => {
       if (action.type === 'current_call') return {type: 'call', call: {id:'call-mobile',direct_message_id:'dm-mobile',caller_id:'me',recipient_id:'mobile',state:'accepted',created_at:'2026-08-20T10:00:00Z'}};
       return {type:'accepted'};
@@ -82,6 +83,7 @@ describe('DirectCallControls remote lifecycle', () => {
         onAction={onAction}
         requestedVoiceRoom={null}
         requestedVoiceRoomName=""
+        onOpenDirectCall={onOpenDirectCall}
         onVoiceRoomChange={vi.fn()}
         onCallChange={vi.fn()}
       />
@@ -90,6 +92,8 @@ describe('DirectCallControls remote lifecycle', () => {
     const controls = await screen.findByRole('region', {name:'Call controls'});
     expect(controls).toHaveTextContent('mobile');
     expect(controls).not.toHaveTextContent('text channel');
+    fireEvent.click(screen.getByRole('button', {name:'Return to Direct Message with mobile'}));
+    expect(onOpenDirectCall).toHaveBeenCalledWith('dm-mobile');
   });
 });
 

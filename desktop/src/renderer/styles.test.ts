@@ -10,9 +10,14 @@ describe('desktop shared control styling', () => {
   });
 
   it('styles generic form controls including checkboxes and file inputs', () => {
-    expect(css).toContain('input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
+    expect(css).toContain(':where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
     expect(css).toContain('input[type="checkbox"]');
     expect(css).toContain('::file-selector-button');
+  });
+
+  it('lets the global Search icon reserve space before its text', () => {
+    expect(css).toMatch(/\.header-search input\s*\{[^}]*padding-left:\s*30px/s);
+    expect(css.indexOf('.header-search input { padding-left: 30px;')).toBeGreaterThan(css.indexOf(':where(input:not('));
   });
 
   it('does not inset Community avatars with native button padding', () => {

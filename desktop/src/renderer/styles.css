@@ -187,9 +187,9 @@ button { font: inherit; }
 html, body, #root { min-height: 100%; background: var(--bg-main); color: var(--text); }
 body { min-width: 760px; min-height: 520px; }
 button, input, select, textarea { font: inherit; }
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-input); outline: 0; }
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):hover, select:hover, textarea:hover { border-color: rgb(255 255 255 / 18%); }
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgb(109 117 232 / 24%); }
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea) { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-input); outline: 0; }
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea):hover { border-color: rgb(255 255 255 / 18%); }
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea):focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgb(109 117 232 / 24%); }
 input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; border: 1px solid #555968; appearance: none; background: var(--bg-input); cursor: pointer; }
 input[type="checkbox"] { border-radius: 4px; }
 input[type="radio"] { border-radius: 50%; }

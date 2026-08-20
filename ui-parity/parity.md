@@ -77,6 +77,7 @@ Desktop now reports throttled Member activity over realtime, exposes the web-sty
 
 - ✅ Default Direct Message layout and visuals pass the packaged cross-client comparison.
 - ⚠️ DM navigation, messaging, outgoing/incoming calls, ringtone, per-participant volume, screen sharing, soundboard, and media transport exist. An active Call disables Community switching and exposes persistent sidebar controls; packaged multi-peer verification remains.
+- ✅ Web and desktop resolve incoming-call audio as Member override → Community ringtone → generated tone. Owners can upload/remove the Community default, and Members can upload/reset their private override.
 - ⚠️ Blocked-member behavior and DM Home exist; empty and rendered states remain incomplete.
 - ⚠️ Two-client call states and recovery/error behavior need deterministic verification.
 

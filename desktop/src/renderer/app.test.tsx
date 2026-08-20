@@ -253,6 +253,7 @@ describe('desktop renderer bootstrap', () => {
     expect(screen.queryByRole('navigation', { name: 'User settings' })).not.toBeInTheDocument();
     const communityAdministration = document.querySelector('[data-community-administration]') as HTMLElement;
     expect(await within(communityAdministration).findByRole('heading', { name: 'General' })).toBeVisible();
+    expect(within(communityAdministration).getByRole('heading', { name: 'Community ringtone' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Home Instance' }));
     expect(await screen.findByRole('heading', { name: 'Welcome to Nora Community' })).toBeVisible();
@@ -430,6 +431,8 @@ describe('desktop renderer bootstrap', () => {
     const notificationSettings = document.querySelector('[data-notification-settings]') as HTMLElement;
     expect(within(notificationSettings).getByRole('heading', { name: 'Notifications' })).toBeVisible();
     expect(within(notificationSettings).getByText('Native notifications enabled')).toBeVisible();
+    expect(within(notificationSettings).getByRole('heading', { name: 'Incoming call ringtone' })).toBeVisible();
+    expect(within(notificationSettings).getByText('Using the generated tone.')).toBeVisible();
     fireEvent.change(within(notificationSettings).getByLabelText('Community notification level'), { target: { value: 'all_messages' } });
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
       type: 'set_community_notifications', level: 'all_messages', muted: false, soundEnabled: true,
@@ -476,7 +479,7 @@ describe('desktop renderer bootstrap', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Start Call' })).toBeVisible());
     fireEvent.click(screen.getByRole('button', { name: 'Start Call' }));
     const directCallGrid = await screen.findByRole('region', { name: 'Direct Call grid' });
-    expect(screen.getByRole('button', { name: 'Home' })).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Home' })).toBeDisabled());
     expect(directCallGrid).toBeVisible();
     expect(directCallGrid.closest('.direct-call-workspace')).toBeTruthy();
     expect(directCallGrid.closest('.message-list')).toBeNull();

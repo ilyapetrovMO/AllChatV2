@@ -159,7 +159,7 @@ screens:
         evidence: renderer-global-direct-call-controls
       - id: incoming-ringtone
         status: partial
-        evidence: renderer-desktop-in-app-ringtone
+        evidence: renderer-resolved-member-community-ringtone
       - id: screen-sharing
         status: partial
         evidence: renderer-desktop-screen-share-owner-routing
@@ -280,6 +280,9 @@ screens:
       - id: permission-denied
         status: intentional
         evidence: native-notifications
+      - id: member-ringtone-override
+        status: partial
+        evidence: renderer-member-ringtone-settings
       - id: channel-overrides
         status: partial
         evidence: renderer-notification-settings

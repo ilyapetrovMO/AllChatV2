@@ -16,6 +16,7 @@ export function assertAllowedAssetPath(path: string): void {
   }
   const allowed = asset.pathname.startsWith('/api/v1/attachments/') ||
     asset.pathname === '/api/v1/community-avatar' ||
+    asset.pathname === '/api/v1/ringtone' ||
     /^\/api\/v1\/members\/[^/]+\/(avatar|banner)$/.test(asset.pathname) ||
     previewImage;
   if (asset.origin !== 'https://allchat.invalid' || !allowed) throw new Error('Asset path is invalid');

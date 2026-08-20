@@ -504,6 +504,17 @@ export class InstanceCoordinator {
 	  }
 	  return { type: 'accepted' };
 	}
+    if (action.type === 'update_ringtone' || action.type === 'remove_ringtone') {
+      const path = action.scope === 'community' ? '/api/v1/admin/community-ringtone' : '/api/v1/member-ringtone';
+      const response = await this.request(`${profile.baseUrl}${path}`, {
+        method: action.type === 'update_ringtone' ? 'PUT' : 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, ...(action.type === 'update_ringtone' ? { 'Content-Type': action.contentType } : {}) },
+        ...(action.type === 'update_ringtone' ? { body: Buffer.from(action.data) as unknown as BodyInit } : {}),
+      });
+      if (!response.ok) throw new Error(`Could not ${action.type === 'update_ringtone' ? 'save' : 'reset'} the ringtone.`);
+      this.assetCache.clearInstance(instanceId);
+      return { type: 'accepted' };
+    }
     if (action.type === 'community_home') {
       const response = await this.request(`${profile.baseUrl}/api/v1/community-home`, { headers: { Authorization: `Bearer ${token}` } });
       const body: unknown = await response.json().catch(() => undefined);
@@ -794,6 +805,7 @@ function normalizeCommunitySettings(value: unknown): import('../shared/instance-
     push_relay_url: settings.push_relay_url,
     push_key_id: typeof settings.push_key_id === 'string' ? settings.push_key_id : '',
     push_public_key: typeof settings.push_public_key === 'string' ? settings.push_public_key : '',
+    ...(typeof settings.community_ringtone_set === 'boolean' ? { community_ringtone_set: settings.community_ringtone_set } : {}),
   };
 }
 

@@ -2240,26 +2240,35 @@ export function DirectCallControls({
     return () => window.removeEventListener("allchat:voice-settings", updateVolumes);
   }, [currentMemberId]);
   useEffect(() => {
-    if (!incoming || typeof AudioContext === "undefined") return;
-    const context = new AudioContext();
+    if (!incoming) return;
+    let disposed = false, context: AudioContext | undefined, timer: number | undefined, customAudio: HTMLAudioElement | undefined, customURL = "";
     const pulse = () => {
-      void context.resume().then(() => {
-        const now = context.currentTime;
+      if (typeof AudioContext === "undefined") return;
+      context ||= new AudioContext();
+      const currentContext = context;
+      void currentContext.resume().then(() => {
+        const now = currentContext.currentTime;
         [523.25, 659.25].forEach((frequency, index) => {
-          const oscillator = context.createOscillator(), gain = context.createGain(), start = now + index * .12;
+          const oscillator = currentContext.createOscillator(), gain = currentContext.createGain(), start = now + index * .12;
           oscillator.frequency.value = frequency;
           gain.gain.setValueAtTime(.0001, start);
           gain.gain.exponentialRampToValueAtTime(.075, start + .02);
           gain.gain.exponentialRampToValueAtTime(.0001, start + .24);
-          oscillator.connect(gain).connect(context.destination);
+          oscillator.connect(gain).connect(currentContext.destination);
           oscillator.start(start);
           oscillator.stop(start + .25);
         });
       }).catch(() => undefined);
     };
-    pulse();
-    const timer = window.setInterval(pulse, 2_200);
-    return () => { window.clearInterval(timer); void context.close().catch(() => undefined); };
+    const generated = () => { if (disposed) return; pulse(); timer = window.setInterval(pulse, 2_200); };
+    void onAction({ type: "load_asset", path: "/api/v1/ringtone" }).then((result) => {
+      if (disposed) return;
+      if (result?.type !== "asset" || result.data.byteLength === 0) return generated();
+      customURL = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
+      customAudio = new Audio(customURL); customAudio.loop = true;
+      void customAudio.play().catch(generated);
+    }).catch(generated);
+    return () => { disposed = true; if (timer !== undefined) window.clearInterval(timer); customAudio?.pause(); if (customURL) URL.revokeObjectURL(customURL); if (context) void context.close().catch(() => undefined); };
   }, [incoming, call?.id]);
   const connected = call?.state === "accepted" || !!voiceRoom;
   const controlSlot = document.getElementById("desktop-call-controls");
@@ -2956,6 +2965,7 @@ function CommunityAdministration({
         {(["dashboard", "general", "channels", "roles", "invitations", "soundboard"] as const).map((item) => <button type="button" key={item} aria-current={section === item ? "page" : undefined} onClick={() => select(item)}>{item === "general" ? "General" : item[0].toUpperCase() + item.slice(1)}</button>)}
       </nav>
 	  {section === "general" && communitySettings && <CommunityAvatarSetting settings={communitySettings} onAction={onAction} onChange={setCommunitySettings} />}
+	  {section === "general" && communitySettings && <RingtoneSetting scope="community" active={communitySettings.community_ringtone_set === true} fallbackLabel="Generated tone" onAction={onAction} onActiveChange={(active) => setCommunitySettings({ ...communitySettings, community_ringtone_set: active })} />}
       {section === "general" && <section className="settings-panel administration-list"><h2>General</h2><p>Manage {state.community.name} from the desktop client.</p>{!communitySettings && !error && <p>Loading Community settings…</p>}{error && <p role="alert" className="notice-error">{error}</p>}{communitySettings && <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "update_community_settings", name: String(data.get("name") || ""), maxAttachmentMiB: Number(data.get("maxAttachmentMiB")), homeMarkdown: String(data.get("homeMarkdown") || ""), pushRelayURL: String(data.get("pushRelayURL") || "") }).then((result) => { if (result?.type === "community_settings") setCommunitySettings(result.settings); }).catch(() => setError("Could not save Community settings.")); }}><label>Community name<input name="name" maxLength={100} defaultValue={communitySettings.name} required /></label><label>Maximum attachment size (MiB)<input name="maxAttachmentMiB" type="number" min="1" max="256" defaultValue={communitySettings.max_attachment_mib} required /></label><p>Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Community Guide<textarea name="homeMarkdown" rows={8} defaultValue={communitySettings.home_markdown} /></label><label>Mobile push relay<input name="pushRelayURL" type="url" defaultValue={communitySettings.push_relay_url} placeholder="https://push.example.com" /></label><p>Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p>Key ID: <code>{communitySettings.push_key_id}</code></p><textarea readOnly rows={3} value={communitySettings.push_public_key} aria-label="Relay public key" /></details><button type="submit">Save settings</button></form>}</section>}
       {section === "dashboard" && <AdminDashboardView dashboard={dashboard} history={dashboardHistory} error={error} />}
       {section === "channels" && <section className="settings-panel administration-list"><h2>Channels</h2><p>Create and archive Community Categories and Channels.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_category", name: String(data.get("name") || ""), position: adminCategories.length }).then((result) => { if (result?.type === "category") setAdminCategories((current) => [...current, result.category]); }); event.currentTarget.reset(); }}><label>Category name<input name="name" required /></label><button type="submit">Create Category</button></form><form className="administration-inline-form channel-create-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_channel", categoryId: String(data.get("category")), name: String(data.get("name") || ""), channelType: String(data.get("type")) as "text" | "voice", position: adminChannels.length }).then((result) => { if (result?.type === "channel") setAdminChannels((current) => [...current, result.channel]); }); event.currentTarget.reset(); }}><label>Category<select name="category" required>{adminCategories.filter(({ archived }) => !archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Channel name<input name="name" required /></label><label>Type<select name="type"><option value="text">Text</option><option value="voice">Voice</option></select></label><button type="submit">Create Channel</button></form>{adminCategories.map((category) => <section className="admin-category" key={category.id}><h3>{category.name}</h3>{adminChannels.filter(({ category_id }) => category_id === category.id).map((channel) => <AdminChannelRow key={channel.id} channel={channel} roles={roles || []} onAction={onAction} onUpdate={(updated) => setAdminChannels((current) => updated ? current.map((item) => item.id === channel.id ? updated : item) : current.filter(({ id }) => id !== channel.id))} />)}</section>)}</section>}
@@ -2972,6 +2982,14 @@ function CommunityAvatarSetting({ settings, onAction, onChange }: { settings: im
 	<label>Choose Community avatar<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_community_avatar", contentType: file.type, data: new Uint8Array(bytes) })).then(() => onChange({ ...settings, avatar_url: `/api/v1/community-avatar?v=${Date.now()}` })); }} /></label>
 	{settings.avatar_url && <button type="button" onClick={() => void onAction({ type: "remove_community_avatar" }).then(() => onChange({ ...settings, avatar_url: undefined }))}>Remove avatar</button>}
   </div>;
+}
+
+function ringtoneFileType(file: File): string { return file.type || (/\.ogg$/i.test(file.name) ? "audio/ogg" : /\.wav$/i.test(file.name) ? "audio/wav" : "audio/mpeg"); }
+
+function RingtoneSetting({ scope, active, fallbackLabel, onAction, onActiveChange }: { scope: "community" | "member"; active: boolean; fallbackLabel: string; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>; onActiveChange(active: boolean): void }) {
+  const [notice, setNotice] = useState("");
+  const label = scope === "community" ? "Community ringtone" : "Incoming call ringtone";
+  return <section className="settings-card ringtone-setting"><h3>{label}</h3><p>{active ? "Custom audio is active." : fallbackLabel}</p><label>Choose audio file<input type="file" accept="audio/mpeg,audio/wav,audio/ogg" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_ringtone", scope, contentType: ringtoneFileType(file), data: new Uint8Array(bytes) })).then(() => { onActiveChange(true); setNotice("Ringtone saved."); }).catch(() => setNotice("Could not save ringtone.")); }} /></label>{active && <button type="button" onClick={() => void onAction({ type: "remove_ringtone", scope }).then(() => { onActiveChange(false); setNotice(scope === "member" ? "Using the Community ringtone." : "Using the generated tone."); })}>{scope === "member" ? "Use Community default" : "Remove custom ringtone"}</button>}<p role="status">{notice}</p></section>;
 }
 
 function AdminChannelRow({ channel, roles, onAction, onUpdate }: {
@@ -3074,6 +3092,7 @@ function NotificationSettings({
   });
   const [channels, setChannels] = useState(state.notifications.channels);
   const [notice, setNotice] = useState("");
+  const [memberRingtone, setMemberRingtone] = useState(state.notifications.member_ringtone_set === true);
 
   async function saveCommunity(next: typeof community): Promise<void> {
     setCommunity(next);
@@ -3104,6 +3123,7 @@ function NotificationSettings({
         <h3>Desktop notifications</h3>
         <p className="notification-permission-state"><span className="presence-dot online" /> Native notifications enabled</p>
       </section>
+      <RingtoneSetting scope="member" active={memberRingtone} fallbackLabel={state.notifications.community_ringtone_set ? "Using the Community ringtone." : "Using the generated tone."} onAction={onAction} onActiveChange={setMemberRingtone} />
       <section className="settings-card">
         <h3>Community defaults</h3>
         <label>Notification level<select aria-label="Community notification level" value={community.level} onChange={(event) => void saveCommunity({ ...community, level: event.target.value as CommunityLevel })}><option value="all_messages">All Messages</option><option value="mentions_only">Only @mentions</option><option value="nothing">Nothing</option></select></label>

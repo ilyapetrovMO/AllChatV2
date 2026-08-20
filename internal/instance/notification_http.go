@@ -21,10 +21,13 @@ type channelNotificationSetting struct {
 }
 
 type notificationSettingsView struct {
-	CurrentMemberID string                                `json:"current_member_id"`
-	Community       notificationSetting                   `json:"community"`
-	Channels        map[string]channelNotificationSetting `json:"channels"`
-	MutedChannelIDs []string                              `json:"muted_channel_ids"`
+	CurrentMemberID      string                                `json:"current_member_id"`
+	Community            notificationSetting                   `json:"community"`
+	Channels             map[string]channelNotificationSetting `json:"channels"`
+	MutedChannelIDs      []string                              `json:"muted_channel_ids"`
+	RingtoneSource       string                                `json:"ringtone_source"`
+	CommunityRingtoneSet bool                                  `json:"community_ringtone_set"`
+	MemberRingtoneSet    bool                                  `json:"member_ringtone_set"`
 }
 
 func validNotificationLevel(level string, allowDefault bool) bool {
@@ -49,6 +52,14 @@ func (i *Instance) notificationSettings(ctx context.Context, memberID string) (n
 	err := i.db.QueryRowContext(ctx, "SELECT level, muted, sound_enabled FROM member_notification_settings WHERE member_id = ?", memberID).Scan(&view.Community.Level, &view.Community.Muted, &view.Community.SoundEnabled)
 	if err != nil && err != sql.ErrNoRows {
 		return notificationSettingsView{}, err
+	}
+	view.CommunityRingtoneSet, view.MemberRingtoneSet = i.ringtoneStatus(memberID)
+	if view.MemberRingtoneSet {
+		view.RingtoneSource = "member"
+	} else if view.CommunityRingtoneSet {
+		view.RingtoneSource = "community"
+	} else {
+		view.RingtoneSource = "tone"
 	}
 	rows, err := i.db.QueryContext(ctx, "SELECT channel_id, level, muted FROM channel_notification_settings WHERE member_id = ?", memberID)
 	if err != nil {

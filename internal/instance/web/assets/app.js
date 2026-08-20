@@ -704,6 +704,8 @@
   };
   installSoundboard(document);
   document.addEventListener("allchat:view-swapped", event => installSoundboard(event.detail?.root || document));
+  const installRingtoneSettings=root=>{if(!root.querySelector?.("[data-community-ringtone]"))return;import("/assets/ringtone-settings.js").then(()=>window.installAllChatRingtoneSettings?.(root)).catch(()=>{})};
+  installRingtoneSettings(document);document.addEventListener("allchat:view-swapped",event=>installRingtoneSettings(event.detail?.root||document));
   const installAdminDashboard=root=>{if(!root.querySelector?.("[data-admin-dashboard]"))return;import("/assets/admin-dashboard.js").then(()=>window.installAllChatAdminDashboard?.(root)).catch(()=>{})};
   installAdminDashboard(document);
   document.addEventListener("allchat:view-swapped",event=>installAdminDashboard(event.detail?.root||document));

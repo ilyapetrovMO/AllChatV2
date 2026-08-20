@@ -47,3 +47,24 @@ func TestWebParticipantMenusControlIndividualVolume(t *testing.T) {
 		}
 	}
 }
+
+func TestWebCallRingtoneUsesResolvedMemberPolicyWithToneFallback(t *testing.T) {
+	call, err := embeddedWeb.ReadFile("web/assets/call.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"/api/v1/ringtone", "ringAudio.loop=true", "ringPulse()"} {
+		if !strings.Contains(string(call), want) {
+			t.Fatalf("web Call ringtone policy missing %q", want)
+		}
+	}
+	settings, err := embeddedWeb.ReadFile("web/assets/notification-service.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"/api/v1/member-ringtone", "Use Community default"} {
+		if !strings.Contains(string(settings), want) {
+			t.Fatalf("web Member ringtone setting missing %q", want)
+		}
+	}
+}

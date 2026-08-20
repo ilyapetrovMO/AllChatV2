@@ -30,7 +30,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 28
+const schemaVersion = 29
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -953,6 +953,25 @@ func initializeSchema(db *sql.DB) error {
 			return err
 		}
 	}
+	if currentVersion < 29 {
+		for _, column := range []struct{ table, name, definition string }{
+			{"community", "ringtone", "BLOB"}, {"community", "ringtone_content_type", "TEXT"},
+			{"member_notification_settings", "ringtone", "BLOB"}, {"member_notification_settings", "ringtone_content_type", "TEXT"},
+		} {
+			exists, err := schemaColumnExists(ctx, tx, column.table, column.name)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				if _, err := tx.ExecContext(ctx, "ALTER TABLE "+column.table+" ADD COLUMN "+column.name+" "+column.definition); err != nil {
+					return fmt.Errorf("add %s.%s: %w", column.table, column.name, err)
+				}
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 29, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return err
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -991,6 +1010,11 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("PUT /api/v1/admin/community-avatar", i.updateCommunityAvatarAPI)
 	mux.HandleFunc("DELETE /api/v1/admin/community-avatar", i.removeCommunityAvatarAPI)
 	mux.HandleFunc("GET /api/v1/community-avatar", i.communityAvatarAPI)
+	mux.HandleFunc("PUT /api/v1/admin/community-ringtone", i.updateCommunityRingtoneAPI)
+	mux.HandleFunc("DELETE /api/v1/admin/community-ringtone", i.removeCommunityRingtoneAPI)
+	mux.HandleFunc("PUT /api/v1/member-ringtone", i.updateMemberRingtoneAPI)
+	mux.HandleFunc("DELETE /api/v1/member-ringtone", i.removeMemberRingtoneAPI)
+	mux.HandleFunc("GET /api/v1/ringtone", i.ringtoneAPI)
 	if i.config.MetricsEnabled {
 		mux.HandleFunc("GET /metrics", i.metrics)
 	}

@@ -518,6 +518,8 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   }
 	if (value.type === 'update_community_avatar') { if (typeof value.contentType !== 'string' || !(value.data instanceof Uint8Array) || value.data.byteLength < 1 || value.data.byteLength > 8 * 1024 * 1024) throw new Error('Community avatar is invalid'); return; }
 	if (value.type === 'remove_community_avatar') return;
+  if (value.type === 'update_ringtone') { if (!['community','member'].includes(value.scope) || typeof value.contentType !== 'string' || !(value.data instanceof Uint8Array) || value.data.byteLength < 1 || value.data.byteLength > 2 * 1024 * 1024) throw new Error('Ringtone is invalid'); return; }
+  if (value.type === 'remove_ringtone') { if (!['community','member'].includes(value.scope)) throw new Error('Ringtone scope is invalid'); return; }
   if (value.type === 'delete_account') { assertString(value.password, 'Password'); if (value.confirmation !== 'DELETE') throw new Error('Account deletion confirmation is invalid'); return; }
 	if (value.type === 'set_member_disabled') { assertString(value.memberId, 'Member identity'); if (typeof value.disabled !== 'boolean') throw new Error('Member state is invalid'); return; }
 	if (value.type === 'delete_member') { assertString(value.memberId, 'Member identity'); if (value.confirmation !== 'understood') throw new Error('Member deletion confirmation is invalid'); return; }

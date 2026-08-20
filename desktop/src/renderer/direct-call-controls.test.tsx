@@ -55,4 +55,15 @@ describe('DirectCallControls remote lifecycle', () => {
 
     expect(screen.queryByRole('region', { name: 'Call controls' })).not.toBeInTheDocument();
   });
+
+  it('resolves the authenticated ringtone when an incoming Call starts', async () => {
+    const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => {
+      if (action.type === 'current_call') return {type: 'call', call: {id: 'incoming', direct_message_id: 'dm-alex', caller_id: 'alex', recipient_id: 'me', state: 'ringing', created_at: '2026-08-20T10:00:00Z'}};
+      if (action.type === 'load_asset') return {type: 'asset', contentType: 'application/octet-stream', data: new Uint8Array()};
+      return {type: 'accepted'};
+    });
+    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
+    expect(await screen.findByRole('region', {name: 'Incoming Call controls'})).toBeVisible();
+    expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'});
+  });
 });

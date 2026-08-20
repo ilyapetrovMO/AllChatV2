@@ -94,6 +94,9 @@ export interface InstanceViewState {
     community: NotificationSetting;
     channels: Record<string, NotificationSetting>;
     muted_channel_ids: string[];
+    ringtone_source?: 'tone' | 'community' | 'member';
+    community_ringtone_set?: boolean;
+    member_ringtone_set?: boolean;
   };
   media: { audio_bitrate: number; screen_bitrate: number };
   cursor: number;

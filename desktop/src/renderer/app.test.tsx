@@ -151,7 +151,7 @@ describe('desktop renderer bootstrap', () => {
         getShellState: async () => ({
           activeInstanceId: 'home',
           instances: [{
-            id: 'home', displayName: 'Home', baseUrl: 'https://chat.example',
+            id: 'home', displayName: 'Home', avatarUrl: '/api/v1/community-avatar?v=42', baseUrl: 'https://chat.example',
             partition: 'persist:allchat-home', credentialRef: 'desktop-session:home',
             session: {
               member: { id: 'me', username: 'nora', owner: true },
@@ -212,6 +212,8 @@ describe('desktop renderer bootstrap', () => {
     expect(document.querySelector('[data-lucide="users"]')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Home' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Home Instance' })).toBeVisible();
+    await waitFor(() => expect(document.querySelector('.instance-avatar')).toHaveAttribute('src', 'blob:allchat-media'));
+    expect(executeInstance).toHaveBeenCalledWith('home', { type: 'load_asset', path: '/api/v1/community-avatar?v=42' });
     expect(screen.getByRole('button', { name: 'Add Community' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Direct Messages' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();

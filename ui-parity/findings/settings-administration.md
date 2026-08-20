@@ -1,5 +1,8 @@
 # Settings and administration parity findings
 
+- Desktop applies one shared visual contract to text inputs, selects, textareas, checkboxes, radios, file inputs, and their interactive/disabled states instead of relying on native operating-system defaults in Community Administration.
+- Community avatar assets use the authenticated, cached asset pipeline. The IPC allowlist explicitly accepts `/api/v1/community-avatar` (including version query parameters), and renderer coverage verifies that the returned bytes become the displayed Community image.
+
 ## Partial native surfaces
 
 - Profile supports fields plus avatar/banner selection, crop/zoom preview, upload, and removal. Rendered crop/output states remain unverified.

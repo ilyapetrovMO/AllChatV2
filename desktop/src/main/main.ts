@@ -14,6 +14,7 @@ import { InstanceRegistry } from './instance-registry';
 import { createWindowOptions, isAllowedAppNavigation, isAllowedExternalNavigation, isAllowedRendererPermission } from './window-policy';
 import { createTrayMenu, shouldHideOnClose, type TrayPresence } from './tray-menu';
 import { downloadVerifiedUpdate, findDesktopUpdate } from './desktop-updater';
+import { assertAllowedAssetPath } from './asset-policy';
 import { notificationPreview, shouldNotifyForMessage } from '../shared/notification-policy';
 import {
   IPC_CHANNELS,
@@ -419,14 +420,7 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'link_preview') { assertString(value.url, 'Preview URL'); if (!/^https?:\/\//.test(value.url)) throw new Error('Preview URL is invalid'); return; }
   if (value.type === 'load_asset') {
     assertString(value.path, 'Asset path');
-    const asset = new URL(value.path, 'https://allchat.invalid');
-    const previewImage = asset.pathname === '/api/v1/link-preview/image' && !!asset.searchParams.get('url');
-    if (previewImage) {
-      const target = new URL(asset.searchParams.get('url')!);
-      if ((target.protocol !== 'https:' && target.protocol !== 'http:') || !target.hostname) throw new Error('Preview image URL is invalid');
-    }
-    const allowed = asset.pathname.startsWith('/api/v1/attachments/') || /^\/api\/v1\/members\/[^/]+\/(avatar|banner)$/.test(asset.pathname) || previewImage;
-    if (asset.origin !== 'https://allchat.invalid' || !allowed) throw new Error('Asset path is invalid');
+    assertAllowedAssetPath(value.path);
     return;
   }
   if (value.type === 'update_profile') { assertString(value.username, 'Username'); if (typeof value.displayName !== 'string' || value.displayName.length > 80) throw new Error('Display Name is invalid'); return; }

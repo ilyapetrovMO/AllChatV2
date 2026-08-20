@@ -187,6 +187,20 @@ button { font: inherit; }
 html, body, #root { min-height: 100%; background: var(--bg-main); color: var(--text); }
 body { min-width: 760px; min-height: 520px; }
 button, input, select, textarea { font: inherit; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]), select, textarea { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-input); outline: 0; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):hover, select:hover, textarea:hover { border-color: rgb(255 255 255 / 18%); }
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="hidden"]):focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgb(109 117 232 / 24%); }
+input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; border: 1px solid #555968; appearance: none; background: var(--bg-input); cursor: pointer; }
+input[type="checkbox"] { border-radius: 4px; }
+input[type="radio"] { border-radius: 50%; }
+input[type="checkbox"]:checked, input[type="radio"]:checked { border-color: var(--brand); background: var(--brand); }
+input[type="checkbox"]:checked::after { content: ""; display: block; width: 8px; height: 4px; margin: 4px 0 0 4px; border: solid white; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+input[type="radio"]:checked { box-shadow: inset 0 0 0 4px var(--bg-input); }
+input[type="range"] { accent-color: var(--brand); cursor: pointer; }
+input[type="file"] { width: 100%; color: var(--muted); }
+input[type="file"]::file-selector-button { min-height: 34px; margin-right: 10px; padding: 6px 10px; border: 0; border-radius: 4px; color: white; background: var(--brand); font: inherit; font-weight: 600; cursor: pointer; }
+input[type="file"]::file-selector-button:hover { background: var(--brand-hover); }
+input:disabled, select:disabled, textarea:disabled { opacity: .55; cursor: not-allowed; }
 button { cursor: pointer; }
 a, button, [role="button"], [role="menuitem"], label[for], .attach-button { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid #00a8fc; outline-offset: 2px; }
@@ -333,7 +347,7 @@ a { color: #00a8fc; }
 .emoji-picker-custom input { min-width: 0; height: 34px; padding: 0 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: var(--bg-input); }
 .emoji-picker-custom button { color: var(--text); background: var(--brand); }
 .pinned { color: var(--yellow); }
-.message-composer-wrap { position: sticky; z-index: 2; bottom: 0; flex: 0 0 auto; margin: auto 6px 2px; }
+.message-composer-wrap { position: sticky; z-index: 2; bottom: 0; flex: 0 0 auto; margin: auto 6px 2px; border-radius: 10px; background: #222329; }
 .message-composer { position: relative; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 4px 6px; border: 1px solid var(--border); border-radius: 10px; background: #222329; box-shadow: 0 1px 2px rgb(0 0 0 / 28%); }
 .message-composer.file-drag-active { border-color: var(--brand); box-shadow: 0 0 0 2px rgb(109 117 232 / 35%); }
 .message-composer textarea { height: 34px; min-height: 34px; max-height: 180px; padding: 6px 4px; border: 0; border-radius: 4px; resize: none; background: transparent; color: var(--text); outline: 0; }
@@ -470,6 +484,9 @@ a { color: #00a8fc; }
 @media(max-width:1000px){.dashboard-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-chart-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.dashboard-stat-grid{grid-template-columns:1fr}.dashboard-storage-row{grid-template-columns:100px minmax(80px,1fr) 72px}.dashboard-health>div{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-heading{display:block}}
 .administration-list { display: grid; gap: 14px; }
+.administration-list label, .community-avatar-setting label { display: grid; gap: 6px; color: var(--muted); font-size: .8rem; font-weight: 700; }
+.administration-list .notification-check { display: flex; }
+.administration-list textarea { resize: vertical; }
 .administration-list form { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-sidebar); }
 .administration-list fieldset { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; border: 1px solid var(--border); border-radius: var(--radius); }
 .administration-list article { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-sidebar); }

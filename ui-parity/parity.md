@@ -44,6 +44,7 @@ The default Community Home, Direct Messages Home, Text Channel, Direct Message, 
 - ✅ Web, desktop, and mobile derive notifications from structured Member IDs; `mentions_only` ignores raw `@text`, respects Community/conversation overrides and mutes, and now produces native desktop notifications while the active conversation is focused.
 - ⚠️ Desktop and mobile now provide Member mention suggestions and render structured mentions. Keyboard/touch behavior is covered, while open-suggestion rendered screenshot parity remains incomplete.
 - ⚠️ Links are clickable; reactions update immediately and survive subsequent realtime frames; images have a cached-original viewer. Channel and DM history use bounded bidirectional pagination, preserve prepend anchors, restore forward history, and re-anchor after delayed media sizing while following present. Reply/edit/delete, pins, link embeds, notification policy, and several rendered states still need complete coverage.
+- ✅ The composer and typing-status area share an opaque surface, so typing text remains legible while media scrolls behind it.
 - ⚠️ Native desktop notification delivery is implemented; recent history, operating-system rendered appearance, and several error states remain incomplete.
 - ✅ The shared Search control and filter menu are available from every authenticated screen; complete rendered search-state coverage remains tracked under Search.
 
@@ -53,6 +54,8 @@ The default Community Home, Direct Messages Home, Text Channel, Direct Message, 
 - ⚠️ Profile upload/editor/error states, Sessions, and Safety still need complete rendered-state coverage.
 - ✅ The Community header menu contains only Community Home and owner-only Community Settings; user settings remain on the bottom-left cog.
 - ✅ Community Administration uses a dedicated navigation shell; Profile, Voice & Video, Notifications, Sessions, and Safety are no longer shown alongside it.
+- ✅ Shared desktop form controls now style text fields, selects, textareas, checkboxes, radios, file inputs, focus, hover, and disabled states consistently throughout settings and administration.
+- ✅ Authenticated Community avatars are accepted by the desktop asset policy and rendered through the cached asset pipeline; the exact Community-avatar path is regression-tested.
 - ⚠️ Profile image upload now includes a native crop/zoom preview; rendered crop output still needs cross-client verification.
 - ⚠️ Voice & Video exposes the web device, processing, preview/test, reset, and persistence controls; real-device and rendered-state coverage remains.
 - ⚠️ Notifications exposes Community defaults, sound/mute controls, channel overrides, native permission status, and save errors; rendered comparison remains.

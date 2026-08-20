@@ -460,6 +460,7 @@ function CommunityShell({
     left: number;
     top: number;
   } | null>(null);
+  const [memberActionsOpen, setMemberActionsOpen] = useState(false);
   const [voiceMemberMenu, setVoiceMemberMenu] = useState<{
     participant: import("../shared/instance-actions").VoiceParticipant;
     left: number;
@@ -778,6 +779,7 @@ function CommunityShell({
     },
   ];
   const showMemberPopover = (memberId: string, bounds: DOMRect) => {
+    setMemberActionsOpen(false);
     setMemberPopover({
       memberId,
       left: Math.min(window.innerWidth - 308, Math.max(8, bounds.left)),
@@ -1787,22 +1789,27 @@ function CommunityShell({
                 top: memberPopover.top,
               }}
             >
-              <AuthenticatedImage
-                path={member.bannerUrl}
-                alt=""
-                className="member-banner"
-                onAction={onAction}
-              />
-              <AuthenticatedImage
-                path={member.avatarUrl}
-                alt=""
-                className="member-card-avatar"
-                onAction={onAction}
-              />
-              <h3>{memberName(member)}</h3>
-			  <p>@{member.username}{member.disabled ? " · Disabled" : ""}</p>
+              <div className="member-card-banner">
+                <AuthenticatedImage
+                  path={member.bannerUrl}
+                  alt=""
+                  className="member-banner"
+                  onAction={onAction}
+                />
+                {member.id !== state.member.id && <button className="member-card-more" type="button" aria-label="Member actions" aria-expanded={memberActionsOpen} onClick={() => setMemberActionsOpen((open) => !open)}>•••</button>}
+              </div>
+              <div className="member-card-body">
+                <AuthenticatedImage
+                  path={member.avatarUrl}
+                  alt=""
+                  className="member-card-avatar"
+                  onAction={onAction}
+                />
+                <h3>{memberName(member)}</h3>
+			    <p>@{member.username}{member.disabled ? " · Disabled" : ""}</p>
+              </div>
               {member.id !== state.member.id && (
-                <>
+                <div className="member-card-actions" role="group" aria-label="Member actions" hidden={!memberActionsOpen}>
                   <button
                     type="button"
                     onClick={() =>
@@ -1841,7 +1848,7 @@ function CommunityShell({
 					<button type="button" onClick={() => void onAction({ type: "set_member_disabled", memberId: member.id, disabled: !member.disabled }).then(() => setMemberPopover(null))}>{member.disabled ? "Restore" : "Disable"}</button>
 					<button className="danger-button" type="button" onClick={() => { const confirmation = window.prompt(`Permanently delete ${memberName(member)} and everything tied to this Member? Type understood to continue.`); if (confirmation !== "understood") return; void onAction({ type: "delete_member", memberId: member.id, confirmation }).then(() => setMemberPopover(null)); }}>Delete Member</button>
 				  </>}
-                </>
+                </div>
               )}
             </section>,
             document.body,

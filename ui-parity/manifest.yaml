@@ -99,13 +99,13 @@ screens:
         evidence: web-and-renderer-syntax-highlighted-fenced-code-tests
       - id: member-popover-open
         status: partial
-        evidence: renderer-member-popover-anchor-and-dismissal
+        evidence: renderer-member-popover-anchor-dismissal-and-action-menu
       - id: notification-menu-open
         status: partial
         evidence: renderer-notification-menu-and-persistence
       - id: mentions-only-native-notification
         status: partial
-        evidence: server-web-desktop-and-mobile-notification-policy-tests
+        evidence: server-web-desktop-and-mobile-notification-policy-tests-and-windows-application-identity
       - id: pinned-messages-open
         status: partial
         evidence: renderer-pinned-message-filter

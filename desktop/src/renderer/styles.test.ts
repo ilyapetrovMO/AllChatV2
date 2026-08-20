@@ -14,6 +14,12 @@ describe('desktop shared control styling', () => {
     expect(css).not.toContain('.message-composer > button[type="submit"]');
   });
 
+  it('keeps Member actions in a polished popover menu instead of loose wrapping buttons', () => {
+    expect(css).toMatch(/\.member-card-actions\s*\{[^}]*display:\s*grid;[^}]*width:\s*188px/s);
+    expect(css).toMatch(/\.member-card-actions\[hidden\]\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/\.member-card \.member-card-actions button\s*\{[^}]*width:\s*100%[^}]*text-align:\s*left/s);
+  });
+
   it('styles generic form controls including checkboxes and file inputs', () => {
     expect(css).toContain(':where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
     expect(css).toContain('input[type="checkbox"]');

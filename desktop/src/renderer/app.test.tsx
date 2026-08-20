@@ -445,6 +445,11 @@ describe('desktop renderer bootstrap', () => {
     const memberPopover = screen.getByRole('dialog', { name: 'Member profile' });
     expect(memberPopover).toHaveStyle({ position: 'fixed', left: '716px', top: '280px' });
     expect(screen.getByRole('heading', { name: 'alex' })).toBeVisible();
+    expect(within(memberPopover).queryByRole('button', { name: 'Message' })).not.toBeInTheDocument();
+    fireEvent.click(within(memberPopover).getByRole('button', { name: 'Member actions' }));
+    const memberActions = within(memberPopover).getByRole('group', { name: 'Member actions' });
+    expect(memberActions).toHaveClass('member-card-actions');
+    expect(within(memberActions).getAllByRole('button')).toHaveLength(4);
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole('dialog', { name: 'Member profile' })).not.toBeInTheDocument();
     fireEvent.click(alexMember);

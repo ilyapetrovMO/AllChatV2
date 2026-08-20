@@ -48,7 +48,9 @@ Desktop now reports throttled Member activity over realtime, exposes the web-sty
 - ⚠️ Links are clickable; reactions update immediately and survive subsequent realtime frames; images have a cached-original viewer. Channel and DM history use bounded bidirectional pagination, preserve prepend anchors, restore forward history, and re-anchor after delayed media sizing while following present. Reply/edit/delete, pins, link embeds, notification policy, and several rendered states still need complete coverage.
 - ✅ The composer and typing-status area share an opaque surface, so typing text remains legible while media scrolls behind it.
 - ✅ Web and desktop composers use Enter to send, Shift+Enter for a newline, no visible Send button, and the same bare attachment icon.
+- ✅ Desktop Member profiles match the web card hierarchy and keep secondary/moderation actions in a compact overflow menu.
 - ⚠️ Native desktop notification delivery is implemented; recent history, operating-system rendered appearance, and several error states remain incomplete.
+- ✅ Packaged Windows desktop builds register a stable application identity before sending native notifications.
 - ✅ The shared Search control and filter menu are available from every authenticated screen; complete rendered search-state coverage remains tracked under Search.
 
 ### Settings and administration

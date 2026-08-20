@@ -16,6 +16,7 @@ import { createTrayMenu, shouldHideOnClose, type TrayPresence } from './tray-men
 import { downloadVerifiedUpdate, findDesktopUpdate } from './desktop-updater';
 import { assertAllowedAssetPath } from './asset-policy';
 import { notificationPreview, shouldNotifyForMessage } from '../shared/notification-policy';
+import { configureApplicationIdentity } from './application-identity';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -38,6 +39,8 @@ let quitting = false;
 let trayPresence: TrayPresence = 'available';
 let offeredUpdateVersion = '';
 let notificationContext = { instanceId: '', conversationId: '' };
+
+configureApplicationIdentity(app);
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();

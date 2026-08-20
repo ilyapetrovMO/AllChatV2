@@ -4,6 +4,7 @@ import renderer, { act } from 'react-test-renderer';
 
 import {
   activeMediaParticipantIDs,
+  acceptedDirectCallConversationID,
   ConversationTimeline,
   formatMessageTime,
   homeDirectMessages,
@@ -39,6 +40,16 @@ const message: Message = {
 };
 
 describe('native conversation timeline', () => {
+  it('opens the Direct Message as soon as a Direct Call is accepted', () => {
+    expect(acceptedDirectCallConversationID({
+      id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-1',
+      recipient_id: 'member-2', state: 'accepted', created_at: '2030-01-01T00:00:00Z',
+    })).toBe('dm-1');
+    expect(acceptedDirectCallConversationID({
+      id: 'call-1', direct_message_id: 'dm-1', caller_id: 'member-1',
+      recipient_id: 'member-2', state: 'ringing', created_at: '2030-01-01T00:00:00Z',
+    })).toBeUndefined();
+  });
   it('resizes the conversation above Android keyboards', () => {
     expect(conversationKeyboardBehavior('android')).toBe('height');
     expect(conversationKeyboardBehavior('ios')).toBe('padding');

@@ -31,6 +31,10 @@ func TestDirectCallRequiresConsentAndEnforcesBusyState(t *testing.T) {
 	if err != nil || accepted.State != "accepted" {
 		t.Fatalf("accept = %+v, %v", accepted, err)
 	}
+	acceptedAgain, err := manager.AcceptDirectCall(call.ID, "recipient")
+	if err != nil || acceptedAgain.State != "accepted" {
+		t.Fatalf("repeated accept = %+v, %v", acceptedAgain, err)
+	}
 	if !manager.CanJoinDirectCall(call.ID, "caller") || !manager.CanJoinDirectCall(call.ID, "recipient") || manager.CanJoinDirectCall(call.ID, "third") {
 		t.Fatal("accepted call participant authorization incorrect")
 	}

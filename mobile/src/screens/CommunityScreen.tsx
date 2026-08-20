@@ -124,6 +124,10 @@ export function trimMessageWindow(messages: Message[], limit = 100) {
   return messages.slice(-limit);
 }
 
+export function acceptedDirectCallConversationID(call?: DirectCall) {
+  return call?.state === 'accepted' ? call.direct_message_id : undefined;
+}
+
 export function activeMediaParticipantIDs(
   selfID: string,
   participants: MediaParticipant[],
@@ -196,6 +200,8 @@ export function CommunityScreen({
   const [mediaRoom, setMediaRoom] = useState<{ id: string; name: string }>();
   const [mediaRoomOpen, setMediaRoomOpen] = useState(false);
   const [currentCall, setCurrentCall] = useState<DirectCall>();
+  const callActionInFlight = useRef('');
+  const openedAcceptedCall = useRef('');
   const [notificationPanel, setNotificationPanel] = useState<
     'global' | 'channel' | ''
   >('');
@@ -807,11 +813,16 @@ export function CommunityScreen({
     }
   }
   async function callAction(action: 'accept' | 'decline' | 'end') {
-    if (!currentCall) return;
+    const activeCall = currentCall;
+    if (!activeCall) return;
+    const actionKey = `${activeCall.id}:${action}`;
+    if (callActionInFlight.current === actionKey) return;
+    callActionInFlight.current = actionKey;
+    setError('');
     try {
       const next = await client.callAction(
         account.session_token,
-        currentCall.id,
+        activeCall.id,
         action,
       );
       setCurrentCall(
@@ -820,13 +831,37 @@ export function CommunityScreen({
           : undefined,
       );
     } catch (caught) {
+      if (action === 'accept') {
+        const accepted = await client.currentCall(account.session_token).catch(() => undefined);
+        if (accepted?.id === activeCall.id && accepted.state === 'accepted') {
+          setCurrentCall(accepted);
+          setError('');
+          return;
+        }
+      }
       setError(
         caught instanceof Error
           ? caught.message
           : `Could not ${action} the Call.`,
       );
+    } finally {
+      if (callActionInFlight.current === actionKey) callActionInFlight.current = '';
     }
   }
+
+  useEffect(() => {
+    const conversationID = acceptedDirectCallConversationID(currentCall);
+    if (!conversationID) {
+      openedAcceptedCall.current = '';
+      return;
+    }
+    if (openedAcceptedCall.current === currentCall!.id) return;
+    openedAcceptedCall.current = currentCall!.id;
+    setError('');
+    openConversation(conversationID, true).catch(() => {});
+    // openConversation is intentionally driven once per accepted Call identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCall?.id, currentCall?.state]);
 
   useEffect(() => {
     const incoming = currentCall?.state === 'ringing' &&

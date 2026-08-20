@@ -76,7 +76,13 @@ func (m *Manager) AcceptDirectCall(callID, memberID string) (DirectCall, error) 
 	defer m.mu.Unlock()
 	m.expireCallsLocked()
 	call := m.calls[callID]
-	if call == nil || call.RecipientID != memberID || call.State != "ringing" {
+	if call == nil || call.RecipientID != memberID {
+		return DirectCall{}, ErrCallState
+	}
+	if call.State == "accepted" {
+		return *call, nil
+	}
+	if call.State != "ringing" {
 		return DirectCall{}, ErrCallState
 	}
 	call.State = "accepted"

@@ -266,7 +266,10 @@ jobs:
       - name: Install WiX Toolset
         if: matrix.platform == 'windows'
         shell: pwsh
-        run: choco install wixtoolset --version=3.14.0 -y --no-progress
+        # Hosted images can carry a newer WiX package. Keep the build on the
+        # version tested with electron-wix-msi instead of failing Chocolatey's
+        # version comparison before packaging starts.
+        run: choco install wixtoolset --version=3.14.0 --allow-downgrade -y --no-progress
       - name: Apply release version
         shell: bash
         run: npm version "${RELEASE_REF#v}" --workspace @allchat/desktop --no-git-tag-version --allow-same-version

@@ -11,6 +11,7 @@ import {
   FormattedBody,
   loadAuthenticatedImage,
   mergeMessagePage,
+  mediaParticipantAvatarDimension,
   MessageRow,
   trimMessageWindow,
   conversationKeyboardBehavior,
@@ -42,6 +43,10 @@ describe('native conversation timeline', () => {
   it('resizes the conversation above Android keyboards', () => {
     expect(conversationKeyboardBehavior('android')).toBe('height');
     expect(conversationKeyboardBehavior('ios')).toBe('padding');
+  });
+  it('bounds compact call avatars so names fit inside short participant tiles', () => {
+    expect(mediaParticipantAvatarDimension(true)).toBe(64);
+    expect(mediaParticipantAvatarDimension(false)).toBe(96);
   });
   it('keeps the home DM preview bounded and removes transient duplicates', () => {
     const dm = (id: string): DirectMessage => ({

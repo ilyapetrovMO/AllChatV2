@@ -473,6 +473,7 @@ a { color: #00a8fc; }
 .media-stage-tile.participant-tile { place-items: center; align-content: center; gap: 10px; }
 .media-stage-visual { width: 100%; min-height: 0; display: grid; place-items: center; }
 .media-stage-avatar { display: grid; place-items: center; width: clamp(72px, 14vw, 140px); height: clamp(72px, 14vw, 140px); overflow: hidden; border-radius: 50%; background: var(--brand); color: #fff; font-size: 2.5rem; font-weight: 800; object-fit: cover; }
+.direct-call-stage .media-stage-avatar { width: clamp(64px, 9vw, 104px); height: clamp(64px, 9vw, 104px); font-size: 2rem; }
 .media-stage-tile.speaking { border-color: var(--green); }
 .media-stage-tile > span { color: var(--muted); font-size: .75rem; }
 .voice-channel-members { display: grid; gap: 2px; margin: 1px 0 3px; padding: 0 0 0 30px; list-style: none; }

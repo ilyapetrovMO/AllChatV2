@@ -153,6 +153,10 @@ export function conversationKeyboardBehavior(platform: string) {
   return platform === 'ios' ? ('padding' as const) : ('height' as const);
 }
 
+export function mediaParticipantAvatarDimension(compact: boolean) {
+  return compact ? 64 : 96;
+}
+
 export function CommunityScreen({
   account,
   palette,
@@ -2304,6 +2308,7 @@ function MediaParticipantTile({
         />
       ) : (
         <MediaParticipantAvatar
+          compact={compact}
           instanceURL={instanceURL}
           label={label}
           member={member}
@@ -2334,6 +2339,7 @@ function MediaParticipantTile({
 }
 
 function MediaParticipantAvatar({
+  compact = false,
   instanceURL,
   label,
   member,
@@ -2341,6 +2347,7 @@ function MediaParticipantAvatar({
   small = false,
   token,
 }: {
+  compact?: boolean;
   instanceURL: string;
   label: string;
   member?: Member;
@@ -2365,17 +2372,26 @@ function MediaParticipantAvatar({
       mounted = false;
     };
   }, [instanceURL, member?.avatar_url, token]);
+  const dimension = mediaParticipantAvatarDimension(compact);
+  const dimensions = {
+    borderRadius: dimension / 2,
+    height: dimension,
+    width: dimension,
+  };
   return source ? (
     <Image
       source={{ uri: source }}
-      style={
-        small ? styles.browserAvatarImage : styles.mediaParticipantAvatarImage
-      }
+      style={small ? styles.browserAvatarImage : [styles.mediaParticipantAvatarImage, dimensions]}
     />
   ) : (
     <Text
       style={[
         small ? styles.browserAvatar : styles.mediaParticipantAvatar,
+        !small && dimensions,
+        !small &&
+          (compact
+            ? styles.compactMediaParticipantAvatar
+            : styles.regularMediaParticipantAvatar),
         { backgroundColor: palette.border, color: palette.text },
       ]}
     >
@@ -4782,16 +4798,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   mediaParticipantAvatar: {
-    borderRadius: 48,
-    fontSize: 36,
     fontWeight: '800',
-    height: 96,
-    lineHeight: 96,
     overflow: 'hidden',
     textAlign: 'center',
-    width: 96,
   },
-  mediaParticipantAvatarImage: { borderRadius: 48, height: 96, width: 96 },
+  regularMediaParticipantAvatar: { fontSize: 36, lineHeight: 96 },
+  compactMediaParticipantAvatar: { fontSize: 28, lineHeight: 64 },
+  mediaParticipantAvatarImage: { resizeMode: 'cover' },
   mediaParticipantName: { fontSize: 15, fontWeight: '800', maxWidth: '100%' },
   mediaParticipantState: { fontSize: 11 },
   participantStateRow: {
@@ -4871,7 +4884,7 @@ const styles = StyleSheet.create({
   compactMediaRoom: { minHeight: 0 },
   compactMediaStatus: { fontSize: 12, paddingHorizontal: 12, paddingTop: 6 },
   compactMediaGrid: { padding: 8 },
-  compactMediaParticipant: { minHeight: 0 },
+  compactMediaParticipant: { gap: 3, minHeight: 0, padding: 6 },
   successBackground: { backgroundColor: '#3ba55d' },
   dangerBackground: { backgroundColor: '#ed4245' },
   settingLabel: {

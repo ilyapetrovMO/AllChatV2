@@ -1,6 +1,6 @@
 import { FormEvent, Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { createMediaFrameQueue, createMediaJoinFrame, type DesktopMediaFrame } from "./media-signaling";
+import { createMediaFrameQueue, createMediaJoinFrame, mediaDisconnectMessage, type DesktopMediaFrame } from "./media-signaling";
 
 import type { DesktopBridge, ShellState } from "../shared/desktop-bridge";
 import type { Attachment, InstanceViewState } from "../shared/instance-state";
@@ -1774,6 +1774,7 @@ function DirectCallControls({
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
   const connectionTimeout = useRef<number | null>(null);
+  const mediaFailure = useRef("");
 
   const cleanup = () => {
     const active = media.current;
@@ -1794,6 +1795,7 @@ function DirectCallControls({
   async function connect(activeCall: import("../shared/instance-actions").DirectCall): Promise<void> {
     if (media.current || connectingRoom.current || !connectMedia) return;
     connectingRoom.current = activeCall.id;
+    mediaFailure.current = "";
     let provisionalStream: MediaStream | null = null;
     try {
     setStatus("Requesting microphone permission…");
@@ -1822,9 +1824,10 @@ function DirectCallControls({
     });
     socket = await connectMedia(instanceId, (value) => {
       void signaling.push(value as DesktopMediaFrame).catch((error) => {
-        setStatus(error instanceof Error ? error.message : "Media signaling failed.");
+        mediaFailure.current = error instanceof Error ? error.message : "Media signaling failed.";
+        setStatus(mediaFailure.current);
       });
-    }, (reason) => setStatus(reason || "Media signaling disconnected."));
+    }, (reason) => setStatus(mediaDisconnectMessage(mediaFailure.current, reason)));
     media.current = { stream, peer, socket, audio };
     provisionalStream = null;
     peer.ontrack = ({ streams, track }) => {

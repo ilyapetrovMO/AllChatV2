@@ -169,16 +169,23 @@ function registerIpc(): void {
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     const socketId = crypto.randomUUID();
     const socket = new WebSocket(url, { headers: { Authorization: `Bearer ${token}` } });
+    let closeReported = false;
+    const reportClosed = (reason: string) => {
+      if (closeReported) return;
+      closeReported = true;
+      if (!event.sender.isDestroyed()) event.sender.send(IPC_CHANNELS.mediaClosed, socketId, reason);
+    };
     mediaSockets.set(socketId, { owner: event.sender.id, socket });
     socket.on('message', (data) => {
       if (!event.sender.isDestroyed()) event.sender.send(IPC_CHANNELS.mediaFrame, socketId, String(data));
     });
-    socket.on('close', (_code, reason) => {
+    socket.on('close', (code, reason) => {
       mediaSockets.delete(socketId);
-      if (!event.sender.isDestroyed()) event.sender.send(IPC_CHANNELS.mediaClosed, socketId, String(reason));
+      const detail = reason.length ? `: ${String(reason)}` : '';
+      reportClosed(`Media signaling closed (${code})${detail}`);
     });
     socket.on('error', (error) => {
-      if (!event.sender.isDestroyed()) event.sender.send(IPC_CHANNELS.mediaClosed, socketId, error.message);
+      reportClosed(error.message);
     });
     await new Promise<void>((resolve, reject) => {
       socket.once('open', () => resolve());

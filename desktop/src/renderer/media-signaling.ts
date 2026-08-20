@@ -9,6 +9,10 @@ export function createMediaJoinFrame(roomID: string, sdp: RTCSessionDescriptionI
   return { version: 1, type: 'join', room_id: roomID, takeover: true, sdp } as const;
 }
 
+export function mediaDisconnectMessage(firstFailure: string, closeReason: string): string {
+  return firstFailure || closeReason || 'Media signaling disconnected.';
+}
+
 export function createMediaFrameQueue(
   peer: RTCPeerConnection,
   send: (frame: object) => void,

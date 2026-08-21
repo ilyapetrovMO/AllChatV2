@@ -477,9 +477,11 @@ function CommunityShell({
     type: "text" | "voice" | "dm";
     topic?: string;
   } | null>(null);
-  const [homeView, setHomeView] = useState<"community" | "direct-messages" | "activities">("community");
+  const [homeView, setHomeView] = useState<"community" | "direct-messages">("community");
   const [activityInstallations, setActivityInstallations] = useState<import("../shared/instance-actions").ActivityInstallation[] | null>(null);
   const [activityLaunch, setActivityLaunch] = useState<{activityId:string;token:string;runtimeUrl:string}|null>(null);
+	const [activityTrayOpen, setActivityTrayOpen] = useState(false);
+	const [activityError, setActivityError] = useState("");
   const [directMessageMemberId, setDirectMessageMemberId] = useState("");
   const [communityGuide, setCommunityGuide] = useState<string | null>(null);
   const [voiceParticipantsByChannel, setVoiceParticipantsByChannel] = useState<Record<string, import("../shared/instance-actions").VoiceParticipant[]>>({});
@@ -644,6 +646,32 @@ function CommunityShell({
     });
   };
   const directCallActive = !!(directCall?.state === "accepted" && conversation?.type === "dm" && directCall.direct_message_id === conversation.id);
+	const openActivityTray = () => {
+		setActivityTrayOpen((current) => !current);
+		setActivityError("");
+		if (activityInstallations !== null) return;
+		void onAction({ type: "list_activities" }).then((result) => {
+			if (result?.type === "activities") setActivityInstallations(result.activities);
+		}).catch(() => setActivityError("Activities are unavailable on this Instance."));
+	};
+	const activityDock = () => <>
+		{activityLaunch && <iframe className="call-activity-frame" title="Call Activity" sandbox="allow-scripts" src={`${activityLaunch.runtimeUrl}#${activityLaunch.token}`} />}
+		<div className="call-activity-dock">
+			{activityTrayOpen && <section className="call-activity-picker" aria-label="Call Activities">
+				<header><strong>Activities</strong>{activityLaunch && <button type="button" onClick={() => setActivityLaunch(null)}>Close Activity</button>}</header>
+				{activityError && <p role="status">{activityError}</p>}
+				{activityInstallations === null && !activityError && <p>Loading Activities…</p>}
+				{activityInstallations?.filter((item) => item.enabled).map((item) => <button type="button" key={item.manifest.id} onClick={() => {
+					setActivityError("");
+					void onAction({ type: "launch_activity", activityId: item.manifest.id }).then((result) => {
+						if (result?.type === "activity_launch") { setActivityLaunch(result); setActivityTrayOpen(false); }
+					}).catch(() => setActivityError("Could not launch this Activity."));
+				}}><span className="activity-mark">✎</span><span><strong>{item.manifest.name}</strong><small>{item.manifest.description}</small></span></button>)}
+				{activityInstallations?.filter((item) => item.enabled).length === 0 && <p>No Activities are enabled.</p>}
+			</section>}
+			<button className={activityTrayOpen || activityLaunch ? "active" : ""} type="button" aria-label="Open Activities" title="Activities" onClick={openActivityTray}><Icon name="rocket" /></button>
+		</div>
+	</>;
   useEffect(() => {
     if (!memberPopover) return;
     const dismiss = (event: MouseEvent) => {
@@ -1012,17 +1040,6 @@ function CommunityShell({
           <button
             className="direct-messages-home"
             type="button"
-            aria-current={homeView === "activities" ? "page" : undefined}
-            onClick={() => {
-              setRequestedVoiceRoom(null); setConversation(null); setSettingsView(null); setHomeView("activities"); setActivityLaunch(null);
-              void onAction({type:"list_activities"}).then(result => { if(result?.type==="activities") setActivityInstallations(result.activities); });
-            }}
-          >
-            Activities
-          </button>
-          <button
-            className="direct-messages-home"
-            type="button"
             onClick={() => {
               setRequestedVoiceRoom(null);
               setConversation(null);
@@ -1171,7 +1188,7 @@ function CommunityShell({
                       ? "Sessions"
                       : settingsView === "safety"
                         ? "Safety"
-                : conversation?.name || (homeView === "direct-messages" ? "Direct Messages" : homeView === "activities" ? "Activities" : "Home")}
+                : conversation?.name || (homeView === "direct-messages" ? "Direct Messages" : "Home")}
           </h1>
           {conversation?.type === "text" && conversation.topic && (
             <span className="channel-topic">{conversation.topic}</span>
@@ -1525,6 +1542,7 @@ function CommunityShell({
                   </article>;
                 })}
               </div>
+				{requestedVoiceRoom === conversation.id && activityDock()}
             </section>
           ) : (
             <section className={directCallActive ? "conversation-workspace direct-call-workspace" : "conversation-workspace"}>
@@ -1549,6 +1567,7 @@ function CommunityShell({
                       </article>;
                     })}
                   </div>
+					{activityDock()}
                 </section>
               )}
             <div
@@ -1850,8 +1869,6 @@ function CommunityShell({
             </div>
             </section>
           )
-        ) : homeView === "activities" ? (
-          activityLaunch ? <section className="desktop-activity-host"><header><button type="button" onClick={()=>setActivityLaunch(null)}>← Activities</button><strong>{activityInstallations?.find(item=>item.manifest.id===activityLaunch.activityId)?.manifest.name||"Activity"}</strong></header><iframe title="Activity" sandbox="allow-scripts" src={`${activityLaunch.runtimeUrl}#${activityLaunch.token}`} /></section> : <section className="desktop-activities"><p className="eyebrow">Community Activities</p><h2>Activities</h2><p>Open an installed Activity to create or join a shared experience.</p><div className="desktop-activity-grid">{activityInstallations===null?<p>Loading Activities…</p>:activityInstallations.map(item=><article key={item.manifest.id}><span className="activity-mark">✎</span><div><h3>{item.manifest.name}</h3><p>{item.manifest.description}</p><small>By {item.manifest.developer} · {item.manifest.version}</small></div>{item.enabled?<button type="button" onClick={()=>void onAction({type:"launch_activity",activityId:item.manifest.id}).then(result=>{if(result?.type==="activity_launch")setActivityLaunch(result)})}>Open</button>:<span>Disabled</span>}</article>)}</div></section>
         ) : homeView === "direct-messages" ? (
           <section className="dm-home">
             <div>
@@ -2993,6 +3010,7 @@ type IconName =
   | "paperclip"
   | "phone"
   | "plus"
+	| "rocket"
   | "pin"
   | "search"
   | "send"
@@ -3032,6 +3050,13 @@ function Icon({ name }: { name: IconName }) {
         <path d="M9 20v-6h6v6" />
       </>
     ),
+	rocket: (
+		<>
+			<path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2" />
+			<path d="M9 15 4 14l7.5-7.5C14.5 3.5 18 3 21.5 3c0 3.5-.5 7-3.5 10L10.5 20 9 15Z" />
+			<path d="M14 6.5a3 3 0 1 0 3.5 3.5" />
+		</>
+	),
     messages: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />,
     mic: (
       <>

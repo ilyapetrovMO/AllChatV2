@@ -267,6 +267,7 @@ describe('desktop renderer bootstrap', () => {
     await waitFor(() => expect(document.querySelector('.instance-avatar')).toHaveAttribute('src', 'blob:allchat-media'));
     expect(executeInstance).toHaveBeenCalledWith('home', { type: 'load_asset', path: '/api/v1/community-avatar?v=42' });
     expect(screen.getByRole('button', { name: 'Add Community' })).toBeVisible();
+		expect(screen.queryByRole('button', { name: 'Open Activities' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Direct Messages' })).toBeVisible();
     expect(screen.getByLabelText('Search Messages')).toBeVisible();
     expect(document.querySelector('.presence-dot.mobile')).toBeInTheDocument();
@@ -545,6 +546,7 @@ describe('desktop renderer bootstrap', () => {
     expect(directCallGrid.querySelector('.media-stage-grid')).toHaveAttribute('data-tile-count', '2');
     expect(directCallGrid.querySelectorAll('.media-stage-visual')).toHaveLength(2);
     expect(within(directCallGrid).getByText('You')).toBeVisible();
+		expect(within(directCallGrid).getByRole('button', { name: 'Open Activities' })).toBeVisible();
     const alexCallTile = within(directCallGrid).getByRole('button', { name: 'Focus alex' });
     fireEvent.click(alexCallTile);
     expect(alexCallTile).toHaveClass('expanded');
@@ -588,6 +590,7 @@ describe('desktop renderer bootstrap', () => {
     const voiceMembers = await screen.findByRole('list', { name: 'Lounge participants' });
     expect(within(voiceMembers).getByText('nora')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Lounge' }));
+		expect(screen.getByRole('button', { name: 'Open Activities' })).toBeVisible();
     expect(document.querySelector('.media-stage-tile.speaking')).toBeInTheDocument();
     fireEvent.contextMenu(within(voiceMembers).getByRole('button', { name: 'nora voice participant' }), { clientX: 400, clientY: 240 });
     const voiceMenu = screen.getByRole('menu', { name: 'Voice Member actions' });

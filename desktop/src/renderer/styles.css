@@ -556,6 +556,18 @@ a { color: #00a8fc; }
 .search-results { padding: 28px 32px; }
 .search-results article { border-color: var(--border); }
 .media-stage { display: grid; min-height: 0; padding: 24px; }
+.media-stage { position: relative; }
+.call-activity-dock { position: absolute; z-index: 30; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: rgb(17 18 20 / 92%); box-shadow: var(--shadow); backdrop-filter: blur(12px); }
+.call-activity-dock > button { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 8px; color: var(--muted); background: transparent; }
+.call-activity-dock > button:hover,.call-activity-dock > button.active { color: white; background: var(--brand); }
+.call-activity-picker { position: absolute; bottom: 54px; left: 50%; width: min(360px,calc(100vw - 120px)); max-height: 320px; overflow: auto; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elevated); box-shadow: var(--shadow); transform: translateX(-50%); }
+.call-activity-picker header { display: flex; align-items: center; justify-content: space-between; padding: 4px 5px 10px; }
+.call-activity-picker header button { padding: 5px 8px; }
+.call-activity-picker > button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; color: var(--text); background: transparent; text-align: left; }
+.call-activity-picker > button:hover { background: var(--bg-hover); }
+.call-activity-picker > button > span:last-child { display: grid; }
+.call-activity-picker small { color: var(--muted); }
+.call-activity-frame { position: absolute; z-index: 20; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg-main); }
 .media-stage-grid { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); place-items: stretch; align-content: center; min-height: 100%; gap: 12px; }
 .media-stage-grid[data-tile-count="1"] { grid-template-columns: minmax(0, 1fr); }
 .media-stage-grid[data-tile-count="2"], .media-stage-grid[data-tile-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }

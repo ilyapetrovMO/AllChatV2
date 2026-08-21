@@ -159,3 +159,23 @@ _Avoid_: Complaint, automatic infraction
 **Archive**:
 A reversible state that preserves a Text Channel or Voice Room and its history while removing it from normal active use.
 _Avoid_: Delete, hide
+
+**Activity**:
+A modular interactive application installed for a Community and run for Members inside an isolated client frame.
+_Avoid_: Bot, plugin, embedded website
+
+**Activity Installation**:
+A versioned Activity package accepted and enabled or disabled by the Community Owner.
+_Avoid_: Extension, server plugin
+
+**Activity Session**:
+A short-lived, Activity-scoped authorization connecting one Member to one Activity and optionally one Activity Resource.
+_Avoid_: Session, login token
+
+**Activity Resource**:
+A durable shared object managed by an Activity, such as a Sketchboard, with Activity-defined ownership and collaboration rules.
+_Avoid_: Channel, document
+
+**Sketchboard**:
+An Activity Resource owned by its creating Member on which active participants draw ordered strokes together.
+_Avoid_: Whiteboard channel, canvas file

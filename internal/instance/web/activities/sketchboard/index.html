@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sketchboard</title>
+  <link rel="stylesheet" href="/assets/activities.css">
+  <script src="/assets/sketchboard.js" defer></script>
+</head>
+<body class="sketchboard-activity">
+  <main>
+    <header class="sketchboard-heading">
+      <div><p class="eyebrow">AllChat Activity</p><h1>Sketchboard</h1><p>Pick a board or create a new shared canvas.</p></div>
+      <form id="create-board"><label>Board name<input name="name" maxlength="80" required placeholder="Design ideas"></label><button>Create board</button></form>
+    </header>
+    <p id="activity-status" role="status" aria-live="polite">Loading boards…</p>
+    <section id="board-grid" class="board-grid" aria-label="Sketchboards"></section>
+    <section id="board-workspace" class="board-workspace" hidden>
+      <header><button id="back-to-boards" type="button">← Boards</button><div><h2 id="board-title"></h2><p id="board-participants"></p></div><button id="clear-board" type="button">Clear</button></header>
+      <canvas id="sketch-canvas" width="1280" height="720" aria-label="Shared sketchboard"></canvas>
+      <div class="sketch-tools"><label>Color <input id="stroke-color" type="color" value="#f2f3f5"></label><label>Size <input id="stroke-size" type="range" min="1" max="24" value="4"></label></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -208,6 +208,20 @@ export class InstanceCoordinator {
       if (!response.ok || !Array.isArray(messages) || !messages.every(isMessage)) throw new Error('Could not load Pinned Messages.');
       return { type: 'messages', conversationId: action.channelId, direction: 'older', page: { messages, has_more: false, next_before: 0 } };
     }
+    if (action.type === 'list_activities') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/activities`, { headers: { Authorization: `Bearer ${token}` } });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !body || typeof body !== 'object' || !Array.isArray((body as {activities?: unknown}).activities)) throw new Error(readError(body, 'Could not load Activities.'));
+      return { type: 'activities', activities: (body as {activities: import('../shared/instance-actions').ActivityInstallation[]}).activities };
+    }
+    if (action.type === 'launch_activity') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/activities/${encodeURIComponent(action.activityId)}/launch`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ resource_id: action.resourceId || '' }) });
+      const body: unknown = await response.json().catch(() => undefined);
+      if (!response.ok || !body || typeof body !== 'object') throw new Error(readError(body, 'Could not launch Activity.'));
+      const launch = body as {token?: unknown;runtime_url?: unknown;expires_at?: unknown};
+      if (typeof launch.token !== 'string' || typeof launch.runtime_url !== 'string' || typeof launch.expires_at !== 'string') throw new Error('Instance returned an invalid Activity launch.');
+      return { type: 'activity_launch', activityId: action.activityId, token: launch.token, runtimeUrl: new URL(launch.runtime_url, profile.baseUrl).toString(), expiresAt: launch.expires_at };
+    }
     if (action.type === 'search_messages') {
       const query = new URLSearchParams({ q: action.query, limit: '25' });
       if (action.cursor) query.set('cursor', action.cursor);

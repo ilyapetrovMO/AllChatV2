@@ -118,6 +118,78 @@ func TestFreshInstanceServesEmbeddedWebAndHealth(t *testing.T) {
 	}
 }
 
+func TestSketchboardActivityPersistsBoardsAndEnforcesCreatorOwnership(t *testing.T) {
+	app := startInstance(t, t.TempDir())
+	ownerClient := newClient(t)
+	owner := bootstrapOwner(t, ownerClient, app, "activity-owner", "correct horse battery staple")
+	memberClient := newClient(t)
+	member := registerMember(t, memberClient, app, createInvitation(t, ownerClient, app, 10, 1).Token, "activity-member", "another strong password")
+
+	type launchView struct {
+		Token      string `json:"token"`
+		RuntimeURL string `json:"runtime_url"`
+	}
+	launch := func(client *http.Client) launchView {
+		var value launchView
+		decodeResponse(t, requestJSON(t, client, http.MethodPost, app.url("/api/v1/activities/allchat.sketchboard/launch"), map[string]string{}), http.StatusCreated, &value)
+		return value
+	}
+	ownerLaunch, memberLaunch := launch(ownerClient), launch(memberClient)
+	if ownerLaunch.Token == "" || ownerLaunch.RuntimeURL != "/activity-runtime/allchat.sketchboard/" {
+		t.Fatalf("launch=%+v", ownerLaunch)
+	}
+
+	activityRequest := func(token, method, path string, body any) *http.Response {
+		var source io.Reader
+		if body != nil {
+			encoded, err := json.Marshal(body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			source = bytes.NewReader(encoded)
+		}
+		request, err := http.NewRequest(method, app.url(path), source)
+		if err != nil {
+			t.Fatal(err)
+		}
+		request.Header.Set("Authorization", "Activity "+token)
+		request.Header.Set("Content-Type", "application/json")
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return response
+	}
+	type boardView struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		OwnerID   string `json:"owner_id"`
+		CanDelete bool   `json:"can_delete"`
+	}
+	var board boardView
+	decodeResponse(t, activityRequest(ownerLaunch.Token, http.MethodPost, "/api/v1/activities/sketchboard/boards", map[string]string{"name": "Architecture"}), http.StatusCreated, &board)
+	if board.Name != "Architecture" || board.OwnerID != owner["id"] || !board.CanDelete {
+		t.Fatalf("board=%+v owner=%v", board, owner)
+	}
+	forbidden := activityRequest(memberLaunch.Token, http.MethodDelete, "/api/v1/activities/sketchboard/boards/"+board.ID, nil)
+	defer forbidden.Body.Close()
+	if forbidden.StatusCode != http.StatusForbidden {
+		t.Fatalf("non-owner delete=%d member=%s", forbidden.StatusCode, member.ID)
+	}
+	deleted := activityRequest(ownerLaunch.Token, http.MethodDelete, "/api/v1/activities/sketchboard/boards/"+board.ID, nil)
+	defer deleted.Body.Close()
+	if deleted.StatusCode != http.StatusNoContent {
+		t.Fatalf("owner delete=%d", deleted.StatusCode)
+	}
+	var listing struct {
+		Boards []boardView `json:"boards"`
+	}
+	decodeResponse(t, activityRequest(memberLaunch.Token, http.MethodGet, "/api/v1/activities/sketchboard/boards", nil), http.StatusOK, &listing)
+	if len(listing.Boards) != 0 {
+		t.Fatalf("boards=%+v", listing.Boards)
+	}
+}
+
 func TestAcceptedDirectCallNegotiatesRealPeersThroughPublicMediaWebSocket(t *testing.T) {
 	app := startInstance(t, t.TempDir())
 	ownerClient := newClient(t)

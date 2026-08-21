@@ -11,6 +11,8 @@ export interface CommunityRole { id: string; name: string; position: number; def
 export interface CommunityInvitation { id: string; token?: string; expires_at: string; max_uses: number; use_count: number; revoked: boolean }
 export interface SoundboardSound { id: string; name: string; emoji?: string; content_type: string; size: number; duration_ms: number; position: number; audio_url: string }
 export interface CommunitySettings { name: string; avatar_url?: string; max_attachment_mib: number; home_markdown: string; push_relay_url: string; push_key_id: string; push_public_key: string; community_ringtone_set?: boolean }
+export interface ActivityManifest { id: string; name: string; description: string; developer: string; version: string; host_api_versions: number[]; capabilities: string[]; bundled: boolean }
+export interface ActivityInstallation { manifest: ActivityManifest; enabled: boolean; installed_at: string }
 
 export type InstanceAction =
   | { type: 'load_messages'; conversationId: string; direct: boolean; before?: number; after?: number; limit?: number }
@@ -78,7 +80,9 @@ export type InstanceAction =
 	| { type: 'remove_community_avatar' }
   | { type: 'update_ringtone'; scope: 'community' | 'member'; contentType: string; data: Uint8Array }
   | { type: 'remove_ringtone'; scope: 'community' | 'member' }
-  | { type: 'community_home' };
+  | { type: 'community_home' }
+  | { type: 'list_activities' }
+  | { type: 'launch_activity'; activityId: string; resourceId?: string };
 
 export type MessagePage = { messages: Message[]; has_more: boolean; next_before?: number; next_after?: number };
 
@@ -114,4 +118,6 @@ export type InstanceActionResult =
   | { type: 'community_settings'; settings: CommunitySettings }
   | { type: 'community_settings_unavailable'; reason: string }
   | { type: 'community_home'; markdown: string }
+  | { type: 'activities'; activities: ActivityInstallation[] }
+  | { type: 'activity_launch'; activityId: string; token: string; runtimeUrl: string; expiresAt: string }
   | { type: 'accepted' };

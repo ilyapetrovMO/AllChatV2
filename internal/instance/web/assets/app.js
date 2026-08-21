@@ -36,8 +36,8 @@
 		if(sidebar.querySelector('.community-header')?.textContent.trim()!=="Community Settings")return;
 		const nav=sidebar.querySelector('.settings-nav');if(!nav)return;
 		const title=root.querySelector('.content-header h1')?.textContent.trim()||"";
-		const active={"Admin Dashboard":"/admin/dashboard","Community Settings":"/admin/settings","Channels":"/admin/channels","Roles":"/admin/roles","Invitations":"/admin/invitations","Soundboard":"/admin/soundboard"}[title];
-		nav.replaceChildren(...[["/admin/dashboard","Dashboard"],["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
+		const active={"Admin Dashboard":"/admin/dashboard","Community Settings":"/admin/settings","Channels":"/admin/channels","Roles":"/admin/roles","Invitations":"/admin/invitations","Soundboard":"/admin/soundboard","Activities":"/admin/activities"}[title];
+		nav.replaceChildren(...[["/admin/dashboard","Dashboard"],["/admin/settings","General"],["/admin/channels","Channels"],["/admin/roles","Roles"],["/admin/invitations","Invitations"],["/admin/soundboard","Soundboard"],["/admin/activities","Activities"]].map(([href,label])=>{const link=document.createElement("a");link.href=href;link.textContent=label;if(href===active)link.setAttribute("aria-current","page");return link}));
 	});
   };
 	const installMarkdownCodeHighlighting=(root=document)=>root.querySelectorAll?.('.community-markdown pre code:not([data-highlighted]),.message .body pre code:not([data-highlighted])').forEach(code=>{
@@ -311,7 +311,7 @@
     if (!menu.querySelector('a[href="/admin/channels"]')) return;
 	const settings=[...menu.querySelectorAll('a')].find(link=>link.textContent.trim()==="Community Settings");if(settings)settings.href="/admin/settings";
     const before = menu.querySelector('a[href="/profile"]');
-    for (const [href, label] of [["/admin/dashboard", "Dashboard"], ["/admin/invitations", "Invitations"], ["/admin/roles", "Roles"], ["/admin/soundboard", "Soundboard"]]) {
+    for (const [href, label] of [["/admin/dashboard", "Dashboard"], ["/admin/invitations", "Invitations"], ["/admin/roles", "Roles"], ["/admin/soundboard", "Soundboard"], ["/admin/activities", "Activities"]]) {
       if (menu.querySelector(`a[href="${href}"]`)) continue;
       const link = document.createElement("a");
       link.href = href;
@@ -713,6 +713,9 @@
   const installAdminDashboard=root=>{if(!root.querySelector?.("[data-admin-dashboard]"))return;import("/assets/admin-dashboard.js").then(()=>window.installAllChatAdminDashboard?.(root)).catch(()=>{})};
   installAdminDashboard(document);
   document.addEventListener("allchat:view-swapped",event=>installAdminDashboard(event.detail?.root||document));
+
+  const installActivityPackageForm=root=>{const form=root.querySelector?.("[data-activity-package]");if(!form||form.dataset.ready)return;form.dataset.ready="true";form.addEventListener("submit",async event=>{event.preventDefault();const file=form.querySelector('[name="package"]')?.files?.[0],status=form.querySelector('[role="status"]'),button=form.querySelector("button");if(!file)return;button.disabled=true;status.textContent="Installing…";try{const csrf=form.querySelector('[name="csrf_token"]')?.value||"",response=await fetch("/api/v1/admin/activities/install",{method:"POST",headers:{"Content-Type":"application/zip","X-CSRF-Token":csrf},body:file});const body=await response.json().catch(()=>({}));if(!response.ok)throw new Error(body.error||"Could not install Activity package.");status.textContent=`${body.manifest.name} installed and disabled for review.`;location.reload()}catch(error){status.textContent=error.message}finally{button.disabled=false}})};
+  installActivityPackageForm(document);document.addEventListener("allchat:view-swapped",event=>installActivityPackageForm(event.detail?.root||document));
 
   const installVersionWatcher=()=>{
     let loadedBuild="",prompted=false;

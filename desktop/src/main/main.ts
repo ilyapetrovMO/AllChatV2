@@ -464,6 +464,8 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
     return;
   }
   if (value.type === 'list_pins') { assertString(value.channelId, 'Channel identity'); return; }
+  if (value.type === 'list_activities') return;
+  if (value.type === 'launch_activity') { assertString(value.activityId, 'Activity identity'); if (value.resourceId !== undefined) assertString(value.resourceId, 'Activity resource identity'); return; }
   if (value.type === 'search_messages') { assertString(value.query, 'Search query'); if (value.query.length > 500) throw new Error('Search query is invalid'); return; }
   if (value.type === 'upload_attachment') {
     assertString(value.name, 'Attachment name'); assertString(value.contentType, 'Attachment content type');

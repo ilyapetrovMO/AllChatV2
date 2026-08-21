@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"allchat/internal/activities"
 	"allchat/internal/community"
 	"allchat/internal/identity"
 	"allchat/internal/media"
@@ -30,7 +31,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 29
+const schemaVersion = 30
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -42,6 +43,7 @@ type Instance struct {
 	db             *sql.DB
 	identity       *identity.Service
 	community      *community.Service
+	activities     *activities.Service
 	live           *liveState
 	media          *media.Manager
 	bootstrapToken string
@@ -170,7 +172,7 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 			mobilePush.Close()
 		}
 	}()
-	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC(), webPush: webPush, mobilePush: mobilePush}
+	app := &Instance{config: config, logger: logger, db: db, lock: lock, identity: identityService, community: communityService, activities: activities.New(db, config.DataDir), live: newLiveState(), media: mediaManager, bootstrapToken: bootstrapToken, tlsConfig: tlsConfig, acme: acmeManager, turnIssued: map[string][]time.Time{}, startedAt: time.Now().UTC(), webPush: webPush, mobilePush: mobilePush}
 	if config.TURNPublicIP != "" {
 		secret, secretErr := loadOrCreateSecret(filepath.Join(config.DataDir, "turn-secret"))
 		if secretErr != nil {
@@ -972,6 +974,55 @@ func initializeSchema(db *sql.DB) error {
 			return err
 		}
 	}
+	if currentVersion < 30 {
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS activity_installations (
+				activity_id TEXT PRIMARY KEY,
+				version TEXT NOT NULL,
+				manifest TEXT NOT NULL,
+				enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+				installed_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+			INSERT OR IGNORE INTO activity_installations(activity_id,version,manifest,enabled,installed_at,updated_at)
+				VALUES('allchat.sketchboard','1.0.0','{"id":"allchat.sketchboard","name":"Sketchboard","developer":"AllChat","host_api_versions":[1],"capabilities":["community.identity","resource.storage","resource.realtime"]}',1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);
+			CREATE TABLE IF NOT EXISTS activity_sessions (
+				id TEXT PRIMARY KEY,
+				token_hash BLOB NOT NULL UNIQUE,
+				activity_id TEXT NOT NULL REFERENCES activity_installations(activity_id) ON DELETE CASCADE,
+				member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+				resource_id TEXT,
+				created_at TEXT NOT NULL,
+				expires_at TEXT NOT NULL
+			);
+			CREATE INDEX IF NOT EXISTS activity_sessions_expiry ON activity_sessions(expires_at);
+			CREATE TABLE IF NOT EXISTS sketchboards (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 80),
+				owner_id TEXT NOT NULL REFERENCES members(id),
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL,
+				deleted_at TEXT,
+				snapshot BLOB NOT NULL DEFAULT '[]',
+				next_sequence INTEGER NOT NULL DEFAULT 1 CHECK(next_sequence > 0)
+			);
+			CREATE INDEX IF NOT EXISTS sketchboards_active_updated ON sketchboards(deleted_at,updated_at DESC);
+			CREATE TABLE IF NOT EXISTS sketchboard_operations (
+				board_id TEXT NOT NULL REFERENCES sketchboards(id) ON DELETE CASCADE,
+				sequence INTEGER NOT NULL,
+				member_id TEXT NOT NULL REFERENCES members(id),
+				kind TEXT NOT NULL CHECK(kind IN ('stroke','clear')),
+				payload BLOB NOT NULL,
+				created_at TEXT NOT NULL,
+				PRIMARY KEY(board_id,sequence)
+			);
+		`); err != nil {
+			return fmt.Errorf("create Activity schema: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 30, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return err
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}
@@ -1015,6 +1066,19 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("PUT /api/v1/member-ringtone", i.updateMemberRingtoneAPI)
 	mux.HandleFunc("DELETE /api/v1/member-ringtone", i.removeMemberRingtoneAPI)
 	mux.HandleFunc("GET /api/v1/ringtone", i.ringtoneAPI)
+	mux.HandleFunc("GET /api/v1/activities", i.activitiesAPI)
+	mux.HandleFunc("PUT /api/v1/admin/activities/{activityID}", i.setActivityEnabledAPI)
+	mux.HandleFunc("POST /api/v1/admin/activities/install", i.installActivityAPI)
+	mux.HandleFunc("POST /api/v1/activities/{activityID}/launch", i.launchActivityAPI)
+	mux.HandleFunc("GET /api/v1/activities/session", i.activitySessionAPI)
+	mux.HandleFunc("OPTIONS /api/v1/activities/session", i.activitySessionAPI)
+	mux.HandleFunc("GET /api/v1/activities/sketchboard/boards", i.sketchboardsAPI)
+	mux.HandleFunc("POST /api/v1/activities/sketchboard/boards", i.sketchboardsAPI)
+	mux.HandleFunc("OPTIONS /api/v1/activities/sketchboard/boards", i.sketchboardsAPI)
+	mux.HandleFunc("GET /api/v1/activities/sketchboard/boards/{boardID}", i.sketchboardAPI)
+	mux.HandleFunc("DELETE /api/v1/activities/sketchboard/boards/{boardID}", i.sketchboardAPI)
+	mux.HandleFunc("OPTIONS /api/v1/activities/sketchboard/boards/{boardID}", i.sketchboardAPI)
+	mux.HandleFunc("GET /api/v1/activities/sketchboard/realtime", i.sketchboardRealtime)
 	if i.config.MetricsEnabled {
 		mux.HandleFunc("GET /metrics", i.metrics)
 	}
@@ -1160,6 +1224,8 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("GET /admin/channels", i.channelsAdminPage)
 	mux.HandleFunc("GET /admin/settings", i.communitySettingsPage)
 	mux.HandleFunc("GET /admin/dashboard", i.adminDashboardPage)
+	mux.HandleFunc("GET /admin/activities", i.activitiesAdminPage)
+	mux.HandleFunc("POST /admin/activities/{activityID}", i.setActivityEnabledWeb)
 	mux.HandleFunc("POST /admin/settings", i.updateCommunitySettingsWeb)
 	mux.HandleFunc("POST /admin/categories", i.createCategoryWeb)
 	mux.HandleFunc("POST /admin/channels", i.createChannelWeb)
@@ -1169,6 +1235,9 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /messages/{messageID}/edit", i.editMessageWeb)
 	mux.HandleFunc("POST /messages/{messageID}/delete", i.deleteMessageWeb)
 	mux.HandleFunc("GET /search", i.searchPage)
+	mux.HandleFunc("GET /activities", i.activitiesPage)
+	mux.HandleFunc("GET /activities/{activityID}", i.activityHostPage)
+	mux.HandleFunc("GET /activity-runtime/{activityID}/{path...}", i.activityRuntime)
 	mux.HandleFunc("GET /dms", i.directMessagesPage)
 	mux.HandleFunc("POST /dms", i.openDirectMessageWeb)
 	mux.HandleFunc("POST /dms/{dmID}/block", i.setDirectMessageBlockWeb)

@@ -15,6 +15,7 @@ if (!browserType) throw new Error(`unsupported ALLCHAT_MEDIA_BROWSER: ${browserN
 const diagnosticDirectory = path.resolve(__dirname, '../../.dev/media-tests', browserName);
 const failurePath = path.join(diagnosticDirectory, 'failure.json');
 const hardTimeoutMS = Number(process.env.ALLCHAT_MEDIA_TIMEOUT_MS || 5 * 60_000);
+const startupTimeoutMS = Number(process.env.ALLCHAT_MEDIA_STARTUP_TIMEOUT_MS || 120_000);
 const timeline = [];
 let currentPhase = 'initializing';
 
@@ -48,12 +49,12 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => {
   process.exit(1);
 });
 
-async function waitForServer(deadline = Date.now() + 60_000) {
+async function waitForServer(deadline = Date.now() + startupTimeoutMS) {
   while (Date.now() < deadline) {
     try { const response = await fetch(`${baseURL}/login`); if (response.ok) return; } catch (_) {}
     await new Promise(resolve => setTimeout(resolve, 100));
   }
-  throw new Error('media test Instance did not start');
+  throw new Error(`media test Instance did not start within ${startupTimeoutMS}ms`);
 }
 
 async function csrf(context) {

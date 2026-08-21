@@ -53,6 +53,7 @@ jobs:
         env:
           ALLCHAT_MEDIA_BROWSERS: ${{ github.event_name == 'pull_request' && 'chromium' || 'chromium firefox webkit' }}
           ALLCHAT_MEDIA_TIMEOUT_MS: 300000
+          ALLCHAT_MEDIA_STARTUP_TIMEOUT_MS: 120000
         run: |
           failed=0
           for browser in $ALLCHAT_MEDIA_BROWSERS; do

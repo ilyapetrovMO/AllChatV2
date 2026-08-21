@@ -14,12 +14,14 @@ export type VoiceVideoSettings = {
   memberVolumes: Record<string, number>;
   noiseGate: boolean;
   noiseGateThresholdDB: number;
+  screenShareMode: 'auto' | 'text' | 'balanced' | 'motion' | 'data-saver';
 };
 
 export const DEFAULT_VOICE_VIDEO_SETTINGS: VoiceVideoSettings = Object.freeze({
   version: 1, microphoneID: '', speakerID: '', cameraID: '',
   echoCancellation: true, noiseSuppression: true, noiseSuppressionMode: 'standard', autoGainControl: false,
   inputGain: 1, outputVolume: 1, memberVolumes: {}, noiseGate: true, noiseGateThresholdDB: -50,
+  screenShareMode: 'auto',
 });
 
 const clamp = (value: unknown, minimum: number, maximum: number, fallback: number) => typeof value === 'number' && Number.isFinite(value) ? Math.min(maximum, Math.max(minimum, value)) : fallback;
@@ -34,6 +36,7 @@ export function normalizeVoiceVideoSettings(value: unknown): VoiceVideoSettings 
     echoCancellation: bool(source.echoCancellation, true), noiseSuppression: bool(source.noiseSuppression, true), noiseSuppressionMode: source.noiseSuppressionMode === 'enhanced' || source.noiseSuppressionMode === 'off' ? source.noiseSuppressionMode : 'standard', autoGainControl: bool(source.autoGainControl, false),
     inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1), memberVolumes,
     noiseGate: bool(source.noiseGate, true), noiseGateThresholdDB: clamp(source.noiseGateThresholdDB, -80, -20, -50),
+    screenShareMode: source.screenShareMode === 'text' || source.screenShareMode === 'balanced' || source.screenShareMode === 'motion' || source.screenShareMode === 'data-saver' ? source.screenShareMode : 'auto',
   };
 }
 

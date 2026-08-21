@@ -32,6 +32,7 @@ describe('DirectCallControls remote lifecycle', () => {
         onAction={onAction}
         requestedVoiceRoom={null}
         requestedVoiceRoomName=""
+        focusedMediaMemberId={null}
         onVoiceRoomChange={vi.fn()}
         onCallChange={vi.fn()}
       />
@@ -62,7 +63,7 @@ describe('DirectCallControls remote lifecycle', () => {
       if (action.type === 'load_asset') return {type: 'asset', contentType: 'application/octet-stream', data: new Uint8Array()};
       return {type: 'accepted'};
     });
-    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
+    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" focusedMediaMemberId={null} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
     expect(await screen.findByRole('region', {name: 'Incoming Call controls'})).toBeVisible();
     expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'});
   });
@@ -83,6 +84,7 @@ describe('DirectCallControls remote lifecycle', () => {
         onAction={onAction}
         requestedVoiceRoom={null}
         requestedVoiceRoomName=""
+        focusedMediaMemberId={null}
         onOpenDirectCall={onOpenDirectCall}
         onVoiceRoomChange={vi.fn()}
         onCallChange={vi.fn()}
@@ -122,6 +124,18 @@ describe('remote screen track lifecycle', () => {
     expect(screens).toEqual({});
 
     Object.defineProperty(track, 'readyState', { configurable: true, value: 'ended', writable: true });
+    track.dispatchEvent(new Event('unmute'));
+    expect(screens).toEqual({});
+  });
+  it('does not resurrect a stopped publication on a late unmute', () => {
+    const track = new EventTarget() as MediaStreamTrack;
+    Object.defineProperties(track, { muted: { configurable: true, value: false, writable: true }, readyState: { configurable: true, value: 'live', writable: true } });
+    const stream = {} as MediaStream;
+    let publishing = true, screens: Record<string, MediaStream> = {};
+    bindRemoteScreenTrack(track, stream, 'mobile', update => { screens = update(screens); }, () => publishing);
+    expect(screens.mobile).toBe(stream);
+    publishing = false;
+    track.dispatchEvent(new Event('mute'));
     track.dispatchEvent(new Event('unmute'));
     expect(screens).toEqual({});
   });

@@ -302,6 +302,23 @@ export function VoiceVideoSettingsScreen({
           </View>
         </Section>
         <Section
+          title="Screen sharing"
+          subtitle="Choose whether readability, motion, or data usage has priority."
+          palette={palette}
+        >
+          <View style={styles.segmented}>
+            {(['auto', 'text', 'balanced', 'motion', 'data-saver'] as const).map(mode => (
+              <Choice
+                active={value.screenShareMode === mode}
+                key={mode}
+                label={mode === 'data-saver' ? 'Data saver' : mode[0].toUpperCase() + mode.slice(1)}
+                onPress={() => update({screenShareMode: mode})}
+                palette={palette}
+              />
+            ))}
+          </View>
+        </Section>
+        <Section
           title="Advanced"
           subtitle="Recovery and diagnostic controls."
           palette={palette}

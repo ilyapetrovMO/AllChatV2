@@ -309,6 +309,33 @@ func TestScreenVisibilityBeforeTrackSelectsHighLayerWhenTrackAppears(t *testing.
 	}
 }
 
+func TestScreenQualityIsIndependentPerViewer(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	for _, memberID := range []string{"sharer", "focused", "thumbnail"} {
+		if _, err := manager.Join(memberID, "room"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := manager.SetScreenQuality("focused", "sharer", "high"); err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.SetScreenQuality("thumbnail", "sharer", "low"); err != nil {
+		t.Fatal(err)
+	}
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+	if got := manager.viewerScreenQualityLocked("room", "focused", "sharer"); got != "high" {
+		t.Fatalf("focused quality = %q", got)
+	}
+	if got := manager.viewerScreenQualityLocked("room", "thumbnail", "sharer"); got != "low" {
+		t.Fatalf("thumbnail quality = %q", got)
+	}
+	if got := manager.maximumScreenQualityLocked("room", "sharer"); got != "high" {
+		t.Fatalf("publisher quality = %q", got)
+	}
+}
+
 func TestSpeakingStateClearsAfterAudioStops(t *testing.T) {
 	manager := NewManager(time.Second)
 	defer manager.Close()

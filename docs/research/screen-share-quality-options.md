@@ -2,6 +2,17 @@
 
 Date: 2026-08-21
 
+## Implementation status
+
+The first implementation slice now covers all four planned phases:
+
+- **Phase 1 — correctness and focus:** viewer-local participant focus is available, and `video-stopped` immediately clears remote presentation state and detached video sources.
+- **Phase 2 — bounded sender quality:** desktop, web, and mobile expose semantic screen-share modes; desktop and web publish bounded `q`/`h`/`f` simulcast layers.
+- **Phase 3 — automatic adaptation:** desktop Auto mode samples sender statistics with downgrade/upgrade hysteresis and records bounded diagnostics.
+- **Phase 4 — receiver-specific delivery:** the SFU tracks screen layers and quality subscriptions per viewer and signals the publisher with the highest currently requested tier.
+
+The architecture is complete enough for end-to-end profiling. Follow-up tuning should use real calls to calibrate thresholds, bitrate ceilings, mobile capture scaling, and codec/device interoperability rather than changing the control model.
+
 ## Executive recommendation
 
 Treat these as one product/transport feature rather than three unrelated fixes:

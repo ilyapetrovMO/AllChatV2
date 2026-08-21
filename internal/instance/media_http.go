@@ -28,6 +28,8 @@ type mediaCommand struct {
 	ResumeToken string                    `json:"resume_token,omitempty"`
 	Takeover    bool                      `json:"takeover,omitempty"`
 	Visible     bool                      `json:"visible,omitempty"`
+	OwnerID     string                    `json:"owner_id,omitempty"`
+	Quality     string                    `json:"quality,omitempty"`
 	Muted       bool                      `json:"muted,omitempty"`
 	SoundID     string                    `json:"sound_id,omitempty"`
 	Candidate   webrtc.ICECandidateInit   `json:"candidate,omitempty"`
@@ -151,6 +153,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			}
 		case "screen-visibility":
 			_ = i.media.SetScreenVisible(member.ID, command.Visible)
+		case "screen-quality":
+			_ = i.media.SetScreenQuality(member.ID, command.OwnerID, command.Quality)
 		case "video-stopped":
 			_ = i.media.SetScreenPublishing(member.ID, false)
 			i.media.Broadcast(mediaRoomID, media.Signal{Type: "video-stopped", MemberID: member.ID})

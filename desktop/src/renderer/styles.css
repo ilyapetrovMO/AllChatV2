@@ -563,6 +563,10 @@ a { color: #00a8fc; }
 .media-stage-status { font-size: .78rem; }
 .media-stage-empty { grid-column: 1 / -1; justify-self: center; }
 .media-stage-tile { position: relative; display: grid; width: 100%; min-width: 0; min-height: 0; aspect-ratio: 16 / 9; overflow: hidden; border: 2px solid transparent; border-radius: 12px; background: #18191e; color: var(--text); }
+.media-stage-tile[role="button"] { cursor: zoom-in; }
+.media-stage-tile.expanded { position: fixed; z-index: 2100; inset: 40px 18px 18px 90px; width: auto; height: auto; aspect-ratio: auto; cursor: zoom-out; box-shadow: 0 0 0 100vmax rgb(0 0 0 / 72%); }
+.media-focus-close { position: absolute; z-index: 2; top: 12px; right: 12px; display: grid; place-items: center; width: 36px; height: 36px; padding: 8px; border: 0; border-radius: 50%; color: white; background: rgb(0 0 0 / 68%); }
+.media-focus-close:hover { background: rgb(0 0 0 / 88%); }
 .media-stage-tile.participant-tile { place-items: center; align-content: center; gap: 10px; }
 .media-stage-visual { width: 100%; min-height: 0; display: grid; place-items: center; }
 .media-stage-avatar { display: grid; place-items: center; width: clamp(72px, 14vw, 140px); height: clamp(72px, 14vw, 140px); overflow: hidden; border-radius: 50%; background: var(--brand); color: #fff; font-size: 2.5rem; font-weight: 800; object-fit: cover; }

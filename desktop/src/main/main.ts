@@ -262,7 +262,7 @@ function registerIpc(): void {
   });
   ipcMain.on(IPC_CHANNELS.diagnostic, (event, diagnosticEvent: DesktopDiagnosticEvent, detail: string) => {
     if (event.sender !== mainWindow?.webContents) return;
-    if (diagnosticEvent !== 'rnnoise_initialization_failed') return;
+    if (diagnosticEvent !== 'rnnoise_initialization_failed' && diagnosticEvent !== 'screen_share_quality') return;
     if (typeof detail !== 'string') return;
     console.warn('[AllChat desktop diagnostic]', JSON.stringify({ event: diagnosticEvent, detail: detail.slice(0, 1_000) }));
   });

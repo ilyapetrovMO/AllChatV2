@@ -80,24 +80,26 @@ func (c *rtpContinuity) rewrite(packet *rtp.Packet) {
 // Manager is the process-local authority for all Voice Rooms and Direct Calls.
 // Restart intentionally clears it so clients never display stale participation.
 type Manager struct {
-	mu              sync.Mutex
-	api             *webrtc.API
-	rejoinWindow    time.Duration
-	maxParticipants int
-	now             func() time.Time
-	byMember        map[string]*session
-	rooms           map[string]map[string]*session
-	peers           map[string]*Peer
-	tracks          map[string]map[string]*webrtc.TrackLocalStaticRTP
-	continuity      map[string]*rtpContinuity
-	screenTracks    map[string]map[string]*webrtc.TrackLocalStaticRTP
-	screenVisible   map[string]map[string]bool
-	calls           map[string]*DirectCall
-	removedUntil    map[string]time.Time
-	speakingTimers  map[string]*time.Timer
-	lastSpoke       map[string]time.Time
-	nextJoinOrder   uint64
-	nextPeerLease   uint64
+	mu                  sync.Mutex
+	api                 *webrtc.API
+	rejoinWindow        time.Duration
+	maxParticipants     int
+	now                 func() time.Time
+	byMember            map[string]*session
+	rooms               map[string]map[string]*session
+	peers               map[string]*Peer
+	tracks              map[string]map[string]*webrtc.TrackLocalStaticRTP
+	continuity          map[string]*rtpContinuity
+	screenTracks        map[string]map[string]*webrtc.TrackLocalStaticRTP
+	screenLayers        map[string]map[string]map[string]*webrtc.TrackLocalStaticRTP
+	screenVisible       map[string]map[string]bool
+	screenSubscriptions map[string]map[string]map[string]string
+	calls               map[string]*DirectCall
+	removedUntil        map[string]time.Time
+	speakingTimers      map[string]*time.Timer
+	lastSpoke           map[string]time.Time
+	nextJoinOrder       uint64
+	nextPeerLease       uint64
 }
 
 func NewManager(rejoinWindow time.Duration) *Manager {
@@ -130,7 +132,7 @@ func NewManagerWithLimits(rejoinWindow time.Duration, portMin, portMax uint16, m
 		maxParticipants = 2
 	}
 	api := webrtc.NewAPI(webrtc.WithMediaEngine(engine), webrtc.WithInterceptorRegistry(registry), webrtc.WithSettingEngine(settings))
-	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, continuity: map[string]*rtpContinuity{}, screenTracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenVisible: map[string]map[string]bool{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
+	return &Manager{api: api, rejoinWindow: rejoinWindow, maxParticipants: maxParticipants, now: time.Now, byMember: map[string]*session{}, rooms: map[string]map[string]*session{}, peers: map[string]*Peer{}, tracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, continuity: map[string]*rtpContinuity{}, screenTracks: map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenLayers: map[string]map[string]map[string]*webrtc.TrackLocalStaticRTP{}, screenVisible: map[string]map[string]bool{}, screenSubscriptions: map[string]map[string]map[string]string{}, calls: map[string]*DirectCall{}, removedUntil: map[string]time.Time{}, speakingTimers: map[string]*time.Timer{}, lastSpoke: map[string]time.Time{}}, nil
 }
 
 func (m *Manager) WebRTCAPI() *webrtc.API { return m.api }
@@ -200,6 +202,7 @@ func (m *Manager) Takeover(memberID, roomID string) (JoinResult, error) {
 			}
 		}
 		delete(m.screenTracks[oldPeer.roomID], memberID)
+		delete(m.screenLayers[oldPeer.roomID], memberID)
 	}
 	joined, err := m.joinLocked(memberID, roomID)
 	m.mu.Unlock()
@@ -228,6 +231,7 @@ func (m *Manager) End(memberID, roomID string) error {
 			}
 		}
 		delete(m.screenTracks[peer.roomID], memberID)
+		delete(m.screenLayers[peer.roomID], memberID)
 	}
 	m.mu.Unlock()
 	if peer != nil {
@@ -388,7 +392,9 @@ func (m *Manager) Close() {
 	m.tracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
 	m.continuity = map[string]*rtpContinuity{}
 	m.screenTracks = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
+	m.screenLayers = map[string]map[string]map[string]*webrtc.TrackLocalStaticRTP{}
 	m.screenVisible = map[string]map[string]bool{}
+	m.screenSubscriptions = map[string]map[string]map[string]string{}
 	m.calls = map[string]*DirectCall{}
 	m.removedUntil = map[string]time.Time{}
 	m.speakingTimers = map[string]*time.Timer{}
@@ -424,10 +430,17 @@ func (m *Manager) removeLocked(item *session) {
 	delete(room, item.participant.MemberID)
 	delete(m.screenVisible[item.participant.RoomID], item.participant.MemberID)
 	delete(m.screenTracks[item.participant.RoomID], item.participant.MemberID)
+	delete(m.screenLayers[item.participant.RoomID], item.participant.MemberID)
+	delete(m.screenSubscriptions[item.participant.RoomID], item.participant.MemberID)
+	for _, subscriptions := range m.screenSubscriptions[item.participant.RoomID] {
+		delete(subscriptions, item.participant.MemberID)
+	}
 	if len(room) == 0 {
 		delete(m.rooms, item.participant.RoomID)
 		delete(m.screenTracks, item.participant.RoomID)
+		delete(m.screenLayers, item.participant.RoomID)
 		delete(m.screenVisible, item.participant.RoomID)
+		delete(m.screenSubscriptions, item.participant.RoomID)
 	}
 }
 

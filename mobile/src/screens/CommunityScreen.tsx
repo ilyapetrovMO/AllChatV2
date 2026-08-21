@@ -1797,6 +1797,7 @@ function MediaRoomScreen({
   const [volumeMember, setVolumeMember] = useState<{id: string; label: string}>();
   const [expandedVideo, setExpandedVideo] = useState<{
     label: string;
+    ownerID: string;
     self: boolean;
     stream: MediaStream;
   }>();
@@ -2065,12 +2066,15 @@ function MediaRoomScreen({
         memberID={memberID}
         onOpenVideo={
           video
-            ? () =>
+            ? () => {
+                if (memberID !== account.member.id) session.current?.setScreenQuality(memberID, 'high');
                 setExpandedVideo({
                   label,
+                  ownerID: memberID,
                   self: memberID === account.member.id,
                   stream: video,
-                })
+                });
+              }
             : undefined
         }
         onVolumeMenu={
@@ -2289,7 +2293,7 @@ function MediaRoomScreen({
       />
       <Modal
         animationType="fade"
-        onRequestClose={() => setExpandedVideo(undefined)}
+        onRequestClose={() => { if (expandedVideo && !expandedVideo.self) session.current?.setScreenQuality(expandedVideo.ownerID, 'medium'); setExpandedVideo(undefined); }}
         visible={Boolean(expandedVideo)}
       >
         <View style={styles.mediaFullscreen}>
@@ -2306,7 +2310,7 @@ function MediaRoomScreen({
           </Text>
           <TouchableOpacity
             accessibilityLabel="Close fullscreen video"
-            onPress={() => setExpandedVideo(undefined)}
+            onPress={() => { if (expandedVideo && !expandedVideo.self) session.current?.setScreenQuality(expandedVideo.ownerID, 'medium'); setExpandedVideo(undefined); }}
             style={styles.viewerClose}
           >
             <Text style={styles.viewerCloseText}>×</Text>

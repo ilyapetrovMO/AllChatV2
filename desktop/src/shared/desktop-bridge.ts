@@ -63,7 +63,7 @@ export interface DesktopBridge {
 }
 
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
-export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed';
+export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed' | 'screen_share_quality';
 
 export type DesktopUpdateState =
   | { status: 'idle' }

@@ -1,5 +1,6 @@
 export type DesktopMediaFrame = {
   type?: string;
+  member_id?: string;
   sdp?: RTCSessionDescriptionInit;
   candidate?: RTCIceCandidateInit;
   error?: string;
@@ -69,7 +70,12 @@ export function desktopMediaOwnerID(trackID: string, streamID = ''): string {
 export function createMediaFrameQueue(
   peer: RTCPeerConnection,
   send: (frame: object) => void,
-  callbacks: { onAnswer?(): void } = {},
+  callbacks: {
+    onAnswer?(): void;
+    onVideoStopped?(memberID: string): void;
+    onVideoStarted?(memberID: string): void;
+    onScreenQuality?(quality: 'low' | 'medium' | 'high'): void;
+  } = {},
 ) {
   const pendingRemote: RTCIceCandidateInit[] = [];
   let queue = Promise.resolve();
@@ -80,6 +86,11 @@ export function createMediaFrameQueue(
   const handle = async (frame: DesktopMediaFrame) => {
     if (frame.type === 'heartbeat-ack') return;
     if (frame.type === 'error') throw new Error(frame.error || 'Media signaling failed.');
+    if (frame.type === 'video-stopped' && frame.member_id) { callbacks.onVideoStopped?.(frame.member_id); return; }
+    if (frame.type === 'video-started' && frame.member_id) { callbacks.onVideoStarted?.(frame.member_id); return; }
+    if (frame.type === 'screen-low') { callbacks.onScreenQuality?.('low'); return; }
+    if (frame.type === 'screen-medium') { callbacks.onScreenQuality?.('medium'); return; }
+    if (frame.type === 'screen-high') { callbacks.onScreenQuality?.('high'); return; }
     if (frame.type === 'answer' && frame.sdp) {
       if (peer.signalingState && peer.signalingState !== 'have-local-offer') return;
       await peer.setRemoteDescription(frame.sdp);

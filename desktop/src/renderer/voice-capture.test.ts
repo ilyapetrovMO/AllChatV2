@@ -13,6 +13,7 @@ describe('desktop voice capture', () => {
       version: 1, microphoneID: 'microphone', speakerID: '', cameraID: '', inputGain: 9, outputVolume: -2, memberVolumes: { alex: 0.4 },
       noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
       noiseGate: true, noiseGateThresholdDB: -50,
+      screenShareMode: 'auto',
     });
     expect(saved).toMatchObject({ inputGain: 2, outputVolume: 0, memberVolumes: { alex: 0.4 } });
     expect(loadDesktopVoicePreferences('member')).toEqual(saved);
@@ -50,6 +51,7 @@ describe('desktop voice capture', () => {
       version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
       noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
       noiseGate: false, noiseGateThresholdDB: -50,
+      screenShareMode: 'auto',
     });
 
     const capture = await captureDesktopMicrophone('member');
@@ -86,6 +88,7 @@ describe('desktop voice capture', () => {
       version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
       noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
       noiseGate: false, noiseGateThresholdDB: -50,
+      screenShareMode: 'auto',
     });
 
     const capture = await captureDesktopMicrophone('member');

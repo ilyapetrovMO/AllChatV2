@@ -38,6 +38,7 @@ export class MediaSession {
   private outgoingAudio?: RTCRtpSender;
   private outgoingVideo?: ReturnType<RTCPeerConnection['addTransceiver']>;
   private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private suspendedRemote = new Map<string, RemoteMedia>(); private resumeToken = '';
+  private stoppedVideoOwners = new Set<string>();
   private screenVisible = false;
   private negotiation = Promise.resolve();
   private audioUpdate = Promise.resolve();
@@ -55,7 +56,7 @@ export class MediaSession {
   stop(explicit = true): void {
     if (explicit && this.socket?.readyState === 1) this.send({type: 'leave'});
     this.stopped = true; this.generation += 1; this.clearTimers(); this.socket?.close(); this.peer?.close();
-    this.socket = undefined; this.peer = undefined; this.outgoingAudio = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.suspendedRemote.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
+    this.socket = undefined; this.peer = undefined; this.outgoingAudio = undefined; this.release(this.screen); this.release(this.local); this.screen = undefined; this.local = undefined; this.remote.clear(); this.suspendedRemote.clear(); this.stoppedVideoOwners.clear(); this.options.onRemote?.([]); this.options.onStatus?.('idle');
   }
 
   setMuted(muted: boolean): Promise<void> {
@@ -90,6 +91,7 @@ export class MediaSession {
     return this.audioUpdate;
   }
   setScreenVisible(visible: boolean): void { this.screenVisible = visible; this.send({type: 'screen-visibility', visible}); }
+  setScreenQuality(ownerID: string, quality: 'low' | 'medium' | 'high'): void { this.send({type: 'screen-quality', owner_id: ownerID, quality}); }
   playSound(soundID: string): void { this.send({type: 'soundboard-play', sound_id: soundID}); }
 
   async setCamera(enabled: boolean): Promise<void> {
@@ -111,7 +113,9 @@ export class MediaSession {
     if (!enabled) { const stream = this.screen; this.screen = undefined; if (stream) { this.send({type: 'video-stopped'}); await this.clearVideoTrack(); } stream?.getTracks().forEach(track => track.stop()); return; }
     if (this.screen) return;
     if (this.local?.getVideoTracks()[0]) await this.setCamera(false);
-    const stream = await (this.options.getDisplayMedia || mediaDevices.getDisplayMedia)({android: {resolutionScale: 1}}) as MediaStream; this.screen = stream;
+    const mode = (this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS).screenShareMode;
+    const resolutionScale = mode === 'data-saver' ? .5 : mode === 'motion' ? .67 : 1;
+    const stream = await (this.options.getDisplayMedia || mediaDevices.getDisplayMedia)({android: {resolutionScale}}) as MediaStream; this.screen = stream;
     const videoTrack = stream.getVideoTracks()[0]; if (videoTrack) await this.setVideoTrack(videoTrack, stream);
     stream.getAudioTracks().forEach(track => this.peer?.addTrack(track, stream));
     if (videoTrack) (videoTrack as unknown as {onended?: () => void}).onended = () => { if (this.screen === stream) this.setScreenSharing(false).catch(() => {}); };
@@ -134,7 +138,7 @@ export class MediaSession {
       const stream = (event.streams[0] || new MediaStream([event.track as never])) as MediaStream; const id = event.track.id || `${event.track.kind}-${this.remote.size}`; const ownerID = mediaOwnerID(id, stream.id); const item = {id, ownerID, stream, kind: event.track.kind as 'audio' | 'video'};
       const remove = () => { if (this.remote.get(id) === item) this.remote.delete(id); if (this.suspendedRemote.get(id) === item) this.suspendedRemote.delete(id); this.options.onRemote?.([...this.remote.values()]); };
       const suspend = () => { if (this.remote.get(id) === item) this.remote.delete(id); this.suspendedRemote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
-      const publish = () => { if (event.track.kind === 'video' && ownerID) for (const [remoteID, current] of this.remote) if (current.kind === 'video' && current.ownerID === ownerID) this.remote.delete(remoteID); this.suspendedRemote.delete(id); this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
+      const publish = () => { if (event.track.kind === 'video' && this.stoppedVideoOwners.has(ownerID)) return; if (event.track.kind === 'video' && ownerID) for (const [remoteID, current] of this.remote) if (current.kind === 'video' && current.ownerID === ownerID) this.remote.delete(remoteID); this.suspendedRemote.delete(id); this.remote.set(id, item); this.options.onRemote?.([...this.remote.values()]); };
       event.track.onended = remove;
       if (event.track.kind === 'video') { event.track.onmute = suspend; event.track.onunmute = publish; if (!event.track.muted) publish(); }
       else { const settings = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS; setTrackVolume(event.track, settings.outputVolume * (settings.memberVolumes[ownerID] ?? 1)); publish(); }
@@ -160,8 +164,8 @@ export class MediaSession {
     if (frame.type === 'participants' && frame.participants) { this.options.onParticipants?.(frame.participants); return; }
     if (frame.type === 'candidate' && frame.candidate) { if (peer.remoteDescription) peer.addIceCandidate(frame.candidate as never).catch(() => {}); else pendingRemote.push(frame.candidate); return; }
     if (frame.type === 'offer' && frame.sdp) { await this.withNegotiation(async () => { const retryLocalOffer = peer.signalingState === 'have-local-offer'; if (retryLocalOffer) await peer.setLocalDescription({type: 'rollback'} as never); await peer.setRemoteDescription(new RTCSessionDescription(frame.sdp as never)); await this.flushRemoteCandidates(peer, pendingRemote); const answer = await peer.createAnswer(); await peer.setLocalDescription(answer); this.send({type: 'answer', sdp: peer.localDescription}); if (retryLocalOffer) { const offer = await peer.createOffer(); await peer.setLocalDescription(offer); this.send({type: 'offer', sdp: peer.localDescription}); } }); }
-    else if (frame.type === 'video-stopped' && frame.member_id) { for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.remote.delete(id); this.suspendedRemote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
-    else if (frame.type === 'video-started' && frame.member_id) { for (const [id, item] of this.suspendedRemote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.suspendedRemote.delete(id); this.remote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
+    else if (frame.type === 'video-stopped' && frame.member_id) { this.stoppedVideoOwners.add(frame.member_id); for (const [id, item] of this.remote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.remote.delete(id); this.suspendedRemote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
+    else if (frame.type === 'video-started' && frame.member_id) { this.stoppedVideoOwners.delete(frame.member_id); for (const [id, item] of this.suspendedRemote) if (item.kind === 'video' && item.ownerID === frame.member_id) { this.suspendedRemote.delete(id); this.remote.set(id, item); } this.options.onRemote?.([...this.remote.values()]); }
     else this.options.onFrame?.(frame);
   }
 

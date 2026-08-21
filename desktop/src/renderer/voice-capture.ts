@@ -13,12 +13,16 @@ export type DesktopVoicePreferences = {
   autoGainControl: boolean;
   noiseGate: boolean;
   noiseGateThresholdDB: number;
+  screenShareMode: ScreenShareMode;
 };
+
+export type ScreenShareMode = 'auto' | 'text' | 'balanced' | 'motion' | 'data-saver';
 
 export const defaultDesktopVoicePreferences: DesktopVoicePreferences = {
   version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
   noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
   noiseGate: true, noiseGateThresholdDB: -50,
+  screenShareMode: 'auto',
 };
 
 export interface DesktopMicrophoneCapture {
@@ -153,6 +157,8 @@ function rawCapture(stream: MediaStream): DesktopMicrophoneCapture {
 function normalizeDesktopVoicePreferences(value: unknown): DesktopVoicePreferences {
   const source = value && typeof value === 'object' ? value as Partial<DesktopVoicePreferences> : {};
   const mode = source.noiseSuppressionMode === 'enhanced' || source.noiseSuppressionMode === 'off' ? source.noiseSuppressionMode : 'standard';
+  const screenShareMode: ScreenShareMode = ['auto', 'text', 'balanced', 'motion', 'data-saver'].includes(source.screenShareMode || '')
+    ? source.screenShareMode as ScreenShareMode : 'auto';
   return {
     ...defaultDesktopVoicePreferences, ...source, version: 1,
     microphoneID: typeof source.microphoneID === 'string' ? source.microphoneID : '',
@@ -163,6 +169,7 @@ function normalizeDesktopVoicePreferences(value: unknown): DesktopVoicePreferenc
       : {},
     inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1),
     noiseGateThresholdDB: clamp(source.noiseGateThresholdDB, -80, -20, -50), noiseSuppressionMode: mode,
+    screenShareMode,
   };
 }
 

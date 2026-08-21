@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { createMediaConnectionWatchdog, createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, desktopMemberOutputVolume, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
 import { insertMention, matchMention } from "./mentions";
+import { createScreenShareAutoController, lowestScreenShareTier, prepareScreenShareTrack, screenSharePreset, screenShareStats, setScreenShareTier, type ScreenShareTier } from "./screen-share-quality";
 
 import type { DesktopBridge, DesktopUpdateState, ShellState } from "../shared/desktop-bridge";
 import { normalizeInstanceUrl } from "../shared/instance-url";
@@ -479,6 +480,7 @@ function CommunityShell({
   const [voiceParticipantsByChannel, setVoiceParticipantsByChannel] = useState<Record<string, import("../shared/instance-actions").VoiceParticipant[]>>({});
   const [requestedVoiceRoom, setRequestedVoiceRoom] = useState<string | null>(null);
   const [directCall, setDirectCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
+  const [focusedMediaMemberId, setFocusedMediaMemberId] = useState<string | null>(null);
   const [settingsView, setSettingsView] = useState<
     "profile" | "voice" | "notifications" | "sessions" | "safety" | "community" | null
   >(null);
@@ -534,6 +536,12 @@ function CommunityShell({
     setSearchResults(null);
     setShowPins(false);
   }, [homeRequestRevision]);
+  useEffect(() => {
+    if (!focusedMediaMemberId) return;
+    const exit = (event: KeyboardEvent) => { if (event.key === "Escape") setFocusedMediaMemberId(null); };
+    document.addEventListener("keydown", exit);
+    return () => document.removeEventListener("keydown", exit);
+  }, [focusedMediaMemberId]);
 
   useEffect(() => {
     if (!reactionPickerMessageId) return;
@@ -1127,6 +1135,7 @@ function CommunityShell({
               connectMedia={connectMedia}
               requestedVoiceRoom={requestedVoiceRoom}
               requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
+              focusedMediaMemberId={focusedMediaMemberId}
               onOpenDirectCall={(directMessageId) => {
                 const directMessage = state.direct_messages.find(({ id }) => id === directMessageId);
                 if (!directMessage) return;
@@ -1458,13 +1467,14 @@ function CommunityShell({
                 ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
-                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""}`} data-media-member-id={participant.member_id} key={participant.member_id} onContextMenu={(event) => {
+                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""} ${focusedMediaMemberId === participant.member_id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${name}`} data-media-member-id={participant.member_id} key={participant.member_id} onClick={() => setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id); } }} onContextMenu={(event) => {
                     event.preventDefault();
                     setVoiceMemberMenu({ participant, left: Math.min(window.innerWidth - 224, event.clientX), top: Math.min(window.innerHeight - 280, event.clientY) });
                   }}>
                     <div className="media-stage-visual"><AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                     <strong>{name}</strong>
                     {participant.screen_sharing && <span>Sharing screen</span>}
+                    {focusedMediaMemberId === participant.member_id && <button className="media-focus-close" type="button" aria-label={`Exit focus for ${name}`} onClick={(event) => { event.stopPropagation(); setFocusedMediaMemberId(null); }}><Icon name="x" /></button>}
                   </article>;
                 })}
               </div>
@@ -1476,7 +1486,7 @@ function CommunityShell({
                   <div className="media-stage-grid" data-tile-count={2}>
                     {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
                       const name = memberName(participant);
-                      return <article className="media-stage-tile participant-tile" data-media-member-id={participant.id} key={participant.id} onContextMenu={(event) => {
+                      return <article className={`media-stage-tile participant-tile ${focusedMediaMemberId === participant.id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${participant.id === state.member.id ? "You" : name}`} data-media-member-id={participant.id} key={participant.id} onClick={() => setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id); } }} onContextMenu={(event) => {
                         if (participant.id === state.member.id || !directCall) return;
                         event.preventDefault();
                         setVoiceMemberMenu({
@@ -1488,6 +1498,7 @@ function CommunityShell({
                       }}>
                         <div className="media-stage-visual"><AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                         <strong>{participant.id === state.member.id ? "You" : name}</strong>
+                        {focusedMediaMemberId === participant.id && <button className="media-focus-close" type="button" aria-label={`Exit focus for ${participant.id === state.member.id ? "You" : name}`} onClick={(event) => { event.stopPropagation(); setFocusedMediaMemberId(null); }}><Icon name="x" /></button>}
                       </article>;
                     })}
                   </div>
@@ -2020,6 +2031,7 @@ export function DirectCallControls({
   connectMedia,
   requestedVoiceRoom,
   requestedVoiceRoomName,
+  focusedMediaMemberId,
   onOpenDirectCall,
   onVoiceRoomChange,
   onCallChange,
@@ -2032,6 +2044,7 @@ export function DirectCallControls({
   connectMedia?: DesktopBridge["connectMedia"];
   requestedVoiceRoom: string | null;
   requestedVoiceRoomName: string;
+  focusedMediaMemberId: string | null;
   onOpenDirectCall?(directMessageId: string): void;
   onVoiceRoomChange(roomId: string | null): void;
   onCallChange(call: import("../shared/instance-actions").DirectCall | null): void;
@@ -2048,11 +2061,13 @@ export function DirectCallControls({
   const [remoteScreens, setRemoteScreens] = useState<Record<string, MediaStream>>({});
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[] } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[]; screenQualityTimer?: number; requestedScreenTier: ScreenShareTier; automaticScreenTier: ScreenShareTier } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const heartbeat = useRef<number | null>(null);
   const connectionWatchdog = useRef<ReturnType<typeof createMediaConnectionWatchdog> | null>(null);
   const mediaFailure = useRef("");
+  const stoppedRemoteScreenOwners = useRef(new Set<string>());
+  const remoteScreenStreams = useRef(new Map<string, MediaStream>());
   transientStatus.current ||= createTransientCallStatusController(setStatus, () => media.current?.peer.connectionState === "connected" ? "Call connected" : null);
   connectionWatchdog.current ||= createMediaConnectionWatchdog(setStatus, () => ({
     connection: media.current?.peer.connectionState || "closed",
@@ -2068,6 +2083,7 @@ export function DirectCallControls({
     active?.peer.close();
     active?.capture.stop();
     active?.screen?.getTracks().forEach((track) => track.stop());
+    if (active?.screenQualityTimer !== undefined) window.clearInterval(active.screenQualityTimer);
     active?.audio.forEach((elements) => elements.forEach((element) => element.remove()));
     if (heartbeat.current !== null) window.clearInterval(heartbeat.current);
     heartbeat.current = null;
@@ -2077,6 +2093,8 @@ export function DirectCallControls({
     setSharing(false);
     setLocalScreen(null);
     setRemoteScreens({});
+    stoppedRemoteScreenOwners.current.clear();
+    remoteScreenStreams.current.clear();
     setSoundboardOpen(false);
   };
 
@@ -2111,6 +2129,27 @@ export function DirectCallControls({
     await waitForIceGathering(peer);
     const signaling = createMediaFrameQueue(peer, (frame) => socket?.send(frame), {
       onAnswer: () => setStatus("Finishing media connection…"),
+      onVideoStopped: (memberID) => {
+        stoppedRemoteScreenOwners.current.add(memberID);
+        setRemoteScreens((current) => {
+          if (!current[memberID]) return current;
+          const next = { ...current };
+          delete next[memberID];
+          return next;
+        });
+      },
+      onVideoStarted: (memberID) => {
+        stoppedRemoteScreenOwners.current.delete(memberID);
+        const stream = remoteScreenStreams.current.get(memberID);
+        if (stream) setRemoteScreens((current) => ({ ...current, [memberID]: stream }));
+      },
+      onScreenQuality: (quality) => {
+        const sender = media.current?.screenSender;
+        if (!sender) return;
+        if (!media.current) return;
+        media.current.requestedScreenTier = quality;
+        void setScreenShareTier(sender, lowestScreenShareTier(quality, media.current.automaticScreenTier)).catch(() => undefined);
+      },
     });
     socket = await connectMedia(instanceId, (value) => {
       const frame = value as DesktopMediaFrame & { sound_url?: string };
@@ -2134,14 +2173,15 @@ export function DirectCallControls({
       cleanup();
       setStatus(message);
     });
-    media.current = { stream, capture, peer, socket, audio, screenAudioSenders: [] };
+    media.current = { stream, capture, peer, socket, audio, screenAudioSenders: [], requestedScreenTier: "high", automaticScreenTier: "high" };
     provisionalCapture = null;
     peer.ontrack = ({ streams, track }) => {
       const remoteStream = streams[0] || new MediaStream([track]);
       if (track.kind === "video") {
         const fallbackOwner = activeCall.caller_id === currentMemberId ? activeCall.recipient_id : activeCall.caller_id;
         const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
-        bindRemoteScreenTrack(track, remoteStream, owner, setRemoteScreens);
+        remoteScreenStreams.current.set(owner, remoteStream);
+        bindRemoteScreenTrack(track, remoteStream, owner, setRemoteScreens, () => !stoppedRemoteScreenOwners.current.has(owner));
         return;
       }
       if (track.kind !== "audio") return;
@@ -2257,6 +2297,8 @@ export function DirectCallControls({
     await active.screenSender?.replaceTrack(null);
     active.screenAudioSenders.forEach((sender) => active.peer.removeTrack(sender));
     active.screenAudioSenders = [];
+    if (active.screenQualityTimer !== undefined) window.clearInterval(active.screenQualityTimer);
+    active.screenQualityTimer = undefined;
     active.socket.send({ version: 1, type: "video-stopped" });
     setSharing(false);
   }
@@ -2269,13 +2311,32 @@ export function DirectCallControls({
     const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     const video = screen.getVideoTracks()[0];
     if (!video) { screen.getTracks().forEach((track) => track.stop()); throw new Error("No screen was selected."); }
+    const preferences = loadDesktopVoicePreferences(currentMemberId);
+    const preset = screenSharePreset(preferences.screenShareMode);
+    await prepareScreenShareTrack(video, preset);
     const transceiver = active.screenSender
       ? null
-      : active.peer.addTransceiver(video, { direction: "sendonly", streams: [screen] });
+      : active.peer.addTransceiver(video, { direction: "sendonly", streams: [screen], sendEncodings: preset.encodings });
     if (active.screenSender) await active.screenSender.replaceTrack(video);
     active.screen = screen;
     setLocalScreen(screen);
     active.screenSender = transceiver?.sender || active.screenSender;
+    active.requestedScreenTier = "high";
+    active.automaticScreenTier = "high";
+    if (preferences.screenShareMode === "auto" && active.screenSender) {
+      const controller = createScreenShareAutoController();
+      active.screenQualityTimer = window.setInterval(() => {
+        const sender = media.current?.screenSender;
+        if (!sender || media.current?.screen !== screen) return;
+        void sender.getStats().then((report) => {
+          let reason = "none";
+          report.forEach((entry) => { if (entry.type === "outbound-rtp" && (entry.kind === "video" || entry.mediaType === "video")) reason = entry.qualityLimitationReason || reason; });
+          if (!media.current || media.current.screen !== screen) return;
+          media.current.automaticScreenTier = controller.sample({ qualityLimitationReason: reason });
+          void setScreenShareTier(sender, lowestScreenShareTier(media.current.requestedScreenTier, media.current.automaticScreenTier)).catch(() => undefined);
+        }).catch(() => undefined);
+      }, 2_000);
+    }
     active.screenAudioSenders = screen.getAudioTracks().map((track) => active.peer.addTrack(track, screen));
     video.onended = () => { void stopScreenShare(); };
     const offer = await active.peer.createOffer();
@@ -2313,6 +2374,25 @@ export function DirectCallControls({
     window.addEventListener("allchat:voice-settings", updateVolumes);
     return () => window.removeEventListener("allchat:voice-settings", updateVolumes);
   }, [currentMemberId]);
+  useEffect(() => {
+    const publish = () => {
+      for (const ownerID of Object.keys(remoteScreens)) {
+        media.current?.socket.send({ version: 1, type: "screen-quality", owner_id: ownerID, quality: document.hidden ? "low" : focusedMediaMemberId === ownerID ? "high" : "medium" });
+      }
+    };
+    publish();
+    document.addEventListener("visibilitychange", publish);
+    return () => document.removeEventListener("visibilitychange", publish);
+  }, [focusedMediaMemberId, remoteScreens]);
+  useEffect(() => {
+    if (!Object.keys(remoteScreens).length) return;
+    const timer = window.setInterval(() => {
+      const peer = media.current?.peer;
+      if (!peer) return;
+      void peer.getStats().then((report) => window.allchatDesktop?.reportDiagnostic?.("screen_share_quality", JSON.stringify(screenShareStats(report)))).catch(() => undefined);
+    }, 5_000);
+    return () => window.clearInterval(timer);
+  }, [remoteScreens]);
   useEffect(() => {
     if (!incoming) return;
     let disposed = false, context: AudioContext | undefined, timer: number | undefined, customAudio: HTMLAudioElement | undefined, customURL = "";
@@ -2387,9 +2467,10 @@ export function bindRemoteScreenTrack(
   stream: MediaStream,
   owner: string,
   update: (updater: (current: Record<string, MediaStream>) => Record<string, MediaStream>) => void,
+  canPublish: () => boolean = () => true,
 ): void {
   const add = () => {
-    if (track.readyState !== "live" || track.muted) return;
+    if (track.readyState !== "live" || track.muted || !canPublish()) return;
     update((current) => ({ ...current, [owner]: stream }));
   };
   const remove = () => update((current) => {
@@ -2411,7 +2492,12 @@ function MediaStreamVideo({ stream, muted }: { stream: MediaStream; muted: boole
     if (!element) return;
     element.srcObject = stream;
     void element.play().catch(() => undefined);
-    return () => { if (element.srcObject === stream) element.srcObject = null; };
+    return () => {
+      element.pause();
+      if (element.srcObject === stream) element.srcObject = null;
+      element.removeAttribute("src");
+      element.load();
+    };
   }, [stream]);
   return <video ref={ref} className="desktop-shared-screen" autoPlay playsInline muted={muted} />;
 }
@@ -3372,6 +3458,10 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
         <div className="camera-test"><video ref={cameraPreview} autoPlay muted playsInline hidden={!cameraStream} /><div className="camera-placeholder" hidden={Boolean(cameraStream)}>Camera preview is off</div></div>
         <label>Camera<select aria-label="Camera" value={preferences.cameraID} onChange={(event) => patch({ cameraID: event.target.value })}><option value="">System default</option>{cameras.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}</select></label>
         <button type="button" onClick={() => void toggleCamera()}>{cameraStream ? "Stop Video" : "Test Video"}</button>
+      </section>
+      <section className="voice-settings-section">
+        <h3>Screen sharing</h3>
+        <label className="setting-row"><span><strong>Quality mode</strong><small>Auto protects frame delivery; Text preserves readability; Motion prioritizes smoothness.</small></span><select aria-label="Screen share quality" value={preferences.screenShareMode} onChange={(event) => patch({ screenShareMode: event.target.value as DesktopVoicePreferences["screenShareMode"] })}><option value="auto">Auto</option><option value="text">Text</option><option value="balanced">Balanced</option><option value="motion">Motion</option><option value="data-saver">Data saver</option></select></label>
       </section>
       <section className="voice-settings-section">
         <h3>Advanced</h3>

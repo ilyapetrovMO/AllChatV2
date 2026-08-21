@@ -87,4 +87,16 @@ describe('desktop media signaling', () => {
     await frames.push({ type: 'answer', sdp: { type: 'answer', sdp: 'remote-answer' } });
     expect(peer.addIceCandidate).toHaveBeenCalledWith({ candidate: 'candidate:early' });
   });
+
+  it('delivers authoritative publication and quality control frames', async () => {
+    const onVideoStopped = vi.fn(), onVideoStarted = vi.fn(), onScreenQuality = vi.fn();
+    const peer = { signalingState: 'stable', remoteDescription: {}, addIceCandidate: vi.fn(), setRemoteDescription: vi.fn(), setLocalDescription: vi.fn(), createAnswer: vi.fn(), createOffer: vi.fn() };
+    const frames = createMediaFrameQueue(peer as unknown as RTCPeerConnection, vi.fn(), { onVideoStopped, onVideoStarted, onScreenQuality });
+    await frames.push({ type: 'video-stopped', member_id: 'member-2' });
+    await frames.push({ type: 'video-started', member_id: 'member-2' });
+    await frames.push({ type: 'screen-medium' });
+    expect(onVideoStopped).toHaveBeenCalledWith('member-2');
+    expect(onVideoStarted).toHaveBeenCalledWith('member-2');
+    expect(onScreenQuality).toHaveBeenCalledWith('medium');
+  });
 });

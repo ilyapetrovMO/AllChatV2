@@ -304,32 +304,103 @@ func (m *Manager) SetScreenVisible(memberID string, visible bool) error {
 		m.screenVisible[roomID] = map[string]bool{}
 	}
 	m.screenVisible[roomID][memberID] = visible
-	owners := make([]*Peer, 0, len(m.screenTracks[roomID]))
-	for ownerID := range m.screenTracks[roomID] {
-		if owner := m.peers[ownerID]; owner != nil {
-			owners = append(owners, owner)
+	owners := make([]string, 0, len(m.screenLayers[roomID]))
+	seen := map[string]bool{}
+	for ownerID := range m.screenLayers[roomID] {
+		if ownerID != memberID {
+			owners = append(owners, ownerID)
+			seen[ownerID] = true
 		}
 	}
-	visibility := make(map[string]bool, len(m.screenVisible[roomID]))
-	for otherID, isVisible := range m.screenVisible[roomID] {
-		visibility[otherID] = isVisible
+	for ownerID := range m.screenTracks[roomID] {
+		if ownerID != memberID && !seen[ownerID] {
+			owners = append(owners, ownerID)
+		}
 	}
 	m.mu.Unlock()
-	for _, owner := range owners {
-		anyVisible := false
-		for otherID, isVisible := range visibility {
-			if otherID != owner.memberID && isVisible {
-				anyVisible = true
-				break
-			}
-		}
-		quality := "screen-low"
-		if anyVisible {
-			quality = "screen-high"
-		}
-		owner.signal(Signal{Type: quality})
+	quality := "low"
+	if visible {
+		quality = "high"
+	}
+	for _, ownerID := range owners {
+		_ = m.SetScreenQuality(memberID, ownerID, quality)
 	}
 	return nil
+}
+
+// SetScreenQuality selects a simulcast layer for one viewer without reducing
+// quality for other viewers in the same room.
+func (m *Manager) SetScreenQuality(viewerID, ownerID, quality string) error {
+	if quality != "low" && quality != "medium" && quality != "high" {
+		return ErrNotPresent
+	}
+	m.mu.Lock()
+	viewer, owner := m.byMember[viewerID], m.byMember[ownerID]
+	if viewer == nil || owner == nil || viewer.participant.RoomID != owner.participant.RoomID || viewerID == ownerID {
+		m.mu.Unlock()
+		return ErrNotPresent
+	}
+	roomID := viewer.participant.RoomID
+	if m.screenSubscriptions[roomID] == nil {
+		m.screenSubscriptions[roomID] = map[string]map[string]string{}
+	}
+	if m.screenSubscriptions[roomID][viewerID] == nil {
+		m.screenSubscriptions[roomID][viewerID] = map[string]string{}
+	}
+	m.screenSubscriptions[roomID][viewerID][ownerID] = quality
+	peer := m.peers[viewerID]
+	track := m.screenLayerLocked(roomID, ownerID, quality)
+	var negotiate bool
+	if peer != nil && track != nil {
+		if sender := peer.screens[ownerID]; sender != nil {
+			_ = sender.ReplaceTrack(track)
+		} else if added, err := peer.connection.AddTrack(track); err == nil {
+			peer.screens[ownerID] = added
+			negotiate = true
+		}
+	}
+	ownerPeer := m.peers[ownerID]
+	maximum := m.maximumScreenQualityLocked(roomID, ownerID)
+	m.mu.Unlock()
+	if negotiate {
+		go peer.sendOffer()
+	}
+	if ownerPeer != nil {
+		ownerPeer.signal(Signal{Type: "screen-" + maximum})
+	}
+	return nil
+}
+
+func (m *Manager) screenLayerLocked(roomID, ownerID, quality string) *webrtc.TrackLocalStaticRTP {
+	layers := m.screenLayers[roomID][ownerID]
+	order := map[string][]string{"low": {"q", "h", "f", ""}, "medium": {"h", "q", "f", ""}, "high": {"f", "h", "q", ""}}
+	for _, rid := range order[quality] {
+		if layers[rid] != nil {
+			return layers[rid]
+		}
+	}
+	return m.screenTracks[roomID][ownerID]
+}
+
+func (m *Manager) maximumScreenQualityLocked(roomID, ownerID string) string {
+	maximum, rank := "low", map[string]int{"low": 0, "medium": 1, "high": 2}
+	for viewerID := range m.rooms[roomID] {
+		if viewerID == ownerID {
+			continue
+		}
+		quality := m.screenSubscriptions[roomID][viewerID][ownerID]
+		if quality == "" {
+			if m.screenVisible[roomID][viewerID] {
+				quality = "high"
+			} else {
+				quality = "low"
+			}
+		}
+		if rank[quality] > rank[maximum] {
+			maximum = quality
+		}
+	}
+	return maximum
 }
 
 // SetScreenPublishing explicitly gates a Member's forwarded video without
@@ -344,8 +415,7 @@ func (m *Manager) SetScreenPublishing(memberID string, publishing bool) error {
 	}
 	roomID := item.participant.RoomID
 	item.participant.ScreenSharing = publishing
-	track := m.screenTracks[roomID][memberID]
-	if track == nil {
+	if len(m.screenLayers[roomID][memberID]) == 0 && m.screenTracks[roomID][memberID] == nil {
 		m.mu.Unlock()
 		return nil
 	}
@@ -356,15 +426,16 @@ func (m *Manager) SetScreenPublishing(memberID string, publishing bool) error {
 			continue
 		}
 		sender := peer.screens[memberID]
+		track := m.screenLayerLocked(roomID, memberID, m.viewerScreenQualityLocked(roomID, otherID, memberID))
 		if sender != nil {
-			if publishing {
+			if publishing && track != nil {
 				_ = sender.ReplaceTrack(track)
 			} else {
 				_ = sender.ReplaceTrack(nil)
 			}
 			continue
 		}
-		if publishing {
+		if publishing && track != nil {
 			if added, addErr := peer.connection.AddTrack(track); addErr == nil {
 				peer.screens[memberID] = added
 				peers = append(peers, peer)
@@ -376,6 +447,16 @@ func (m *Manager) SetScreenPublishing(memberID string, publishing bool) error {
 		go peer.sendOffer()
 	}
 	return nil
+}
+
+func (m *Manager) viewerScreenQualityLocked(roomID, viewerID, ownerID string) string {
+	if quality := m.screenSubscriptions[roomID][viewerID][ownerID]; quality != "" {
+		return quality
+	}
+	if m.screenVisible[roomID][viewerID] {
+		return "high"
+	}
+	return "low"
 }
 
 func (m *Manager) RemovePeer(memberID string) {
@@ -424,6 +505,7 @@ func (m *Manager) detachPeer(memberID string, lease uint64, removeSession, force
 		}
 	}
 	delete(m.screenTracks[peer.roomID], memberID)
+	delete(m.screenLayers[peer.roomID], memberID)
 	roomID := peer.roomID
 	m.mu.Unlock()
 	_ = peer.connection.Close()
@@ -435,37 +517,40 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 	// layer. Reassert the desired layer as soon as any layer appears so a
 	// browser previously left on screen-low enables the full layer we forward.
 	source.signal(Signal{Type: m.screenQuality(source.roomID, source.memberID)})
-	// The browser orders screen simulcast layers low-to-high as q/h/f. The MVP
-	// SFU forwards the full layer and drains lower layers; receivers can still
-	// use congestion control while avoiding duplicate rendered tracks.
-	if rid := remote.RID(); rid != "" && rid != "f" {
-		for {
-			if _, _, err := remote.ReadRTP(); err != nil {
-				return
-			}
-		}
-	}
+	rid := remote.RID()
 	m.mu.Lock()
-	local, err := webrtc.NewTrackLocalStaticRTP(remote.Codec().RTPCodecCapability, "screen-"+source.memberID, "screen-"+source.memberID)
+	local, err := webrtc.NewTrackLocalStaticRTP(remote.Codec().RTPCodecCapability, "screen-"+source.memberID+"-"+rid, "screen-"+source.memberID)
 	if err != nil {
 		m.mu.Unlock()
 		return
 	}
+	if m.screenLayers[source.roomID] == nil {
+		m.screenLayers[source.roomID] = map[string]map[string]*webrtc.TrackLocalStaticRTP{}
+	}
+	if m.screenLayers[source.roomID][source.memberID] == nil {
+		m.screenLayers[source.roomID][source.memberID] = map[string]*webrtc.TrackLocalStaticRTP{}
+	}
+	m.screenLayers[source.roomID][source.memberID][rid] = local
 	if m.screenTracks[source.roomID] == nil {
 		m.screenTracks[source.roomID] = map[string]*webrtc.TrackLocalStaticRTP{}
 	}
-	m.screenTracks[source.roomID][source.memberID] = local
+	if rid == "f" || rid == "" {
+		m.screenTracks[source.roomID][source.memberID] = local
+	}
 	if item := m.byMember[source.memberID]; item != nil {
 		item.participant.ScreenSharing = true
 	}
 	peers := make([]*Peer, 0, len(m.rooms[source.roomID]))
 	for memberID := range m.rooms[source.roomID] {
 		if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
+			selected := m.screenLayerLocked(source.roomID, source.memberID, m.viewerScreenQualityLocked(source.roomID, memberID, source.memberID))
 			if sender := peer.screens[source.memberID]; sender != nil {
-				_ = sender.ReplaceTrack(local)
-			} else if added, addErr := peer.connection.AddTrack(local); addErr == nil {
-				peer.screens[source.memberID] = added
-				peers = append(peers, peer)
+				_ = sender.ReplaceTrack(selected)
+			} else if selected != nil {
+				if added, addErr := peer.connection.AddTrack(selected); addErr == nil {
+					peer.screens[source.memberID] = added
+					peers = append(peers, peer)
+				}
 			}
 		}
 	}
@@ -497,8 +582,14 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 	defer close(done)
 	defer func() {
 		m.mu.Lock()
+		if m.screenLayers[source.roomID][source.memberID][rid] == local {
+			delete(m.screenLayers[source.roomID][source.memberID], rid)
+		}
 		if m.screenTracks[source.roomID][source.memberID] == local {
 			delete(m.screenTracks[source.roomID], source.memberID)
+		}
+		noLayers := len(m.screenLayers[source.roomID][source.memberID]) == 0
+		if noLayers {
 			if item := m.byMember[source.memberID]; item != nil {
 				item.participant.ScreenSharing = false
 			}
@@ -506,7 +597,12 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 		for memberID := range m.rooms[source.roomID] {
 			if peer := m.peers[memberID]; peer != nil && memberID != source.memberID {
 				if sender := peer.screens[source.memberID]; sender != nil && sender.Track() == local {
-					_ = sender.ReplaceTrack(nil)
+					replacement := m.screenLayerLocked(source.roomID, source.memberID, m.viewerScreenQualityLocked(source.roomID, memberID, source.memberID))
+					if replacement == nil {
+						_ = sender.ReplaceTrack(nil)
+					} else {
+						_ = sender.ReplaceTrack(replacement)
+					}
 				}
 			}
 		}
@@ -524,12 +620,7 @@ func (m *Manager) forwardScreen(source *Peer, remote *webrtc.TrackRemote) {
 func (m *Manager) screenQuality(roomID, ownerID string) string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for memberID, visible := range m.screenVisible[roomID] {
-		if memberID != ownerID && visible {
-			return "screen-high"
-		}
-	}
-	return "screen-low"
+	return "screen-" + m.maximumScreenQualityLocked(roomID, ownerID)
 }
 
 func (m *Manager) publishTrack(source *Peer, track *webrtc.TrackLocalStaticRTP) {

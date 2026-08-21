@@ -86,8 +86,8 @@
           await peer.setLocalDescription(answer);
           await waitForGathering(peer);
           socket.send(JSON.stringify({version: 1, type: "answer", sdp: peer.localDescription}));
-		} else if ((frame.type === "screen-low" || frame.type === "screen-high") && screenSender) {
-		  const parameters=screenSender.getParameters();(parameters.encodings||[]).forEach(encoding=>encoding.active=frame.type==="screen-high"||encoding.rid==="q"||!encoding.rid);screenSender.setParameters(parameters).catch(()=>{});
+		} else if ((frame.type === "screen-low" || frame.type === "screen-medium" || frame.type === "screen-high") && screenSender) {
+		  const parameters=screenSender.getParameters(),maximum=frame.type==="screen-low"?0:frame.type==="screen-medium"?1:2;(parameters.encodings||[]).forEach((encoding,index)=>encoding.active=index<=maximum);screenSender.setParameters(parameters).catch(()=>{});
         }
       };
       socket.onclose = () => peer && stop();

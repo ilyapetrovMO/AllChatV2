@@ -9,7 +9,7 @@
   let ringContext = null, ringTimer = null, ringAudio = null, ringAudioURL = "", ringGeneration = 0;
   let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
   let mediaIceServers = null;
-  const remoteAudio = new Map(), remoteVideo = new Map();
+  const remoteAudio = new Map(), remoteVideo = new Map(), stoppedVideoMembers = new Set();
   const panel = document.createElement("section");
   panel.className = "call-banner";
   panel.hidden = true;
@@ -72,6 +72,7 @@
   const participantTile = (memberID, label, image, video) => {
     const tile = document.createElement("article"), visual = document.createElement("div"), name = document.createElement("strong");
     tile.className = `media-stage-tile participant-tile${video ? " sharing" : ""}`; visual.className = "media-stage-visual"; name.textContent = label;
+    tile.tabIndex=0;tile.setAttribute("role","button");tile.onclick=()=>{tile.classList.toggle("expanded");if(video&&memberID)connection?.send("screen-quality",{owner_id:memberID,quality:tile.classList.contains("expanded")?"high":"medium"})};tile.onkeydown=event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();tile.click()}};
     if(memberID&&memberID!==document.body.dataset.memberId)tile.oncontextmenu=event=>{event.preventDefault();window.AllChatVoiceSettings?.openParticipantVolumeMenu({memberID,label,x:event.clientX,y:event.clientY})};
     if (video) {
       visual.append(video);
@@ -108,13 +109,14 @@
   const toggleScreen = async button => {
     if (screenStream) return stopScreen();
     if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this browser.");
-    const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
-    const videoTrack = stream.getVideoTracks()[0], senders = [];
+    const mode=window.AllChatVoiceSettings?.load?.().screenShareMode||"auto",motion=mode==="motion",saver=mode==="data-saver",text=mode==="text",width=motion?1280:saver?960:1920,height=motion?720:saver?540:1080,fps=motion?30:saver?12:text?10:20;
+    const stream = await navigator.mediaDevices.getDisplayMedia({video:{width:{max:width},height:{max:height},frameRate:{max:fps}}, audio: true});
+    const videoTrack = stream.getVideoTracks()[0], senders = [];videoTrack.contentHint=motion?"motion":text?"text":"detail";
     stream.getAudioTracks().forEach(track => senders.push(connection.addTrack(track, stream)));
     const sender = await connection.setVideoTrack(videoTrack, stream, {sendEncodings: [
-        {rid: "q", scaleResolutionDownBy: 4, maxBitrate: Math.min(250000, mediaConfig.screen_bitrate)},
-        {rid: "h", scaleResolutionDownBy: 2, maxBitrate: Math.min(750000, mediaConfig.screen_bitrate)},
-        {rid: "f", maxBitrate: mediaConfig.screen_bitrate},
+        {rid: "q", scaleResolutionDownBy: 4, maxBitrate: Math.min(250000, mediaConfig.screen_bitrate), maxFramerate: Math.min(12,fps)},
+        {rid: "h", scaleResolutionDownBy: 2, maxBitrate: Math.min(750000, mediaConfig.screen_bitrate), maxFramerate: Math.min(20,fps)},
+        {rid: "f", maxBitrate: mediaConfig.screen_bitrate, maxFramerate: fps},
       ]});
     screenSender = sender;
     stream.__allchatSenders = senders; screenStream = stream; button.classList.add("active");
@@ -143,7 +145,7 @@
 
   const clearRemoteMedia = () => {
     remoteAudio.forEach(element => element.remove()); remoteAudio.clear();
-    remoteVideo.forEach(element => element.remove()); remoteVideo.clear();
+    remoteVideo.forEach(element => element.remove()); remoteVideo.clear(); stoppedVideoMembers.clear();
   };
 
   const clearRemoteVideo = () => {
@@ -172,7 +174,7 @@
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
       video.dataset.memberId=window.allchatMediaOwnerID?.(event.track.id,stream.id)||"";
-      const id=event.track.id||crypto.randomUUID(),remove=()=>{if(remoteVideo.get(id)===video)remoteVideo.delete(id);video.remove();renderMedia()},publish=()=>{
+      const id=event.track.id||crypto.randomUUID(),remove=()=>{if(remoteVideo.get(id)===video)remoteVideo.delete(id);video.remove();renderMedia()},publish=()=>{if(stoppedVideoMembers.has(video.dataset.memberId))return;
         // A Direct Call has one remote Member and one active video source.
         for(const old of remoteVideo.values())old.remove();remoteVideo.clear();remoteVideo.set(id,video);renderMedia();video.play().catch(()=>{});
       };
@@ -205,17 +207,19 @@
       }
     };
     const receiveFrame = frame => {
-      if ((frame.type === "screen-low" || frame.type === "screen-high") && screenSender) {
+      if ((frame.type === "screen-low" || frame.type === "screen-medium" || frame.type === "screen-high") && screenSender) {
         const parameters = screenSender.getParameters();
-        (parameters.encodings || []).forEach(encoding => {encoding.active = frame.type === "screen-high" || encoding.rid === "q" || !encoding.rid;});
+        const maximum=frame.type==="screen-low"?0:frame.type==="screen-medium"?1:2;(parameters.encodings || []).forEach((encoding,index) => {encoding.active = index<=maximum;});
         screenSender.setParameters(parameters).catch(() => {});
       } else if (frame.type === "screen-rejected") {
         stopScreen().catch(() => {});
         const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
       } else if (frame.type === "video-stopped") {
+        stoppedVideoMembers.add(frame.member_id);
         for (const video of remoteVideo.values()) { video.dataset.stopped = "true"; video.remove(); }
         renderMedia();
       } else if (frame.type === "video-started") {
+        stoppedVideoMembers.delete(frame.member_id);
         for (const video of remoteVideo.values()) { video.dataset.stopped = "false"; video.play().catch(() => {}); }
         renderMedia();
       }
@@ -224,6 +228,7 @@
     connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, fetchCredentials: async()=>mediaIceServers||[], resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
     await connection.start();
   };
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;for(const video of remoteVideo.values())connection?.send("screen-quality",{owner_id:video.dataset.memberId,quality:"low"})});
 
   const prepareMedia = async expectedGeneration => {
     if (microphone) return;

@@ -530,6 +530,12 @@ describe('desktop renderer bootstrap', () => {
     expect(directCallGrid.querySelector('.media-stage-grid')).toHaveAttribute('data-tile-count', '2');
     expect(directCallGrid.querySelectorAll('.media-stage-visual')).toHaveLength(2);
     expect(within(directCallGrid).getByText('You')).toBeVisible();
+    const alexCallTile = within(directCallGrid).getByRole('button', { name: 'Focus alex' });
+    fireEvent.click(alexCallTile);
+    expect(alexCallTile).toHaveClass('expanded');
+    expect(within(directCallGrid).getByRole('button', { name: 'Exit focus for alex' })).toBeVisible();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(alexCallTile).not.toHaveClass('expanded');
     expect(screen.getByLabelText('alex Messages')).toBeVisible();
     fireEvent.contextMenu(directCallGrid.querySelector('[data-media-member-id="alex"]') as HTMLElement, { clientX: 420, clientY: 260 });
     expect(screen.getByRole('slider', { name: 'alex volume' })).toBeVisible();

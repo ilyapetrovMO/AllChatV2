@@ -31,6 +31,7 @@ export class RealtimeConnection {
   #stopped = true;
   #cursor: number;
   #attempt = 0;
+  #activity: boolean | undefined;
 
   constructor(private readonly options: RealtimeConnectionOptions) {
     this.#cursor = Math.max(0, options.cursor);
@@ -60,6 +61,7 @@ export class RealtimeConnection {
   }
 
   sendActivity(active: boolean): void {
+    this.#activity = active;
     if (this.#socket?.readyState === 1) {
       this.#socket.send(JSON.stringify({ type: 'activity', active }));
     }
@@ -75,6 +77,9 @@ export class RealtimeConnection {
     this.#socket = socket;
     socket.onopen = () => {
       this.#attempt = 0;
+      if (this.#activity !== undefined && socket.readyState === 1) {
+        socket.send(JSON.stringify({ type: 'activity', active: this.#activity }));
+      }
       this.options.onStatus?.('connected');
     };
     socket.onmessage = ({ data }) => {

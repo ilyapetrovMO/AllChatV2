@@ -1,4 +1,4 @@
-import {RealtimeClient, RealtimeFrame, RealtimeStatus} from '../src/realtime/RealtimeClient';
+import {mobileRealtimeHeaders, RealtimeClient, RealtimeFrame, RealtimeStatus} from '../src/realtime/RealtimeClient';
 
 class FakeSocket {
   readyState = 0;
@@ -16,6 +16,13 @@ class FakeSocket {
 }
 
 describe('RealtimeClient', () => {
+  it('identifies its realtime connection as mobile to the Instance', () => {
+    expect(mobileRealtimeHeaders('session-token')).toEqual({
+      Authorization: 'Bearer session-token',
+      'User-Agent': 'AllChat-Mobile (Mobile)',
+    });
+  });
+
   it('authenticates, resumes a cursor, and acknowledges heartbeats', () => {
     const socket = new FakeSocket();
     const connections: Array<{url: string; token: string}> = [];

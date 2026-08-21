@@ -80,7 +80,7 @@ describe('desktop renderer bootstrap', () => {
     );
 
     fireEvent.click(await screen.findByRole('button', { name: 'Legacy Community' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Community Settings' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Community Settings' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Update the Instance to manage Community settings from desktop.',
@@ -189,7 +189,9 @@ describe('desktop renderer bootstrap', () => {
       if (action.type === 'list_soundboard') return { type: 'soundboard' as const, sounds: [{ id: 'sound-1', name: 'Airhorn', emoji: '📣', content_type: 'audio/ogg', size: 1024, duration_ms: 900, position: 0, audio_url: '/api/v1/soundboard/sound-1/audio' }], maxDurationMs: 10000, canManage: true };
       if (action.type === 'get_community_settings') return { type: 'community_settings' as const, settings: { name: 'AllChat Community', max_attachment_mib: 64, home_markdown: '# Welcome', push_relay_url: 'https://push.example.com', push_key_id: 'key-1', push_public_key: 'public-key' } };
       if (action.type === 'community_home') return { type: 'community_home' as const, markdown: '# Welcome to Nora Community\n\nChoose a Channel to begin.' };
-      if (action.type === 'search_messages') return { type: 'search_results' as const, results: [{ message: { id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora', sequence: 1, body: 'Global result', created_at: '2026-08-18T09:00:00Z', deleted: false }, channel_name: 'lobby', category_name: 'General', snippet: 'Global result', url: '/channels/chat#message-1' }] };
+      if (action.type === 'search_messages') return 'cursor' in action && action.cursor
+        ? { type: 'search_results' as const, results: [{ message: { id: 'message-2', channel_id: 'chat', author_id: 'alex', author_name: 'alex', sequence: 2, body: 'Older global result', created_at: '2026-08-18T08:00:00Z', deleted: false }, channel_name: 'lobby', category_name: 'General', snippet: 'Older global result', url: '/channels/chat#message-2' }] }
+        : { type: 'search_results' as const, results: [{ message: { id: 'message-1', channel_id: 'chat', author_id: 'me', author_name: 'nora', sequence: 1, body: 'Global result', created_at: '2026-08-18T09:00:00Z', deleted: false }, channel_name: 'lobby', category_name: 'General', snippet: 'Global result', url: '/channels/chat#message-1' }], nextCursor: 'page-2' };
       if (action.type === 'load_asset') return { type: 'asset' as const, contentType: 'image/png', data: new Uint8Array([1, 2, 3]) };
       if (action.type === 'start_call') return { type: 'call' as const, call: { id: 'call-alex', direct_message_id: 'dm-alex', caller_id: 'me', recipient_id: 'alex', state: 'accepted' as const, created_at: '2026-08-18T09:00:00Z' } };
       if (action.type === 'call_action') return { type: 'call' as const, call: null };
@@ -454,8 +456,16 @@ describe('desktop renderer bootstrap', () => {
     const globalSearch = screen.getByLabelText('Search Messages');
     fireEvent.change(globalSearch, { target: { value: 'global' } });
     fireEvent.submit(globalSearch.closest('form')!);
-    expect(await screen.findByRole('heading', { name: 'Search Results' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Close Search' }));
+    const searchPane = await screen.findByRole('complementary', { name: 'Search Results' });
+    expect(searchPane).toHaveClass('member-directory');
+    expect(within(searchPane).getByText('Global result')).toBeVisible();
+    fireEvent.click(within(searchPane).getByRole('button', { name: 'Load more' }));
+    expect(await within(searchPane).findByText('Older global result')).toBeVisible();
+    expect(executeInstance).toHaveBeenCalledWith('home', { type: 'search_messages', query: 'global', cursor: 'page-2' });
+    fireEvent.click(within(searchPane).getAllByRole('button', { name: 'Jump to message' })[0]);
+    expect(await screen.findByRole('heading', { name: 'lobby' })).toBeVisible();
+    expect(screen.queryByRole('complementary', { name: 'Search Results' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'User Settings' }));
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Voice & Video' }));
     const voiceSettings = document.querySelector('[data-voice-settings]') as HTMLElement;
@@ -473,8 +483,6 @@ describe('desktop renderer bootstrap', () => {
     const notificationSettings = document.querySelector('[data-notification-settings]') as HTMLElement;
     expect(within(notificationSettings).getByRole('heading', { name: 'Notifications' })).toBeVisible();
     expect(within(notificationSettings).getByText('Native notifications enabled')).toBeVisible();
-    expect(within(notificationSettings).getByRole('heading', { name: 'Incoming call ringtone' })).toBeVisible();
-    expect(within(notificationSettings).getByText('Using the generated tone.')).toBeVisible();
     fireEvent.change(within(notificationSettings).getByLabelText('Community notification level'), { target: { value: 'all_messages' } });
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
       type: 'set_community_notifications', level: 'all_messages', muted: false, soundEnabled: true,
@@ -483,6 +491,13 @@ describe('desktop renderer bootstrap', () => {
     await waitFor(() => expect(executeInstance).toHaveBeenCalledWith('home', {
       type: 'set_channel_notifications', channelId: 'chat', level: 'nothing', muted: false,
     }));
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'User settings' })).getByRole('button', { name: 'Ringtone' }));
+    const ringtoneSettings = document.querySelector('[data-ringtone-settings]') as HTMLElement;
+    expect(within(ringtoneSettings).getByRole('heading', { name: 'Ringtone' })).toBeVisible();
+    expect(within(ringtoneSettings).getByRole('heading', { name: 'Incoming call ringtone' })).toBeVisible();
+    expect(within(ringtoneSettings).getByText('Using the generated tone.')).toBeVisible();
+    fireEvent.change(within(ringtoneSettings).getByLabelText('Ringtone volume'), { target: { value: '0.4' } });
+    expect(JSON.parse(localStorage.getItem('allchat:voice-video:v1:desktop:me') || '{}')).toMatchObject({ ringtoneVolume: 0.4 });
     fireEvent.click(screen.getByRole('button', { name: 'Sessions' }));
     expect(screen.getAllByRole('heading', { name: 'Sessions' })).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Safety' }));

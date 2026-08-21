@@ -7,6 +7,7 @@ export type DesktopVoicePreferences = {
   cameraID: string;
   inputGain: number;
   outputVolume: number;
+  ringtoneVolume: number;
   memberVolumes: Record<string, number>;
   noiseSuppressionMode: 'standard' | 'enhanced' | 'off';
   echoCancellation: boolean;
@@ -19,7 +20,7 @@ export type DesktopVoicePreferences = {
 export type ScreenShareMode = 'auto' | 'text' | 'balanced' | 'motion' | 'data-saver';
 
 export const defaultDesktopVoicePreferences: DesktopVoicePreferences = {
-  version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
+  version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, ringtoneVolume: 1, memberVolumes: {},
   noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
   noiseGate: true, noiseGateThresholdDB: -50,
   screenShareMode: 'auto',
@@ -167,7 +168,7 @@ function normalizeDesktopVoicePreferences(value: unknown): DesktopVoicePreferenc
     memberVolumes: source.memberVolumes && typeof source.memberVolumes === 'object'
       ? Object.fromEntries(Object.entries(source.memberVolumes).map(([id, volume]) => [id, clamp(volume, 0, 1, 1)]))
       : {},
-    inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1),
+    inputGain: clamp(source.inputGain, 0, 2, 1), outputVolume: clamp(source.outputVolume, 0, 1, 1), ringtoneVolume: clamp(source.ringtoneVolume, 0, 1, 1),
     noiseGateThresholdDB: clamp(source.noiseGateThresholdDB, -80, -20, -50), noiseSuppressionMode: mode,
     screenShareMode,
   };

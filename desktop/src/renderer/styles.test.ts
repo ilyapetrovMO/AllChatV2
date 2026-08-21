@@ -46,4 +46,11 @@ describe('desktop shared control styling', () => {
     expect(css).toMatch(/\.presence-dot\.mobile\s*\{[^}]*width:\s*10px[^}]*height:\s*16px[^}]*border-radius:\s*3px/s);
     expect(css).toContain('.presence-dot.mobile::after');
   });
+
+  it('keeps voice and Member controls visible throughout Community settings', () => {
+    expect(css).not.toContain('.member-settings-open .member-panel');
+    expect(css).not.toContain('.community-settings-open .conversation-sidebar > *');
+    expect(css).toMatch(/\.community-settings-open \.community-administration > nav\s*\{[^}]*bottom:\s*52px/s);
+    expect(css).toMatch(/\.community-settings-open:has\(#desktop-call-controls:not\(:empty\)\) \.community-administration > nav\s*\{[^}]*bottom:\s*104px/s);
+  });
 });

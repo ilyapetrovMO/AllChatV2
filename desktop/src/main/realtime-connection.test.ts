@@ -24,5 +24,24 @@ describe('RealtimeConnection', () => {
     expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'activity', active: true }));
     connection.stop();
   });
+
+  it('replays active presence when the socket opens after renderer activity', () => {
+    const socket: RealtimeSocket = {
+      readyState: 0, onopen: null, onmessage: null, onerror: null, onclose: null,
+      send: vi.fn(), close: vi.fn(),
+    };
+    const connection = new RealtimeConnection({
+      baseUrl: 'https://chat.example', token: 'secret', cursor: 0, onFrame: vi.fn(), createSocket: () => socket,
+    });
+
+    connection.start();
+    connection.sendActivity(true);
+    expect(socket.send).not.toHaveBeenCalled();
+    socket.readyState = 1;
+    socket.onopen?.();
+
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'activity', active: true }));
+    connection.stop();
+  });
 });
 // @vitest-environment node

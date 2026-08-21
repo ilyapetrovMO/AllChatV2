@@ -86,13 +86,18 @@ func TestWebCallRingtoneUsesResolvedMemberPolicyWithToneFallback(t *testing.T) {
 			t.Fatalf("web Call ringtone policy missing %q", want)
 		}
 	}
-	settings, err := embeddedWeb.ReadFile("web/assets/notification-service.js")
+	settings, err := embeddedWeb.ReadFile("web/assets/member-ringtone-settings.js")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"/api/v1/member-ringtone", "Use Community default"} {
+	for _, want := range []string{"/api/v1/member-ringtone", "ringtoneVolume", "Ringtone volume saved on this device."} {
 		if !strings.Contains(string(settings), want) {
 			t.Fatalf("web Member ringtone setting missing %q", want)
+		}
+	}
+	for _, want := range []string{"ringAudio.volume=", ".075*volume"} {
+		if !strings.Contains(string(call), want) {
+			t.Fatalf("web Call ringtone volume policy missing %q", want)
 		}
 	}
 }

@@ -6,6 +6,7 @@ import {
   activeMediaParticipantIDs,
   acceptedDirectCallConversationID,
   ConversationTimeline,
+  ConversationPanel,
   formatMessageTime,
   homeDirectMessages,
   FormattedBody,
@@ -15,6 +16,8 @@ import {
   mobileAttachmentDisplayURL,
   shouldRenderInlineCallBanner,
   MessageRow,
+  MemberPresenceIndicator,
+  memberSections,
   trimMessageWindow,
   conversationKeyboardBehavior,
 } from '../src/screens/CommunityScreen';
@@ -42,6 +45,36 @@ const message: Message = {
 };
 
 describe('native conversation timeline', () => {
+  it('groups Members into Owner, Online, and Offline categories', () => {
+    const members = [
+      {id:'offline',username:'zoe',owner:false},
+      {id:'owner',username:'owner',owner:true},
+      {id:'online',username:'alex',owner:false},
+      {id:'mobile',username:'bea',owner:false},
+    ];
+    expect(memberSections(members, {online:'online',mobile:'mobile',offline:'offline',owner:'online'}).map(section => [section.title, section.data.map(item => item.id)])).toEqual([
+      ['Owner', ['owner']],
+      ['Online', ['online', 'mobile']],
+      ['Offline', ['offline']],
+    ]);
+  });
+
+  it('uses a phone icon for mobile presence instead of a green dot', () => {
+    let tree: renderer.ReactTestRenderer;
+    act(() => { tree = renderer.create(<MemberPresenceIndicator presence="mobile" />); });
+    expect(tree!.root.findByProps({accessibilityLabel:'mobile'}).type).not.toBe(Text);
+    expect(tree!.root.findAll(node => node.type === Text && node.children.includes('●'))).toHaveLength(0);
+  });
+
+  it('renders search results as full Messages with a jump action', () => {
+    const onJump = jest.fn();
+    let tree: renderer.ReactTestRenderer;
+    act(() => { tree = renderer.create(<ConversationPanel account={{instance_url:'https://chat.example',session_token:'token'}} busy={false} currentMemberID="me" messages={[]} mode="search" onClose={jest.fn()} onJump={onJump} onSearch={jest.fn()} palette={palette} query="hello" results={[{message,channel_name:'general',category_name:'Community',snippet:'ignored',url:'/channels/channel-1#message-message-1'}]} setQuery={jest.fn()} />); });
+    expect(tree!.root.findByType(MessageRow).props.message.body).toBe('Hello');
+    const jump = tree!.root.findByProps({accessibilityLabel:'Jump to message from Member'});
+    act(() => jump.props.onPress());
+    expect(onJump).toHaveBeenCalledWith(message);
+  });
   it('loads animated GIF originals instead of static generated previews', () => {
     expect(mobileAttachmentDisplayURL('https://chat.example.test', {
       id: 'gif', name: 'party.gif', content_type: 'image/gif', size: 10,

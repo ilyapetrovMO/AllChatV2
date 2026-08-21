@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstanceAction, InstanceActionResult } from '../shared/instance-actions';
@@ -58,14 +58,30 @@ describe('DirectCallControls remote lifecycle', () => {
   });
 
   it('resolves the authenticated ringtone when an incoming Call starts', async () => {
+    const onIncomingCallNotification = vi.fn();
     const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => {
       if (action.type === 'current_call') return {type: 'call', call: {id: 'incoming', direct_message_id: 'dm-alex', caller_id: 'alex', recipient_id: 'me', state: 'ringing', created_at: '2026-08-20T10:00:00Z'}};
       if (action.type === 'load_asset') return {type: 'asset', contentType: 'application/octet-stream', data: new Uint8Array()};
       return {type: 'accepted'};
     });
-    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" focusedMediaMemberId={null} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
+    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'dm-alex',name:'Alex',type:'dm'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" focusedMediaMemberId={null} onIncomingCallNotification={onIncomingCallNotification} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
     expect(await screen.findByRole('region', {name: 'Incoming Call controls'})).toBeVisible();
-    expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'});
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith({type: 'load_asset', path: '/api/v1/ringtone'}));
+    await waitFor(() => expect(onIncomingCallNotification).toHaveBeenCalledWith({callId: 'incoming', callerName: 'Alex'}));
+  });
+
+  it('opens the callers Direct Message immediately when accepting', async () => {
+    const onOpenDirectCall = vi.fn();
+    const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => {
+      if (action.type === 'current_call') return {type: 'call', call: {id:'incoming',direct_message_id:'dm-alex',caller_id:'alex',recipient_id:'me',state:'ringing',created_at:'2026-08-20T10:00:00Z'}};
+      if (action.type === 'load_asset') return {type:'asset',contentType:'application/octet-stream',data:new Uint8Array()};
+      if (action.type === 'call_action') return {type:'call',call:{id:'incoming',direct_message_id:'dm-alex',caller_id:'alex',recipient_id:'me',state:'accepted',created_at:'2026-08-20T10:00:00Z'}};
+      return {type:'accepted'};
+    });
+    render(<><div id="desktop-call-controls" /><DirectCallControls conversation={{id:'text-channel',name:'general',type:'text'}} directCallNames={{'dm-alex':'Alex'}} currentMemberId="me" instanceId="instance-1" onAction={onAction} requestedVoiceRoom={null} requestedVoiceRoomName="" focusedMediaMemberId={null} onOpenDirectCall={onOpenDirectCall} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} /></>);
+
+    fireEvent.click(await screen.findByRole('button', {name:'Accept'}));
+    expect(onOpenDirectCall).toHaveBeenCalledWith('dm-alex');
   });
 
   it('keeps the active DM name when another channel is selected', async () => {

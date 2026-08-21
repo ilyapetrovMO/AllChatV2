@@ -168,5 +168,9 @@ export class RealtimeClient {
 }
 
 function nativeSocket(url: string, token: string): Socket {
-  return new WebSocket(url, null, {headers: {Authorization: `Bearer ${token}`}}) as Socket;
+  return new WebSocket(url, null, {headers: mobileRealtimeHeaders(token)}) as Socket;
+}
+
+export function mobileRealtimeHeaders(token: string) {
+  return {Authorization: `Bearer ${token}`, 'User-Agent': 'AllChat-Mobile (Mobile)'};
 }

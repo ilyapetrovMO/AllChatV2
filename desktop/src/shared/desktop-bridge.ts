@@ -48,6 +48,7 @@ export interface DesktopBridge {
   watchUpdateState?(listener: (state: DesktopUpdateState) => void): () => void;
   installUpdate?(): Promise<void>;
   setNotificationContext?(instanceId: string, conversationId: string | null): void;
+  setIncomingCallNotification?(call: IncomingCallNotification | null): void;
   reportDiagnostic?(event: DesktopDiagnosticEvent, detail: string): void;
   getShellState(): Promise<ShellState>;
   addInstance(input: AddInstanceInput): Promise<ShellState>;
@@ -61,6 +62,8 @@ export interface DesktopBridge {
   executeInstance(instanceId: string, action: import('./instance-actions').InstanceAction): Promise<import('./instance-actions').InstanceActionResult>;
   connectMedia?(instanceId: string, listener: (frame: unknown) => void, closed: (reason: string) => void): Promise<DesktopMediaConnection>;
 }
+
+export interface IncomingCallNotification { callId: string; callerName: string }
 
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
 export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed' | 'screen_share_quality';
@@ -79,6 +82,7 @@ export const DESKTOP_BRIDGE_METHODS = [
   'watchUpdateState',
   'installUpdate',
   'setNotificationContext',
+  'setIncomingCallNotification',
   'reportDiagnostic',
   'getShellState',
   'addInstance',
@@ -99,6 +103,7 @@ export const IPC_CHANNELS = {
   updateStateChanged: 'allchat:update:state-changed',
   updateInstall: 'allchat:update:install',
   notificationContext: 'allchat:notification:context',
+  incomingCallNotification: 'allchat:notification:incoming-call',
   diagnostic: 'allchat:diagnostic',
   getShellState: 'allchat:shell:get-state',
   addInstance: 'allchat:instance:add',

@@ -1140,6 +1140,7 @@ func (i *Instance) routes() http.Handler {
 	mux.HandleFunc("POST /logout", i.logoutWeb)
 	mux.HandleFunc("GET /sessions", i.sessionsPage)
 	mux.HandleFunc("GET /voice-video", i.voiceSettingsPage)
+	mux.HandleFunc("GET /ringtone", i.ringtoneSettingsPage)
 	mux.HandleFunc("POST /sessions/{sessionID}/revoke", i.revokeSessionWeb)
 	mux.HandleFunc("POST /sessions/revoke-all", i.revokeAllSessionsWeb)
 	mux.HandleFunc("GET /recover", i.recoveryPage)

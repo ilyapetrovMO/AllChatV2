@@ -23,11 +23,11 @@
     try {
       ringContext ||= new AudioContext(); await ringContext.resume();
       const now=ringContext.currentTime;
-      [523.25,659.25].forEach((frequency,index)=>{const oscillator=ringContext.createOscillator(),gain=ringContext.createGain(),start=now+index*.12;oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075,start+.02);gain.gain.exponentialRampToValueAtTime(.0001,start+.24);oscillator.connect(gain).connect(ringContext.destination);oscillator.start(start);oscillator.stop(start+.25);});
+      const volume=window.AllChatVoiceSettings?.load?.().ringtoneVolume??1;[523.25,659.25].forEach((frequency,index)=>{const oscillator=ringContext.createOscillator(),gain=ringContext.createGain(),start=now+index*.12;oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,.075*volume),start+.02);gain.gain.exponentialRampToValueAtTime(.0001,start+.24);oscillator.connect(gain).connect(ringContext.destination);oscillator.start(start);oscillator.stop(start+.25);});
     } catch (_) {}
   };
   const stopRinging = () => { ringGeneration++;if(ringTimer)clearInterval(ringTimer);ringTimer=null;ringAudio?.pause();ringAudio=null;if(ringAudioURL)URL.revokeObjectURL(ringAudioURL);ringAudioURL=""; };
-  const startRinging = async () => { if(ringTimer||ringAudio)return;const run=++ringGeneration;try{const response=await fetch("/api/v1/ringtone",{cache:"no-store"});if(run!==ringGeneration)return;if(response.ok&&response.status!==204){ringAudioURL=URL.createObjectURL(await response.blob());ringAudio=new Audio(ringAudioURL);ringAudio.loop=true;await ringAudio.play();return}}catch(_){}if(run!==ringGeneration)return;ringPulse();ringTimer=setInterval(ringPulse,2200); };
+  const startRinging = async () => { if(ringTimer||ringAudio)return;const run=++ringGeneration;try{const response=await fetch("/api/v1/ringtone",{cache:"no-store"});if(run!==ringGeneration)return;if(response.ok&&response.status!==204){ringAudioURL=URL.createObjectURL(await response.blob());ringAudio=new Audio(ringAudioURL);ringAudio.loop=true;ringAudio.volume=window.AllChatVoiceSettings?.load?.().ringtoneVolume??1;await ringAudio.play();return}}catch(_){}if(run!==ringGeneration)return;ringPulse();ringTimer=setInterval(ringPulse,2200); };
   addEventListener("pointerdown",()=>{try{ringContext ||= new AudioContext();ringContext.resume().catch(()=>{});}catch(_){}},{once:true});
 
   const attachPanel = () => {

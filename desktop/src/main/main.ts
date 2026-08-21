@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { app, BrowserWindow, dialog, ipcMain, Menu, Notification, safeStorage, session, shell, Tray } from 'electron';
+import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, Menu, Notification, safeStorage, session, shell, Tray } from 'electron';
 import WebSocket from 'ws';
 
 import { DesktopAccountManager } from './desktop-account-manager';
@@ -17,6 +17,7 @@ import { downloadVerifiedUpdate, findDesktopUpdate } from './desktop-updater';
 import { assertAllowedAssetPath } from './asset-policy';
 import { notificationPreview, shouldNotifyForMessage } from '../shared/notification-policy';
 import { configureApplicationIdentity } from './application-identity';
+import { registerDisplayMediaHandler } from './display-media';
 import {
   IPC_CHANNELS,
   type AddInstanceInput,
@@ -43,6 +44,7 @@ let offeredUpdateVersion = '';
 let desktopUpdateState: DesktopUpdateState = { status: 'idle' };
 let downloadedUpdatePath = '';
 let notificationContext = { instanceId: '', conversationId: '' };
+let incomingCallNotification: { callId: string; notification: Notification } | null = null;
 
 configureApplicationIdentity(app);
 
@@ -259,6 +261,29 @@ function registerIpc(): void {
     assertString(instanceId, 'Instance identity');
     if (conversationId !== null) assertString(conversationId, 'Conversation identity');
     notificationContext = { instanceId, conversationId: conversationId || '' };
+  });
+  ipcMain.on(IPC_CHANNELS.incomingCallNotification, (event, call: import('../shared/desktop-bridge').IncomingCallNotification | null) => {
+    if (event.sender !== mainWindow?.webContents) return;
+    if (call === null) {
+      incomingCallNotification?.notification.close();
+      incomingCallNotification = null;
+      return;
+    }
+    assertBoundedText(call.callId, 'Call identity', 1, 200);
+    assertBoundedText(call.callerName, 'Caller name', 1, 200);
+    if (!Notification.isSupported() || incomingCallNotification?.callId === call.callId) return;
+    incomingCallNotification?.notification.close();
+    const notification = new Notification({
+      title: `Incoming Direct Call from ${call.callerName}`,
+      body: 'Open AllChat to accept or decline.',
+      silent: true,
+    });
+    notification.on('click', showMainWindow);
+    notification.on('close', () => {
+      if (incomingCallNotification?.notification === notification) incomingCallNotification = null;
+    });
+    incomingCallNotification = { callId: call.callId, notification };
+    notification.show();
   });
   ipcMain.on(IPC_CHANNELS.diagnostic, (event, diagnosticEvent: DesktopDiagnosticEvent, detail: string) => {
     if (event.sender !== mainWindow?.webContents) return;
@@ -554,4 +579,24 @@ function lockPermissions(): void {
   });
   session.defaultSession.setPermissionCheckHandler((webContents, permission) =>
     isAllowedRendererPermission(permission, !!webContents && BrowserWindow.fromWebContents(webContents) !== null));
+  registerDisplayMediaHandler({
+    setHandler: (handler) => session.defaultSession.setDisplayMediaRequestHandler(handler),
+    getSources: () => desktopCapturer.getSources({ types: ['screen', 'window'], fetchWindowIcons: true }),
+    showPicker: async (sources) => {
+      const buttons = [...sources.map((source) => source.name), 'Cancel'];
+      const result = await dialog.showMessageBox({
+        type: 'question',
+        title: 'Share your screen',
+        message: 'Choose what to share',
+        detail: 'AllChat will share the selected screen or window with the call.',
+        buttons,
+        cancelId: sources.length,
+        defaultId: 0,
+        noLink: true,
+      });
+      return result.response === sources.length ? null : result.response;
+    },
+    isAllowedFrame: (frame) => frame.top === mainWindow?.webContents.mainFrame,
+    platform: process.platform,
+  });
 }

@@ -406,6 +406,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
             homeRequestRevision={communityHomeRevision}
             onAction={executeAction}
             connectMedia={bridge.connectMedia}
+            onIncomingCallNotification={bridge.setIncomingCallNotification}
             onConversationChange={(conversationId) => bridge.setNotificationContext?.(active!.id, conversationId)}
           />
         ) : (
@@ -459,6 +460,7 @@ function CommunityShell({
   homeRequestRevision,
   onAction,
   connectMedia,
+  onIncomingCallNotification,
   onConversationChange,
 }: {
   instanceId: string;
@@ -466,6 +468,7 @@ function CommunityShell({
   homeRequestRevision: number;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   connectMedia?: DesktopBridge["connectMedia"];
+  onIncomingCallNotification?: DesktopBridge["setIncomingCallNotification"];
   onConversationChange?(conversationId: string | null): void;
 }) {
   const [conversation, setConversation] = useState<{
@@ -482,7 +485,7 @@ function CommunityShell({
   const [directCall, setDirectCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [focusedMediaMemberId, setFocusedMediaMemberId] = useState<string | null>(null);
   const [settingsView, setSettingsView] = useState<
-    "profile" | "voice" | "notifications" | "sessions" | "safety" | "community" | null
+    "profile" | "voice" | "ringtone" | "notifications" | "sessions" | "safety" | "community" | null
   >(null);
   const [communitySettingsSection, setCommunitySettingsSection] = useState("general");
   const [draft, setDraft] = useState("");
@@ -496,6 +499,9 @@ function CommunityShell({
   const [searchResults, setSearchResults] = useState<
     import("../shared/instance-state").SearchResult[] | null
   >(null);
+  const [searchNextCursor, setSearchNextCursor] = useState<string | null>(null);
+  const [searchActiveQuery, setSearchActiveQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFiltersOpen, setSearchFiltersOpen] = useState(false);
   const [showPins, setShowPins] = useState(false);
@@ -600,6 +606,7 @@ function CommunityShell({
   }, [instanceId]);
   const lastTypingAt = useRef(0);
   const messageListRef = useRef<HTMLDivElement | null>(null);
+  const pendingMessageJump = useRef<{ conversationId: string; messageId: string; windowStart: number } | null>(null);
   const stickToBottom = useRef(true);
   const historyLoading = useRef(new Set<string>());
   const historyExhausted = useRef<Record<string, boolean>>({});
@@ -669,7 +676,8 @@ function CommunityShell({
     return () => document.removeEventListener("mousedown", dismiss);
   }, [notificationMenuOpen]);
   useEffect(() => {
-    stickToBottom.current = true;
+    const pendingJump = conversation && pendingMessageJump.current?.conversationId === conversation.id ? pendingMessageJump.current : null;
+    stickToBottom.current = !pendingJump;
     setAwayFromPresent(false);
     setDraft(
       conversation
@@ -683,8 +691,8 @@ function CommunityShell({
       const messages = state.messages[conversation.id] || [];
       historyExhausted.current[conversation.id] = (messages[0]?.sequence || 1) <= 1;
       newerHistoryTruncated.current[conversation.id] = false;
-      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: null }));
-      const last = messages.at(-1);
+      setMessageWindowStarts((current) => ({ ...current, [conversation.id]: pendingJump ? pendingJump.windowStart : null }));
+      const last = pendingJump ? undefined : messages.at(-1);
       if (last)
         void onAction({
           type: "update_read_position",
@@ -692,6 +700,10 @@ function CommunityShell({
           direct: conversation.type === "dm",
           sequence: last.sequence,
         });
+      if (pendingJump) requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById(`message-${pendingJump.messageId}`)?.scrollIntoView({ block: "center" });
+        if (pendingMessageJump.current === pendingJump) pendingMessageJump.current = null;
+      }));
     }
   }, [conversation?.id, instanceId]);
   const voiceChannelIds = channels.filter(({ type }) => type === "voice").map(({ id }) => id);
@@ -737,6 +749,40 @@ function CommunityShell({
     ? Math.max(0, allConversationMessages.length - 80)
     : Math.max(0, Math.min(requestedWindowStart, Math.max(0, allConversationMessages.length - 1)));
   const renderedConversationMessages = allConversationMessages.slice(messageWindowStart, messageWindowStart + 80);
+
+  async function runMessageSearch(query: string, cursor?: string): Promise<void> {
+    setSearchLoading(true);
+    if (!cursor) setSearchActiveQuery(query);
+    try {
+      const result = await onAction({ type: "search_messages", query, ...(cursor ? { cursor } : {}) });
+      if (result?.type !== "search_results") return;
+      setSearchResults((current) => cursor && current ? [...current, ...result.results.filter((incoming) => !current.some(({ message }) => message.id === incoming.message.id))] : result.results);
+      setSearchNextCursor(result.nextCursor || null);
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+
+  async function jumpToSearchResult(result: import("../shared/instance-state").SearchResult): Promise<void> {
+    const directMessage = state.direct_messages.find(({ id }) => id === result.message.channel_id);
+    const channel = state.channels.find(({ id }) => id === result.message.channel_id);
+    if (!directMessage && !channel) return;
+    const nextConversation = directMessage
+      ? { id: directMessage.id, name: memberName(directMessage.other), type: "dm" as const }
+      : { id: channel!.id, name: channel!.name, type: channel!.type, topic: channel!.topic };
+    if (nextConversation.type === "voice") return;
+    stickToBottom.current = false;
+    const page = await onAction({ type: "load_messages", conversationId: nextConversation.id, direct: nextConversation.type === "dm", before: result.message.sequence + 1, limit: 50 });
+    const loaded = page?.type === "messages" ? page.page.messages : [result.message];
+    const merged = mergeMessages(state.messages[nextConversation.id] || [], loaded, "older");
+    const targetIndex = Math.max(0, merged.findIndex(({ id }) => id === result.message.id));
+    setSettingsView(null);
+    setHomeView(directMessage ? "direct-messages" : "community");
+    setConversation(nextConversation);
+    pendingMessageJump.current = { conversationId: nextConversation.id, messageId: result.message.id, windowStart: Math.max(0, targetIndex - 20) };
+    setSearchResults(null);
+    setSearchNextCursor(null);
+  }
 
   async function loadOlderMessages(): Promise<void> {
     if (!conversation || conversation.type === "voice" || historyLoading.current.has(conversation.id)) return;
@@ -879,6 +925,10 @@ function CommunityShell({
                 aria-current={settingsView === "voice" ? "page" : undefined}
                 onClick={() => setSettingsView("voice")}
               >Voice &amp; Video</button>
+              <button
+                aria-current={settingsView === "ringtone" ? "page" : undefined}
+                onClick={() => setSettingsView("ringtone")}
+              >Ringtone</button>
               <button
                 aria-current={settingsView === "notifications" ? "page" : undefined}
                 onClick={() => setSettingsView("notifications")}
@@ -1098,8 +1148,10 @@ function CommunityShell({
                 ? "My Account"
                 : settingsView === "voice"
                   ? "Voice & Video"
-                  : settingsView === "notifications"
-                    ? "Notifications"
+                  : settingsView === "ringtone"
+                    ? "Ringtone"
+                    : settingsView === "notifications"
+                      ? "Notifications"
                     : settingsView === "sessions"
                       ? "Sessions"
                       : settingsView === "safety"
@@ -1133,6 +1185,7 @@ function CommunityShell({
               instanceId={instanceId}
               onAction={onAction}
               connectMedia={connectMedia}
+              onIncomingCallNotification={onIncomingCallNotification}
               requestedVoiceRoom={requestedVoiceRoom}
               requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
               focusedMediaMemberId={focusedMediaMemberId}
@@ -1290,12 +1343,7 @@ function CommunityShell({
                   new FormData(event.currentTarget).get("query") || "",
                 );
                 setSearchFiltersOpen(false);
-                void onAction({ type: "search_messages", query }).then(
-                  (result) => {
-                    if (result?.type === "search_results")
-                      setSearchResults(result.results);
-                  },
-                );
+                void runMessageSearch(query);
               }}
             >
               <Icon name="search" />
@@ -1314,7 +1362,7 @@ function CommunityShell({
             </form>
           </div>
         </header>
-        {settingsView && !searchResults ? settingsView === "community" ? (
+        {settingsView ? settingsView === "community" ? (
           <div className="community-settings-layout">
             <CommunityAdministration state={state} onAction={onAction} onSectionChange={setCommunitySettingsSection} />
           </div>
@@ -1377,6 +1425,9 @@ function CommunityShell({
               {settingsView === "voice" && (
                 <VoiceVideoSettings memberId={state.member.id} />
               )}
+              {settingsView === "ringtone" && (
+                <RingtoneSettings state={state} onAction={onAction} />
+              )}
               {settingsView === "notifications" && (
                 <NotificationSettings
                   state={state}
@@ -1438,25 +1489,6 @@ function CommunityShell({
                 </section>
               )}
             </section>
-          </div>
-        ) : searchResults ? (
-          <div className="search-results">
-            <h2>Search Results</h2>
-            <button type="button" onClick={() => setSearchResults(null)}>
-              Close Search
-            </button>
-            {searchResults.length ? (
-              searchResults.map((result) => (
-                <article key={result.message.id}>
-                  <strong>
-                    #{result.channel_name} · {result.message.author_name}
-                  </strong>
-                  <p>{result.snippet}</p>
-                </article>
-              ))
-            ) : (
-              <p>No results found.</p>
-            )}
           </div>
         ) : conversation ? (
           conversation.type === "voice" ? (
@@ -1852,7 +1884,23 @@ function CommunityShell({
           </div>
         )}
       </section>
-      {membersOpen && !settingsView && homeView === "community" && (!conversation || conversation.type === "text") && (
+      {searchResults ? (
+        <aside className="member-directory search-results-pane" aria-label="Search Results">
+          <header><h2>Search Results — {searchResults.length}</h2><button type="button" aria-label="Close Search" onClick={() => { setSearchResults(null); setSearchNextCursor(null); }}><Icon name="x" /></button></header>
+          <div className="search-results-list">
+            {searchResults.length ? searchResults.map((result) => (
+              <article className="search-result-message" key={result.message.id}>
+                <small>#{result.channel_name} · {result.category_name}</small>
+                <strong>{result.message.author_name}</strong>
+                <time>{formatMessageTime(result.message.created_at)}</time>
+                <div className="message-body"><MessageBody body={result.message.body || ""} mentions={result.message.mentions || []} /></div>
+                <button type="button" onClick={() => void jumpToSearchResult(result)}>Jump to message</button>
+              </article>
+            )) : <p>No results found.</p>}
+          </div>
+          {searchNextCursor && <button className="search-load-more" type="button" disabled={searchLoading} onClick={() => void runMessageSearch(searchActiveQuery, searchNextCursor)}>{searchLoading ? "Loading…" : "Load more"}</button>}
+        </aside>
+      ) : membersOpen && !settingsView && homeView === "community" && (!conversation || conversation.type === "text") && (
         <aside className="member-directory" aria-label="Members">
           {memberGroups.map((group) => (
             <section className="member-directory-group" key={group.label}>
@@ -2029,6 +2077,7 @@ export function DirectCallControls({
   instanceId,
   onAction,
   connectMedia,
+  onIncomingCallNotification,
   requestedVoiceRoom,
   requestedVoiceRoomName,
   focusedMediaMemberId,
@@ -2042,6 +2091,7 @@ export function DirectCallControls({
   instanceId: string;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   connectMedia?: DesktopBridge["connectMedia"];
+  onIncomingCallNotification?: DesktopBridge["setIncomingCallNotification"];
   requestedVoiceRoom: string | null;
   requestedVoiceRoomName: string;
   focusedMediaMemberId: string | null;
@@ -2250,6 +2300,7 @@ export function DirectCallControls({
 
   async function act(action: "accept" | "decline" | "end"): Promise<void> {
     if (!call) return;
+    if (action === "accept") onOpenDirectCall?.(call.direct_message_id);
     const result = await onAction({ type: "call_action", callId: call.id, action });
     if (result?.type === "call") { setCall(result.call); onCallChange(result.call); }
     if (action === "decline" || action === "end") { cleanup(); setCall(null); onCallChange(null); setStatus(""); }
@@ -2361,6 +2412,12 @@ export function DirectCallControls({
   }
 
   const incoming = call?.state === "ringing" && call.recipient_id === currentMemberId;
+  const directCallName = call ? directCallNames[call.direct_message_id] || (conversation?.type === "dm" && conversation.id === call.direct_message_id ? conversation.name : "") || "Direct Call" : "Direct Call";
+  useEffect(() => {
+    if (!incoming || !call) return;
+    onIncomingCallNotification?.({ callId: call.id, callerName: directCallName });
+    return () => onIncomingCallNotification?.(null);
+  }, [incoming, call?.id, directCallName, onIncomingCallNotification]);
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: Boolean(call) } }));
     return () => { window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: false } })); };
@@ -2396,6 +2453,7 @@ export function DirectCallControls({
   useEffect(() => {
     if (!incoming) return;
     let disposed = false, context: AudioContext | undefined, timer: number | undefined, customAudio: HTMLAudioElement | undefined, customURL = "";
+    const ringtoneVolume = loadDesktopVoicePreferences(currentMemberId).ringtoneVolume;
     const pulse = () => {
       if (typeof AudioContext === "undefined") return;
       context ||= new AudioContext();
@@ -2406,7 +2464,7 @@ export function DirectCallControls({
           const oscillator = currentContext.createOscillator(), gain = currentContext.createGain(), start = now + index * .12;
           oscillator.frequency.value = frequency;
           gain.gain.setValueAtTime(.0001, start);
-          gain.gain.exponentialRampToValueAtTime(.075, start + .02);
+          gain.gain.exponentialRampToValueAtTime(Math.max(.0001, .075 * ringtoneVolume), start + .02);
           gain.gain.exponentialRampToValueAtTime(.0001, start + .24);
           oscillator.connect(gain).connect(currentContext.destination);
           oscillator.start(start);
@@ -2420,12 +2478,12 @@ export function DirectCallControls({
       if (result?.type !== "asset" || result.data.byteLength === 0) return generated();
       customURL = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
       customAudio = new Audio(customURL); customAudio.loop = true;
+      customAudio.volume = ringtoneVolume;
       void customAudio.play().catch(generated);
     }).catch(generated);
     return () => { disposed = true; if (timer !== undefined) window.clearInterval(timer); customAudio?.pause(); if (customURL) URL.revokeObjectURL(customURL); if (context) void context.close().catch(() => undefined); };
   }, [incoming, call?.id]);
   const connected = call?.state === "accepted" || !!voiceRoom;
-  const directCallName = call ? directCallNames[call.direct_message_id] || (conversation?.type === "dm" && conversation.id === call.direct_message_id ? conversation.name : "") || "Direct Call" : "Direct Call";
   const controlSlot = document.getElementById("desktop-call-controls");
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
@@ -3303,7 +3361,6 @@ function NotificationSettings({
   });
   const [channels, setChannels] = useState(state.notifications.channels);
   const [notice, setNotice] = useState("");
-  const [memberRingtone, setMemberRingtone] = useState(state.notifications.member_ringtone_set === true);
 
   async function saveCommunity(next: typeof community): Promise<void> {
     setCommunity(next);
@@ -3334,7 +3391,6 @@ function NotificationSettings({
         <h3>Desktop notifications</h3>
         <p className="notification-permission-state"><span className="presence-dot online" /> Native notifications enabled</p>
       </section>
-      <RingtoneSetting scope="member" active={memberRingtone} fallbackLabel={state.notifications.community_ringtone_set ? "Using the Community ringtone." : "Using the generated tone."} onAction={onAction} onActiveChange={setMemberRingtone} />
       <section className="settings-card">
         <h3>Community defaults</h3>
         <label>Notification level<select aria-label="Community notification level" value={community.level} onChange={(event) => void saveCommunity({ ...community, level: event.target.value as CommunityLevel })}><option value="all_messages">All Messages</option><option value="mentions_only">Only @mentions</option><option value="nothing">Nothing</option></select></label>
@@ -3355,6 +3411,26 @@ function NotificationSettings({
       <p role="status" aria-live="polite">{notice}</p>
     </section>
   );
+}
+
+function RingtoneSettings({ state, onAction }: { state: InstanceViewState; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined> }) {
+  const [memberRingtone, setMemberRingtone] = useState(state.notifications.member_ringtone_set === true);
+  const [volume, setVolume] = useState(() => loadDesktopVoicePreferences(state.member.id).ringtoneVolume);
+  const saveVolume = (value: number) => {
+    const preferences = loadDesktopVoicePreferences(state.member.id);
+    const saved = saveDesktopVoicePreferences(state.member.id, { ...preferences, ringtoneVolume: value });
+    setVolume(saved.ringtoneVolume);
+  };
+  return <section className="settings-panel ringtone-settings-page" data-ringtone-settings>
+    <p className="eyebrow">Member settings</p>
+    <h2>Ringtone</h2>
+    <p>Choose the sound and volume used for incoming Direct Calls on this device.</p>
+    <RingtoneSetting scope="member" active={memberRingtone} fallbackLabel={state.notifications.community_ringtone_set ? "Using the Community ringtone." : "Using the generated tone."} onAction={onAction} onActiveChange={setMemberRingtone} />
+    <section className="settings-card">
+      <h3>Ringtone volume</h3>
+      <label className="setting-slider"><span>Volume</span><output>{Math.round(volume * 100)}%</output><input aria-label="Ringtone volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => saveVolume(Number(event.target.value))} /></label>
+    </section>
+  </section>;
 }
 
 function VoiceVideoSettings({ memberId }: { memberId: string }) {
@@ -3466,7 +3542,7 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
       <section className="voice-settings-section">
         <h3>Advanced</h3>
         <div className="setting-row"><span><strong>Speaker test</strong><small>Play a short tone through the selected output device.</small></span><button type="button" onClick={playSpeakerTest}>Play sound</button></div>
-        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save(defaultDesktopVoicePreferences); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
+        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save({ ...defaultDesktopVoicePreferences, ringtoneVolume: preferences.ringtoneVolume }); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
       </section>
       <p className="voice-settings-notice" role="status" aria-live="polite">{notice}</p>
     </section>

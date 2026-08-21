@@ -697,7 +697,7 @@
   if (document.body.dataset.memberId) import("/assets/call.js");
   const installProfileImages=root=>import("/assets/profile-images.js").then(module=>module.installProfileImageControls(root)).catch(()=>{});
   installProfileImages(document);document.addEventListener("allchat:view-swapped",event=>installProfileImages(event.detail?.root||document));
-  const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.closest(".channel-sidebar")?.querySelector(".community-header")?.textContent.trim()!=="Member Settings"||nav.querySelector('a[href="/voice-video"]'))return;const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";const sessions=nav.querySelector('a[href="/sessions"]');sessions?nav.insertBefore(link,sessions):nav.append(link)};
+  const installVoiceSettingsLink=root=>{const nav=root.querySelector?.(".settings-nav");if(!nav||nav.closest(".channel-sidebar")?.querySelector(".community-header")?.textContent.trim()!=="Member Settings")return;const sessions=nav.querySelector('a[href="/sessions"]');if(!nav.querySelector('a[href="/voice-video"]')){const link=document.createElement("a");link.href="/voice-video";link.textContent="Voice & Video";sessions?nav.insertBefore(link,sessions):nav.append(link)}if(!nav.querySelector('a[href="/ringtone"]')){const link=document.createElement("a");link.href="/ringtone";link.textContent="Ringtone";sessions?nav.insertBefore(link,sessions):nav.append(link)}};
   installVoiceSettingsLink(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettingsLink(event.detail?.root||document));
   const installVoiceSettings=root=>{if(!root.querySelector?.("[data-voice-settings]"))return;import("/assets/voice-settings-page.js").then(()=>window.installAllChatVoiceSettings?.(root)).catch(()=>{})};
   installVoiceSettings(document);document.addEventListener("allchat:view-swapped",event=>installVoiceSettings(event.detail?.root||document));
@@ -708,7 +708,7 @@
   };
   installSoundboard(document);
   document.addEventListener("allchat:view-swapped", event => installSoundboard(event.detail?.root || document));
-  const installRingtoneSettings=root=>{if(!root.querySelector?.("[data-community-ringtone]"))return;import("/assets/ringtone-settings.js").then(()=>window.installAllChatRingtoneSettings?.(root)).catch(()=>{})};
+  const installRingtoneSettings=root=>{if(!root.querySelector?.("[data-community-ringtone]:not([data-member-ringtone-settings])"))return;import("/assets/ringtone-settings.js").then(()=>window.installAllChatRingtoneSettings?.(root)).catch(()=>{})};
   installRingtoneSettings(document);document.addEventListener("allchat:view-swapped",event=>installRingtoneSettings(event.detail?.root||document));
   const installAdminDashboard=root=>{if(!root.querySelector?.("[data-admin-dashboard]"))return;import("/assets/admin-dashboard.js").then(()=>window.installAllChatAdminDashboard?.(root)).catch(()=>{})};
   installAdminDashboard(document);

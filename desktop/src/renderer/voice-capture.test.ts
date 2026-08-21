@@ -10,12 +10,12 @@ describe('desktop voice capture', () => {
 
   it('persists normalized preferences and builds standard WebRTC constraints', () => {
     const saved = saveDesktopVoicePreferences('member', {
-      version: 1, microphoneID: 'microphone', speakerID: '', cameraID: '', inputGain: 9, outputVolume: -2, memberVolumes: { alex: 0.4 },
+      version: 1, microphoneID: 'microphone', speakerID: '', cameraID: '', inputGain: 9, outputVolume: -2, ringtoneVolume: 4, memberVolumes: { alex: 0.4 },
       noiseSuppressionMode: 'standard', echoCancellation: true, autoGainControl: false,
       noiseGate: true, noiseGateThresholdDB: -50,
       screenShareMode: 'auto',
     });
-    expect(saved).toMatchObject({ inputGain: 2, outputVolume: 0, memberVolumes: { alex: 0.4 } });
+    expect(saved).toMatchObject({ inputGain: 2, outputVolume: 0, ringtoneVolume: 1, memberVolumes: { alex: 0.4 } });
     expect(loadDesktopVoicePreferences('member')).toEqual(saved);
     expect(desktopVoiceConstraints(saved)).toEqual({
       deviceId: { ideal: 'microphone' }, echoCancellation: true, noiseSuppression: true, autoGainControl: false,
@@ -48,7 +48,7 @@ describe('desktop voice capture', () => {
     vi.stubGlobal('AudioWorkletNode', FakeWorkletNode);
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: vi.fn(async () => raw) } });
     saveDesktopVoicePreferences('member', {
-      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
+      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, ringtoneVolume: 1, memberVolumes: {},
       noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
       noiseGate: false, noiseGateThresholdDB: -50,
       screenShareMode: 'auto',
@@ -85,7 +85,7 @@ describe('desktop voice capture', () => {
     const getUserMedia = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(fallback);
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
     saveDesktopVoicePreferences('member', {
-      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, memberVolumes: {},
+      version: 1, microphoneID: '', speakerID: '', cameraID: '', inputGain: 1, outputVolume: 1, ringtoneVolume: 1, memberVolumes: {},
       noiseSuppressionMode: 'enhanced', echoCancellation: true, autoGainControl: false,
       noiseGate: false, noiseGateThresholdDB: -50,
       screenShareMode: 'auto',

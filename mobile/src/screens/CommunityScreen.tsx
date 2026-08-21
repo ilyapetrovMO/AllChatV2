@@ -4,6 +4,7 @@ import {
   Alert,
   AppState,
   FlatList,
+  SectionList,
   Image,
   KeyboardAvoidingView,
   Linking,
@@ -44,6 +45,7 @@ import {
   Search,
   Settings,
   ShieldAlert,
+  Smartphone,
   Users,
   Volume2,
 } from 'lucide-react-native';
@@ -449,7 +451,7 @@ export function CommunityScreen({
   const channel = community?.channels.find(item => item.id === activeID);
   const messages = community?.messages[activeID] || [];
 
-  async function openConversation(id: string, isDirect: boolean) {
+  async function openConversation(id: string, isDirect: boolean, before = 0) {
     setActiveID(id);
     setHistory(value => ({
       ...value,
@@ -463,6 +465,7 @@ export function CommunityScreen({
         account.session_token,
         id,
         isDirect,
+        before,
       );
       setCommunity(value =>
         value
@@ -712,6 +715,7 @@ export function CommunityScreen({
   }
 
   async function openPins() {
+    setMembersOpen(false);
     setPanel('pins');
     setPanelBusy(true);
     setPanelMessages([]);
@@ -747,6 +751,12 @@ export function CommunityScreen({
     } finally {
       setPanelBusy(false);
     }
+  }
+
+  async function jumpToMessage(message: Message) {
+    const isDirect = Boolean(community?.direct_messages.some(item => item.id === message.channel_id));
+    await openConversation(message.channel_id, isDirect, message.sequence + 1);
+    setPanel('');
   }
 
   async function startDM(member: Member) {
@@ -1030,7 +1040,7 @@ export function CommunityScreen({
               </View>
               <TouchableOpacity
                 accessibilityLabel="Community Members"
-                onPress={() => setMembersOpen(true)}
+                onPress={() => { setPanel(''); setMembersOpen(true); }}
                 style={[styles.iconButton, styles.communityHeaderAction]}
               >
                 <Users color={palette.text} size={20} />
@@ -1434,7 +1444,7 @@ export function CommunityScreen({
             ) : null}
             <TouchableOpacity
               accessibilityLabel="Search Messages"
-              onPress={() => setPanel('search')}
+              onPress={() => { setMembersOpen(false); setPanel('search'); }}
               style={styles.iconButton}
             >
               <Search color={palette.text} size={20} />
@@ -1629,10 +1639,13 @@ export function CommunityScreen({
             palette={palette}
           />
           <ConversationPanel
+            account={account}
             busy={panelBusy}
+            currentMemberID={community.member.id}
             messages={panelMessages}
             mode={panel}
             onClose={() => setPanel('')}
+            onJump={jumpToMessage}
             onSearch={search}
             palette={palette}
             query={searchQuery}
@@ -2286,6 +2299,10 @@ function MediaRoomScreen({
           session.current?.updateAudioSettings(settings);
           onVoiceSettingsChange(settings);
         }}
+        onPreview={next => {
+          if (!volumeMember) return;
+          session.current?.updateAudioSettings({...voiceSettings, memberVolumes: {...voiceSettings.memberVolumes, [volumeMember.id]: next}});
+        }}
         onClose={() => setVolumeMember(undefined)}
         open={Boolean(volumeMember)}
         palette={palette}
@@ -2488,37 +2505,49 @@ export function participantVolumeFromPosition(position: number, width: number) {
   return Math.round(Math.min(1, Math.max(0, position / width)) * 20) / 20;
 }
 
-function ParticipantVolumeModal({label, onChange, onClose, open, palette, value}: {
+export function ParticipantVolumeModal({label, onChange, onClose, onPreview, open, palette, value}: {
   label: string;
   onChange(value: number): void;
   onClose(): void;
+  onPreview(value: number): void;
   open: boolean;
   palette: Palette;
   value: number;
 }) {
   const [width, setWidth] = useState(1);
-  const adjust = (locationX: number) => onChange(participantVolumeFromPosition(locationX, width));
+  const [draft, setDraft] = useState(value);
+  const draftRef = useRef(value);
+  useEffect(() => { if (open) { draftRef.current = value; setDraft(value); } }, [open, value]);
+  const adjust = (locationX: number) => {
+    const next = participantVolumeFromPosition(locationX, width);
+    draftRef.current = next;
+    setDraft(next);
+    onPreview(next);
+  };
+  const commit = () => onChange(draftRef.current);
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={open}>
       <TouchableOpacity activeOpacity={1} onPress={onClose} style={styles.participantVolumeBackdrop}>
         <TouchableOpacity activeOpacity={1} onPress={() => undefined} style={[styles.participantVolumePopover, {backgroundColor: palette.field}]}>
           <Text style={[styles.participantVolumeTitle, {color: palette.text}]}>{label} volume</Text>
-          <Text style={[styles.participantVolumeValue, {color: palette.muted}]}>{Math.round(value * 100)}%</Text>
+          <Text style={[styles.participantVolumeValue, {color: palette.muted}]}>{Math.round(draft * 100)}%</Text>
           <View
             accessibilityActions={[{name: 'increment'}, {name: 'decrement'}]}
             accessibilityLabel={`${label} volume`}
             accessibilityRole="adjustable"
-            accessibilityValue={{min: 0, max: 100, now: Math.round(value * 100)}}
-            onAccessibilityAction={event => onChange(Math.min(1, Math.max(0, value + (event.nativeEvent.actionName === 'increment' ? 0.05 : -0.05))))}
+            accessibilityValue={{min: 0, max: 100, now: Math.round(draft * 100)}}
+            onAccessibilityAction={event => { const next = Math.min(1, Math.max(0, draft + (event.nativeEvent.actionName === 'increment' ? 0.05 : -0.05))); draftRef.current = next; setDraft(next); onPreview(next); onChange(next); }}
             onLayout={event => setWidth(event.nativeEvent.layout.width)}
             onMoveShouldSetResponder={() => true}
             onResponderGrant={event => adjust(event.nativeEvent.locationX)}
             onResponderMove={event => adjust(event.nativeEvent.locationX)}
+            onResponderRelease={commit}
+            onResponderTerminate={commit}
             onStartShouldSetResponder={() => true}
             style={[styles.participantVolumeTrack, {backgroundColor: palette.border}]}
           >
-            <View style={[styles.participantVolumeFill, {backgroundColor: palette.accent, width: `${value * 100}%`}]} />
-            <View style={[styles.participantVolumeThumb, {backgroundColor: palette.text, left: `${value * 100}%`}]} />
+            <View pointerEvents="none" style={[styles.participantVolumeFill, {backgroundColor: palette.accent, width: `${draft * 100}%`}]} />
+            <View pointerEvents="none" style={[styles.participantVolumeThumb, {backgroundColor: palette.text, left: `${draft * 100}%`}]} />
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -3336,21 +3365,27 @@ function ActionButton({
   );
 }
 
-function ConversationPanel({
+export function ConversationPanel({
+  account,
   busy,
+  currentMemberID,
   messages,
   mode,
   onClose,
+  onJump,
   onSearch,
   palette,
   query,
   results,
   setQuery,
 }: {
+  account: Pick<InstanceAccount, 'instance_url' | 'session_token'>;
   busy: boolean;
+  currentMemberID: string;
   messages: Message[];
   mode: 'pins' | 'search' | '';
   onClose(): void;
+  onJump(message: Message): void;
   onSearch(): void;
   palette: Palette;
   query: string;
@@ -3358,17 +3393,16 @@ function ConversationPanel({
   setQuery(value: string): void;
 }) {
   if (!mode) return null;
-  const items =
+  const items: Array<{id: string; message: Message; context?: string}> =
     mode === 'pins'
       ? messages.map(message => ({
           id: message.id,
-          author: message.author_name,
-          body: message.body || 'Attachment',
+          message,
         }))
       : results.map(result => ({
           id: result.message.id,
-          author: `${result.message.author_name} in #${result.channel_name}`,
-          body: result.snippet,
+          message: result.message,
+          context: `#${result.channel_name} · ${result.category_name}`,
         }));
   return (
     <Modal animationType="slide" onRequestClose={onClose} visible>
@@ -3431,12 +3465,17 @@ function ConversationPanel({
               <View
                 style={[styles.panelItem, { backgroundColor: palette.field }]}
               >
-                <Text style={[styles.author, { color: palette.text }]}>
-                  {item.author}
-                </Text>
-                <Text numberOfLines={4} style={{ color: palette.text }}>
-                  {item.body}
-                </Text>
+                {item.context ? <Text style={[styles.panelMessageContext, {color: palette.muted}]}>{item.context}</Text> : null}
+                <MessageRow
+                  instanceURL={account.instance_url}
+                  message={item.message}
+                  mine={item.message.author_id === currentMemberID}
+                  palette={palette}
+                  token={account.session_token}
+                />
+                <TouchableOpacity accessibilityLabel={`Jump to message from ${item.message.author_name}`} onPress={() => onJump(item.message)} style={[styles.panelJumpButton, {backgroundColor: palette.accent}]}>
+                  <Text style={styles.searchButtonText}>Jump to message</Text>
+                </TouchableOpacity>
               </View>
             )}
           />
@@ -3469,11 +3508,7 @@ function MembersPanel({
   presence: CommunityState['presence'];
   token: string;
 }) {
-  const sorted = [...members].sort(
-    (left, right) =>
-      presenceRank(presence[left.id]) - presenceRank(presence[right.id]) ||
-      memberName(left).localeCompare(memberName(right)),
-  );
+  const sections = memberSections(members, presence);
   return (
     <Modal animationType="slide" onRequestClose={onClose} visible={open}>
       <View style={[styles.panel, { backgroundColor: palette.background }]}>
@@ -3493,10 +3528,11 @@ function MembersPanel({
         {busy ? (
           <ActivityIndicator color={palette.accent} />
         ) : (
-          <FlatList
+          <SectionList
             contentContainerStyle={styles.panelList}
-            data={sorted}
+            sections={sections}
             keyExtractor={member => member.id}
+            renderSectionHeader={({section}) => <Text style={[styles.memberSectionHeading, {color: palette.muted}]}>{section.title} — {section.data.length}</Text>}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => onOpenProfile(item)}
@@ -3518,12 +3554,7 @@ function MembersPanel({
                     {item.owner ? ' · Owner' : ''}
                   </Text>
                 </View>
-                <Text
-                  accessibilityLabel={presence[item.id] || 'offline'}
-                  style={[styles.presenceDot, presenceStyle(presence[item.id])]}
-                >
-                  ●
-                </Text>
+                <MemberPresenceIndicator presence={presence[item.id]} />
               </TouchableOpacity>
             )}
           />
@@ -4269,14 +4300,17 @@ function notificationLevelName(level: NotificationSetting['level']) {
 function memberName(member: Member) {
   return member.display_name || member.username;
 }
-function presenceRank(value?: string) {
-  return value === 'online' || value === 'mobile'
-    ? 0
-    : value === 'dnd'
-    ? 1
-    : value === 'idle'
-    ? 2
-    : 3;
+export function memberSections(members: Member[], presence: CommunityState['presence']) {
+  const byName = (left: Member, right: Member) => memberName(left).localeCompare(memberName(right));
+  return [
+    {title: 'Owner', data: members.filter(member => member.owner).sort(byName)},
+    {title: 'Online', data: members.filter(member => !member.owner && Boolean(presence[member.id]) && presence[member.id] !== 'offline').sort(byName)},
+    {title: 'Offline', data: members.filter(member => !member.owner && (!presence[member.id] || presence[member.id] === 'offline')).sort(byName)},
+  ];
+}
+export function MemberPresenceIndicator({presence}: {presence?: string}) {
+  if (presence === 'mobile') return <Smartphone accessibilityLabel="mobile" color="#23a559" size={18} />;
+  return <Text accessibilityLabel={presence || 'offline'} style={[styles.presenceDot, presenceStyle(presence)]}>●</Text>;
 }
 function presenceStyle(value?: string) {
   return value === 'dnd'
@@ -4776,6 +4810,8 @@ const styles = StyleSheet.create({
   panelBusy: { marginTop: 40 },
   panelList: { gap: 8, padding: 12 },
   panelItem: { borderRadius: 10, padding: 12 },
+  panelMessageContext: {fontSize: 12, fontWeight: '700', marginBottom: 4, paddingHorizontal: 12, paddingTop: 8},
+  panelJumpButton: {alignSelf: 'flex-end', borderRadius: 8, marginHorizontal: 12, marginTop: 8, paddingHorizontal: 12, paddingVertical: 8},
   actionText: { fontSize: 16 },
   dangerText: { color: '#ed4245' },
   whiteText: { color: '#fff' },
@@ -4787,6 +4823,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
   },
+  memberSectionHeading: {fontSize: 12, fontWeight: '800', paddingHorizontal: 4, paddingTop: 12, textTransform: 'uppercase'},
   memberAvatar: {
     borderRadius: 22,
     fontSize: 18,

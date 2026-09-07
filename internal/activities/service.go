@@ -52,8 +52,11 @@ type Installation struct {
 }
 
 type Participant struct {
-	MemberID string `json:"member_id"`
-	Name     string `json:"name"`
+	MemberID string   `json:"member_id"`
+	Name     string   `json:"name"`
+	CursorX  *float64 `json:"cursor_x,omitempty"`
+	CursorY  *float64 `json:"cursor_y,omitempty"`
+	Tool     string   `json:"tool,omitempty"`
 }
 
 type Board struct {
@@ -105,6 +108,7 @@ type Service struct {
 	now      func() time.Time
 	mu       sync.Mutex
 	presence map[string]map[string]presenceLease
+	watchers map[string]map[chan []Participant]struct{}
 }
 
 func New(db *sql.DB, dataDir ...string) *Service {
@@ -112,7 +116,7 @@ func New(db *sql.DB, dataDir ...string) *Service {
 	if len(dataDir) > 0 {
 		root = dataDir[0]
 	}
-	return &Service{db: db, dataDir: root, now: time.Now, presence: map[string]map[string]presenceLease{}}
+	return &Service{db: db, dataDir: root, now: time.Now, presence: map[string]map[string]presenceLease{}, watchers: map[string]map[chan []Participant]struct{}{}}
 }
 
 func (s *Service) Installations(ctx context.Context) ([]Installation, error) {
@@ -494,17 +498,53 @@ func (s *Service) Touch(boardID string, participant Participant) {
 		s.presence[boardID] = leases
 	}
 	leases[participant.MemberID] = presenceLease{participant: participant, expiresAt: s.now().Add(15 * time.Second)}
+	s.publishPresenceLocked(boardID)
 }
 
 func (s *Service) Leave(boardID, memberID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.presence[boardID], memberID)
+	s.publishPresenceLocked(boardID)
 }
 
 func (s *Service) Participants(boardID string) []Participant {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.participantsLocked(boardID)
+}
+
+func (s *Service) SubscribePresence(boardID string) (<-chan []Participant, func()) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	updates := make(chan []Participant, 1)
+	if s.watchers[boardID] == nil {
+		s.watchers[boardID] = map[chan []Participant]struct{}{}
+	}
+	s.watchers[boardID][updates] = struct{}{}
+	return updates, func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		delete(s.watchers[boardID], updates)
+	}
+}
+
+func (s *Service) publishPresenceLocked(boardID string) {
+	participants := s.participantsLocked(boardID)
+	for updates := range s.watchers[boardID] {
+		select {
+		case updates <- participants:
+		default:
+			select {
+			case <-updates:
+			default:
+			}
+			updates <- participants
+		}
+	}
+}
+
+func (s *Service) participantsLocked(boardID string) []Participant {
 	now := s.now()
 	leases := s.presence[boardID]
 	participants := []Participant{}

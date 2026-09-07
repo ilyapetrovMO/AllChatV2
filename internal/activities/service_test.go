@@ -79,7 +79,8 @@ func TestSketchboardOwnershipSessionsAndOrderedOperations(t *testing.T) {
 	if len(state.Operations) != 1 || state.Operations[0].Sequence != 2 {
 		t.Fatalf("state=%+v", state)
 	}
-	service.Touch(board.ID, Participant{MemberID: "other", Name: "Other Member"})
+	cursorX, cursorY := 120.5, 87.25
+	service.Touch(board.ID, Participant{MemberID: "other", Name: "Other Member", CursorX: &cursorX, CursorY: &cursorY, Tool: "pen"})
 	boards, err := service.Boards(ctx, "other")
 	if err != nil {
 		t.Fatal(err)
@@ -87,11 +88,31 @@ func TestSketchboardOwnershipSessionsAndOrderedOperations(t *testing.T) {
 	if len(boards) != 1 || boards[0].CanDelete || len(boards[0].Participants) != 1 {
 		t.Fatalf("boards=%+v", boards)
 	}
+	participant := boards[0].Participants[0]
+	if participant.CursorX == nil || *participant.CursorX != cursorX || participant.CursorY == nil || *participant.CursorY != cursorY || participant.Tool != "pen" {
+		t.Fatalf("participant cursor=%+v", participant)
+	}
 	if err := service.DeleteBoard(ctx, "owner", board.ID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := service.Authenticate(ctx, token); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("deleted board session=%v", err)
+	}
+}
+
+func TestSketchboardPresencePublishesCursorUpdatesImmediately(t *testing.T) {
+	service, _ := activityTestService(t)
+	updates, unsubscribe := service.SubscribePresence("board")
+	defer unsubscribe()
+	cursorX, cursorY := 42.0, 84.0
+	service.Touch("board", Participant{MemberID: "other", Name: "Other Member", CursorX: &cursorX, CursorY: &cursorY})
+	select {
+	case participants := <-updates:
+		if len(participants) != 1 || participants[0].CursorX == nil || *participants[0].CursorX != cursorX {
+			t.Fatalf("participants=%+v", participants)
+		}
+	case <-time.After(50 * time.Millisecond):
+		t.Fatal("cursor update waited for polling")
 	}
 }
 

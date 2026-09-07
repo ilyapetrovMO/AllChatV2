@@ -11,14 +11,30 @@
   <main>
     <header class="sketchboard-heading">
       <div><p class="eyebrow">AllChat Activity</p><h1>Sketchboard</h1><p>Pick a board or create a new shared canvas.</p></div>
-      <form id="create-board"><label>Board name<input name="name" maxlength="80" required placeholder="Design ideas"></label><button>Create board</button></form>
+      <form id="create-board"><label>Board name<input name="name" maxlength="80" required placeholder="Design ideas"></label><button id="create-board-button" type="button">Create board</button></form>
     </header>
     <p id="activity-status" role="status" aria-live="polite">Loading boards…</p>
     <section id="board-grid" class="board-grid" aria-label="Sketchboards"></section>
     <section id="board-workspace" class="board-workspace" hidden>
       <header><button id="back-to-boards" type="button">← Boards</button><div><h2 id="board-title"></h2><p id="board-participants"></p></div><button id="clear-board" type="button">Clear</button></header>
-      <canvas id="sketch-canvas" width="1280" height="720" aria-label="Shared sketchboard"></canvas>
-      <div class="sketch-tools"><label>Color <input id="stroke-color" type="color" value="#f2f3f5"></label><label>Size <input id="stroke-size" type="range" min="1" max="24" value="4"></label></div>
+      <canvas id="sketch-canvas" width="1600" height="900" aria-label="Shared sketchboard"></canvas>
+      <div class="sketch-tools" role="toolbar" aria-label="Sketchboard tools">
+        <div class="tool-group" aria-label="Drawing tools">
+          <button type="button" data-tool="pen" class="active" title="Pen (P)">Pen</button>
+          <button type="button" data-tool="highlighter" title="Highlighter (H)">Highlight</button>
+          <button type="button" data-tool="line" title="Line (L)">Line</button>
+          <button type="button" data-tool="rectangle" title="Rectangle (R)">Rectangle</button>
+          <button type="button" data-tool="ellipse" title="Ellipse (O)">Ellipse</button>
+          <button type="button" data-tool="text" title="Text (T)">Text</button>
+          <button type="button" data-tool="note" title="Sticky note (N)">Note</button>
+          <button type="button" data-tool="eraser" title="Eraser (E)">Eraser</button>
+          <button type="button" data-tool="pan" title="Pan (Space)">Pan</button>
+        </div>
+        <label class="text-tool" hidden>Content <input id="element-text" maxlength="240" placeholder="Type, then click the board"></label>
+        <label>Color <input id="stroke-color" type="color" value="#5865f2"></label>
+        <label>Size <input id="stroke-size" type="range" min="1" max="32" value="4"></label>
+        <div class="tool-group"><button id="undo" type="button" title="Undo (Ctrl+Z)">Undo</button><button id="redo" type="button" title="Redo (Ctrl+Y)">Redo</button><button id="zoom-out" type="button" aria-label="Zoom out">−</button><output id="zoom-level">100%</output><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="reset-view" type="button">Fit</button><button id="export-board" type="button">Export PNG</button></div>
+      </div>
     </section>
   </main>
 </body>

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"html/template"
 	"io"
+	"math"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -127,7 +128,7 @@ func (i *Instance) activitySessionAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"activity_id": session.ActivityID,
-		"member": map[string]string{"id": session.MemberID, "name": session.MemberName},
+		"member":      map[string]string{"id": session.MemberID, "name": session.MemberName},
 		"resource_id": session.ResourceID,
 		"expires_at":  session.ExpiresAt.Format(time.RFC3339Nano),
 		"host_api":    1,
@@ -231,7 +232,10 @@ func (i *Instance) sketchboardRealtime(w http.ResponseWriter, r *http.Request) {
 		_ = connection.Close(websocket.StatusPolicyViolation, "board unavailable")
 		return
 	}
-	i.activities.Touch(hello.BoardID, activities.Participant{MemberID: session.MemberID, Name: session.MemberName})
+	participant := activities.Participant{MemberID: session.MemberID, Name: session.MemberName}
+	presenceUpdates, unsubscribePresence := i.activities.SubscribePresence(hello.BoardID)
+	defer unsubscribePresence()
+	i.activities.Touch(hello.BoardID, participant)
 	defer i.activities.Leave(hello.BoardID, session.MemberID)
 	frames := make(chan sketchboardFrame, 16)
 	failed := make(chan struct{}, 1)
@@ -268,6 +272,10 @@ func (i *Instance) sketchboardRealtime(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-failed:
 			return
+		case participants := <-presenceUpdates:
+			if !write(map[string]any{"type": "presence", "participants": participants}) {
+				return
+			}
 		case frame := <-frames:
 			if frame.Type == "operation" {
 				_, appendErr := i.activities.AppendOperation(r.Context(), session.MemberID, hello.BoardID, frame.Kind, frame.Payload)
@@ -278,10 +286,23 @@ func (i *Instance) sketchboardRealtime(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if frame.Type == "heartbeat" {
-				i.activities.Touch(hello.BoardID, activities.Participant{MemberID: session.MemberID, Name: session.MemberName})
+				i.activities.Touch(hello.BoardID, participant)
+			}
+			if frame.Type == "cursor" {
+				var cursor struct {
+					X    float64 `json:"x"`
+					Y    float64 `json:"y"`
+					Tool string  `json:"tool"`
+				}
+				if json.Unmarshal(frame.Payload, &cursor) == nil && !math.IsNaN(cursor.X) && !math.IsNaN(cursor.Y) && !math.IsInf(cursor.X, 0) && !math.IsInf(cursor.Y, 0) && math.Abs(cursor.X) <= 100000 && math.Abs(cursor.Y) <= 100000 {
+					participant.CursorX = &cursor.X
+					participant.CursorY = &cursor.Y
+					participant.Tool = cursor.Tool
+					i.activities.Touch(hello.BoardID, participant)
+				}
 			}
 		case <-ticker.C:
-			i.activities.Touch(hello.BoardID, activities.Participant{MemberID: session.MemberID, Name: session.MemberName})
+			i.activities.Touch(hello.BoardID, participant)
 			state, stateErr := i.activities.BoardState(r.Context(), session.MemberID, hello.BoardID, after)
 			if stateErr != nil {
 				_ = connection.Close(websocket.StatusNormalClosure, "board deleted")
@@ -407,7 +428,7 @@ func (i *Instance) activityRuntime(w http.ResponseWriter, r *http.Request) {
 		contentType = "application/octet-stream"
 	}
 	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data:; base-uri 'none'; form-action 'none'")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = w.Write(source)

@@ -138,6 +138,14 @@ func TestSketchboardActivityPersistsBoardsAndEnforcesCreatorOwnership(t *testing
 	if ownerLaunch.Token == "" || ownerLaunch.RuntimeURL != "/activity-runtime/allchat.sketchboard/" {
 		t.Fatalf("launch=%+v", ownerLaunch)
 	}
+	runtime := getWithClient(t, ownerClient, app.url(ownerLaunch.RuntimeURL))
+	_ = runtime.Body.Close()
+	if runtime.StatusCode != http.StatusOK {
+		t.Fatalf("Activity runtime status=%d", runtime.StatusCode)
+	}
+	if policy := runtime.Header.Get("Content-Security-Policy"); strings.Contains(policy, "frame-ancestors") {
+		t.Fatalf("Activity runtime cannot be embedded by the Desktop Client: %s", policy)
+	}
 
 	activityRequest := func(token, method, path string, body any) *http.Response {
 		var source io.Reader

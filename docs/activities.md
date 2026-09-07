@@ -35,8 +35,12 @@ Authorization: Activity <token>
 
 `GET /api/v1/activities/session` returns the Activity ID, current Member identity, optional Activity Resource ID, expiry, and host API version. Activity tokens cannot authenticate normal AllChat APIs and are invalidated when the Activity is disabled.
 
-The runtime sends a restrictive Content Security Policy, disables referrers and MIME sniffing, and has no access to the parent page's cookies or DOM. Installed files are served from `/activity-runtime/{activityID}/`.
+The runtime sends a restrictive Content Security Policy, disables referrers and MIME sniffing, and has no access to the parent page's cookies or DOM. It deliberately leaves the framing ancestor unrestricted so the packaged Desktop Client's `file:` document can host it; authorization comes from the sandbox and scoped Activity token rather than ambient cookies. Installed files are served from `/activity-runtime/{activityID}/`.
 
 ## Sketchboard
 
-Opening Sketchboard first shows a grid of current Sketchboards, their owner, and active participants. Any Member may create or enter one. Only its creator may delete it. Drawing changes are durable, server-ordered operations; active participant presence uses renewable leases and is not persisted.
+Opening Sketchboard first shows a grid of current Sketchboards, their owner, and active participants. Any Member may create or enter one. Only its creator may delete it.
+
+The board uses retained scene elements over the existing durable, server-ordered operation stream. It supports pen and translucent highlighter strokes, lines, rectangles, ellipses, text, sticky notes, element erasing, per-user undo/redo, pan and zoom controls, fit/reset view, and PNG export. Collaborator names, tools, and live cursor positions travel through renewable presence leases and are never persisted in board history. Legacy stroke operations remain readable.
+
+The first enhancement batch was chosen from the primary-source product comparison in [`research/collaborative-sketchboard-features.md`](research/collaborative-sketchboard-features.md). Selection/transform, connectors, images, comments, frames, native scene export, and facilitation controls remain follow-up work rather than being simulated through a second canvas model.

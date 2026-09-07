@@ -85,6 +85,50 @@ async function provision(dataDirectory) {
   return {first, second, firstMember, secondMember, room, dm};
 }
 
+async function assertSketchboardCreate(browser, api) {
+  const context = await browser.newContext({storageState: await api.storageState()});
+  const page = await context.newPage();
+  try {
+    await page.goto(`${baseURL}/activities/allchat.sketchboard`);
+    const activity = page.frameLocator('iframe[title="AllChat Activity"]');
+    await activity.getByLabel('Board name').fill('Browser reliability board');
+    await activity.getByRole('button', {name: 'Create board'}).click();
+    await activity.getByRole('heading', {name: 'Browser reliability board'}).waitFor({timeout: 10_000});
+		await activity.getByRole('button', {name: 'Enter'}).click();
+		await activity.locator('#board-workspace').waitFor({state: 'visible'});
+		if (await activity.locator('#board-grid').isVisible()) throw new Error('Sketchboard catalog remained visible after Enter');
+		const canvas = await activity.locator('#sketch-canvas').boundingBox();
+		const viewport = page.viewportSize();
+		if (!canvas || !viewport || canvas.height < viewport.height * 0.7 || canvas.width < viewport.width * 0.8) {
+			throw new Error(`Sketchboard canvas did not fill the Activity viewport: canvas=${JSON.stringify(canvas)} viewport=${JSON.stringify(viewport)}`);
+		}
+		const canvasAspect = await activity.locator('#sketch-canvas').evaluate(element => ({intrinsic: element.width / element.height, displayed: element.clientWidth / element.clientHeight}));
+		if (Math.abs(canvasAspect.intrinsic - canvasAspect.displayed) / canvasAspect.intrinsic > 0.02) {
+			throw new Error(`Sketchboard canvas aspect ratio is distorted: ${JSON.stringify(canvasAspect)}`);
+		}
+		await activity.locator('#sketch-canvas').evaluate(element => {
+			const context = element.getContext('2d');
+			context.fillStyle = '#000';
+			context.fillRect(0, 0, 8, 8);
+		});
+		await activity.getByRole('button', {name: 'Clear'}).click();
+		const confirmClear = activity.getByRole('button', {name: 'Confirm clear'});
+		await confirmClear.waitFor({timeout: 2_000});
+		await new Promise(resolve => setTimeout(resolve, 500));
+		await confirmClear.click();
+		const clearDeadline = Date.now() + 5_000;
+		while (Date.now() < clearDeadline) {
+			const pixel = await activity.locator('#sketch-canvas').evaluate(element => Array.from(element.getContext('2d').getImageData(1, 1, 1, 1).data));
+			if (pixel.every(channel => channel === 255)) break;
+			await new Promise(resolve => setTimeout(resolve, 100));
+		}
+		const pixel = await activity.locator('#sketch-canvas').evaluate(element => Array.from(element.getContext('2d').getImageData(1, 1, 1, 1).data));
+		if (!pixel.every(channel => channel === 255)) throw new Error(`Sketchboard clear operation did not clear the canvas: pixel=${pixel}`);
+  } finally {
+    await context.close();
+  }
+}
+
 async function attachEndpoint(browser, api, roomID, name, {video = true} = {}) {
   const context = await browser.newContext({storageState: await api.storageState()});
   const page = await context.newPage();
@@ -354,6 +398,8 @@ async function main() {
       await fixture.first.dispose(); await fixture.second.dispose();
       process.stdout.write('Electron media interoperability: PASS\n'); return;
     }
+    markPhase('sketchboard sandbox interaction');
+    await assertSketchboardCreate(browser, fixture.first);
     if (!only || only === 'baseline') { markPhase('voice-room baseline'); await runPair(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room'); }
     if (!only || only === 'video-restart') { markPhase('voice-room video restart'); await runTrackRestart(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/video-restart'); }
     if (!only || only === 'quality') { markPhase('voice-room quality'); await runQualitySwitch(browser, fixture, fixture.room.id, 'voice-room/quality'); }

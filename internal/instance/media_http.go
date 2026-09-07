@@ -153,8 +153,12 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		if json.Unmarshal(encoded, &command) != nil || command.Version != 1 {
 			continue
 		}
-		if !i.media.IsPeerLease(member.ID, peerLease) {
-			write(mediaFrame{Version: 1, Type: "error", Code: "superseded", Error: media.ErrSuperseded.Error()})
+		if leaseErr := i.media.CheckPeerLease(member.ID, peerLease); leaseErr != nil {
+			code, message := "transport_closed", "Media transport closed. Reconnecting…"
+			if errors.Is(leaseErr, media.ErrSuperseded) {
+				code, message = "superseded", media.ErrSuperseded.Error()
+			}
+			write(mediaFrame{Version: 1, Type: "error", Code: code, Error: message})
 			return
 		}
 		reject := func(err error) {

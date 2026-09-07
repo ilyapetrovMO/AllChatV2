@@ -148,12 +148,21 @@ func TestStalePeerLeaseCannotDisconnectReplacement(t *testing.T) {
 	manager.mu.Lock()
 	manager.peers["member-a"] = &Peer{memberID: "member-a", roomID: "voice-one", lease: 2, connection: connection}
 	manager.mu.Unlock()
+	if err := manager.CheckPeerLease("member-a", 1); !errors.Is(err, ErrSuperseded) {
+		t.Fatalf("replacement peer should supersede old lease: %v", err)
+	}
+	if err := manager.CheckPeerLease("member-a", 2); err != nil {
+		t.Fatalf("current peer lease rejected: %v", err)
+	}
 	manager.DisconnectPeer("member-a", 1)
 	manager.RemovePeerLease("member-a", 1)
 	if participants := manager.Participants("voice-one"); len(participants) != 1 || !participants[0].Connected {
 		t.Fatalf("stale cleanup changed replacement session: %+v", participants)
 	}
 	manager.DisconnectPeer("member-a", 2)
+	if err := manager.CheckPeerLease("member-a", 2); !errors.Is(err, ErrNotPresent) {
+		t.Fatalf("disconnected peer should be recoverable, not superseded: %v", err)
+	}
 	if participants := manager.Participants("voice-one"); len(participants) != 1 || participants[0].Connected {
 		t.Fatalf("current cleanup did not disconnect session: %+v", participants)
 	}

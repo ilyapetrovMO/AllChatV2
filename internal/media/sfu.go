@@ -816,9 +816,22 @@ func (m *Manager) peerForLeaseLocked(memberID string, lease []uint64) *Peer {
 }
 
 func (m *Manager) IsPeerLease(memberID string, lease uint64) bool {
+	return m.CheckPeerLease(memberID, lease) == nil
+}
+
+// CheckPeerLease distinguishes a lost transport from a replacement peer so
+// clients can recover ordinary disconnections without treating them as takeovers.
+func (m *Manager) CheckPeerLease(memberID string, lease uint64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.peerForLeaseLocked(memberID, []uint64{lease}) != nil
+	peer := m.peers[memberID]
+	if peer == nil {
+		return ErrNotPresent
+	}
+	if peer.lease != lease {
+		return ErrSuperseded
+	}
+	return nil
 }
 
 func (m *Manager) EnableNegotiationIDs(memberID string, lease uint64) {

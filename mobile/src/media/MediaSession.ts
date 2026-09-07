@@ -37,7 +37,7 @@ export type MediaSessionOptions = {
 export class MediaSession {
   private peer?: RTCPeerConnection; private socket?: SocketLike; private local?: MediaStream;
   private outgoingAudio?: RTCRtpSender;
-  private displayAudioSender?: RTCRtpSender;
+  private pendingMicrophone?: MediaStream;
   private outgoingVideo?: ReturnType<RTCPeerConnection['addTransceiver']>;
   private screen?: MediaStream; private remote = new Map<string, RemoteMedia>(); private suspendedRemote = new Map<string, RemoteMedia>(); private resumeToken = '';
   private stoppedVideoOwners = new Set<string>();
@@ -45,7 +45,6 @@ export class MediaSession {
   private negotiation = Promise.resolve();
   private audioUpdate = Promise.resolve();
   private videoUpdate = Promise.resolve();
-  private screenAudio: RTCRtpSender[] = [];
   private offerTimer?: ReturnType<typeof setTimeout>;
   private attemptTimer?: ReturnType<typeof setTimeout>;
   private recoveryDeadline = 0;
@@ -68,6 +67,7 @@ export class MediaSession {
       const settings = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS;
       const local = await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: voiceAudioConstraints(settings), video: false}) as MediaStream;
       if (!this.current(generation)) { this.release(local); return; }
+      this.retainMicrophone(local);
       this.local = local;
       local.getAudioTracks().forEach(track => { track.enabled = !this.manuallyMuted; });
       setTrackVolume(local.getAudioTracks()[0], settings.inputGain);
@@ -86,13 +86,14 @@ export class MediaSession {
   private current(generation: number) { return !this.stopped && generation === this.generation; }
   private closePeer() {
     const socket = this.socket, peer = this.peer;
-    this.socket = undefined; this.peer = undefined; this.outgoingAudio = undefined; this.outgoingVideo = undefined; this.displayAudioSender = undefined;
+    this.socket = undefined; this.peer = undefined; this.outgoingAudio = undefined; this.outgoingVideo = undefined;
+    this.release(this.pendingMicrophone); this.pendingMicrophone = undefined;
     socket?.close(); peer?.close();
     this.negotiation = Promise.resolve(); this.negotiationPending = false; this.localOfferID = ''; this.correlated = false;
     this.remote.clear(); this.suspendedRemote.clear(); this.stoppedVideoOwners.clear(); this.options.onRemote?.([]);
   }
   private stopVideoCapture() {
-    this.release(this.screen); this.screen = undefined; this.screenAudio = [];
+    this.release(this.screen); this.screen = undefined;
     for (const track of this.local?.getVideoTracks() || []) { track.stop(); this.local?.removeTrack(track); }
     this.options.onVideoStopped?.();
   }
@@ -104,8 +105,9 @@ export class MediaSession {
 
   setMuted(muted: boolean): Promise<void> {
     this.manuallyMuted = muted;
-    const track = this.local?.getAudioTracks()[0];
-    if (track) track.enabled = !muted;
+    for (const stream of [this.local, this.pendingMicrophone]) {
+      for (const track of stream?.getAudioTracks() || []) track.enabled = !muted;
+    }
     this.send({type: 'mute-state', muted});
     const generation = this.generation;
     const apply = async () => { if (this.current(generation) && this.outgoingAudio) await this.outgoingAudio.replaceTrack(this.manuallyMuted ? null : this.local?.getAudioTracks()[0] || null); };
@@ -127,9 +129,12 @@ export class MediaSession {
       const current = this.local.getAudioTracks()[0];
       const sender = this.outgoingAudio;
       if (!sender) { this.release(replacement); throw new Error('The active microphone sender is unavailable. Rejoin to apply processing changes.'); }
+      this.retainMicrophone(replacement);
       next.enabled = !this.manuallyMuted; setTrackVolume(next, settings.inputGain);
+      this.pendingMicrophone = replacement;
       try { await sender.replaceTrack(this.manuallyMuted ? null : next); }
       catch (error) { this.release(replacement); throw error; }
+      finally { if (this.pendingMicrophone === replacement) this.pendingMicrophone = undefined; }
       if (!this.current(generation) || !this.local) { this.release(replacement); return; }
       if (current) { this.local.removeTrack(current); current.stop(); }
       this.local.addTrack(next);
@@ -154,14 +159,12 @@ export class MediaSession {
     const generation = this.generation;
     const apply = async () => {
       if (!this.current(generation) || !this.peer || !this.local) return;
-      const peer = this.peer, local = this.local;
+      const local = this.local;
       this.send({type: 'video-stopped'});
       await this.clearVideoTrack();
       if (!this.current(generation)) return;
-      const hadAudio = this.screenAudio.some(sender => sender !== this.displayAudioSender);
-      for (const sender of this.screenAudio) { if(sender === this.displayAudioSender) await sender.replaceTrack(null); else peer.removeTrack(sender); }
       this.stopVideoCapture();
-      if (source === 'off') { if (hadAudio) await this.renegotiate(); return; }
+      if (source === 'off') return;
       const settings = this.options.settings || DEFAULT_VOICE_VIDEO_SETTINGS;
       const stream = source === 'camera'
         ? await (this.options.getUserMedia || mediaDevices.getUserMedia)({audio: false, video: settings.cameraID ? {deviceId: {ideal: settings.cameraID}} : {facingMode: 'user'}}) as MediaStream
@@ -169,18 +172,17 @@ export class MediaSession {
       if (!this.current(generation)) { this.release(stream); return; }
       const track = stream.getVideoTracks()[0];
       if (!track) { this.release(stream); throw new Error('No video source was selected.'); }
+      // Native display capture is video-only. Never give incidental capture
+      // audio a second sender outside the owned microphone's mute control.
+      for (const extra of stream.getTracks()) if (extra !== track) extra.stop();
       try {
         if (source === 'camera') local.addTrack(track); else this.screen = stream;
-        this.screenAudio = [];
-        const audio = stream.getAudioTracks()[0];
-        if(audio && this.displayAudioSender) { await this.displayAudioSender.replaceTrack(audio); if (!this.current(generation)) { this.release(stream); return; } this.screenAudio = [this.displayAudioSender]; }
         await this.setVideoTrack(track, source === 'camera' ? local : stream);
         if (!this.current(generation)) { this.release(stream); return; }
         (track as unknown as {onended?: () => void}).onended = () => { if (this.current(generation)) this.changeVideo('off').catch(() => {}); };
       } catch (error) {
         this.release(stream);
         if (this.current(generation)) {
-          for (const sender of this.screenAudio) { if(sender === this.displayAudioSender) await sender.replaceTrack(null); else peer.removeTrack(sender); }
           this.stopVideoCapture();
           await this.clearVideoTrack().catch(() => {});
         }
@@ -204,7 +206,12 @@ export class MediaSession {
     const pendingLocal: object[] = []; const pendingRemote: object[] = [];
     let frameQueue = Promise.resolve();
     const peer = (this.options.createPeer || (configuration => new RTCPeerConnection(configuration)))({iceServers}); this.peer = peer;
-    for(const track of this.local?.getTracks()||[]){const sender=peer.addTrack(track,this.local!);if(track.kind==='audio'){this.outgoingAudio=sender;if(this.manuallyMuted)await sender.replaceTrack(null)}} this.displayAudioSender = peer.addTransceiver('audio', {direction: 'sendrecv'}).sender; this.outgoingVideo = peer.addTransceiver('video', {direction: 'sendrecv'});
+    const microphone = this.local?.getAudioTracks()[0];
+    if (!microphone || !this.local) throw new Error('Microphone capture is unavailable.');
+    this.outgoingAudio = peer.addTrack(microphone, this.local);
+    if (this.manuallyMuted) await this.outgoingAudio.replaceTrack(null);
+    if (!this.current(generation)) return;
+    this.outgoingVideo = peer.addTransceiver('video', {direction: 'sendrecv'});
     const codecs = RTCRtpSender.getCapabilities('video').codecs;
     if (codecs.length) this.outgoingVideo.setCodecPreferences([...codecs.filter(codec => codec.mimeType.toLowerCase() === 'video/vp8'), ...codecs.filter(codec => codec.mimeType.toLowerCase() !== 'video/vp8')]);
     peer.ontrack = (event: {streams: MediaStream[]; track: {id: string; kind: string; muted?: boolean; onended?: () => void; onmute?: () => void; onunmute?: () => void}}) => {
@@ -321,6 +328,14 @@ export class MediaSession {
     collect(); this.diagnostics = setInterval(collect, 1000);
   }
   private clearTimers() { clearTimeout(this.offerTimer); if (this.attemptTimer) clearTimeout(this.attemptTimer); this.attemptTimer = undefined; if (this.heartbeat) clearInterval(this.heartbeat); if (this.diagnostics) clearInterval(this.diagnostics); if (this.reconnect) clearTimeout(this.reconnect); this.heartbeat = undefined; this.diagnostics = undefined; this.reconnect = undefined; }
+  private retainMicrophone(stream: MediaStream) {
+    const microphone = stream.getAudioTracks()[0];
+    if (!microphone) { this.release(stream); throw new Error('No microphone track was captured.'); }
+    for (const track of stream.getTracks()) {
+      if (track === microphone) continue;
+      track.stop(); stream.removeTrack(track);
+    }
+  }
   private release(stream?: MediaStream) { stream?.getTracks().forEach(track => track.stop()); }
   private mediaURL() { const url = new URL(this.options.instanceURL); return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/api/v1/media`; }
   private async fetchICE(): Promise<IceServer[]> {

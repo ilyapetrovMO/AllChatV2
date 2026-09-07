@@ -4,8 +4,8 @@ import {DEFAULT_VOICE_VIDEO_SETTINGS} from '../src/media/VoiceVideoSettings';
 function harness(settings = DEFAULT_VOICE_VIDEO_SETTINGS) {
   const track = {id: 'audio-1', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
   const cameraTrack = {id: 'camera-1', kind: 'video', enabled: true, stop: jest.fn(), _switchCamera: jest.fn()}; const screenTrack = {id: 'screen-1', kind: 'video', enabled: true, stop: jest.fn()};
-  const videoTracks: typeof cameraTrack[] = [];
-  const local = {getTracks: () => [track, ...videoTracks], getAudioTracks: () => [track], getVideoTracks: () => videoTracks, addTrack: jest.fn((item: typeof cameraTrack) => videoTracks.push(item)), removeTrack: jest.fn((item: typeof cameraTrack) => { const index = videoTracks.indexOf(item); if (index >= 0) videoTracks.splice(index, 1); })};
+  const localTracks = [track];
+  const local = {getTracks: () => [...localTracks], getAudioTracks: () => localTracks.filter(item => item.kind === 'audio'), getVideoTracks: () => localTracks.filter(item => item.kind === 'video'), addTrack: jest.fn((item: typeof track) => localTracks.push(item)), removeTrack: jest.fn((item: typeof track) => { const index = localTracks.indexOf(item); if (index >= 0) localTracks.splice(index, 1); })};
   const cameraStream = {getTracks: () => [cameraTrack], getAudioTracks: () => [], getVideoTracks: () => [cameraTrack]};
   const screenStream = {getTracks: () => [screenTrack], getAudioTracks: () => [], getVideoTracks: () => [screenTrack]};
   const senders: Array<{track: typeof cameraTrack | typeof screenTrack}> = [];
@@ -95,6 +95,102 @@ describe('MediaSession', () => {
     expect(staleTrack.stop).toHaveBeenCalled();
     expect(sender.track).toBe(currentTrack);
     session.stop();
+  });
+
+  it('negotiates only the owned microphone as an outgoing audio source', async () => {
+    const {session, peer} = harness();
+    try {
+      await session.start();
+      expect(peer.addTrack.mock.calls.filter(([track]: any[]) => track.kind === 'audio')).toHaveLength(1);
+      expect(peer.addTransceiver.mock.calls.filter(([kind, init]: any[]) => kind === 'audio' && init.direction !== 'recvonly')).toHaveLength(0);
+    } finally { session.stop(); }
+  });
+
+  it.each(['initial', 'replacement'])('stops extra tracks from %s microphone capture', async phase => {
+    const {session, peer} = harness();
+    const makeTrack = (id: string) => ({id, kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()});
+    const microphone = makeTrack('selected');
+    const extra = makeTrack('extra');
+    const tracks = [microphone, extra];
+    const capture = {
+      getTracks: () => [...tracks], getAudioTracks: () => [...tracks], getVideoTracks: () => [],
+      removeTrack: (track: typeof microphone) => tracks.splice(tracks.indexOf(track), 1),
+    };
+    try {
+      if (phase === 'replacement') await session.start();
+      (session as any).options.getUserMedia.mockResolvedValueOnce(capture);
+      if (phase === 'initial') await session.start();
+      else await session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+      expect(extra.stop).toHaveBeenCalled();
+      expect(session.localStream()?.getAudioTracks()).toEqual([microphone]);
+      expect(peer.getSenders().filter((sender: any) => sender.track?.kind === 'audio')).toHaveLength(1);
+      await session.setMuted(true);
+      expect(microphone.enabled).toBe(false);
+      expect(peer.getSenders().some((sender: any) => sender.track?.kind === 'audio')).toBe(false);
+      await session.setMuted(false);
+      expect(peer.getSenders().filter((sender: any) => sender.track === microphone)).toHaveLength(1);
+    } finally { session.stop(); }
+  });
+
+  it('stops pending microphone capture immediately when leaving', async () => {
+    const {session, peer} = harness();
+    const next = {id: 'pending', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    let finish!: () => void;
+    try {
+      await session.start();
+      peer.getSenders()[0].replaceTrack.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+      (session as any).options.getUserMedia.mockResolvedValueOnce({getTracks: () => [next], getAudioTracks: () => [next]});
+      const update = session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+      for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+      expect(finish).toBeDefined();
+      session.stop();
+      const stoppedBeforeReplacementFinished = next.stop.mock.calls.length;
+      finish();
+      await update;
+      expect(stoppedBeforeReplacementFinished).toBeGreaterThan(0);
+      expect(session.localStream()).toBeUndefined();
+    } finally { session.stop(); }
+  });
+
+  it.each(['camera', 'screen'])('never forwards incidental %s capture audio around microphone mute', async source => {
+    const {session, peer, cameraTrack, screenTrack} = harness();
+    const incidental = {id: 'extra-microphone', kind: 'audio', enabled: true, stop: jest.fn()};
+    const video = source === 'camera' ? cameraTrack : screenTrack;
+    const capture = {getTracks: () => [video, incidental], getAudioTracks: () => [incidental], getVideoTracks: () => [video]};
+    try {
+      await session.start();
+      const options = (session as any).options;
+      (source === 'camera' ? options.getUserMedia : options.getDisplayMedia).mockResolvedValueOnce(capture);
+      if (source === 'camera') await session.setCamera(true); else await session.setScreenSharing(true);
+      await session.setMuted(true);
+      const senders = [...peer.getSenders(), ...peer.addTransceiver.mock.results.map((result: any) => result.value.sender)];
+      expect(senders.filter(sender => sender.track?.kind === 'audio' && sender.track.enabled)).toHaveLength(0);
+      expect(incidental.stop).toHaveBeenCalled();
+    } finally { session.stop(); }
+  });
+
+  it('silences an in-flight replacement immediately when mute is pressed', async () => {
+    const {session, peer, track} = harness();
+    const next = {id: 'replacement', kind: 'audio', enabled: true, stop: jest.fn(), _setVolume: jest.fn()};
+    let finish!: () => void;
+    try {
+      await session.start();
+      const sender = peer.getSenders()[0];
+      sender.replaceTrack.mockImplementationOnce(() => new Promise<void>(resolve => { finish = () => { sender.track = next; resolve(); }; }));
+      (session as any).options.getUserMedia.mockResolvedValueOnce({getTracks: () => [next], getAudioTracks: () => [next]});
+      const update = session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+      for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+      expect(finish).toBeDefined();
+      const mute = session.setMuted(true);
+      // Native replacement can complete before its bridge promise resolves.
+      const enabledWhileMutePending = next.enabled;
+      finish();
+      await Promise.all([update, mute]);
+      expect(track.enabled).toBe(false);
+      expect(enabledWhileMutePending).toBe(false);
+      expect(next.enabled).toBe(false);
+      expect(sender.track).toBeNull();
+    } finally { session.stop(); }
   });
 
   it('uses SFU stream identity instead of rewritten native track IDs', () => {
@@ -398,6 +494,26 @@ describe('Media Session cancellation and recovery ownership', () => {
     await socket.onmessage({data: JSON.stringify({type: 'error', code: 'superseded', error: 'Session moved'})});
     expect(statuses.at(-1)).toBe('failed');
     expect(track.stop).toHaveBeenCalled();
+  });
+
+  it('resumes after server transport loss while preserving muted capture', async () => {
+    const {session, socket, track, statuses, peer} = harness();
+    const scheduled: Array<() => void> = [];
+    (session as any).options.schedule = (run: () => void) => { scheduled.push(run); return 1; };
+    await session.start();
+    await socket.onmessage({data: JSON.stringify({type: 'answer', sdp: {type: 'answer', sdp: 'answer'}, resume_token: 'resume-current'})});
+    await session.setMuted(true);
+    await socket.onmessage({data: JSON.stringify({type: 'error', code: 'transport_closed', error: 'Media transport closed'})});
+    expect(statuses.at(-1)).toBe('recovering');
+    expect(track.stop).not.toHaveBeenCalled();
+    scheduled.shift()!();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    socket.onopen();
+    const joins = socket.send.mock.calls.map(([value]: [string]) => JSON.parse(value)).filter((frame: {type: string}) => frame.type === 'join');
+    expect(joins.at(-1)).toMatchObject({resume_token: 'resume-current', takeover: false});
+    expect(track.enabled).toBe(false);
+    expect(peer.getSenders().some((sender: {track: unknown}) => sender.track === track)).toBe(false);
+    session.stop();
   });
 });
 

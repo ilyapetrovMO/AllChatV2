@@ -225,3 +225,29 @@ describe('desktop provisional media ownership', () => {
     expect(connectMedia).not.toHaveBeenCalled();
   });
 });
+
+it('keeps Connected visible when transport connects before answer processing finishes', async () => {
+  const track = {kind: 'audio', enabled: true};
+  vi.spyOn(voiceCapture, 'captureDesktopMicrophone').mockResolvedValue({stream: {getTracks: () => [track], getAudioTracks: () => [track]} as unknown as MediaStream, enhanced: false, stop: vi.fn()});
+  class Peer {
+    connectionState = 'new'; iceConnectionState = 'new'; iceGatheringState = 'complete'; signalingState = 'stable';
+    localDescription: RTCSessionDescriptionInit | null = null;
+    onconnectionstatechange?: () => void;
+    addTrack() {} close() {}
+    addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; }
+    async createOffer() { return {type: 'offer' as const, sdp: 'offer'}; }
+    async setLocalDescription(value: RTCSessionDescriptionInit) { this.localDescription = value; this.signalingState = 'have-local-offer'; }
+    async setRemoteDescription() { this.signalingState = 'stable'; this.connectionState = 'connected'; this.iceConnectionState = 'connected'; this.onconnectionstatechange?.(); }
+  }
+  vi.stubGlobal('RTCPeerConnection', Peer);
+  vi.stubGlobal('RTCRtpSender', {getCapabilities: () => ({codecs: []})});
+  let receive!: (frame: unknown) => void;
+  const send = vi.fn();
+  const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult> => action.type === 'turn_credentials' ? {type: 'turn_credentials', iceServers: []} : {type: 'call', call: null});
+  const view = render(<><div id="desktop-call-controls" /><DirectCallControls conversation={null} currentMemberId="me" instanceId="instance" requestedVoiceRoom="room" requestedVoiceRoomName="Room" focusedMediaMemberId={null} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} onAction={onAction} connectMedia={async (_instance, onFrame) => {receive = onFrame; return {send, close: vi.fn()};}} /></>);
+  try {
+    await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({type: 'join'})));
+    await act(async () => {receive({type: 'answer', negotiation_id: 'client-1', sdp: {type: 'answer', sdp: 'answer'}});});
+    expect(within(screen.getByRole('region', {name: 'Voice controls'})).getByText('Connected', {exact: true})).toBeVisible();
+  } finally {view.unmount(); vi.unstubAllGlobals(); vi.restoreAllMocks();}
+});

@@ -2266,7 +2266,7 @@ export function DirectCallControls({
     await waitForIceGathering(peer);
     ensureCurrent();
     const signaling = createMediaFrameQueue(peer, (frame) => socket?.send(frame), {
-      onAnswer: (frame) => { if (!current()) return; if(frame.resume_token) resumeToken.current = frame.resume_token; socket?.send({version: 1, type: 'mute-state', muted: stream.getAudioTracks()[0]?.enabled === false}); setStatus("Finishing media connection…"); },
+      onAnswer: (frame) => { if (!current()) return; if(frame.resume_token) resumeToken.current = frame.resume_token; socket?.send({version: 1, type: 'mute-state', muted: stream.getAudioTracks()[0]?.enabled === false}); setStatus(peer.connectionState === "connected" ? "Call connected" : "Finishing media connection…"); },
       onFailure: (error) => { if(current()) recoverMedia(error); },
       onCommandError: (frame) => { if(current()) setStatus(frame.error || 'Media command rejected'); },
       onVideoStopped: (memberID) => {

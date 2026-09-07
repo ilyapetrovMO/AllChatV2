@@ -8,9 +8,9 @@ const os = require('node:os');
 exports.runDesktopInterop = async ({fixture, browser, baseURL, post, attachEndpoint, progress, waitForVideoAdvance, waitForVideoStop, assertFreshAudio}) => {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'allchat-electron-media-'));
   const app = await electron.launch({args: [path.resolve('desktop'), `--user-data-dir=${profile}`, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required', ...(process.platform === 'linux' ? ['--no-sandbox'] : [])]});
-  let web;
+  let web, page;
   try {
-    const page = await app.firstWindow();
+    page = await app.firstWindow();
     page.setDefaultTimeout(15000);
     await page.evaluate(() => {
       const NativePeer = window.RTCPeerConnection, peers = [], captured = [];
@@ -53,6 +53,13 @@ exports.runDesktopInterop = async ({fixture, browser, baseURL, post, attachEndpo
     await page.getByRole('button', {name: 'End call', exact: true}).click();
     await page.waitForFunction(() => window.mediaTest.captured.every(track => track.readyState === 'ended') && window.mediaTest.peers.every(peer => peer.connectionState === 'closed'));
 
+  } catch (error) {
+    const diagnostics = await page?.evaluate(() => ({
+      controls: [...document.querySelectorAll('[aria-label="Voice controls"], [aria-label="Call controls"], [role="alert"]')].map(element => element.textContent),
+      peers: window.mediaTest?.peers.map(peer => ({connection: peer.connectionState, ice: peer.iceConnectionState, signaling: peer.signalingState})),
+      capture: window.mediaTest?.captured.map(track => ({kind: track.kind, state: track.readyState, enabled: track.enabled})),
+    })).catch(() => ({unavailable: true}));
+    throw new Error(`${error.message}; desktop media state=${JSON.stringify(diagnostics)}`, {cause: error});
   } finally {
     if (web) { await web.page.evaluate(() => {window.mediaTest.connection.stop({explicit: true});window.mediaTest.oscillator.stop();clearInterval(window.mediaTest.draw);window.mediaTest.audio.close();}); await web.context.close(); }
     await app.close();

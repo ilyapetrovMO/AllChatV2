@@ -10,7 +10,7 @@ const baseURL = `http://${host}:${port}`;
 const password = 'media test password';
 const browserName = process.env.ALLCHAT_MEDIA_BROWSER || 'chromium';
 const only = process.env.ALLCHAT_MEDIA_ONLY || '';
-const browserType = {chromium, firefox, webkit}[browserName];
+const browserType = {chromium, firefox, webkit, electron: chromium}[browserName];
 if (!browserType) throw new Error(`unsupported ALLCHAT_MEDIA_BROWSER: ${browserName}`);
 const diagnosticDirectory = path.resolve(__dirname, '../../.dev/media-tests', browserName);
 const failurePath = path.join(diagnosticDirectory, 'failure.json');
@@ -88,8 +88,13 @@ async function provision(dataDirectory) {
 async function attachEndpoint(browser, api, roomID, name, {video = true} = {}) {
   const context = await browser.newContext({storageState: await api.storageState()});
   const page = await context.newPage();
+  // Use a real local navigation so browser local-network permission checks
+  // see the server address. The test owns its controller; prevent automatic
+  // Direct Call polling from acquiring a competing session on this page.
+  await page.route('**/assets/call.js', route => route.fulfill({contentType: 'application/javascript', body: ''}));
   await page.goto(`${baseURL}/`);
   await page.addScriptTag({url: '/assets/voice-connection.js'});
+  await page.locator('body').click({position: {x: 1, y: 1}});
   await page.evaluate(async ({roomID, name, video}) => {
     const audio = new AudioContext();
     const oscillator = audio.createOscillator();
@@ -102,7 +107,7 @@ async function attachEndpoint(browser, api, roomID, name, {video = true} = {}) {
     const videoStream = canvas.captureStream(10);
     const mediaStream = new MediaStream([...audioDestination.stream.getAudioTracks(), ...(video ? videoStream.getVideoTracks() : [])]);
     const events = [], tracks = [];
-    const connection = new window.AllChatVoiceConnection({roomID, stream: mediaStream, onState: state => events.push({kind: 'state', state, at: performance.now()}), onTrack: event => tracks.push(event.track), onDiagnostics: snapshot => events.push({kind: 'stats', snapshot, at: performance.now()})});
+    const connection = new window.AllChatVoiceConnection({roomID, takeover: true, stream: mediaStream, onState: (state, error) => events.push({kind: 'state', state, error: error?.message, at: performance.now()}), onTrack: event => { tracks.push(event.track); { const element=document.createElement(event.track.kind==='audio'?'audio':'video');element.autoplay=true;element.playsInline=true;if(event.track.kind==='video')element.muted=true;element.srcObject=new MediaStream([event.track]);document.body.append(element);element.play().catch(()=>{}); } }, onDiagnostics: snapshot => events.push({kind: 'stats', snapshot, at: performance.now()})});
     await connection.start();
     window.mediaTest = {audio, canvas, connection, draw, events, oscillator, tracks, videoStream, videoSender: null};
   }, {roomID, name, video});
@@ -150,16 +155,18 @@ async function waitForVideoAdvance(label, page, baseline = null) {
 async function waitForVideoStop(label, page) {
   const deadline = Date.now() + 4_000;
   let previous = await progress(page), stableSince = Date.now();
+  const history = [];
   while (Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, 250));
     const current = await progress(page);
+    history.push({at: Date.now(), frames: current.videoFrames, packets: current.videoPackets});
     // RTP padding/retransmissions may continue after replaceTrack(null),
     // especially in Firefox. Decoded frames are the media-progress signal.
     if (current.videoFrames !== previous.videoFrames) stableSince = Date.now();
     else if (Date.now() - stableSince >= 1000) return current;
     previous = current;
   }
-  throw new Error(`${label}: removed video did not quiesce: ${JSON.stringify(previous)}`);
+  throw new Error(`${label}: removed video did not quiesce: ${JSON.stringify({previous, history})}`);
 }
 
 async function runTrackRestart(browser, firstAPI, secondAPI, roomID, label) {
@@ -176,6 +183,27 @@ async function runTrackRestart(browser, firstAPI, secondAPI, roomID, label) {
   } finally {
     for (const endpoint of [publisher, viewer]) {
       await endpoint.page.evaluate(() => { const test = window.mediaTest; test.connection.stop({explicit: true}); test.oscillator.stop(); clearInterval(test.draw); test.videoStream.getTracks().forEach(track => track.stop()); test.audio.close(); });
+      await endpoint.context.close();
+    }
+  }
+}
+
+async function runQualitySwitch(browser, fixture, roomID, label) {
+  const publisher = await attachEndpoint(browser, fixture.first, roomID, 'quality-publisher', {video: false});
+  const viewer = await attachEndpoint(browser, fixture.second, roomID, 'quality-viewer', {video: false});
+  try {
+    await startVideo(publisher.page);
+    for (const quality of ['low', 'medium', 'high', 'low', 'high']) {
+      const before = await progress(viewer.page);
+      await viewer.page.evaluate(({owner, quality}) => window.mediaTest.connection.send('screen-quality', {owner_id: owner, quality}), {owner: fixture.firstMember.id, quality});
+      await waitForVideoAdvance(`${label}/${quality}`, viewer.page, before);
+    }
+    await stopVideo(publisher.page);
+    await viewer.page.evaluate(owner => window.mediaTest.connection.send('screen-quality', {owner_id: owner, quality: 'high'}), fixture.firstMember.id);
+    await waitForVideoStop(`${label}/stopped-quality-change`, viewer.page);
+  } finally {
+    for (const endpoint of [publisher, viewer]) {
+      await endpoint.page.evaluate(() => {const test=window.mediaTest;test.connection.stop({explicit:true});test.oscillator.stop();clearInterval(test.draw);test.videoStream.getTracks().forEach(track=>track.stop());test.audio.close();});
       await endpoint.context.close();
     }
   }
@@ -237,6 +265,8 @@ async function runSignalingRecovery(browser, firstAPI, secondAPI, roomID, label)
   const second = await attachEndpoint(browser, secondAPI, roomID, 'recovery-second', {video: false});
   try {
     await Promise.all([assertFreshAudio(`${label}/before/first`, first.page), assertFreshAudio(`${label}/before/second`, second.page)]);
+    await Promise.all([startVideo(first.page), startVideo(second.page)]);
+    await Promise.all([assertAdvancing(`${label}/active-video/first`, first.page), assertAdvancing(`${label}/active-video/second`, second.page)]);
     await recoverEndpoint(label, first.page);
     await waitForConvergence(label, [first.page, second.page]);
     try { await Promise.all([assertFreshAudio(`${label}/after/first`, first.page), assertFreshAudio(`${label}/after/second`, second.page)]); }
@@ -254,11 +284,12 @@ async function runSignalingRecovery(browser, firstAPI, secondAPI, roomID, label)
 
 async function progress(page) {
   return page.evaluate(async () => {
+    if (!window.mediaTest.connection.peer) throw Error('Media peer unavailable: '+JSON.stringify(window.mediaTest.events.filter(event=>event.kind==='state')));
     const report = await window.mediaTest.connection.peer.getStats();
-    const result = {audioPackets: 0, videoFrames: 0, videoPackets: 0, outboundAudioPackets: 0, outboundVideoPackets: 0};
+    const result = {audioPackets: 0, videoFrames: 0, videoPackets: 0, outboundAudioPackets: 0, outboundVideoPackets: 0, audioSamples: 0};
     report.forEach(item => {
       const kind = item.kind || item.mediaType;
-      if (item.type === 'inbound-rtp' && kind === 'audio') result.audioPackets += item.packetsReceived || 0;
+      if (item.type === 'inbound-rtp' && kind === 'audio') { result.audioPackets += item.packetsReceived || 0; result.audioSamples += item.totalSamplesReceived || 0; }
       if (item.type === 'inbound-rtp' && kind === 'video') { result.videoPackets += item.packetsReceived || 0; result.videoFrames += item.framesDecoded || 0; }
       if (item.type === 'outbound-rtp' && kind === 'audio') result.outboundAudioPackets += item.packetsSent || 0;
       if (item.type === 'outbound-rtp' && kind === 'video') result.outboundVideoPackets += item.packetsSent || 0;
@@ -285,7 +316,7 @@ async function assertFreshAudio(label, page) {
   while (Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, 250));
     const after = await progress(page);
-    if (after.audioPackets > before.audioPackets) return;
+    if (after.audioPackets > before.audioPackets && after.audioSamples > before.audioSamples) return;
     before = after;
   }
   throw new Error(`${label}: post-recovery audio did not advance: ${JSON.stringify(before)}`);
@@ -307,7 +338,9 @@ async function runPair(browser, firstAPI, secondAPI, roomID, label) {
 async function main() {
   markPhase('starting Instance');
   const dataDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'allchat-media-'));
-  const server = spawn('go', ['run', '-buildvcs=false', './cmd/allchat', '--data-dir', dataDirectory, '--listen', `${host}:${port}`], {cwd: path.resolve(__dirname, '../..'), env: {...process.env, GOCACHE: process.env.GOCACHE || '/tmp/allchat-media-gocache'}, stdio: ['ignore', 'inherit', 'inherit']});
+  const server = spawn('go', ['run', '-buildvcs=false', './cmd/allchat', '--data-dir', dataDirectory, '--listen', `${host}:${port}`], {cwd: path.resolve(__dirname, '../..'), env: {...process.env, GOCACHE: process.env.GOCACHE || '/tmp/allchat-media-gocache'}, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe']});
+  const redact = data => process.stdout.write(String(data).replace(/(token=)[^"\s]+/g, '$1<REDACTED>'));
+  server.stdout.on('data', redact); server.stderr.on('data', redact);
   let browser;
   try {
     await waitForServer();
@@ -315,8 +348,15 @@ async function main() {
     const fixture = await provision(dataDirectory);
     markPhase('launching browser');
     browser = await browserType.launch({headless: true});
+    if (browserName === 'electron') {
+      markPhase('desktop production lifecycle');
+      await require('../desktop/run.cjs').runDesktopInterop({fixture, browser, baseURL, post, attachEndpoint, progress, waitForVideoAdvance, waitForVideoStop, assertFreshAudio});
+      await fixture.first.dispose(); await fixture.second.dispose();
+      process.stdout.write('Electron media interoperability: PASS\n'); return;
+    }
     if (!only || only === 'baseline') { markPhase('voice-room baseline'); await runPair(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room'); }
     if (!only || only === 'video-restart') { markPhase('voice-room video restart'); await runTrackRestart(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/video-restart'); }
+    if (!only || only === 'quality') { markPhase('voice-room quality'); await runQualitySwitch(browser, fixture, fixture.room.id, 'voice-room/quality'); }
     if (!only || only === 'glare') { markPhase('voice-room glare'); await runSimultaneousRestarts(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/glare'); }
     if (!only || only === 'signaling-recovery') { markPhase('voice-room signaling recovery'); await runSignalingRecovery(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/signaling-recovery'); }
     markPhase('creating direct call');
@@ -324,6 +364,7 @@ async function main() {
     await post(fixture.second, `/api/v1/calls/${call.id}/accept`, {});
     if (!only || only === 'baseline') { markPhase('direct-call baseline'); await runPair(browser, fixture.first, fixture.second, call.id, 'direct-call'); }
     if (!only || only === 'video-restart') { markPhase('direct-call video restart'); await runTrackRestart(browser, fixture.first, fixture.second, call.id, 'direct-call/video-restart'); }
+    if (!only || only === 'quality') { markPhase('direct-call quality'); await runQualitySwitch(browser, fixture, call.id, 'direct-call/quality'); }
     if (!only || only === 'glare') { markPhase('direct-call glare'); await runSimultaneousRestarts(browser, fixture.first, fixture.second, call.id, 'direct-call/glare'); }
     if (!only || only === 'signaling-recovery') { markPhase('direct-call signaling recovery'); await runSignalingRecovery(browser, fixture.first, fixture.second, call.id, 'direct-call/signaling-recovery'); }
     await fixture.first.dispose(); await fixture.second.dispose();
@@ -331,7 +372,8 @@ async function main() {
     process.stdout.write(`browser media interoperability (${browserName}): PASS\n`);
   } finally {
     markPhase('cleanup');
-    await browser?.close(); server.kill('SIGTERM');
+    await browser?.close();
+    try { if(process.platform !== 'win32') process.kill(-server.pid, 'SIGTERM'); else server.kill('SIGTERM'); } catch(error) { if(error.code !== 'ESRCH') throw error; }
   }
 }
 

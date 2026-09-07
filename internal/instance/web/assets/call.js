@@ -96,6 +96,7 @@
   };
 
   const stopScreen = async ({renegotiate = true} = {}) => {
+    const owner=connection,peer=connection?.peer;
     const stream = screenStream; screenStream = null;
     screenSender = null;
     localScreenVideo?.remove(); localScreenVideo = null;
@@ -103,25 +104,34 @@
     for (const sender of stream?.__allchatSenders || []) { try { connection?.removeTrack(sender); } catch (_) {} }
     document.querySelector("[data-call-screen]")?.classList.remove("active");
     renderMedia();
-    if (renegotiate && connection && !connection.stopped) await connection.clearVideoTrack();
+    if (renegotiate && connection && !connection.stopped) { await owner.clearVideoTrack(); if(connection===owner && owner.peer===peer) await owner.setDisplayAudioTrack(null); }
   };
 
+  let screenBusy=false;
   const toggleScreen = async button => {
+    if(screenBusy)return;
     if (screenStream) return stopScreen();
+    screenBusy=true;const owner=connection,peer=connection?.peer,run=generation;let acquired;
+    try{
     if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this browser.");
     const mode=window.AllChatVoiceSettings?.load?.().screenShareMode||"auto",motion=mode==="motion",saver=mode==="data-saver",text=mode==="text",width=motion?1280:saver?960:1920,height=motion?720:saver?540:1080,fps=motion?30:saver?12:text?10:20;
-    const stream = await navigator.mediaDevices.getDisplayMedia({video:{width:{max:width},height:{max:height},frameRate:{max:fps}}, audio: true});
-    const videoTrack = stream.getVideoTracks()[0], senders = [];videoTrack.contentHint=motion?"motion":text?"text":"detail";
-    stream.getAudioTracks().forEach(track => senders.push(connection.addTrack(track, stream)));
+    const stream = acquired = await navigator.mediaDevices.getDisplayMedia({video:{width:{max:width},height:{max:height},frameRate:{max:fps}}, audio: true});
+    if(run!==generation||connection!==owner||owner?.peer!==peer||owner?.stopped){stream.getTracks().forEach(track=>track.stop());return}
+    screenStream = stream;
+    const videoTrack = stream.getVideoTracks()[0], senders = [];if(!videoTrack)throw new Error("No screen selected");videoTrack.contentHint=motion?"motion":text?"text":"detail";
+    await connection.setDisplayAudioTrack(stream.getAudioTracks()[0] || null);
     const sender = await connection.setVideoTrack(videoTrack, stream, {sendEncodings: [
         {rid: "q", scaleResolutionDownBy: 4, maxBitrate: Math.min(250000, mediaConfig.screen_bitrate), maxFramerate: Math.min(12,fps)},
         {rid: "h", scaleResolutionDownBy: 2, maxBitrate: Math.min(750000, mediaConfig.screen_bitrate), maxFramerate: Math.min(20,fps)},
         {rid: "f", maxBitrate: mediaConfig.screen_bitrate, maxFramerate: fps},
       ]});
+    if(run!==generation||connection!==owner||owner?.peer!==peer||owner?.stopped){stream.getTracks().forEach(track=>track.stop());return}
+    if(senders.length)await connection.renegotiate();
     screenSender = sender;
     stream.__allchatSenders = senders; screenStream = stream; button.classList.add("active");
     localScreenVideo = document.createElement("video"); localScreenVideo.autoplay = true; localScreenVideo.muted = true; localScreenVideo.playsInline = true; localScreenVideo.className = "shared-screen"; localScreenVideo.srcObject = stream; renderMedia();
-    videoTrack.onended = () => stopScreen().catch(() => {});
+    videoTrack.onended = () => {if(run===generation&&connection===owner)stopScreen().catch(()=>{})};
+    }catch(error){acquired?.getTracks().forEach(track=>track.stop());if(connection===owner)await stopScreen();throw error}finally{screenBusy=false}
   };
 
   const renderConnectedView = () => {
@@ -173,15 +183,15 @@
     if (event.track.kind === "video") {
       const video = document.createElement("video");
       video.autoplay = true; video.playsInline = true; video.className = "shared-screen"; video.srcObject = stream;
-      video.dataset.memberId=window.allchatMediaOwnerID?.(event.track.id,stream.id)||"";
+      video.dataset.memberId=window.allchatMediaOwnerID?.(event.track.id,stream.id)||(call?.caller_id===document.body.dataset.memberId?call?.recipient_id:call?.caller_id)||"";
       const id=event.track.id||crypto.randomUUID(),remove=()=>{if(remoteVideo.get(id)===video)remoteVideo.delete(id);video.remove();renderMedia()},publish=()=>{if(stoppedVideoMembers.has(video.dataset.memberId))return;
         // A Direct Call has one remote Member and one active video source.
         for(const old of remoteVideo.values())old.remove();remoteVideo.clear();remoteVideo.set(id,video);renderMedia();video.play().catch(()=>{});
       };
-      event.track.addEventListener("ended",remove);event.track.addEventListener("mute",remove);event.track.addEventListener("unmute",publish);
+      event.track.addEventListener("ended",remove);event.track.addEventListener("mute",()=>{video.dataset.stopped="true";video.remove();renderMedia()});event.track.addEventListener("unmute",publish);
       if(!event.track.muted)publish();return;
     }
-    const memberID=window.allchatMediaOwnerID?.(event.track.id,stream.id)||(call?.caller_id===document.body.dataset.memberId?call?.recipient_id:call?.caller_id)||"";const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = stream;audio.dataset.memberId=memberID;window.AllChatVoiceSettings?.applyOutput(audio,memberID);
+    const memberID=window.allchatMediaOwnerID?.(event.track.id,stream.id)||(call?.caller_id===document.body.dataset.memberId?call?.recipient_id:call?.caller_id)||"";const audio = document.createElement("audio"); audio.autoplay = true; audio.srcObject = new MediaStream([event.track]);audio.dataset.memberId=memberID;window.AllChatVoiceSettings?.applyOutput(audio,memberID);
     remoteAudio.set(event.track, audio); document.body.append(audio);
     audio.play().catch(() => {});
     event.track.addEventListener("ended", () => {remoteAudio.delete(event.track);audio.remove();});
@@ -216,16 +226,16 @@
         const status = document.querySelector("[data-call-status]"); if (status) status.textContent = "The other Member is already sharing their screen.";
       } else if (frame.type === "video-stopped") {
         stoppedVideoMembers.add(frame.member_id);
-        for (const video of remoteVideo.values()) { video.dataset.stopped = "true"; video.remove(); }
+        for (const video of remoteVideo.values()) if(video.dataset.memberId===frame.member_id) { video.dataset.stopped = "true"; video.remove(); }
         renderMedia();
       } else if (frame.type === "video-started") {
         stoppedVideoMembers.delete(frame.member_id);
-        for (const video of remoteVideo.values()) { video.dataset.stopped = "false"; video.play().catch(() => {}); }
+        for (const video of remoteVideo.values()) if(video.dataset.memberId===frame.member_id) { video.dataset.stopped = "false"; video.play().catch(() => {}); }
         renderMedia();
       }
     };
     const progress = message => { if (!connection || connection.state !== "connected") { panel.hidden=false;panel.innerHTML='<span class="call-progress"></span>';panel.firstElementChild.textContent=message;attachPanel(); } };
-    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, fetchCredentials: async()=>mediaIceServers||[], resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
+    connection = new window.AllChatVoiceConnection({roomID: activeCall.id, stream: microphone, takeover:true,releaseCapture:()=>microphoneCapture?.stop(),onPeerReplaced:clearRemoteMedia, resumeToken: sessionStorage.getItem(key) || "", onState: stateChanged, onProgress: progress, onTrack: receiveTrack, onFrame: receiveFrame, onResumeToken: token => sessionStorage.setItem(key, token)});
     await connection.start();
   };
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)return;for(const video of remoteVideo.values())connection?.send("screen-quality",{owner_id:video.dataset.memberId,quality:"low"})});
@@ -240,11 +250,10 @@
           window.AllChatVoiceSettings ? null : import("/assets/voice-settings.js"),
           window.AllChatVoiceConnection ? null : import("/assets/voice-connection.js"),
         ]);
-        const [capture, config, iceServers] = await Promise.all([
-          window.AllChatVoiceSettings.capture(),
+        const [capture, config, iceServers] = await window.AllChatVoiceSettings.prepare([
           fetch("/api/v1/media/config").then(response => response.ok ? response.json() : mediaConfig),
           fetch("/api/v1/turn-credentials").then(async response => {if(!response.ok)throw new Error("TURN credentials unavailable");return (await response.json()).ice_servers||[]}),
-        ]);
+        ],()=>expectedGeneration===generation);
         if (expectedGeneration !== generation) { capture.stop(); throw new Error("Direct Call preparation cancelled"); }
         microphoneCapture=capture;microphone=capture.stream;mediaConfig=config;mediaIceServers=iceServers;
       })().finally(() => { mediaPreparation=null; });

@@ -26,7 +26,7 @@ test('terminal Voice Room failure releases the microphone', async ({ page }) => 
     const stream = {getTracks: () => [track]};
     const createPeer = () => ({
       addTrack() {},
-      addTransceiver() {},
+      addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; },
       close() {},
       createOffer: async () => ({type: 'offer', sdp: 'test'}),
       setLocalDescription: async function(description) { this.localDescription = description; },
@@ -376,7 +376,7 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
     class FakePeer {
       constructor() { this.localDescription = null; this.connectionState = 'new'; peers.push(this); }
       addTrack() {}
-      addTransceiver() {}
+      addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; }
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'offer'}); }
       setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
       setRemoteDescription() { this.connectionState = 'connected'; this.onconnectionstatechange?.(); return Promise.resolve(); }
@@ -424,7 +424,7 @@ test('voice connection recovers a dropped signaling socket with fresh transport 
   });
   expect(result.states).toContain('recovering');
   expect(result.states.at(-1)).toBe('connected');
-  expect(result).toMatchObject({sockets: 4, peers: 4, credentialFetches: 4, joinTokens: ['', 'resume-token', '', 'resume-token'], joinTakeovers: [false, false, true, false]});
+  expect(result).toMatchObject({sockets: 4, peers: 4, credentialFetches: 4, joinTokens: ['', 'resume-token', '', 'resume-token'], joinTakeovers: [false, false, false, false]});
   expect(result.heartbeats).toBeGreaterThan(0);
 });
 
@@ -433,7 +433,7 @@ test('voice connection exposes receiver-side audio flow diagnostics', async ({pa
   await page.addScriptTag({url:'/assets/voice-connection.js'});
   const samples=await page.evaluate(async()=>{
     const captured=[];
-    class Peer{constructor(){this.localDescription=null;this.connectionState='new';this.iceConnectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}getStats(){return Promise.resolve(new Map([['in',{type:'inbound-rtp',kind:'audio',packetsReceived:321,bytesReceived:6543,packetsLost:2,jitter:.015}],['out',{type:'outbound-rtp',kind:'audio',packetsSent:123,bytesSent:4567}]]))}}
+    class Peer{constructor(){this.localDescription=null;this.connectionState='new';this.iceConnectionState='new'}addTrack(){}addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; }createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}getStats(){return Promise.resolve(new Map([['in',{type:'inbound-rtp',kind:'audio',packetsReceived:321,bytesReceived:6543,packetsLost:2,jitter:.015}],['out',{type:'outbound-rtp',kind:'audio',packetsSent:123,bytesSent:4567}]]))}}
     class Socket{static OPEN=1;constructor(){this.readyState=1;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({type:'answer',sdp:{type:'answer',sdp:'answer'}})}))}close(){this.readyState=3}}
     const connection=new window.AllChatVoiceConnection({roomID:'voice-example',stream:{getTracks:()=>[]},fetchCredentials:async()=>[],createPeer:()=>new Peer(),createSocket:()=>new Socket(),diagnosticsInterval:5,onDiagnostics:value=>captured.push(value)});
     await connection.start();await new Promise(resolve=>setTimeout(resolve,16));connection.stop();return captured;
@@ -449,7 +449,7 @@ test('voice connection serializes an initial answer and immediate SFU offer', as
     const sent = [], states = [], progress = [];
     class Peer {
       constructor() { this.localDescription = null; this.remoteDescription = null; this.settingRemote = false; }
-      addTrack() {} addTransceiver() {} addIceCandidate() { return Promise.resolve(); } close() {}
+      addTrack() {} addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; } addIceCandidate() { return Promise.resolve(); } close() {}
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'client-offer'}); }
       createAnswer() { return Promise.resolve({type: 'answer', sdp: 'client-answer'}); }
       setLocalDescription(value) { this.localDescription = value; return Promise.resolve(); }
@@ -504,9 +504,9 @@ test('Direct Call keeps remote screen media when tracks arrive with the SDP answ
     Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>({getTracks:()=>[microphoneTrack],getAudioTracks:()=>[microphoneTrack]})}});
     class Peer {
       constructor(){this.localDescription=null;this.remoteDescription=null;}
-      addTrack(){} addTransceiver(){} createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}
+      addTrack(){} addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; } createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}
       setLocalDescription(value){this.localDescription=value;return Promise.resolve()}
-      async setRemoteDescription(value){this.remoteDescription=value;this.connectionState='connected';this.onconnectionstatechange?.();const track={kind:'video',addEventListener(){}};this.ontrack?.({track,streams:[new MediaStream()]})}
+      async setRemoteDescription(value){this.remoteDescription=value;this.connectionState='connected';this.onconnectionstatechange?.();const track={kind:'video',id:'screen-member-two',addEventListener(){}};this.ontrack?.({track,streams:[new MediaStream()]})}
       addIceCandidate(){return Promise.resolve()} close(){}
     }
     class Socket {
@@ -567,7 +567,7 @@ test('voice connection restarts failed ICE before replacing the signaling socket
     let peers = 0, sockets = 0, restarts = 0;
     class FakePeer {
       constructor() { this.localDescription=null;this.connectionState='new';peers++; }
-      addTrack(){} addTransceiver(){} addIceCandidate(){return Promise.resolve()}
+      addTrack(){} addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; } addIceCandidate(){return Promise.resolve()}
       createOffer(options){sent.push({offer:options||{}});return Promise.resolve({type:'offer',sdp:'offer'})}
       setLocalDescription(value){this.localDescription=value;return Promise.resolve()}
       setRemoteDescription(){this.connectionState='connected';this.onconnectionstatechange?.();return Promise.resolve()}
@@ -596,7 +596,7 @@ test('voice connection replaces a half-open socket after missed heartbeat acknow
   await page.addScriptTag({url:'/assets/voice-connection.js'});
   const result=await page.evaluate(async()=>{
     let socketCount=0,credentialFetches=0;const states=[];
-    class Peer{constructor(){this.localDescription=null;this.connectionState='new'}addTrack(){}addTransceiver(){}createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}}
+    class Peer{constructor(){this.localDescription=null;this.connectionState='new'}addTrack(){}addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; }createOffer(){return Promise.resolve({type:'offer',sdp:'offer'})}setLocalDescription(value){this.localDescription=value;return Promise.resolve()}setRemoteDescription(){this.connectionState='connected';queueMicrotask(()=>this.onconnectionstatechange?.());return Promise.resolve()}addIceCandidate(){return Promise.resolve()}close(){}}
     class Socket{static OPEN=1;constructor(){this.readyState=1;this.number=++socketCount;queueMicrotask(()=>this.onopen?.())}send(raw){const frame=JSON.parse(raw);if(frame.type==='join')queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'answer',sdp:{type:'answer',sdp:'answer'},resume_token:'resume'})}));if(frame.type==='heartbeat'&&this.number>1)queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({version:1,type:'heartbeat-ack'})}))}close(){if(this.readyState===3)return;this.readyState=3;queueMicrotask(()=>this.onclose?.())}}
     const connection=new window.AllChatVoiceConnection({roomID:'voice-room',stream:{getTracks:()=>[{kind:'audio'}]},onState:state=>states.push(state),fetchCredentials:async()=>{credentialFetches++;return[]},createPeer:()=>new Peer(),createSocket:()=>new Socket(),heartbeatInterval:5,heartbeatTimeout:12,recoveryDelays:[0],recoveryTimeout:100});
     await connection.start();await new Promise(resolve=>setTimeout(resolve,35));
@@ -680,7 +680,7 @@ test('clicking a voice channel joins in place without replacing the text convers
     window.RTCPeerConnection = class {
       constructor() { this.iceGatheringState = 'gathering'; this.localDescription = null; this.listeners = {}; window.voicePeer = this; }
       addTrack() { return {}; }
-      addTransceiver() {}
+      addTransceiver() { return {sender: {replaceTrack: async () => {}}, setCodecPreferences() {}}; }
       createOffer() { return Promise.resolve({type: 'offer', sdp: 'mock-offer'}); }
       createAnswer() { return Promise.resolve({type: 'answer', sdp: 'mock-client-answer'}); }
       setLocalDescription(value) { this.localDescription = value; setTimeout(() => this.onicecandidate?.({candidate: {toJSON: () => ({candidate: 'candidate:mock'})}}), 10); setTimeout(() => {this.iceGatheringState = 'complete'; (this.listeners.icegatheringstatechange || []).forEach(listener => listener());}, 1500); return Promise.resolve(); }
@@ -723,13 +723,14 @@ test('clicking a voice channel joins in place without replacing the text convers
   voiceParticipants = voiceParticipants.filter(item => item.member_id !== 'member-two');
   await expect.poll(() => page.evaluate(() => window.voiceEarcons)).toContain('leave');
   await page.evaluate(() => {
-    window.botOneAudio = new MediaStream();
-    window.botTwoAudio = new MediaStream();
-    window.voicePeer.ontrack({track: {kind: 'audio', id: 'audio-bot1', addEventListener() {}}, streams: [window.botOneAudio]});
-    window.voicePeer.ontrack({track: {kind: 'audio', id: 'audio-bot2', addEventListener() {}}, streams: [window.botTwoAudio]});
+    window.testAudioContext = new AudioContext();
+    window.botOneAudio = window.testAudioContext.createMediaStreamDestination().stream;
+    window.botTwoAudio = window.testAudioContext.createMediaStreamDestination().stream;
+    window.voicePeer.ontrack({track: window.botOneAudio.getAudioTracks()[0], streams: [window.botOneAudio]});
+    window.voicePeer.ontrack({track: window.botTwoAudio.getAudioTracks()[0], streams: [window.botTwoAudio]});
   });
   await expect(page.locator('body > audio')).toHaveCount(2);
-  expect(await page.evaluate(() => [...document.querySelectorAll('body > audio')].map(audio => audio.srcObject).includes(window.botOneAudio))).toBe(true);
+  expect(await page.evaluate(() => [...document.querySelectorAll('body > audio')].flatMap(audio => audio.srcObject.getTracks()).includes(window.botOneAudio.getAudioTracks()[0]))).toBe(true);
   await page.locator('a[href="/channels/voice-one"]').dispatchEvent('click');
   await expect(page.locator('[data-media-stage-grid] .participant-tile')).toContainText('Akko');
   await page.evaluate(() => {

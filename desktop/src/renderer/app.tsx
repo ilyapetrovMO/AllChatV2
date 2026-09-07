@@ -2145,8 +2145,16 @@ export function DirectCallControls({
   const [remoteScreens, setRemoteScreens] = useState<Record<string, MediaStream>>({});
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[]; screenQualityTimer?: number; requestedScreenTier: ScreenShareTier; automaticScreenTier: ScreenShareTier } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[]; displayAudioSender: RTCRtpSender; signaling: ReturnType<typeof createMediaFrameQueue>; screenBusy?: boolean; screenQualityTimer?: number; requestedScreenTier: ScreenShareTier; automaticScreenTier: ScreenShareTier } | null>(null);
   const connectingRoom = useRef<string | null>(null);
+  const mediaGeneration = useRef(0);
+  const disposeProvisional = useRef<(() => void) | null>(null);
+  const activeMediaCall = useRef<import('../shared/instance-actions').DirectCall | null>(null);
+  const resumeToken = useRef('');
+  const recovery = useRef<{deadline: number; attempts: number; timer?: ReturnType<typeof setTimeout>; capture?: DesktopMicrophoneCapture; muted: boolean}>({deadline: 0, attempts: 0, muted: false});
+  const mediaTerminated = useRef(false);
+  const lastMediaAck = useRef(0);
+  const attemptDeadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const heartbeat = useRef<number | null>(null);
   const connectionWatchdog = useRef<ReturnType<typeof createMediaConnectionWatchdog> | null>(null);
   const mediaFailure = useRef("");
@@ -2156,16 +2164,23 @@ export function DirectCallControls({
   connectionWatchdog.current ||= createMediaConnectionWatchdog(setStatus, () => ({
     connection: media.current?.peer.connectionState || "closed",
     ice: media.current?.peer.iceConnectionState || "closed",
-  }));
+  }), 10_000, window.setTimeout, window.clearTimeout, (message) => recoverMedia(new Error(message)));
 
-  const cleanup = () => {
+  const cleanup = (recovering = false) => {
+    mediaGeneration.current++;
+    disposeProvisional.current?.(); disposeProvisional.current = null;
+    if (attemptDeadline.current) clearTimeout(attemptDeadline.current);
+    if (recovery.current.timer) clearTimeout(recovery.current.timer);
+    recovery.current.timer = undefined;
+    if (!recovering) { recovery.current.capture?.stop(); recovery.current.capture = undefined; recovery.current.deadline = 0; activeMediaCall.current = null; resumeToken.current = ''; recovery.current.muted = false; recovery.current.attempts = 0; }
     transientStatus.current?.clear();
     const active = media.current;
     media.current = null;
-    active?.socket.send({ version: 1, type: "leave" });
+    if (!recovering) active?.socket.send({ version: 1, type: "leave" });
+    active?.signaling.close();
     active?.socket.close();
     active?.peer.close();
-    active?.capture.stop();
+    if (recovering && active) { recovery.current.capture = active.capture; recovery.current.muted = active.stream.getAudioTracks()[0]?.enabled === false; } else active?.capture.stop();
     active?.screen?.getTracks().forEach((track) => track.stop());
     if (active?.screenQualityTimer !== undefined) window.clearInterval(active.screenQualityTimer);
     active?.audio.forEach((elements) => elements.forEach((element) => element.remove()));
@@ -2182,28 +2197,66 @@ export function DirectCallControls({
     setSoundboardOpen(false);
   };
 
-  async function connect(activeCall: import("../shared/instance-actions").DirectCall): Promise<void> {
-    if (media.current || connectingRoom.current || !connectMedia) return;
+  function recoverMedia(error: Error & {code?: string}): void {
+    if (mediaTerminated.current) return;
+    const activeCall = activeMediaCall.current;
+    if (!activeCall) return;
+    if (['moderated', 'superseded', 'already_active', 'unauthorized', 'join_failed'].includes(error.code || '')) {
+      cleanup(); mediaTerminated.current = true; setStatus(error.message); return;
+    }
+    if (error.code === 'invalid_resume') resumeToken.current = '';
+    if (recovery.current.timer) return;
+    recovery.current.deadline ||= Date.now() + 30_000;
+    if (Date.now() >= recovery.current.deadline) { cleanup(); mediaTerminated.current = true; setStatus('Media recovery timed out. Rejoin to try again.'); return; }
+    cleanup(true);
+    setStatus('Reconnecting media…');
+    const delay = Math.min(4000, 500 * 2 ** Math.min(recovery.current.attempts++, 3), recovery.current.deadline - Date.now());
+    recovery.current.timer = setTimeout(() => {
+      recovery.current.timer = undefined;
+      if (Date.now() >= recovery.current.deadline) { recoverMedia(new Error('Media recovery timed out')); return; }
+      void connect(activeCall, false).catch(recoverMedia);
+    }, Math.max(0, delay));
+  }
+
+  async function connect(activeCall: import("../shared/instance-actions").DirectCall, explicit = false): Promise<void> {
+    if (media.current || connectingRoom.current || !connectMedia || (!explicit && (mediaTerminated.current || recovery.current.timer))) return;
+    mediaTerminated.current = false;
+    activeMediaCall.current = activeCall;
+    const generation = ++mediaGeneration.current;
+    const current = () => generation === mediaGeneration.current;
+    const ensureCurrent = () => { if (!current()) throw new Error('Media connection cancelled'); };
+    attemptDeadline.current = setTimeout(() => { if (current()) recoverMedia(new Error('Media connection timed out')); }, Math.min(10_000, recovery.current.deadline ? Math.max(0, recovery.current.deadline - Date.now()) : 10_000));
     connectingRoom.current = activeCall.id;
     mediaFailure.current = "";
     let provisionalCapture: DesktopMicrophoneCapture | null = null;
+    let provisionalPeer: RTCPeerConnection | null = null;
+    let provisionalSocket: import("../shared/desktop-bridge").DesktopMediaConnection | null = null;
+    const dispose = () => { provisionalCapture?.stop(); provisionalPeer?.close(); provisionalSocket?.close(); };
+    disposeProvisional.current = dispose;
     try {
     setStatus("Requesting microphone permission…");
-    const capture = await captureDesktopMicrophone(currentMemberId);
+    const savedCapture = recovery.current.capture;
+    recovery.current.capture = undefined;
+    const capture = savedCapture || await captureDesktopMicrophone(currentMemberId);
     const stream = capture.stream;
     provisionalCapture = capture;
+    ensureCurrent();
+    if (recovery.current.muted) stream.getAudioTracks().forEach(track => { track.enabled = false; });
     if (capture.compatibilityNotice) setStatus(capture.compatibilityNotice);
     const credentials = await onAction({ type: "turn_credentials" });
+    ensureCurrent();
     if (credentials?.type !== "turn_credentials") throw new Error("TURN credentials unavailable.");
-    const peer = new RTCPeerConnection({ iceServers: credentials.iceServers });
+    const peer = provisionalPeer = new RTCPeerConnection({ iceServers: credentials.iceServers });
     const audio = new Map<string, HTMLAudioElement[]>();
     const pendingCandidates: RTCIceCandidateInit[] = [];
     stream.getTracks().forEach((track) => peer.addTrack(track, stream));
-    peer.addTransceiver("audio", { direction: "sendrecv" });
-    peer.addTransceiver("video", { direction: "recvonly" });
+    const displayAudioSender = peer.addTransceiver("audio", { direction: "sendrecv" }).sender;
+    const videoTransceiver = peer.addTransceiver("video", {direction: "sendrecv", sendEncodings: screenSharePreset(loadDesktopVoicePreferences(currentMemberId).screenShareMode).encodings});
+    const codecs = RTCRtpSender.getCapabilities('video')?.codecs;
+    if (codecs) videoTransceiver.setCodecPreferences([...codecs.filter(codec=>codec.mimeType.toLowerCase()==='video/vp8'), ...codecs.filter(codec=>codec.mimeType.toLowerCase()!=='video/vp8')]);
     let socket: import("../shared/desktop-bridge").DesktopMediaConnection | null = null;
     peer.onicecandidate = ({ candidate }) => {
-      if (!candidate) return;
+      if (!current() || !candidate) return;
       const encoded = candidate.toJSON();
       if (socket) socket.send({ version: 1, type: "candidate", candidate: encoded });
       else pendingCandidates.push(encoded);
@@ -2211,8 +2264,11 @@ export function DirectCallControls({
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     await waitForIceGathering(peer);
+    ensureCurrent();
     const signaling = createMediaFrameQueue(peer, (frame) => socket?.send(frame), {
-      onAnswer: () => setStatus("Finishing media connection…"),
+      onAnswer: (frame) => { if (!current()) return; if(frame.resume_token) resumeToken.current = frame.resume_token; socket?.send({version: 1, type: 'mute-state', muted: stream.getAudioTracks()[0]?.enabled === false}); setStatus("Finishing media connection…"); },
+      onFailure: (error) => { if(current()) recoverMedia(error); },
+      onCommandError: (frame) => { if(current()) setStatus(frame.error || 'Media command rejected'); },
       onVideoStopped: (memberID) => {
         stoppedRemoteScreenOwners.current.add(memberID);
         setRemoteScreens((current) => {
@@ -2232,13 +2288,16 @@ export function DirectCallControls({
         if (!sender) return;
         if (!media.current) return;
         media.current.requestedScreenTier = quality;
+        media.current.socket.send({version: 1, type: "publisher-quality", quality: lowestScreenShareTier(quality, media.current.automaticScreenTier)});
         void setScreenShareTier(sender, lowestScreenShareTier(quality, media.current.automaticScreenTier)).catch(() => undefined);
       },
     });
-    socket = await connectMedia(instanceId, (value) => {
-      const frame = value as DesktopMediaFrame & { sound_url?: string };
-      if (frame.type === "soundboard-played" && frame.sound_url) {
-        void onAction({ type: "load_asset", path: frame.sound_url }).then((result) => {
+    socket = provisionalSocket = await connectMedia(instanceId, (value) => {
+      if (!current()) return;
+      if ((value as DesktopMediaFrame).type === "heartbeat-ack") lastMediaAck.current = Date.now();
+      const frame = value as DesktopMediaFrame & { sound?: { audio_url?: string } };
+      if (frame.type === "soundboard-played" && frame.sound?.audio_url) {
+        void onAction({ type: "load_asset", path: frame.sound?.audio_url }).then((result) => {
           if (result?.type !== "asset") return;
           const url = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
           const element = new Audio(url);
@@ -2248,24 +2307,27 @@ export function DirectCallControls({
         });
       }
       void signaling.push(value as DesktopMediaFrame).catch((error) => {
+        if (!current()) return;
         mediaFailure.current = error instanceof Error ? error.message : "Media signaling failed.";
-        setStatus(mediaFailure.current);
+        recoverMedia(Object.assign(error instanceof Error ? error : new Error(mediaFailure.current), {code: (error as {code?: string}).code}));
       });
     }, (reason) => {
-      if (media.current?.socket !== socket) return;
+      if (!current()) return;
       const message = mediaDisconnectMessage(mediaFailure.current, reason);
-      cleanup();
-      setStatus(message);
+      recoverMedia(new Error(message));
     });
-    media.current = { stream, capture, peer, socket, audio, screenAudioSenders: [], requestedScreenTier: "high", automaticScreenTier: "high" };
-    provisionalCapture = null;
+    ensureCurrent();
+    media.current = { stream, capture, peer, socket, audio, signaling, displayAudioSender, screenSender: videoTransceiver.sender, screenAudioSenders: [], requestedScreenTier: "high", automaticScreenTier: "high" };
+    provisionalCapture = null; provisionalPeer = null; provisionalSocket = null;
+    if (disposeProvisional.current === dispose) disposeProvisional.current = null;
     peer.ontrack = ({ streams, track }) => {
+      if (!current()) return;
       const remoteStream = streams[0] || new MediaStream([track]);
       if (track.kind === "video") {
         const fallbackOwner = activeCall.caller_id === currentMemberId ? activeCall.recipient_id : activeCall.caller_id;
         const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
         remoteScreenStreams.current.set(owner, remoteStream);
-        bindRemoteScreenTrack(track, remoteStream, owner, setRemoteScreens, () => !stoppedRemoteScreenOwners.current.has(owner));
+        bindRemoteScreenTrack(track, remoteStream, owner, setRemoteScreens, () => current() && !stoppedRemoteScreenOwners.current.has(owner));
         return;
       }
       if (track.kind !== "audio") return;
@@ -2273,7 +2335,7 @@ export function DirectCallControls({
       const owner = desktopMediaOwnerID(track.id, streams[0]?.id) || fallbackOwner;
       const element = document.createElement("audio");
       element.autoplay = true;
-      element.srcObject = remoteStream;
+      element.srcObject = new MediaStream([track]);
       applyDesktopOutputPreferences(element, currentMemberId, owner);
       document.body.append(element);
       audio.set(owner, [...(audio.get(owner) || []), element]);
@@ -2284,20 +2346,25 @@ export function DirectCallControls({
       });
       void element.play().catch(() => undefined);
     };
-    const updateConnectionState = () => connectionWatchdog.current?.stateChanged();
+    const updateConnectionState = () => {
+      if (!current()) return;
+      if (peer.connectionState === 'connected') { clearTimeout(attemptDeadline.current); recovery.current.deadline = 0; recovery.current.attempts = 0; setMuted(stream.getAudioTracks()[0]?.enabled === false); }
+      connectionWatchdog.current?.stateChanged();
+    };
     peer.onconnectionstatechange = updateConnectionState;
     peer.oniceconnectionstatechange = updateConnectionState;
-    socket.send(createMediaJoinFrame(activeCall.id, peer.localDescription));
+    socket.send(createMediaJoinFrame(activeCall.id, peer.localDescription, resumeToken.current, explicit));
     pendingCandidates.splice(0).forEach((candidate) => socket!.send({ version: 1, type: "candidate", candidate }));
-    heartbeat.current = window.setInterval(() => socket?.send({ version: 1, type: "heartbeat" }), 1_000);
+    lastMediaAck.current = Date.now();
+    heartbeat.current = window.setInterval(() => { if (!current()) return; if (Date.now() - lastMediaAck.current > 25_000) recoverMedia(new Error('Media heartbeat timed out')); else socket?.send({ version: 1, type: "heartbeat" }); }, 5_000);
     connectionWatchdog.current?.start();
     setStatus("Connecting…");
     } catch (error) {
-      provisionalCapture?.stop();
-      cleanup();
-      throw error;
+      provisionalCapture?.stop(); provisionalPeer?.close(); provisionalSocket?.close();
+      if (!current()) return;
+      recoverMedia(error instanceof Error ? error : new Error('Media connection failed'));
     } finally {
-      connectingRoom.current = null;
+      if(current()) connectingRoom.current = null;
     }
   }
 
@@ -2334,6 +2401,7 @@ export function DirectCallControls({
 
   async function act(action: "accept" | "decline" | "end"): Promise<void> {
     if (!call) return;
+    if (action === "accept") mediaTerminated.current = false;
     if (action === "accept") onOpenDirectCall?.(call.direct_message_id);
     const result = await onAction({ type: "call_action", callId: call.id, action });
     if (result?.type === "call") { setCall(result.call); onCallChange(result.call); }
@@ -2343,10 +2411,11 @@ export function DirectCallControls({
   async function joinVoice(room: string): Promise<void> {
     if (voiceRoomRef.current === room) return;
     if (voiceRoomRef.current) cleanup();
+    mediaTerminated.current = false;
     voiceRoomRef.current = room;
     setVoiceRoom(room);
     try {
-      await connect({ id: room, direct_message_id: "", caller_id: currentMemberId, recipient_id: "", state: "accepted", created_at: new Date().toISOString() });
+      await connect({ id: room, direct_message_id: "", caller_id: currentMemberId, recipient_id: "", state: "accepted", created_at: new Date().toISOString() }, true);
     } catch (error) {
       voiceRoomRef.current = null;
       setVoiceRoom(null);
@@ -2380,7 +2449,8 @@ export function DirectCallControls({
     setLocalScreen(null);
     screen.getTracks().forEach((track) => { track.onended = null; track.stop(); });
     await active.screenSender?.replaceTrack(null);
-    active.screenAudioSenders.forEach((sender) => active.peer.removeTrack(sender));
+    await active.displayAudioSender.replaceTrack(null);
+    if (media.current !== active) return;
     active.screenAudioSenders = [];
     if (active.screenQualityTimer !== undefined) window.clearInterval(active.screenQualityTimer);
     active.screenQualityTimer = undefined;
@@ -2391,19 +2461,26 @@ export function DirectCallControls({
   async function toggleScreenShare(): Promise<void> {
     const active = media.current;
     if (!active) return;
+    if (active.screenBusy) return;
     if (active.screen) return stopScreenShare();
+    active.screenBusy = true;
+    let acquired: MediaStream | undefined;
+    try {
     if (!navigator.mediaDevices?.getDisplayMedia) throw new Error("Screen sharing is unavailable on this operating system.");
-    const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    const screen = acquired = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    if(media.current !== active) { screen.getTracks().forEach(track=>track.stop()); return; }
     const video = screen.getVideoTracks()[0];
     if (!video) { screen.getTracks().forEach((track) => track.stop()); throw new Error("No screen was selected."); }
+    active.screen = screen;
     const preferences = loadDesktopVoicePreferences(currentMemberId);
     const preset = screenSharePreset(preferences.screenShareMode);
     await prepareScreenShareTrack(video, preset);
+    if(media.current !== active) { screen.getTracks().forEach(track=>track.stop()); return; }
     const transceiver = active.screenSender
       ? null
       : active.peer.addTransceiver(video, { direction: "sendonly", streams: [screen], sendEncodings: preset.encodings });
     if (active.screenSender) await active.screenSender.replaceTrack(video);
-    active.screen = screen;
+    if(media.current !== active) { screen.getTracks().forEach(track=>track.stop()); return; }
     setLocalScreen(screen);
     active.screenSender = transceiver?.sender || active.screenSender;
     active.requestedScreenTier = "high";
@@ -2418,18 +2495,19 @@ export function DirectCallControls({
           report.forEach((entry) => { if (entry.type === "outbound-rtp" && (entry.kind === "video" || entry.mediaType === "video")) reason = entry.qualityLimitationReason || reason; });
           if (!media.current || media.current.screen !== screen) return;
           media.current.automaticScreenTier = controller.sample({ qualityLimitationReason: reason });
+          media.current.socket.send({version: 1, type: "publisher-quality", quality: lowestScreenShareTier(media.current.requestedScreenTier, media.current.automaticScreenTier)});
           void setScreenShareTier(sender, lowestScreenShareTier(media.current.requestedScreenTier, media.current.automaticScreenTier)).catch(() => undefined);
         }).catch(() => undefined);
       }, 2_000);
     }
-    active.screenAudioSenders = screen.getAudioTracks().map((track) => active.peer.addTrack(track, screen));
-    video.onended = () => { void stopScreenShare(); };
-    const offer = await active.peer.createOffer();
-    await active.peer.setLocalDescription(offer);
-    await waitForIceGathering(active.peer);
-    active.socket.send({ version: 1, type: "offer", sdp: serializeSessionDescription(active.peer.localDescription) });
+    await active.displayAudioSender.replaceTrack(screen.getAudioTracks()[0] || null);
+    active.screenAudioSenders = screen.getAudioTracks().length ? [active.displayAudioSender] : [];
+    video.onended = () => { if (media.current === active && active.screen === screen) void stopScreenShare().catch(() => {}); };
+    if (transceiver) await active.signaling.renegotiate();
+    if(media.current !== active) { screen.getTracks().forEach(track=>track.stop()); return; }
     active.socket.send({ version: 1, type: "video-started" });
     setSharing(true);
+    } catch(error) { acquired?.getTracks().forEach(track=>track.stop()); if(media.current===active) await stopScreenShare(); throw error; } finally { active.screenBusy=false; }
   }
 
   async function openSoundboard(): Promise<void> {

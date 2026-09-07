@@ -18,26 +18,38 @@
 	  document.dispatchEvent(new CustomEvent("allchat:voice-pending"));
 	};
   const stopScreen = async session => {
+    const peer=session.connection?.peer;
     const stream=session.screenStream;
     session.screenStream=null;
     stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
     session.screenSenders.forEach(sender=>{try{session.connection?.removeTrack(sender)}catch(_){}});
+    const hadAudio=session.screenSenders.length>0;
     session.screenSenders=[];session.screenSender=null;
     session.panel.querySelector("[data-voice-screen]")?.classList.remove("active");
     renderStage();
     await session.connection?.clearVideoTrack();
+    if(session.connection?.peer===peer) await session.connection?.setDisplayAudioTrack(null);
+    if(hadAudio && session.connection && !session.connection.stopped) await session.connection.renegotiate();
   };
   const toggleScreen = async session => {
+    if(session.screenBusy)return;
     if(session.screenStream)return stopScreen(session);
+    session.screenBusy=true;const peer=session.connection?.peer;
+    let acquired;
+    try {
     if(!navigator.mediaDevices?.getDisplayMedia)throw new Error(window.allchatText?.screenUnavailable||"Screen sharing is unavailable on this browser.");
     const mode=window.AllChatVoiceSettings?.load?.().screenShareMode||"auto",motion=mode==="motion",saver=mode==="data-saver",text=mode==="text",width=motion?1280:saver?960:1920,height=motion?720:saver?540:1080,fps=motion?30:saver?12:text?10:20;
-    const stream=await navigator.mediaDevices.getDisplayMedia({video:{width:{max:width},height:{max:height},frameRate:{max:fps}},audio:true}),track=stream.getVideoTracks()[0],senders=[];track.contentHint=motion?"motion":text?"text":"detail";
-    stream.getAudioTracks().forEach(audio=>senders.push(session.connection.addTrack(audio,stream)));
+    const stream=acquired=await navigator.mediaDevices.getDisplayMedia({video:{width:{max:width},height:{max:height},frameRate:{max:fps}},audio:true}),track=stream.getVideoTracks()[0],senders=[];if(active!==session||session.connection?.peer!==peer||session.connection?.stopped){stream.getTracks().forEach(track=>track.stop());return}if(!track)throw new Error("No screen selected");track.contentHint=motion?"motion":text?"text":"detail";
+    session.screenStream=stream;
+    await session.connection.setDisplayAudioTrack(stream.getAudioTracks()[0]||null);
     const sender=await session.connection.setVideoTrack(track,stream,{sendEncodings:[{rid:"q",scaleResolutionDownBy:4,maxBitrate:Math.min(250000,session.mediaConfig.screen_bitrate),maxFramerate:Math.min(12,fps)},{rid:"h",scaleResolutionDownBy:2,maxBitrate:Math.min(750000,session.mediaConfig.screen_bitrate),maxFramerate:Math.min(20,fps)},{rid:"f",maxBitrate:session.mediaConfig.screen_bitrate,maxFramerate:fps}]});
+    if(active!==session||session.connection?.peer!==peer||session.connection?.stopped){stream.getTracks().forEach(track=>track.stop());return}
+    if(senders.length)await session.connection.renegotiate();
     session.screenStream=stream;session.screenSender=sender;session.screenSenders=senders;
     session.panel.querySelector("[data-voice-screen]")?.classList.add("active");
     track.onended=()=>stopScreen(session).catch(()=>{});
     renderStage();
+    }catch(error){acquired?.getTracks().forEach(track=>track.stop());if(active===session)await stopScreen(session);throw error}finally{session.screenBusy=false}
   };
   let stageRenderSequence=0;
   const renderStage = async () => {
@@ -156,13 +168,12 @@
     });
     try {
       status.textContent = "Requesting microphone";
-      const [microphoneCapture, mediaConfig, iceServers] = await Promise.all([
-        window.AllChatVoiceSettings.capture(),
+      const [microphoneCapture, mediaConfig] = await window.AllChatVoiceSettings.prepare([
         fetch("/api/v1/media/config").then(response => response.ok ? response.json() : session.mediaConfig),
         fetch("/api/v1/turn-credentials").then(async response => {if(!response.ok)throw new Error("TURN credentials unavailable");return (await response.json()).ice_servers||[]}),
-      ]);
+      ], () => active === session);
       session.microphoneCapture = microphoneCapture; session.stream = microphoneCapture.stream;
-      if (active !== session) return session.stream.getTracks().forEach(track => track.stop());
+      if (active !== session) return microphoneCapture.stop();
       session.mediaConfig = mediaConfig;
       const resumeKey = `allchat-media-resume:${roomID}`;
       const receiveTrack = event => {
@@ -183,7 +194,7 @@
           session.remoteAudios.set(event.track, audio); document.body.append(audio);
           event.track.addEventListener("ended", () => { session.remoteAudios.delete(event.track); audio.remove(); });
         }
-        audio.srcObject = event.streams[0] || new MediaStream([event.track]);
+        audio.srcObject = new MediaStream([event.track]);
       };
       const receiveFrame = frame => {
         if ((frame.type === "screen-low" || frame.type === "screen-medium" || frame.type === "screen-high") && session.screenSender) {
@@ -233,11 +244,11 @@
 	  };
 	  window.allchatVoiceDiagnostics=()=>{try{return JSON.parse(localStorage.getItem("allchat:voice-diagnostics")||"[]")}catch(_){return[]}};
 	  window.allchatClearVoiceDiagnostics=()=>localStorage.removeItem("allchat:voice-diagnostics");
-      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,fetchCredentials:async()=>iceServers,resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onProgress:connectionProgress,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
+      session.connection = new window.AllChatVoiceConnection({roomID,stream:session.stream,takeover:true,releaseCapture:()=>session.microphoneCapture?.stop(),onPeerReplaced:()=>{session.remoteAudios.forEach(audio=>audio.remove());session.remoteAudios.clear();session.remoteVideos.forEach(video=>video.remove());session.remoteVideos.clear();session.stoppedVideoMembers.clear();},resumeToken:sessionStorage.getItem(resumeKey)||"",onState:connectionState,onProgress:connectionProgress,onTrack:receiveTrack,onFrame:receiveFrame,onDiagnostics:recordDiagnostics,onResumeToken:token=>sessionStorage.setItem(resumeKey,token)});
       await session.connection.start();
     } catch (error) {
       if (active === session) {
-        session.stream?.getTracks().forEach(track => track.stop());
+        session.microphoneCapture?.stop();
         status.textContent = error?.message || "Could not join voice";
         panel.classList.add("error");
 		setPending(session, "Connection failed");

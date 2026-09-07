@@ -1,6 +1,9 @@
 package org.allchat.mobile
 
 import android.content.Context
+import android.media.AudioDeviceCallback
+import android.os.Handler
+import android.os.Looper
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
@@ -12,6 +15,27 @@ import com.facebook.react.bridge.ReactMethod
 
 class AllChatAudioModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context) {
   private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+  private var selectedRoute = ""
+  private val routeChanges = object : AudioDeviceCallback() {
+    override fun onAudioDevicesRemoved(devices: Array<out AudioDeviceInfo>) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && devices.any { it.id.toString() == selectedRoute }) {
+        audio.clearCommunicationDevice()
+      }
+    }
+    override fun onAudioDevicesAdded(devices: Array<out AudioDeviceInfo>) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && audio.mode == AudioManager.MODE_IN_COMMUNICATION) {
+        audio.availableCommunicationDevices.firstOrNull { it.id.toString() == selectedRoute }?.let { audio.setCommunicationDevice(it) }
+      }
+    }
+  }
+  override fun initialize() {
+    super.initialize()
+    audio.registerAudioDeviceCallback(routeChanges, Handler(Looper.getMainLooper()))
+  }
+  override fun invalidate() {
+    audio.unregisterAudioDeviceCallback(routeChanges)
+    super.invalidate()
+  }
   override fun getName() = "AllChatAudio"
 
   @ReactMethod
@@ -31,9 +55,11 @@ class AllChatAudioModule(context: ReactApplicationContext) : ReactContextBaseJav
   @ReactMethod
   fun selectRoute(id: String, promise: Promise) {
     try {
+      selectedRoute = id
       audio.mode = AudioManager.MODE_IN_COMMUNICATION
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val device = audio.availableCommunicationDevices.firstOrNull { it.id.toString() == id }
+        if (device == null) audio.clearCommunicationDevice()
         promise.resolve(device != null && audio.setCommunicationDevice(device))
       } else {
         @Suppress("DEPRECATION")

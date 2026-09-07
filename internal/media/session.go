@@ -80,6 +80,7 @@ func (c *rtpContinuity) rewrite(packet *rtp.Packet) {
 // Manager is the process-local authority for all Voice Rooms and Direct Calls.
 // Restart intentionally clears it so clients never display stale participation.
 type Manager struct {
+	screenRequests      map[*webrtc.TrackLocalStaticRTP]func()
 	mu                  sync.Mutex
 	api                 *webrtc.API
 	rejoinWindow        time.Duration
@@ -207,6 +208,9 @@ func (m *Manager) Takeover(memberID, roomID string) (JoinResult, error) {
 	joined, err := m.joinLocked(memberID, roomID)
 	m.mu.Unlock()
 	if oldPeer != nil {
+		if oldPeer.signal != nil {
+			oldPeer.signal(Signal{Type: "error", Code: "superseded", Error: ErrSuperseded.Error()})
+		}
 		_ = oldPeer.connection.Close()
 	}
 	return joined, err
@@ -255,6 +259,10 @@ func (m *Manager) markConnected(memberID string, lease uint64) {
 	defer m.mu.Unlock()
 	if peer := m.peers[memberID]; peer == nil || peer.lease != lease {
 		return
+	}
+	if peer := m.peers[memberID]; peer != nil && peer.disconnectTimer != nil {
+		peer.disconnectTimer.Stop()
+		peer.disconnectTimer = nil
 	}
 	if item := m.byMember[memberID]; item != nil {
 		item.participant.Connected = true
@@ -334,9 +342,12 @@ func (m *Manager) MarkSpeaking(memberID string) {
 	m.speakingTimers[memberID] = time.AfterFunc(650*time.Millisecond, func() { m.clearSpeaking(memberID) })
 }
 
-func (m *Manager) SetClientMuted(memberID string, muted bool) error {
+func (m *Manager) SetClientMuted(memberID string, muted bool, lease ...uint64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if len(lease) > 0 && m.peerForLeaseLocked(memberID, lease) == nil {
+		return ErrSuperseded
+	}
 	item := m.byMember[memberID]
 	if item == nil {
 		return ErrNotPresent
@@ -420,6 +431,35 @@ func (m *Manager) expireLocked() {
 }
 
 func (m *Manager) removeLocked(item *session) {
+	for otherID := range m.rooms[item.participant.RoomID] {
+		other := m.peers[otherID]
+		if other == nil || otherID == item.participant.MemberID {
+			continue
+		}
+		changed := false
+		if sender := other.screens[item.participant.MemberID]; sender != nil {
+			_ = other.connection.RemoveTrack(sender)
+			delete(other.screens, item.participant.MemberID)
+			delete(other.video, item.participant.MemberID)
+			changed = true
+		}
+		for key, sender := range other.tracks {
+			if strings.HasPrefix(key, item.participant.MemberID+":") {
+				_ = other.connection.RemoveTrack(sender)
+				delete(other.tracks, key)
+				changed = true
+			}
+		}
+		if changed {
+			go other.sendOffer()
+		}
+	}
+	prefix := item.participant.RoomID + ":" + item.participant.MemberID + ":"
+	for key := range m.continuity {
+		if strings.HasPrefix(key, prefix) {
+			delete(m.continuity, key)
+		}
+	}
 	if timer := m.speakingTimers[item.participant.MemberID]; timer != nil {
 		timer.Stop()
 		delete(m.speakingTimers, item.participant.MemberID)

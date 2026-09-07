@@ -1,3 +1,4 @@
+import * as voiceCapture from './voice-capture';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -188,5 +189,39 @@ describe('transient Call status', () => {
     controller.clear();
     vi.advanceTimersByTime(3_000);
     expect(setStatus).toHaveBeenLastCalledWith('Not supported.');
+  });
+});
+
+
+describe('desktop provisional media ownership', () => {
+  afterEach(() => vi.restoreAllMocks());
+  const properties = () => ({conversation: null, currentMemberId: 'me', instanceId: 'instance-1', requestedVoiceRoom: 'room-1', requestedVoiceRoomName: 'Room', focusedMediaMemberId: null, onVoiceRoomChange: vi.fn(), onCallChange: vi.fn()});
+
+  it('stops capture that resolves after unmount without opening signaling', async () => {
+    const acquisition = deferred<voiceCapture.DesktopMicrophoneCapture>();
+    const capture = vi.spyOn(voiceCapture, 'captureDesktopMicrophone').mockReturnValue(acquisition.promise);
+    const connectMedia = vi.fn();
+    const onAction = vi.fn(async (): Promise<InstanceActionResult> => ({type: 'call', call: null}));
+    const view = render(<DirectCallControls {...properties()} onAction={onAction} connectMedia={connectMedia} />);
+    await waitFor(() => expect(capture).toHaveBeenCalled());
+    view.unmount();
+    const stop = vi.fn();
+    await act(async () => { acquisition.resolve({stream: {getTracks: () => []} as unknown as MediaStream, enhanced: false, stop}); });
+    expect(stop).toHaveBeenCalled();
+    expect(connectMedia).not.toHaveBeenCalled();
+  });
+
+  it('releases provisional capture immediately while credentials are still pending', async () => {
+    const credentials = deferred<InstanceActionResult | undefined>();
+    const stop = vi.fn();
+    vi.spyOn(voiceCapture, 'captureDesktopMicrophone').mockResolvedValue({stream: {getTracks: () => [], getAudioTracks: () => []} as unknown as MediaStream, enhanced: false, stop});
+    const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult | undefined> => action.type === 'turn_credentials' ? credentials.promise : {type: 'call', call: null});
+    const connectMedia = vi.fn();
+    const view = render(<DirectCallControls {...properties()} onAction={onAction} connectMedia={connectMedia} />);
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith({type: 'turn_credentials'}));
+    view.unmount();
+    expect(stop).toHaveBeenCalled();
+    await act(async () => { credentials.resolve({type: 'turn_credentials', iceServers: []}); });
+    expect(connectMedia).not.toHaveBeenCalled();
   });
 });

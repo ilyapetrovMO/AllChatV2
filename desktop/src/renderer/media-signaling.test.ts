@@ -16,7 +16,7 @@ describe('desktop media signaling', () => {
     const encoded = serializeSessionDescription(nativeLike);
     expect(encoded).toEqual({ type: 'offer', sdp: 'v=0\r\n' });
     expect(JSON.parse(JSON.stringify(createMediaJoinFrame('voice-room', nativeLike)))).toEqual({
-      version: 1, type: 'join', room_id: 'voice-room', takeover: true,
+      version: 1, type: 'join', room_id: 'voice-room', takeover: true, resume_token: '', capabilities: ['negotiation-id'], negotiation_id: 'client-1',
       sdp: { type: 'offer', sdp: 'v=0\r\n' },
     });
   });
@@ -99,4 +99,51 @@ describe('desktop media signaling', () => {
     expect(onVideoStarted).toHaveBeenCalledWith('member-2');
     expect(onScreenQuality).toHaveBeenCalledWith('medium');
   });
+});
+
+
+it('does not treat a rejected media command as a failed connection', async () => {
+  const onCommandError = vi.fn();
+  const queue = createMediaFrameQueue({} as RTCPeerConnection, vi.fn(), {onCommandError});
+  await expect(queue.push({type: 'command-error', error: 'Sound unavailable'})).resolves.toBeUndefined();
+  expect(onCommandError).toHaveBeenCalled();
+});
+
+it('does not apply an obsolete answer to the next local offer', async () => {
+  const peer = {signalingState: 'have-local-offer', setRemoteDescription: vi.fn()};
+  const queue = createMediaFrameQueue(peer as unknown as RTCPeerConnection, vi.fn());
+  await queue.push({type: 'answer', negotiation_id: 'obsolete', sdp: {type: 'answer', sdp: 'old'}});
+  expect(peer.setRemoteDescription).not.toHaveBeenCalled();
+});
+
+it('queues local topology changes until the outstanding answer is applied', async () => {
+  const send = vi.fn();
+  const peer = {
+    signalingState: 'have-local-offer', localDescription: {type: 'offer', sdp: 'initial'},
+    async setRemoteDescription() { this.signalingState = 'stable'; },
+    async createOffer() { return {type: 'offer', sdp: 'new'}; },
+    async setLocalDescription(value: {type: string; sdp: string}) { this.localDescription = value; this.signalingState = 'have-local-offer'; },
+  };
+  const queue = createMediaFrameQueue(peer as unknown as RTCPeerConnection, send);
+  await queue.renegotiate(); await queue.renegotiate();
+  expect(send).not.toHaveBeenCalled();
+  await queue.push({type: 'answer', negotiation_id: 'client-1', sdp: {type: 'answer', sdp: 'answer'}});
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(send).toHaveBeenCalledWith(expect.objectContaining({type: 'offer', negotiation_id: 'client-2'}));
+});
+
+it('recovers a connected peer when an offer answer never arrives', async () => {
+  vi.useFakeTimers();
+  const onFailure = vi.fn();
+  const peer = {
+    signalingState: 'stable', localDescription: null,
+    createOffer: async () => ({type: 'offer', sdp: 'offer'}),
+    async setLocalDescription(this: {localDescription: RTCSessionDescriptionInit | null; signalingState: string}, value: RTCSessionDescriptionInit) { this.localDescription = value; this.signalingState = 'have-local-offer'; },
+  } as unknown as RTCPeerConnection;
+  const queue = createMediaFrameQueue(peer, vi.fn(), {onFailure});
+  try {
+    await queue.renegotiate();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(onFailure).toHaveBeenCalledWith(expect.objectContaining({message: 'Media negotiation timed out'}));
+  } finally { queue.close(); vi.useRealTimers(); }
 });

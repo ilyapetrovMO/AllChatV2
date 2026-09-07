@@ -13,12 +13,13 @@ function manager(): NativeInCallManager | undefined {
   return NativeModules.InCallManager as NativeInCallManager | undefined;
 }
 
-export function startCallAudioSession(): void {
+export function startCallAudioSession(routeID = ''): void {
   const native = manager();
   if (!native) return;
   native.start?.('video', true, '');
   native.setMicrophoneMute?.(false);
-  native.setForceSpeakerphoneOn?.(1);
+  native.setForceSpeakerphoneOn?.(-1);
+  if (routeID) NativeModules.AllChatAudio?.selectRoute?.(routeID)?.catch?.(() => {});
   if (Platform.OS === 'android') native.requestAudioFocusJS?.().catch(() => {});
 }
 

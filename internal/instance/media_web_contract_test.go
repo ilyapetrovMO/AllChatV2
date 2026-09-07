@@ -69,7 +69,7 @@ func TestWebCallPreparationDoesNotSerializeIndependentWork(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{`const [microphoneCapture, mediaConfig, iceServers] = await Promise.all([`, `window.AllChatVoiceSettings.capture()`, `fetch("/api/v1/media/config")`, `fetch("/api/v1/turn-credentials")`, `fetchCredentials:async()=>iceServers`} {
+	for _, want := range []string{`const [microphoneCapture, mediaConfig] = await window.AllChatVoiceSettings.prepare([`, `fetch("/api/v1/media/config")`, `fetch("/api/v1/turn-credentials")`} {
 		if !strings.Contains(string(sidebar), want) {
 			t.Fatalf("Voice Room connection critical path is serialized: missing %q", want)
 		}

@@ -1815,13 +1815,16 @@ function MediaRoomScreen({
     stream: MediaStream;
   }>();
   useEffect(() => {
-    startCallAudioSession();
+    let disposed = false;
+    startCallAudioSession(voiceSettings.speakerID);
     const connection = new MediaSession({
       instanceURL: account.instance_url,
       token: account.session_token,
       roomID,
       settings: captureSettings,
       onStatus: (next, cause) => {
+        if (disposed) return;
+        if (next === "failed" || next === "idle") { stopCallAudioSession(); stopCallForegroundService().catch(() => {}); }
         setStatus(next);
         setError(cause?.message || '');
         if (next === 'connected') setProgress('Connected');
@@ -1831,7 +1834,8 @@ function MediaRoomScreen({
           setScreen(undefined);
         }
       },
-      onProgress: setProgress,
+      onVideoStopped: () => { if(disposed) return; setCamera(false); setSharing(false); setScreen(undefined); setExpandedVideo(undefined); },
+      onProgress: message => { if(!disposed) setProgress(message); },
       onRemote: next => {
         setRemote(next);
         setExpandedVideo(current =>
@@ -1858,10 +1862,10 @@ function MediaRoomScreen({
     session.current = connection;
     requestMediaPermissions(false)
       .then(granted =>
-        granted
+        granted && !disposed
           ? startCallForegroundService(name)
-              .then(() => connection.start())
-              .then(() => setLocal(connection.localStream()))
+              .then(() => { if(!disposed) return connection.start(); })
+              .then(() => { if(!disposed) setLocal(connection.localStream()); })
           : setError('Microphone permission is required.'),
       )
       .catch(caught =>
@@ -1876,6 +1880,7 @@ function MediaRoomScreen({
       .then(setSounds)
       .catch(() => setSounds([]));
     return () => {
+      disposed = true;
       connection.stop();
       stopCallAudioSession();
       stopCallForegroundService().catch(() => {});

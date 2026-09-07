@@ -112,7 +112,7 @@ describe('MediaSession', () => {
 	peer.connectionState = 'connected'; peer.onconnectionstatechange?.();
 
     expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({version: 1, type: 'join', room_id: 'voice-1'});
-    expect(peer.addTransceiver).toHaveBeenCalledWith('video', {direction: 'recvonly'});
+    expect(peer.addTransceiver).toHaveBeenCalledWith('video', {direction: 'sendrecv'});
     expect(statuses).toEqual(['connecting', 'connected']);
     expect(participants).toEqual([['member-1']]);
     session.stop();
@@ -267,9 +267,9 @@ describe('MediaSession', () => {
     await session.setCamera(false);
     await session.setCamera(true);
 
-    expect(offersAfterFirstVideo).toBe(offersAfterJoin + 1);
+    expect(offersAfterFirstVideo).toBe(offersAfterJoin);
     expect(peer.createOffer).toHaveBeenCalledTimes(offersAfterFirstVideo);
-    expect(peer.addTransceiver.mock.calls.filter((call: unknown[]) => typeof call[0] !== 'string')).toHaveLength(1);
+    expect(peer.addTransceiver.mock.calls.filter((call: unknown[]) => call[0] === 'video')).toHaveLength(1);
     session.stop();
   });
 
@@ -347,4 +347,75 @@ describe('MediaSession', () => {
     expect(cameraTrack._switchCamera).toHaveBeenCalledTimes(1);
     session.stop();
   });
+});
+
+describe('Media Session cancellation and recovery ownership', () => {
+  it('releases microphone capture that resolves after leave', async () => {
+    const {session, local, track} = harness();
+    let resolve!: (stream: unknown) => void;
+    (session as any).options.getUserMedia.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const start = session.start();
+    session.stop();
+    resolve(local);
+    await start;
+    expect(track.stop).toHaveBeenCalled();
+    expect(session.localStream()).toBeUndefined();
+  });
+
+  it('releases replacement capture when leave wins the settings update', async () => {
+    const {session} = harness();
+    await session.start();
+    const track = {kind: 'audio', stop: jest.fn()};
+    const replacement = {getAudioTracks: () => [track], getTracks: () => [track]};
+    let resolve!: (stream: unknown) => void;
+    (session as any).options.getUserMedia.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+    const update = session.updateAudioSettings({...DEFAULT_VOICE_VIDEO_SETTINGS, autoGainControl: true});
+    for (let i = 0; i < 10 && !resolve; i++) await Promise.resolve();
+    session.stop();
+    resolve(replacement);
+    await expect(update).resolves.toBeUndefined();
+    expect(track.stop).toHaveBeenCalled();
+  });
+
+  it('clears an invalid resume token without automatically taking ownership', async () => {
+    const {session, socket} = harness();
+    const scheduled: Array<() => void> = [];
+    (session as any).options.schedule = (run: () => void) => { scheduled.push(run); return 1; };
+    await session.start();
+    (session as any).resumeToken = 'obsolete';
+    await socket.onmessage({data: JSON.stringify({type: 'error', code: 'invalid_resume', error: 'expired'})});
+    scheduled.shift()!();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    socket.onopen();
+    const joins = socket.send.mock.calls.map(([value]: [string]) => JSON.parse(value)).filter((frame: {type: string}) => frame.type === 'join');
+    expect(joins.at(-1)).toMatchObject({resume_token: '', takeover: false});
+    session.stop();
+  });
+
+  it('terminates capture when the session moves to another device', async () => {
+    const {session, socket, track, statuses} = harness();
+    await session.start();
+    await socket.onmessage({data: JSON.stringify({type: 'error', code: 'superseded', error: 'Session moved'})});
+    expect(statuses.at(-1)).toBe('failed');
+    expect(track.stop).toHaveBeenCalled();
+  });
+});
+
+it('does not publish a stale video-started event into a replacement session', async () => {
+  const {session, socket, cameraTrack} = harness();
+  await session.start();
+  let finish!: () => void;
+  const sender = (session as any).outgoingVideo.sender;
+  sender.replaceTrack.mockImplementation((track: unknown) => track === cameraTrack ? new Promise<void>(resolve => {finish = resolve;}) : Promise.resolve());
+  const camera = session.setCamera(true);
+  for (let i = 0; i < 20 && !finish; i++) await Promise.resolve();
+  expect(finish).toBeDefined();
+  session.stop();
+  await session.start();
+  socket.send.mockClear();
+  finish();
+  await camera;
+  expect(socket.send.mock.calls.map(([frame]: [string]) => JSON.parse(frame).type)).not.toContain('video-started');
+  expect(cameraTrack.stop).toHaveBeenCalled();
+  session.stop();
 });

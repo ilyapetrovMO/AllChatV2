@@ -410,3 +410,63 @@ func TestParticipantsRemainInJoinOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestStaleSignalingLeaseCannotMutateReplacement(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	if _, err := manager.Join("member", "room"); err != nil {
+		t.Fatal(err)
+	}
+	peer, err := manager.api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager.peers["member"] = &Peer{memberID: "member", roomID: "room", lease: 2, connection: peer}
+	if err := manager.SetClientMuted("member", true, 1); err == nil {
+		t.Fatal("stale mute accepted")
+	}
+	if err := manager.SetScreenPublishing("member", true, 1); err == nil {
+		t.Fatal("stale publishing accepted")
+	}
+	if err := manager.SetScreenVisible("member", false, 1); err == nil {
+		t.Fatal("stale visibility accepted")
+	}
+	if err := manager.AddICECandidate("member", webrtc.ICECandidateInit{}, 1); err == nil {
+		t.Fatal("stale candidate accepted")
+	}
+	if participant := manager.Participants("room")[0]; participant.Muted || participant.ScreenSharing {
+		t.Fatal("replacement mutated")
+	}
+}
+
+func TestConnectedPeerCancelsDisconnectGrace(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	manager.Join("member", "room")
+	connection, err := manager.api.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	peer := &Peer{memberID: "member", roomID: "room", lease: 1, connection: connection}
+	manager.peers["member"] = peer
+	manager.deferDisconnect("member", 1)
+	if peer.disconnectTimer == nil || manager.peers["member"] != peer {
+		t.Fatal("disconnected peer was not retained")
+	}
+	manager.markConnected("member", 1)
+	if peer.disconnectTimer != nil {
+		t.Fatal("grace timer not cancelled")
+	}
+}
+
+func TestDepartureReclaimsAudioContinuity(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	manager.Join("member", "room")
+	manager.continuity["room:member:track"] = &rtpContinuity{}
+	manager.continuity["room:other:track"] = &rtpContinuity{}
+	manager.Leave("member", "room")
+	if len(manager.continuity) != 1 || manager.continuity["room:other:track"] == nil {
+		t.Fatal("incorrect continuity cleanup")
+	}
+}

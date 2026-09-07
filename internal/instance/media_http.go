@@ -8,6 +8,7 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -21,31 +22,36 @@ import (
 )
 
 type mediaCommand struct {
-	Version     int                       `json:"version"`
-	Type        string                    `json:"type"`
-	RoomID      string                    `json:"room_id,omitempty"`
-	SDP         webrtc.SessionDescription `json:"sdp,omitempty"`
-	ResumeToken string                    `json:"resume_token,omitempty"`
-	Takeover    bool                      `json:"takeover,omitempty"`
-	Visible     bool                      `json:"visible,omitempty"`
-	OwnerID     string                    `json:"owner_id,omitempty"`
-	Quality     string                    `json:"quality,omitempty"`
-	Muted       bool                      `json:"muted,omitempty"`
-	SoundID     string                    `json:"sound_id,omitempty"`
-	Candidate   webrtc.ICECandidateInit   `json:"candidate,omitempty"`
+	NegotiationID string                    `json:"negotiation_id,omitempty"`
+	Capabilities  []string                  `json:"capabilities,omitempty"`
+	Version       int                       `json:"version"`
+	Type          string                    `json:"type"`
+	RoomID        string                    `json:"room_id,omitempty"`
+	SDP           webrtc.SessionDescription `json:"sdp,omitempty"`
+	ResumeToken   string                    `json:"resume_token,omitempty"`
+	Takeover      bool                      `json:"takeover,omitempty"`
+	Visible       bool                      `json:"visible,omitempty"`
+	OwnerID       string                    `json:"owner_id,omitempty"`
+	Quality       string                    `json:"quality,omitempty"`
+	Muted         bool                      `json:"muted,omitempty"`
+	SoundID       string                    `json:"sound_id,omitempty"`
+	Candidate     webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 }
 
 type mediaFrame struct {
-	Version      int                        `json:"version"`
-	Type         string                     `json:"type"`
-	SDP          any                        `json:"sdp,omitempty"`
-	ResumeToken  string                     `json:"resume_token,omitempty"`
-	Participants []media.Participant        `json:"participants,omitempty"`
-	Error        string                     `json:"error,omitempty"`
-	Code         string                     `json:"code,omitempty"`
-	MemberID     string                     `json:"member_id,omitempty"`
-	Sound        *community.SoundboardSound `json:"sound,omitempty"`
-	Candidate    *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
+	NegotiationID string                     `json:"negotiation_id,omitempty"`
+	Capabilities  []string                   `json:"capabilities,omitempty"`
+	Scope         string                     `json:"scope,omitempty"`
+	Version       int                        `json:"version"`
+	Type          string                     `json:"type"`
+	SDP           any                        `json:"sdp,omitempty"`
+	ResumeToken   string                     `json:"resume_token,omitempty"`
+	Participants  []media.Participant        `json:"participants,omitempty"`
+	Error         string                     `json:"error,omitempty"`
+	Code          string                     `json:"code,omitempty"`
+	MemberID      string                     `json:"member_id,omitempty"`
+	Sound         *community.SoundboardSound `json:"sound,omitempty"`
+	Candidate     *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 }
 
 func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +98,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 	var token string
 	var peerLease uint64
 	forward := func(signal media.Signal) {
-		frame := mediaFrame{Version: 1, Type: signal.Type, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate, Participants: signal.Participants}
+		frame := mediaFrame{Version: 1, Type: signal.Type, Code: signal.Code, Error: signal.Error, NegotiationID: signal.NegotiationID, SDP: signal.SDP, MemberID: signal.MemberID, Candidate: signal.Candidate, Participants: signal.Participants}
 		if signal.SoundID != "" {
 			frame.Sound = &community.SoundboardSound{ID: signal.SoundID, Name: signal.SoundName, Emoji: signal.SoundEmoji, AudioURL: signal.SoundURL}
 		}
@@ -109,6 +115,8 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		code := "join_failed"
 		if errors.Is(err, media.ErrInvalidResume) {
 			code = "invalid_resume"
+		} else if errors.Is(err, media.ErrSuperseded) {
+			code = "superseded"
 		} else if errors.Is(err, media.ErrAlreadyActive) {
 			code = "already_active"
 		} else if errors.Is(err, media.ErrModerated) {
@@ -116,6 +124,12 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		write(mediaFrame{Version: 1, Type: "error", Code: code, Error: err.Error()})
 		return
+	}
+	correlated := slices.Contains(command.Capabilities, "negotiation-id")
+	var capabilities []string
+	if correlated {
+		capabilities = []string{"negotiation-id"}
+		i.media.EnableNegotiationIDs(member.ID, peerLease)
 	}
 	explicitLeave := false
 	defer func() {
@@ -125,7 +139,7 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			i.media.DisconnectPeer(member.ID, peerLease)
 		}
 	}()
-	if !write(mediaFrame{Version: 1, Type: "answer", SDP: answer, ResumeToken: token, Participants: i.media.Participants(mediaRoomID)}) {
+	if !write(mediaFrame{Version: 1, Type: "answer", SDP: answer, NegotiationID: command.NegotiationID, Capabilities: capabilities, ResumeToken: token, Participants: i.media.Participants(mediaRoomID)}) {
 		return
 	}
 	i.media.Renegotiate(member.ID)
@@ -135,8 +149,18 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
+		command = mediaCommand{}
 		if json.Unmarshal(encoded, &command) != nil || command.Version != 1 {
 			continue
+		}
+		if !i.media.IsPeerLease(member.ID, peerLease) {
+			write(mediaFrame{Version: 1, Type: "error", Code: "superseded", Error: media.ErrSuperseded.Error()})
+			return
+		}
+		reject := func(err error) {
+			if err != nil {
+				write(mediaFrame{Version: 1, Type: "command-error", Scope: command.Type, Code: "command_rejected", Error: err.Error(), NegotiationID: command.NegotiationID})
+			}
 		}
 		switch command.Type {
 		case "heartbeat":
@@ -144,32 +168,36 @@ func (i *Instance) mediaWebSocket(w http.ResponseWriter, r *http.Request) {
 			// proxies and NAT mappings. Media state is carried by WebRTC.
 			write(mediaFrame{Version: 1, Type: "heartbeat-ack"})
 		case "answer":
-			_ = i.media.HandleAnswer(member.ID, command.SDP)
+			reject(i.media.HandleCorrelatedAnswer(member.ID, peerLease, command.NegotiationID, command.SDP))
 		case "candidate":
-			_ = i.media.AddICECandidate(member.ID, command.Candidate)
+			reject(i.media.AddICECandidate(member.ID, command.Candidate, peerLease))
 		case "offer":
-			if answer, offerErr := i.media.HandleOffer(member.ID, command.SDP); offerErr == nil {
-				write(mediaFrame{Version: 1, Type: "answer", SDP: answer})
+			if answer, offerErr := i.media.HandleOffer(member.ID, command.SDP, peerLease); offerErr == nil {
+				write(mediaFrame{Version: 1, Type: "answer", SDP: answer, NegotiationID: command.NegotiationID})
+			} else {
+				reject(offerErr)
 			}
 		case "screen-visibility":
-			_ = i.media.SetScreenVisible(member.ID, command.Visible)
+			reject(i.media.SetScreenVisible(member.ID, command.Visible, peerLease))
+		case "publisher-quality":
+			reject(i.media.SetPublisherQuality(member.ID, command.Quality, peerLease))
 		case "screen-quality":
-			_ = i.media.SetScreenQuality(member.ID, command.OwnerID, command.Quality)
+			reject(i.media.SetScreenQuality(member.ID, command.OwnerID, command.Quality, peerLease))
 		case "video-stopped":
-			_ = i.media.SetScreenPublishing(member.ID, false)
-			i.media.Broadcast(mediaRoomID, media.Signal{Type: "video-stopped", MemberID: member.ID})
+			reject(i.media.SetScreenPublishing(member.ID, false, peerLease))
+			i.media.BroadcastPeer(member.ID, peerLease, media.Signal{Type: "video-stopped", MemberID: member.ID})
 		case "video-started":
-			_ = i.media.SetScreenPublishing(member.ID, true)
-			i.media.Broadcast(mediaRoomID, media.Signal{Type: "video-started", MemberID: member.ID})
+			reject(i.media.SetScreenPublishing(member.ID, true, peerLease))
+			i.media.BroadcastPeer(member.ID, peerLease, media.Signal{Type: "video-started", MemberID: member.ID})
 		case "mute-state":
-			_ = i.media.SetClientMuted(member.ID, command.Muted)
+			reject(i.media.SetClientMuted(member.ID, command.Muted, peerLease))
 		case "soundboard-play":
 			sound, soundErr := i.community.SoundForPlayback(r.Context(), member, command.SoundID, mediaRoomID, directCall)
 			if soundErr != nil {
-				write(mediaFrame{Version: 1, Type: "error", Error: soundErr.Error()})
+				write(mediaFrame{Version: 1, Type: "command-error", Scope: "soundboard-play", Code: "command_rejected", Error: soundErr.Error()})
 				continue
 			}
-			i.media.Broadcast(mediaRoomID, media.Signal{Type: "soundboard-played", MemberID: member.ID, SoundID: sound.ID, SoundName: sound.Name, SoundEmoji: sound.Emoji, SoundURL: sound.AudioURL})
+			i.media.BroadcastPeer(member.ID, peerLease, media.Signal{Type: "soundboard-played", MemberID: member.ID, SoundID: sound.ID, SoundName: sound.Name, SoundEmoji: sound.Emoji, SoundURL: sound.AudioURL})
 		case "leave":
 			explicitLeave = true
 			return

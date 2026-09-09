@@ -76,16 +76,29 @@ try {
     return {
       iconCenter: iconBox.top + iconBox.height / 2,
       inputCenter: inputBox.top + inputBox.height / 2,
+      iconLeft: iconBox.left,
       iconRight: iconBox.right,
-      textStart: inputBox.left + Number.parseFloat(inputStyle.paddingLeft),
+      inputRight: inputBox.right,
+      height: inputBox.height,
+      textEnd: inputBox.right - Number.parseFloat(inputStyle.paddingRight),
     };
   });
   if (
-    Math.abs(searchAlignment.iconCenter - (searchAlignment.inputCenter - 1)) > 0.25 ||
-    searchAlignment.textStart - searchAlignment.iconRight < 5
+    Math.abs(searchAlignment.iconCenter - searchAlignment.inputCenter) > 0.25 ||
+    searchAlignment.iconLeft - searchAlignment.textEnd < 5 ||
+    Math.abs(searchAlignment.inputRight - searchAlignment.iconRight - 10) > 0.25 ||
+    searchAlignment.height !== 32
   ) {
     throw new Error(`Desktop Search icon and text are misaligned: ${JSON.stringify(searchAlignment)}`);
   }
+  const compact = await page.locator('body > .header-search').evaluate(form => {
+    form.style.width = '180px';
+    const input = form.querySelector('input');
+    input.placeholder = 'Search Геймдев студия "Радуга"';
+    return { width: input.getBoundingClientRect().width, overflow: form.scrollWidth > form.clientWidth };
+  });
+  if (compact.width !== 180 || compact.overflow) throw new Error('Compact search must fit its available width');
+  await page.locator('body > .header-search').screenshot({path:'/tmp/search-app-compact.png'});
   const blobImageLoaded = await page.evaluate(async () => {
     const url = URL.createObjectURL(
       new Blob(

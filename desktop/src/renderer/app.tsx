@@ -1383,7 +1383,7 @@ function CommunityShell({
                 name="query"
                 type="search"
                 aria-label="Search Messages"
-                placeholder={settingsView ? "Search Community" : "Search"}
+                placeholder={`Search ${state.community.name}`}
                 maxLength={200}
                 required
                 value={searchQuery}

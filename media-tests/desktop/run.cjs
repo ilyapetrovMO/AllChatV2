@@ -30,7 +30,7 @@ exports.runDesktopInterop = async ({fixture, browser, baseURL, post, attachEndpo
     await page.locator('form').getByRole('button', {name: 'Sign in', exact: true}).click();
     web = await attachEndpoint(browser, fixture.second, fixture.room.id, 'web-to-desktop', {video: false});
     await page.getByRole('button', {name: 'Media room', exact: true}).click();
-    await page.getByRole('region', {name: 'Voice controls'}).getByText('Connected', {exact: true}).waitFor();
+    await page.getByRole('region', {name: 'Voice controls'}).getByText('Voice Connected', {exact: true}).waitFor();
     await Promise.all([assertFreshAudio('desktop/receive', page), assertFreshAudio('desktop/publish', web.page)]);
     await page.getByRole('button', {name: 'Share screen', exact: true}).click();
     await waitForVideoAdvance('desktop/screen/start', web.page);
@@ -39,14 +39,18 @@ exports.runDesktopInterop = async ({fixture, browser, baseURL, post, attachEndpo
     await page.getByRole('button', {name: 'Share screen', exact: true}).click();
     await waitForVideoAdvance('desktop/screen/restart', web.page, stopped);
     await page.getByRole('button', {name: 'Disconnect voice', exact: true}).click();
+    await page.getByRole('region', {name: 'Voice controls'}).waitFor({state: 'hidden'});
     const released = await page.evaluate(() => window.mediaTest.captured.every(track => track.readyState === 'ended') && window.mediaTest.peers.every(peer => peer.connectionState === 'closed'));
     if (!released) throw Error('Desktop leave did not release capture and peers');
     await web.page.evaluate(() => { const t=window.mediaTest;t.connection.stop({explicit:true});t.oscillator.stop();clearInterval(t.draw);t.audio.close(); });
     await web.context.close(); web = null;
+    const cookies = (await fixture.second.storageState()).cookies;
+    const leave = await fixture.second.delete(`/api/v1/media/rooms/${fixture.room.id}/session`, {headers: {'X-CSRF-Token': cookies.find(cookie => cookie.name === 'allchat_csrf')?.value || ''}});
+    if (!leave.ok()) throw new Error(`Web endpoint leave: ${leave.status()}`);
     const call = await post(fixture.second, `/api/v1/dms/${fixture.dm.id}/calls`, {});
     await page.getByRole('region', {name: 'Incoming Call controls'}).getByRole('button', {name: 'Accept', exact: true}).click();
     web = await attachEndpoint(browser, fixture.second, call.id, 'web-direct-call', {video: false});
-    await page.getByRole('region', {name: 'Call controls', exact: true}).getByText('Connected', {exact: true}).waitFor();
+    await page.getByRole('region', {name: 'Call controls', exact: true}).getByText('Voice Connected', {exact: true}).waitFor();
     await Promise.all([assertFreshAudio('desktop/call/receive', page), assertFreshAudio('desktop/call/publish', web.page)]);
     await page.getByRole('button', {name: 'Share screen', exact: true}).click();
     await waitForVideoAdvance('desktop/call/screen', web.page);

@@ -405,6 +405,11 @@ async function main() {
     if (!only || only === 'quality') { markPhase('voice-room quality'); await runQualitySwitch(browser, fixture, fixture.room.id, 'voice-room/quality'); }
     if (!only || only === 'glare') { markPhase('voice-room glare'); await runSimultaneousRestarts(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/glare'); }
     if (!only || only === 'signaling-recovery') { markPhase('voice-room signaling recovery'); await runSignalingRecovery(browser, fixture.first, fixture.second, fixture.room.id, 'voice-room/signaling-recovery'); }
+    // Transport closure preserves a rejoin window; explicitly end both Voice Room sessions.
+    for (const member of [fixture.first, fixture.second]) {
+      const response = await member.delete(`/api/v1/media/rooms/${fixture.room.id}/session`, {headers: {'X-CSRF-Token': await csrf(member)}});
+      if (!response.ok()) throw new Error(`Voice Room fixture leave: ${response.status()}`);
+    }
     markPhase('creating direct call');
     const call = await post(fixture.first, `/api/v1/dms/${fixture.dm.id}/calls`, {});
     await post(fixture.second, `/api/v1/calls/${call.id}/accept`, {});

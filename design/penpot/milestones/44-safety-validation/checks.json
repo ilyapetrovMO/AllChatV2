@@ -1,0 +1,87 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "report-short",
+      "message": "Please lengthen this text to 3 characters or more (you are currently using 2 characters).",
+      "popup": {
+        "x": 473,
+        "y": 432,
+        "w": 637,
+        "h": 57
+      }
+    },
+    {
+      "key": "report-reason",
+      "message": "Please fill out this field.",
+      "popup": {
+        "x": 687,
+        "y": 432,
+        "w": 209,
+        "h": 41
+      }
+    },
+    {
+      "key": "report-member",
+      "message": "Please select an item in the list.",
+      "popup": {
+        "x": 657,
+        "y": 338,
+        "w": 270,
+        "h": 41
+      }
+    },
+    {
+      "key": "confirmation-pattern",
+      "message": "Please match the requested format.",
+      "popup": {
+        "x": 643,
+        "y": 644,
+        "w": 298,
+        "h": 41
+      }
+    },
+    {
+      "key": "confirmation",
+      "message": "Please fill out this field.",
+      "popup": {
+        "x": 687,
+        "y": 644,
+        "w": 209,
+        "h": 41
+      }
+    },
+    {
+      "key": "password",
+      "message": "Please fill out this field.",
+      "popup": {
+        "x": 687,
+        "y": 568,
+        "w": 209,
+        "h": 41
+      }
+    },
+    {
+      "key": "duration",
+      "message": "Value must be greater than or equal to 0.",
+      "popup": {
+        "x": 623,
+        "y": 554,
+        "w": 337,
+        "h": 41
+      }
+    },
+    {
+      "key": "moderation-reason",
+      "message": "Please fill out this field.",
+      "popup": {
+        "x": 687,
+        "y": 477,
+        "w": 209,
+        "h": 41
+      }
+    }
+  ]
+}

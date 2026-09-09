@@ -1,0 +1,966 @@
+[
+  {
+    "key": "default",
+    "maps": [
+      {
+        "type": "box",
+        "name": "span community-settings-avatar",
+        "x": 192,
+        "y": 0,
+        "w": 64,
+        "h": 64,
+        "color": "rgb(109, 117, 232)",
+        "radius": 18,
+        "border": "rgb(255, 255, 255)",
+        "borderWidth": 0
+      },
+      {
+        "lines": [
+          "A"
+        ],
+        "type": "text",
+        "name": "span text 1",
+        "copy": "A",
+        "x": 218,
+        "y": 21.796875,
+        "w": 12,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "800",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "lines": [
+          "Choose Community avatar"
+        ],
+        "type": "text",
+        "name": "label text 2",
+        "copy": "Choose Community avatar",
+        "x": 266,
+        "y": 4.046875,
+        "w": 166,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input avatar",
+        "x": 266,
+        "y": 26.953125,
+        "w": 306,
+        "h": 34,
+        "color": "rgba(0, 0, 0, 0)",
+        "radius": 0,
+        "border": "rgb(164, 168, 179)",
+        "borderWidth": 0
+      },
+      {
+        "type": "file",
+        "name": "file content avatar",
+        "x": 266,
+        "y": 26.953125,
+        "w": 306,
+        "h": 34,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "buttonStyle": {
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(109, 117, 232)",
+          "padding": "6px 10px",
+          "border": "0px none rgb(255, 255, 255)",
+          "borderRadius": "4px"
+        }
+      },
+      {
+        "type": "box",
+        "name": "section settings-card ringtone-setting",
+        "x": 0,
+        "y": 82,
+        "w": 584,
+        "h": 248.5,
+        "color": "rgb(17, 18, 22)",
+        "radius": 8,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "lines": [
+          "Community ringtone"
+        ],
+        "type": "text",
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104,
+        "w": 188,
+        "h": 23,
+        "fontSize": 18.72,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Generated tone"
+        ],
+        "type": "text",
+        "name": "p text 6",
+        "copy": "Generated tone",
+        "x": 21,
+        "y": 158.203125,
+        "w": 116,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Choose audio file"
+        ],
+        "type": "text",
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.59375,
+        "w": 107,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input ringtone",
+        "x": 21,
+        "y": 231.5,
+        "w": 542,
+        "h": 34,
+        "color": "rgba(0, 0, 0, 0)",
+        "radius": 0,
+        "border": "rgb(164, 168, 179)",
+        "borderWidth": 0
+      },
+      {
+        "type": "file",
+        "name": "file content ringtone",
+        "x": 21,
+        "y": 231.5,
+        "w": 542,
+        "h": 34,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "buttonStyle": {
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(109, 117, 232)",
+          "padding": "6px 10px",
+          "border": "0px none rgb(255, 255, 255)",
+          "borderRadius": "4px"
+        }
+      },
+      {
+        "lines": [
+          "General"
+        ],
+        "type": "text",
+        "name": "h2 text 11",
+        "copy": "General",
+        "x": 0,
+        "y": 352.40625,
+        "w": 92,
+        "h": 29,
+        "fontSize": 24,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Manage AllChat Community from the desktop client."
+        ],
+        "type": "text",
+        "name": "p text 12",
+        "copy": "Manage AllChat Community from the desktop client.",
+        "x": 0,
+        "y": 434.90625,
+        "w": 395,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "form Community nameMaximu",
+        "x": 0,
+        "y": 486.296875,
+        "w": 584,
+        "h": 693.21875,
+        "color": "rgb(17, 18, 22)",
+        "radius": 8,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "lines": [
+          "Community name"
+        ],
+        "type": "text",
+        "name": "label text 14",
+        "copy": "Community name",
+        "x": 17,
+        "y": 504.296875,
+        "w": 111,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input name",
+        "x": 17,
+        "y": 527.203125,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value name",
+        "copy": "AllChat Community",
+        "x": 28,
+        "y": 537.203125,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Maximum attachment size (MiB)"
+        ],
+        "type": "text",
+        "name": "label text 16",
+        "copy": "Maximum attachment size (MiB)",
+        "x": 17,
+        "y": 578.203125,
+        "w": 201,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input maxAttachmentMiB",
+        "x": 17,
+        "y": 601.109375,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value maxAttachmentMiB",
+        "copy": "25",
+        "x": 28,
+        "y": 611.109375,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Applies immediately. Your reverse proxy must allow at least the same",
+          "request size."
+        ],
+        "type": "text",
+        "name": "p text 18",
+        "copy": "Applies immediately. Your reverse proxy must allow at least the same request size.",
+        "x": 17,
+        "y": 668.109375,
+        "w": 524,
+        "h": 42.390625,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Community Guide"
+        ],
+        "type": "text",
+        "name": "label text 19",
+        "copy": "Community Guide",
+        "x": 17,
+        "y": 740.890625,
+        "w": 113,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "textarea homeMarkdown",
+        "x": 17,
+        "y": 763.796875,
+        "w": 550,
+        "h": 161.25,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value homeMarkdown",
+        "copy": "Welcome to AllChat Community.",
+        "x": 28,
+        "y": 773.796875,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Mobile push relay"
+        ],
+        "type": "text",
+        "name": "label text 21",
+        "copy": "Mobile push relay",
+        "x": 17,
+        "y": 938.046875,
+        "w": 110,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input pushRelayURL",
+        "x": 17,
+        "y": 960.953125,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value pushRelayURL",
+        "copy": "https://push.example.com",
+        "x": 28,
+        "y": 970.953125,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(117,117,117)"
+      },
+      {
+        "lines": [
+          "Used only for Android and iOS background notifications. Leave empty",
+          "to disable mobile push."
+        ],
+        "type": "text",
+        "name": "p text 23",
+        "copy": "Used only for Android and iOS background notifications. Leave empty to disable mobile push.",
+        "x": 17,
+        "y": 1027.953125,
+        "w": 532,
+        "h": 42.390625,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "text",
+        "name": "Relay disclosure",
+        "copy": "▸",
+        "x": 17,
+        "y": 1100.734375,
+        "w": 14,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": 400,
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Relay authorization identity"
+        ],
+        "type": "text",
+        "name": "summary text 25",
+        "copy": "Relay authorization identity",
+        "x": 33.9375,
+        "y": 1100.734375,
+        "w": 204,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "button Save settings",
+        "x": 17,
+        "y": 1134.125,
+        "w": 550,
+        "h": 28.390625,
+        "color": "rgb(107, 107, 107)",
+        "radius": 0,
+        "border": "rgb(255, 255, 255)",
+        "borderWidth": 2
+      },
+      {
+        "lines": [
+          "Save settings"
+        ],
+        "type": "text",
+        "name": "button text 29",
+        "copy": "Save settings",
+        "x": 242,
+        "y": 1138.125,
+        "w": 100,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(255, 255, 255)"
+      }
+    ],
+    "origin": {
+      "x": 344,
+      "y": 116
+    },
+    "width": 584,
+    "height": 1179.515625,
+    "maxScroll": 736
+  },
+  {
+    "key": "relay",
+    "maps": [
+      {
+        "type": "box",
+        "name": "span community-settings-avatar",
+        "x": 192,
+        "y": 0,
+        "w": 64,
+        "h": 64,
+        "color": "rgb(109, 117, 232)",
+        "radius": 18,
+        "border": "rgb(255, 255, 255)",
+        "borderWidth": 0
+      },
+      {
+        "lines": [
+          "A"
+        ],
+        "type": "text",
+        "name": "span text 1",
+        "copy": "A",
+        "x": 218,
+        "y": 21.796875,
+        "w": 12,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "800",
+        "color": "rgb(255, 255, 255)"
+      },
+      {
+        "lines": [
+          "Choose Community avatar"
+        ],
+        "type": "text",
+        "name": "label text 2",
+        "copy": "Choose Community avatar",
+        "x": 266,
+        "y": 4.046875,
+        "w": 166,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input avatar",
+        "x": 266,
+        "y": 26.953125,
+        "w": 306,
+        "h": 34,
+        "color": "rgba(0, 0, 0, 0)",
+        "radius": 0,
+        "border": "rgb(164, 168, 179)",
+        "borderWidth": 0
+      },
+      {
+        "type": "file",
+        "name": "file content avatar",
+        "x": 266,
+        "y": 26.953125,
+        "w": 306,
+        "h": 34,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "buttonStyle": {
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(109, 117, 232)",
+          "padding": "6px 10px",
+          "border": "0px none rgb(255, 255, 255)",
+          "borderRadius": "4px"
+        }
+      },
+      {
+        "type": "box",
+        "name": "section settings-card ringtone-setting",
+        "x": 0,
+        "y": 82,
+        "w": 584,
+        "h": 248.5,
+        "color": "rgb(17, 18, 22)",
+        "radius": 8,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "lines": [
+          "Community ringtone"
+        ],
+        "type": "text",
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104,
+        "w": 188,
+        "h": 23,
+        "fontSize": 18.72,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Generated tone"
+        ],
+        "type": "text",
+        "name": "p text 6",
+        "copy": "Generated tone",
+        "x": 21,
+        "y": 158.203125,
+        "w": 116,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Choose audio file"
+        ],
+        "type": "text",
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.59375,
+        "w": 107,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input ringtone",
+        "x": 21,
+        "y": 231.5,
+        "w": 542,
+        "h": 34,
+        "color": "rgba(0, 0, 0, 0)",
+        "radius": 0,
+        "border": "rgb(164, 168, 179)",
+        "borderWidth": 0
+      },
+      {
+        "type": "file",
+        "name": "file content ringtone",
+        "x": 21,
+        "y": 231.5,
+        "w": 542,
+        "h": 34,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "buttonStyle": {
+          "color": "rgb(255, 255, 255)",
+          "background": "rgb(109, 117, 232)",
+          "padding": "6px 10px",
+          "border": "0px none rgb(255, 255, 255)",
+          "borderRadius": "4px"
+        }
+      },
+      {
+        "lines": [
+          "General"
+        ],
+        "type": "text",
+        "name": "h2 text 11",
+        "copy": "General",
+        "x": 0,
+        "y": 352.40625,
+        "w": 92,
+        "h": 29,
+        "fontSize": 24,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Manage AllChat Community from the desktop client."
+        ],
+        "type": "text",
+        "name": "p text 12",
+        "copy": "Manage AllChat Community from the desktop client.",
+        "x": 0,
+        "y": 434.90625,
+        "w": 395,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "form Community nameMaximu",
+        "x": 0,
+        "y": 486.296875,
+        "w": 584,
+        "h": 839.171875,
+        "color": "rgb(17, 18, 22)",
+        "radius": 8,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "lines": [
+          "Community name"
+        ],
+        "type": "text",
+        "name": "label text 14",
+        "copy": "Community name",
+        "x": 17,
+        "y": 504.296875,
+        "w": 111,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input name",
+        "x": 17,
+        "y": 527.203125,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value name",
+        "copy": "AllChat Community",
+        "x": 28,
+        "y": 537.203125,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Maximum attachment size (MiB)"
+        ],
+        "type": "text",
+        "name": "label text 16",
+        "copy": "Maximum attachment size (MiB)",
+        "x": 17,
+        "y": 578.203125,
+        "w": 201,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input maxAttachmentMiB",
+        "x": 17,
+        "y": 601.109375,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value maxAttachmentMiB",
+        "copy": "25",
+        "x": 28,
+        "y": 611.109375,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Applies immediately. Your reverse proxy must allow at least the same",
+          "request size."
+        ],
+        "type": "text",
+        "name": "p text 18",
+        "copy": "Applies immediately. Your reverse proxy must allow at least the same request size.",
+        "x": 17,
+        "y": 668.109375,
+        "w": 524,
+        "h": 42.390625,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Community Guide"
+        ],
+        "type": "text",
+        "name": "label text 19",
+        "copy": "Community Guide",
+        "x": 17,
+        "y": 740.890625,
+        "w": 113,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "textarea homeMarkdown",
+        "x": 17,
+        "y": 763.796875,
+        "w": 550,
+        "h": 161.25,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value homeMarkdown",
+        "copy": "Welcome to AllChat Community.",
+        "x": 28,
+        "y": 773.796875,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "lines": [
+          "Mobile push relay"
+        ],
+        "type": "text",
+        "name": "label text 21",
+        "copy": "Mobile push relay",
+        "x": 17,
+        "y": 938.046875,
+        "w": 110,
+        "h": 15,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "input pushRelayURL",
+        "x": 17,
+        "y": 960.953125,
+        "w": 550,
+        "h": 38,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value pushRelayURL",
+        "copy": "https://push.example.com",
+        "x": 28,
+        "y": 970.953125,
+        "w": 526,
+        "h": 17.919999999999998,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(117,117,117)"
+      },
+      {
+        "lines": [
+          "Used only for Android and iOS background notifications. Leave empty",
+          "to disable mobile push."
+        ],
+        "type": "text",
+        "name": "p text 23",
+        "copy": "Used only for Android and iOS background notifications. Leave empty to disable mobile push.",
+        "x": 17,
+        "y": 1027.953125,
+        "w": 532,
+        "h": 42.390625,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "text",
+        "name": "Relay disclosure",
+        "copy": "▾",
+        "x": 17,
+        "y": 1100.734375,
+        "w": 14,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": 400,
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Relay authorization identity"
+        ],
+        "type": "text",
+        "name": "summary text 25",
+        "copy": "Relay authorization identity",
+        "x": 33.9375,
+        "y": 1100.734375,
+        "w": 204,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "Key ID:"
+        ],
+        "type": "text",
+        "name": "p text 26",
+        "copy": "Key ID:",
+        "x": 17,
+        "y": 1139.125,
+        "w": 59,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "lines": [
+          "example-key-id"
+        ],
+        "type": "text",
+        "name": "code text 27",
+        "copy": "example-key-id",
+        "x": 76,
+        "y": 1140.125,
+        "w": 134.859375,
+        "h": 19,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)"
+      },
+      {
+        "type": "box",
+        "name": "textarea relayPublicKey",
+        "x": 17,
+        "y": 1177.515625,
+        "w": 550,
+        "h": 85.171875,
+        "color": "rgb(32, 33, 39)",
+        "radius": 5,
+        "border": "rgba(255, 255, 255, 0.067)",
+        "borderWidth": 1
+      },
+      {
+        "type": "text",
+        "name": "value relayPublicKey",
+        "copy": "EXAMPLE PUBLIC KEY — synthetic design fixture",
+        "x": 28,
+        "y": 1187.515625,
+        "w": 526,
+        "h": 22.4,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "type": "box",
+        "name": "button Save settings",
+        "x": 17,
+        "y": 1280.078125,
+        "w": 550,
+        "h": 28.390625,
+        "color": "rgb(107, 107, 107)",
+        "radius": 0,
+        "border": "rgb(255, 255, 255)",
+        "borderWidth": 2
+      },
+      {
+        "lines": [
+          "Save settings"
+        ],
+        "type": "text",
+        "name": "button text 29",
+        "copy": "Save settings",
+        "x": 242,
+        "y": 1284.078125,
+        "w": 100,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(255, 255, 255)"
+      }
+    ],
+    "origin": {
+      "x": 344,
+      "y": 116
+    },
+    "width": 584,
+    "height": 1325.46875,
+    "maxScroll": 881
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-08",
+  "connection": "Direct MCP client using the current configured hosted URL succeeded; existing session tool returned HTTP 504",
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "fileName": "New File 1",
+  "pages": [
+    {
+      "id": "c828d3cf-7d4e-8145-8008-9a4f1a6ff380",
+      "name": "AllChat Design Trial"
+    }
+  ],
+  "rootBoards": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a51814a4b8d",
+      "name": "Text channel — desktop dark — draft"
+    }
+  ],
+  "localComponents": [],
+  "recordedDesktopSignInBoardFound": false,
+  "designMutationsPerformed": false,
+  "nextAction": "Locate the browser tab or saved revision containing the Desktop catalog before applying recovery changes. The connected view alone does not establish whether prior work is lost or remains in another browser tab."
+}

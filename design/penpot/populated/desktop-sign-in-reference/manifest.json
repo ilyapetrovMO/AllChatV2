@@ -1,0 +1,113 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "vector": "sign-in.svg",
+      "layers": "sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "username-focused",
+      "screenshot": "username-focused.png",
+      "controls": "username-focused.json",
+      "vector": "username-focused.svg",
+      "layers": "username-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-focused",
+      "screenshot": "password-focused.png",
+      "controls": "password-focused.json",
+      "vector": "password-focused.svg",
+      "layers": "password-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-keyboard-focused",
+      "screenshot": "submit-keyboard-focused.png",
+      "controls": "submit-keyboard-focused.json",
+      "vector": "submit-keyboard-focused.svg",
+      "layers": "submit-keyboard-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-hovered",
+      "screenshot": "submit-hovered.png",
+      "controls": "submit-hovered.json",
+      "vector": "submit-hovered.svg",
+      "layers": "submit-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "register-tab-hovered",
+      "screenshot": "register-tab-hovered.png",
+      "controls": "register-tab-hovered.json",
+      "vector": "register-tab-hovered.svg",
+      "layers": "register-tab-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "username-required",
+      "screenshot": "username-required.png",
+      "controls": "username-required.json",
+      "vector": "username-required.svg",
+      "layers": "username-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-required",
+      "screenshot": "password-required.png",
+      "controls": "password-required.json",
+      "vector": "password-required.svg",
+      "layers": "password-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "credentials-filled",
+      "screenshot": "credentials-filled.png",
+      "controls": "credentials-filled.json",
+      "vector": "credentials-filled.svg",
+      "layers": "credentials-filled.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "login-error",
+      "screenshot": "login-error.png",
+      "controls": "login-error.json",
+      "vector": "login-error.svg",
+      "layers": "login-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "credentials-edited-after-error",
+      "screenshot": "credentials-edited-after-error.png",
+      "controls": "credentials-edited-after-error.json",
+      "vector": "credentials-edited-after-error.svg",
+      "layers": "credentials-edited-after-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "login-success-home",
+      "screenshot": "login-success-home.png",
+      "controls": "login-success-home.json",
+      "vector": "login-success-home.svg",
+      "layers": "login-success-home.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

@@ -1,0 +1,988 @@
+{
+  "scope": "Desktop first; complete static coverage, no new prototypes",
+  "families": [
+    {
+      "id": "desktop-shell",
+      "scope": "Title bar, update banner, tray and window states",
+      "source": "desktop/src/renderer/app.tsx:438",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "community-manager",
+      "scope": "Add/edit/remove communities, sign-in accounts, empty/error states",
+      "source": "desktop/src/renderer/app.tsx:16",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "authentication",
+      "scope": "Sign in, Register, Recovery and validation states",
+      "source": "desktop/src/renderer/app.tsx:16",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "main-navigation",
+      "scope": "Community menu, channel/DM navigation and member presence",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "main-popovers",
+      "scope": "Notification popover, search filter menu and role variants",
+      "source": "desktop/src/renderer/app.tsx:1240",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "messages",
+      "scope": "Message actions, reply/edit/delete, reactions, emoji, pinned messages",
+      "source": "desktop/src/renderer/app.tsx:1548",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "composer",
+      "scope": "Mention suggestions, draft/edit/reply, attachments and errors",
+      "source": "desktop/src/renderer/app.tsx:1548",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "rich-content",
+      "scope": "Code, links, files, image/video/audio, previews and lightbox",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "members",
+      "scope": "Member list, member card, profile/status, block controls",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "search",
+      "scope": "Filters, results, empty/error/loading/pagination",
+      "source": "desktop/src/renderer/app.tsx:1393",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "calls-media",
+      "scope": "Voice room, direct calls, incoming/outgoing, media controls, screen share",
+      "source": "desktop/src/renderer/app.tsx:2107",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "activities",
+      "scope": "Activities picker, soundboard and sketchboard surfaces",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "profile-settings",
+      "scope": "Account/profile/avatar/banner controls and states",
+      "source": "desktop/src/renderer/app.tsx:3672",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "voice-video-settings",
+      "scope": "Devices, capture, processing and preview controls",
+      "source": "desktop/src/renderer/app.tsx:3556",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "notification-settings",
+      "scope": "Community/channel notification forms and states",
+      "source": "desktop/src/renderer/app.tsx:3465",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "ringtone-settings",
+      "scope": "Default/custom ringtone upload, playback and errors",
+      "source": "desktop/src/renderer/app.tsx:3536",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "sessions-safety",
+      "scope": "Sessions, blocking, reports and moderation records",
+      "source": "desktop/src/renderer/app.tsx:3736",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "administration",
+      "scope": "Dashboard, community settings, roles, invitations, channels and permissions",
+      "source": "desktop/src/renderer/app.tsx:3265",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "os-dialogs",
+      "scope": "File pickers, permission prompts and native dropdowns",
+      "source": "desktop/src/main/window-policy.ts",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    }
+  ],
+  "items": [
+    {
+      "key": "community-owner",
+      "id": "7299a615-462e-803f-8008-9b99d5b7163a",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:998",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "community-member",
+      "id": "7299a615-462e-803f-8008-9b99d6995243",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:998",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "presence",
+      "id": "7299a615-462e-803f-8008-9b99d71e936b",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:1154",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "search-filters",
+      "id": "7299a615-462e-803f-8008-9b99d7bf7fc6",
+      "family": "main-popovers",
+      "source": "desktop/src/renderer/app.tsx:1393",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "notifications",
+      "id": "7299a615-462e-803f-8008-9b99d943ce27",
+      "family": "main-popovers",
+      "source": "desktop/src/renderer/app.tsx:1256",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected",
+      "remaining": [
+        "hover/focus references",
+        "applicable alternate values/checked states"
+      ]
+    },
+    {
+      "key": "own-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1b7f9d73",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "other-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c0a8649",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "pinned-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c8158a0",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "deleted",
+      "id": "7299a615-462e-803f-8008-9b9b1d22f537",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "reply-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d431b5a",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1767",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "edit-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d94f293",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1767",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "reaction-empty",
+      "id": "7299a615-462e-803f-8008-9b9cbbe9057a",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "reaction-custom",
+      "id": "7299a615-462e-803f-8008-9b9cc31a4150",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "mentions",
+      "id": "7299a615-462e-803f-8008-9b9cca2d2c61",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1853",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "pins-empty",
+      "id": "7299a615-462e-803f-8008-9b9ccb85b974",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1599",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "pins-populated",
+      "id": "7299a615-462e-803f-8008-9b9cccb6de3d",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1599",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "file-pending",
+      "id": "7299a615-462e-803f-8008-9b9e204df504",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:2826",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "remove-hover",
+      "id": "7299a615-462e-803f-8008-9b9e21cffcca",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:2826",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-drag",
+      "id": "7299a615-462e-803f-8008-9b9e235931b3",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1752",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-loading",
+      "id": "7299a615-462e-803f-8008-9b9e23d1d078",
+      "family": "rich-content",
+      "source": "desktop/src/renderer/app.tsx:2983",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-download",
+      "id": "7299a615-462e-803f-8008-9b9e255460cf",
+      "family": "rich-content",
+      "source": "desktop/src/renderer/app.tsx:2983",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "typing",
+      "id": "7299a615-462e-803f-8008-9b9e26d687e2",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1752",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "reply-excerpt",
+      "id": "7299a615-462e-803f-8008-9b9fddef6299",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1615",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered locally and inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "reply-deleted-excerpt",
+      "id": "7299a615-462e-803f-8008-9b9fdf04a601",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1615",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered locally and inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "account-top",
+      "id": "7299a615-462e-803f-8008-9ba144a91c5e",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1405; ProfileImages:3672",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Re-rendered and inspected in milestone 16 after source-defined profile control style corrections.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "file picker platform reference",
+        "required username validation"
+      ]
+    },
+    {
+      "key": "account-lower",
+      "id": "7299a615-462e-803f-8008-9ba15063b716",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1405; ProfileImages:3672",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Re-rendered and inspected in milestone 16 after source-defined profile control style corrections.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "file picker platform reference",
+        "required username validation"
+      ]
+    },
+    {
+      "key": "sessions-loading",
+      "id": "7299a615-462e-803f-8008-9ba15c091269",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "sessions-empty",
+      "id": "7299a615-462e-803f-8008-9ba16126b9a0",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "sessions-populated",
+      "id": "7299a615-462e-803f-8008-9ba165d477e3",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "avatar-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c1c1216a",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3c52fd1ec",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c8684a29",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3cb947ca0",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-updated",
+      "id": "7299a615-462e-803f-8008-9ba3cf5eb09b",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-updated",
+      "id": "7299a615-462e-803f-8008-9ba3d0ee18f8",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-crop-cancelled",
+      "id": "7299a615-462e-803f-8008-9ba5684f5c22",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3731",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered and visually inspected in milestone 17",
+      "remaining": [
+        "runtime geometry comparison",
+        "minimum-window variant"
+      ]
+    },
+    {
+      "key": "banner-crop-cancelled",
+      "id": "7299a615-462e-803f-8008-9ba568d424aa",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3731",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered and visually inspected in milestone 17",
+      "remaining": [
+        "runtime geometry comparison",
+        "minimum-window variant"
+      ]
+    },
+    {
+      "key": "account-username-hover",
+      "id": "7299a615-462e-803f-8008-9ba66a5a66c7",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-username-focus",
+      "id": "7299a615-462e-803f-8008-9ba66af05c14",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-save-focus",
+      "id": "7299a615-462e-803f-8008-9ba66ba256f4",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-username-required",
+      "id": "7299a615-462e-803f-8008-9ba66c3a5936",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "sessions-revoke-confirm",
+      "id": "7299a615-462e-803f-8008-9ba76d5b6065",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1487\u20131500",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native Penpot SVG rendered and visually inspected; confirmation content based on isolated Electron Linux native screenshot",
+      "remaining": [
+        "native dialog placement and window decoration with a window manager",
+        "cross-platform typography and control appearance",
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "sessions-revoked",
+      "id": "7299a615-462e-803f-8008-9ba76f382fbe",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1487\u20131500",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native Penpot SVG rendered and visually inspected; confirmation content based on isolated Electron Linux native screenshot",
+      "remaining": [
+        "native dialog placement and window decoration with a window manager",
+        "cross-platform typography and control appearance",
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "ringtone-generated",
+      "id": "7299a615-462e-803f-8008-9ba890dc36cd",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-community",
+      "id": "7299a615-462e-803f-8008-9ba897b59b5f",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-custom",
+      "id": "7299a615-462e-803f-8008-9ba89e4e86ec",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-saved",
+      "id": "7299a615-462e-803f-8008-9ba8a546b65d",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-error",
+      "id": "7299a615-462e-803f-8008-9ba8ac6d87a6",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-reset",
+      "id": "7299a615-462e-803f-8008-9ba8b3589d3c",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-muted",
+      "id": "7299a615-462e-803f-8008-9ba8ba893bb0",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-error-custom",
+      "id": "7299a615-462e-803f-8008-9ba95973bbdb",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-reset-generated",
+      "id": "7299a615-462e-803f-8008-9ba95a5fa1b2",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-volume-half",
+      "id": "7299a615-462e-803f-8008-9ba95b505c31",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-file-focus",
+      "id": "7299a615-462e-803f-8008-9baa945abd7e",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-reset-focus",
+      "id": "7299a615-462e-803f-8008-9baa94a6184f",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-volume-focus",
+      "id": "7299a615-462e-803f-8008-9baa94e88bca",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum",
+      "id": "7299a615-462e-803f-8008-9baa9531a870",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum-custom",
+      "id": "7299a615-462e-803f-8008-9baa95f10334",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum-scrolled",
+      "id": "7299a615-462e-803f-8008-9baa96c73618",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "notifications-empty",
+      "id": "7299a615-462e-803f-8008-9babc636b1cd",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-overrides",
+      "id": "7299a615-462e-803f-8008-9baba02cddd8",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-muted",
+      "id": "7299a615-462e-803f-8008-9bab8dded5b7",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-default",
+      "id": "7299a615-462e-803f-8008-9bab7c636cf4",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "ringtone-file-hover",
+      "id": "7299a615-462e-803f-8008-9babd6d4ddb7",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:209",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison"
+      ]
+    }
+  ],
+  "renderReviewCaveat": "Milestone 15 found generateMarkup repeats descendants as top-level siblings, bypassing ancestor clipping in earlier review renders. Renderer now retains only the selected native board hierarchy and frames its native bounds. Earlier milestone SVGs remain original evidence; prior clipped/overlapping layouts require renewed render inspection with the corrected renderer.",
+  "profileStateAudit": "profile-state-audit.md: upload/decode failures have no implemented error notice; existing editor state remains. Native validation/file-picker/session confirmation references still missing.",
+  "nativePickerInvestigation": "investigations/native-picker/README.md: isolated Electron native picker not visible in capture; reference still missing."
+}

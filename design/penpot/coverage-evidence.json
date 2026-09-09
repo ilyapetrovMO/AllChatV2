@@ -1,0 +1,1554 @@
+{
+  "status": "INCOMPLETE: evidence reconciliation only; no surface is fully verified",
+  "surfaces": [
+    {
+      "id": "web-001",
+      "platform": "web",
+      "name": "activities",
+      "source": "internal/instance/activity_http.go",
+      "anchor": "template.New(\"activities\")",
+      "currentAnchorLines": [
+        437
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a2b216f6e",
+          "reference": "populated/web-reference/activities.png",
+          "scope": "activities",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-002",
+      "platform": "web",
+      "name": "activities-admin",
+      "source": "internal/instance/activity_http.go",
+      "anchor": "template.New(\"activities-admin\")",
+      "currentAnchorLines": [
+        438
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a26fba1b6",
+          "reference": "populated/web-reference/admin-activities.png",
+          "scope": "admin-activities",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-003",
+      "platform": "web",
+      "name": "activity-host",
+      "source": "internal/instance/activity_http.go",
+      "anchor": "template.New(\"activity-host\")",
+      "currentAnchorLines": [
+        439
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-004",
+      "platform": "web",
+      "name": "admin-dashboard",
+      "source": "internal/instance/admin_dashboard.go",
+      "anchor": "template.New(\"admin-dashboard\")",
+      "currentAnchorLines": [
+        194
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6cc8c18005",
+          "reference": "populated/web-reference/admin-dashboard.png",
+          "scope": "admin-dashboard",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-005",
+      "platform": "web",
+      "name": "auth",
+      "source": "internal/instance/auth_http.go",
+      "anchor": "template.New(\"auth\")",
+      "currentAnchorLines": [
+        282
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a35478a56",
+          "reference": "populated/web-reference/login.png",
+          "scope": "login",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-006",
+      "platform": "web",
+      "name": "home",
+      "source": "internal/instance/channel_http.go",
+      "anchor": "template.New(\"home\")",
+      "currentAnchorLines": [
+        277
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a69f7b9b1a6",
+          "reference": "populated/web-reference/home.png",
+          "scope": "home",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-007",
+      "platform": "web",
+      "name": "channels-admin",
+      "source": "internal/instance/channel_http.go",
+      "anchor": "template.New(\"channels-admin\")",
+      "currentAnchorLines": [
+        278
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a101bc1c2",
+          "reference": "populated/web-reference/admin-channels.png",
+          "scope": "admin-channels",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-008",
+      "platform": "web",
+      "name": "direct-messages",
+      "source": "internal/instance/direct_message_http.go",
+      "anchor": "template.New(\"direct-messages\")",
+      "currentAnchorLines": [
+        214
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a2e043911",
+          "reference": "populated/web-reference/dms.png",
+          "scope": "dms",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-009",
+      "platform": "web",
+      "name": "voice-room",
+      "source": "internal/instance/media_http.go",
+      "anchor": "template.New(\"voice-room\")",
+      "currentAnchorLines": [
+        279
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6cedfeb095",
+          "reference": "populated/web-reference/channels-DOwvzcpeaCjFnAGK.png",
+          "scope": "channels-DOwvzcpeaCjFnAGK",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-010",
+      "platform": "web",
+      "name": "join",
+      "source": "internal/instance/member_http.go",
+      "anchor": "template.New(\"join\")",
+      "currentAnchorLines": [
+        374
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a397e3397",
+          "reference": "populated/web-reference/join.png",
+          "scope": "join",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-011",
+      "platform": "web",
+      "name": "profile",
+      "source": "internal/instance/member_http.go",
+      "anchor": "template.New(\"profile\")",
+      "currentAnchorLines": [
+        382
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a69fbc0f828",
+          "reference": "populated/web-reference/profile.png",
+          "scope": "profile",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-012",
+      "platform": "web",
+      "name": "invitations",
+      "source": "internal/instance/member_http.go",
+      "anchor": "template.New(\"invitations\")",
+      "currentAnchorLines": [
+        384
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a1a91fd61",
+          "reference": "populated/web-reference/admin-invitations.png",
+          "scope": "admin-invitations",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-013",
+      "platform": "web",
+      "name": "channel",
+      "source": "internal/instance/message_http.go",
+      "anchor": "template.New(\"channel\")",
+      "currentAnchorLines": [
+        273
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6ccf79db16",
+          "reference": "populated/web-reference/channels-JGIjxz4YL5YDhXa-.png",
+          "scope": "channels-JGIjxz4YL5YDhXa-",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6cd398591a",
+          "reference": "populated/web-reference/channels-aKj2uIgCb_BwNt61.png",
+          "scope": "channels-aKj2uIgCb_BwNt61",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6cd7c2788e",
+          "reference": "populated/web-reference/channels-BhcOGkOVj18id1Jm.png",
+          "scope": "channels-BhcOGkOVj18id1Jm",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6cdc4177df",
+          "reference": "populated/web-reference/channels-AyswaBtel0iDZWiq.png",
+          "scope": "channels-AyswaBtel0iDZWiq",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6ce0c36884",
+          "reference": "populated/web-reference/channels-9l-la6OtYg1wfsG5.png",
+          "scope": "channels-9l-la6OtYg1wfsG5",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6ce59b3306",
+          "reference": "populated/web-reference/channels-Fq94LX9I_-cuRnVj.png",
+          "scope": "channels-Fq94LX9I_-cuRnVj",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-014",
+      "platform": "web",
+      "name": "ringtone-settings",
+      "source": "internal/instance/ringtone_settings_http.go",
+      "anchor": "template.New(\"ringtone-settings\")",
+      "currentAnchorLines": [
+        21
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a093706f9",
+          "reference": "populated/web-reference/ringtone.png",
+          "scope": "ringtone",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-015",
+      "platform": "web",
+      "name": "roles",
+      "source": "internal/instance/role_http.go",
+      "anchor": "template.New(\"roles\")",
+      "currentAnchorLines": [
+        220
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a150fb4b9",
+          "reference": "populated/web-reference/admin-roles.png",
+          "scope": "admin-roles",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-016",
+      "platform": "web",
+      "name": "search",
+      "source": "internal/instance/search_http.go",
+      "anchor": "template.New(\"search\")",
+      "currentAnchorLines": [
+        44
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a32ed3857",
+          "reference": "populated/web-reference/search.png",
+          "scope": "search",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-017",
+      "platform": "web",
+      "name": "sessions",
+      "source": "internal/instance/session_http.go",
+      "anchor": "template.New(\"sessions\")",
+      "currentAnchorLines": [
+        241
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a69fef8f357",
+          "reference": "populated/web-reference/sessions.png",
+          "scope": "sessions",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-018",
+      "platform": "web",
+      "name": "recovery",
+      "source": "internal/instance/session_http.go",
+      "anchor": "template.New(\"recovery\")",
+      "currentAnchorLines": [
+        243
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a37540dda",
+          "reference": "populated/web-reference/recover.png",
+          "scope": "recover",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-019",
+      "platform": "web",
+      "name": "community-settings",
+      "source": "internal/instance/settings_http.go",
+      "anchor": "template.New(\"community-settings\")",
+      "currentAnchorLines": [
+        240
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a0c0f175e",
+          "reference": "populated/web-reference/admin-settings.png",
+          "scope": "admin-settings",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-020",
+      "platform": "web",
+      "name": "soundboard",
+      "source": "internal/instance/soundboard_http.go",
+      "anchor": "template.New(\"soundboard\")",
+      "currentAnchorLines": [
+        144
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a21e2c4ad",
+          "reference": "populated/web-reference/admin-soundboard.png",
+          "scope": "admin-soundboard",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-021",
+      "platform": "web",
+      "name": "voice-video-settings",
+      "source": "internal/instance/voice_settings_http.go",
+      "anchor": "template.New(\"voice-video-settings\")",
+      "currentAnchorLines": [
+        16
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6a0297e9fe",
+          "reference": "populated/web-reference/voice-video.png",
+          "scope": "voice-video",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-022",
+      "platform": "desktop",
+      "name": "Application and authentication",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "export function App(",
+      "currentAnchorLines": [
+        16
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6463e2cada",
+          "reference": "populated/desktop-reference/sign-in.png",
+          "scope": "sign-in",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a646a6de6ad",
+          "reference": "populated/desktop-reference/register.png",
+          "scope": "register",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a647072d59b",
+          "reference": "populated/desktop-reference/account-recovery.png",
+          "scope": "account-recovery",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a624d6665de",
+          "reference": "populated/desktop-reference/add-instance.png",
+          "scope": "add-instance",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-023",
+      "platform": "desktop",
+      "name": "Desktop title bar and updates",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function DesktopTitleBar(",
+      "currentAnchorLines": [
+        438
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-024",
+      "platform": "desktop",
+      "name": "Community shell and navigation",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function CommunityShell(",
+      "currentAnchorLines": [
+        457
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6475804eb2",
+          "reference": "populated/desktop-reference/community-home.png",
+          "scope": "community-home",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64853c75d9",
+          "reference": "populated/desktop-reference/text-channel.png",
+          "scope": "text-channel",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a649a3ebe37",
+          "reference": "populated/desktop-reference/member-presence-menu.png",
+          "scope": "member-presence-menu",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64b084192c",
+          "reference": "populated/desktop-reference/community-menu.png",
+          "scope": "community-menu",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64c740b78a",
+          "reference": "populated/desktop-reference/conversation-notification-menu.png",
+          "scope": "conversation-notification-menu",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64e0287479",
+          "reference": "populated/desktop-reference/settings-my-account.png",
+          "scope": "settings-my-account",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64f22262dd",
+          "reference": "populated/desktop-reference/settings-my-account-scroll-1.png",
+          "scope": "settings-my-account-scroll-1",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6549c67864",
+          "reference": "populated/desktop-reference/settings-sessions.png",
+          "scope": "settings-sessions",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-025",
+      "platform": "desktop",
+      "name": "Direct calls and media controls",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "export function DirectCallControls(",
+      "currentAnchorLines": [
+        2107
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-026",
+      "platform": "desktop",
+      "name": "Emoji picker",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function EmojiPicker(",
+      "currentAnchorLines": [
+        2781
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a77194e036a",
+          "reference": "populated/desktop-message-reference/reaction-picker-empty.png",
+          "scope": "reaction-picker-empty",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a772e6ce06d",
+          "reference": "populated/desktop-message-reference/reaction-picker-custom.png",
+          "scope": "reaction-picker-custom",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-027",
+      "platform": "desktop",
+      "name": "Pending attachments",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function AttachmentPreviewList(",
+      "currentAnchorLines": [
+        2818
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a774ccc7ab3",
+          "reference": "populated/desktop-message-reference/pending-file.png",
+          "scope": "pending-file",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-028",
+      "platform": "desktop",
+      "name": "Message formatting and code",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function MessageBody(",
+      "currentAnchorLines": [
+        2877
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-029",
+      "platform": "desktop",
+      "name": "Link preview",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function LinkPreview(",
+      "currentAnchorLines": [
+        2933
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-030",
+      "platform": "desktop",
+      "name": "Attachment card and media",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function AttachmentView(",
+      "currentAnchorLines": [
+        2983
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-031",
+      "platform": "desktop",
+      "name": "Image lightbox",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function ImageLightbox(",
+      "currentAnchorLines": [
+        3059
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a76a7ddbf06",
+          "reference": "populated/desktop-message-reference/image-viewer-default.png",
+          "scope": "image-viewer-default",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a7708d65a59",
+          "reference": "populated/desktop-message-reference/image-viewer-zoomed.png",
+          "scope": "image-viewer-zoomed",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-032",
+      "platform": "desktop",
+      "name": "Community administration",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function CommunityAdministration(",
+      "currentAnchorLines": [
+        3265
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6559d91db1",
+          "reference": "populated/desktop-reference/admin-general.png",
+          "scope": "admin-general",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a689a068a09",
+          "reference": "populated/desktop-reference/admin-channels.png",
+          "scope": "admin-channels",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a68a766f9dc",
+          "reference": "populated/desktop-reference/admin-roles.png",
+          "scope": "admin-roles",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a692ba41747",
+          "reference": "populated/desktop-reference/admin-invitations.png",
+          "scope": "admin-invitations",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a693b43bb57",
+          "reference": "populated/desktop-reference/admin-soundboard.png",
+          "scope": "admin-soundboard",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-033",
+      "platform": "desktop",
+      "name": "Community avatar settings",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function CommunityAvatarSetting(",
+      "currentAnchorLines": [
+        3368
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-034",
+      "platform": "desktop",
+      "name": "Ringtone control",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function RingtoneSetting(",
+      "currentAnchorLines": [
+        3378
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-035",
+      "platform": "desktop",
+      "name": "Admin channel row",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function AdminChannelRow(",
+      "currentAnchorLines": [
+        3384
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-036",
+      "platform": "desktop",
+      "name": "Admin dashboard",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function AdminDashboardView(",
+      "currentAnchorLines": [
+        3397
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a688a62f745",
+          "reference": "populated/desktop-reference/admin-dashboard.png",
+          "scope": "admin-dashboard",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-037",
+      "platform": "desktop",
+      "name": "Notification settings",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function NotificationSettings(",
+      "currentAnchorLines": [
+        3465
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a65346e695b",
+          "reference": "populated/desktop-reference/settings-notifications.png",
+          "scope": "settings-notifications",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a653ef2337b",
+          "reference": "populated/desktop-reference/settings-notifications-scroll-1.png",
+          "scope": "settings-notifications-scroll-1",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-038",
+      "platform": "desktop",
+      "name": "Ringtone settings",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function RingtoneSettings(",
+      "currentAnchorLines": [
+        3536
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a652b557d7a",
+          "reference": "populated/desktop-reference/settings-ringtone.png",
+          "scope": "settings-ringtone",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-039",
+      "platform": "desktop",
+      "name": "Voice and video settings",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function VoiceVideoSettings(",
+      "currentAnchorLines": [
+        3556
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a64fc0b827d",
+          "reference": "populated/desktop-reference/settings-voice-video.png",
+          "scope": "settings-voice-video",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a650b149b11",
+          "reference": "populated/desktop-reference/settings-voice-video-scroll-1.png",
+          "scope": "settings-voice-video-scroll-1",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a65172b2a17",
+          "reference": "populated/desktop-reference/settings-voice-video-scroll-2.png",
+          "scope": "settings-voice-video-scroll-2",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a652154e158",
+          "reference": "populated/desktop-reference/settings-voice-video-scroll-3.png",
+          "scope": "settings-voice-video-scroll-3",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-040",
+      "platform": "desktop",
+      "name": "Profile image editor",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function ProfileImages(",
+      "currentAnchorLines": [
+        3672
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "desktop-041",
+      "platform": "desktop",
+      "name": "Safety panel",
+      "source": "desktop/src/renderer/app.tsx",
+      "anchor": "function SafetyPanel(",
+      "currentAnchorLines": [
+        3736
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a65528ddbf9",
+          "reference": "populated/desktop-reference/settings-safety.png",
+          "scope": "settings-safety",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-042",
+      "platform": "mobile",
+      "name": "Account loading and add instance",
+      "source": "mobile/App.tsx",
+      "anchor": "function AppContent(",
+      "currentAnchorLines": [
+        46
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6fee8f2b10",
+          "reference": "mobile-reference/add-instance-dark.png",
+          "scope": "empty dark onboarding",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-043",
+      "platform": "mobile",
+      "name": "Active community and account management",
+      "source": "mobile/App.tsx",
+      "anchor": "function ActiveCommunity(",
+      "currentAnchorLines": [
+        152
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-044",
+      "platform": "mobile",
+      "name": "Community and conversations",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function CommunityScreen(",
+      "currentAnchorLines": [
+        173
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-045",
+      "platform": "mobile",
+      "name": "Call banner",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function CallBanner(",
+      "currentAnchorLines": [
+        1693
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a781d3a4599",
+          "reference": null,
+          "scope": "Outgoing banner",
+          "status": "source-derived draft; runtime capture pending"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a781d93ee79",
+          "reference": null,
+          "scope": "Incoming banner",
+          "status": "source-derived draft; runtime capture pending"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a781df5e2a6",
+          "reference": null,
+          "scope": "Connected banner",
+          "status": "source-derived draft; runtime capture pending"
+        }
+      ],
+      "referencesExist": false,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-046",
+      "platform": "mobile",
+      "name": "Media room",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MediaRoomScreen(",
+      "currentAnchorLines": [
+        1768
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-047",
+      "platform": "mobile",
+      "name": "Media participant tile",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MediaParticipantTile(",
+      "currentAnchorLines": [
+        2346
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-048",
+      "platform": "mobile",
+      "name": "Participant volume",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function ParticipantVolumeModal(",
+      "currentAnchorLines": [
+        2513
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a7876dc9f4e",
+          "reference": null,
+          "scope": "0 percent volume",
+          "status": "source-derived draft; runtime capture pending"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a78771c9a57",
+          "reference": null,
+          "scope": "50.0 percent volume",
+          "status": "source-derived draft; runtime capture pending"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a78776aabab",
+          "reference": null,
+          "scope": "100 percent volume",
+          "status": "source-derived draft; runtime capture pending"
+        }
+      ],
+      "referencesExist": false,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-049",
+      "platform": "mobile",
+      "name": "Soundboard",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function SoundboardModal(",
+      "currentAnchorLines": [
+        2563
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-050",
+      "platform": "mobile",
+      "name": "Selected attachment",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function SelectedFile(",
+      "currentAnchorLines": [
+        2647
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-051",
+      "platform": "mobile",
+      "name": "Conversation timeline",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function ConversationTimeline(",
+      "currentAnchorLines": [
+        2690
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-052",
+      "platform": "mobile",
+      "name": "Message row",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function MessageRow(",
+      "currentAnchorLines": [
+        2750
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-053",
+      "platform": "mobile",
+      "name": "Attachment view",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function AttachmentView(",
+      "currentAnchorLines": [
+        2871
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-054",
+      "platform": "mobile",
+      "name": "Image viewer",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function AuthenticatedImage(",
+      "currentAnchorLines": [
+        2975
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-055",
+      "platform": "mobile",
+      "name": "Link preview",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MessageLinkPreview(",
+      "currentAnchorLines": [
+        3174
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-056",
+      "platform": "mobile",
+      "name": "Message action menu",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MessageActions(",
+      "currentAnchorLines": [
+        3269
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a7abbe2863a",
+          "reference": "mobile-reference/own-message-actions-light.png",
+          "scope": "own non-deleted unpinned message, light",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-057",
+      "platform": "mobile",
+      "name": "Conversation panel",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "export function ConversationPanel(",
+      "currentAnchorLines": [
+        3373
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6afe94b8c9",
+          "reference": "mobile-reference/pinned-messages-dark.png",
+          "scope": "pins empty dark",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6afed7272b",
+          "reference": "mobile-reference/search-messages-dark.png",
+          "scope": "search empty dark",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-058",
+      "platform": "mobile",
+      "name": "Members panel",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MembersPanel(",
+      "currentAnchorLines": [
+        3493
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a7c5de56e33",
+          "reference": "mobile-reference/members-panel-light.png",
+          "scope": "cached owner and offline members, light",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-059",
+      "platform": "mobile",
+      "name": "Member profile",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function MemberProfile(",
+      "currentAnchorLines": [
+        3572
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-060",
+      "platform": "mobile",
+      "name": "Moderation panel",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function ModerationPanel(",
+      "currentAnchorLines": [
+        4050
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-061",
+      "platform": "mobile",
+      "name": "Notification settings",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "anchor": "function NotificationSettingsPanel(",
+      "currentAnchorLines": [
+        4168
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a708aa261f2",
+          "reference": "mobile-reference/conversation-notifications-dark.png",
+          "scope": "channel notification card default dark",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "mobile-062",
+      "platform": "mobile",
+      "name": "Voice and video settings",
+      "source": "mobile/src/screens/VoiceVideoSettingsScreen.tsx",
+      "anchor": "export function VoiceVideoSettingsScreen(",
+      "currentAnchorLines": [
+        35
+      ],
+      "sourceVerified": true,
+      "designEvidence": [],
+      "referencesExist": true,
+      "coverage": "no mapped editable design",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    },
+    {
+      "id": "web-063",
+      "platform": "web",
+      "name": "Sketchboard activity",
+      "source": "internal/instance/web/activities/sketchboard/index.html",
+      "anchor": "<!doctype html>",
+      "currentAnchorLines": [
+        1
+      ],
+      "sourceVerified": true,
+      "designEvidence": [
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e381b1c7f",
+          "reference": "sketchboard-reference/board-list.png",
+          "scope": "board-list",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e39ab5326",
+          "reference": "sketchboard-reference/board-list-populated.png",
+          "scope": "board-list-populated",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e3b39f53c",
+          "reference": "sketchboard-reference/delete-confirmation.png",
+          "scope": "delete-confirmation",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e3c98657a",
+          "reference": "sketchboard-reference/workspace-pen.png",
+          "scope": "workspace-pen",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e3e743fdb",
+          "reference": "sketchboard-reference/workspace-highlighter.png",
+          "scope": "workspace-highlighter",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e40400ba9",
+          "reference": "sketchboard-reference/workspace-line.png",
+          "scope": "workspace-line",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e420abb6b",
+          "reference": "sketchboard-reference/workspace-rectangle.png",
+          "scope": "workspace-rectangle",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e43fa3814",
+          "reference": "sketchboard-reference/workspace-ellipse.png",
+          "scope": "workspace-ellipse",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e45f2d969",
+          "reference": "sketchboard-reference/workspace-text.png",
+          "scope": "workspace-text",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e47c047a5",
+          "reference": "sketchboard-reference/workspace-note.png",
+          "scope": "workspace-note",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e49aa8b61",
+          "reference": "sketchboard-reference/workspace-eraser.png",
+          "scope": "workspace-eraser",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e4bd55e7f",
+          "reference": "sketchboard-reference/workspace-pan.png",
+          "scope": "workspace-pan",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e4df3c3b7",
+          "reference": "sketchboard-reference/clear-confirmation.png",
+          "scope": "clear-confirmation",
+          "status": "draft"
+        },
+        {
+          "boardId": "6bdc1c40-ce96-804f-8008-9a6e9f9d91e9",
+          "reference": "sketchboard-reference/workspace-toolbar-right.png",
+          "scope": "workspace-toolbar-right",
+          "status": "draft"
+        }
+      ],
+      "referencesExist": true,
+      "coverage": "partial draft evidence",
+      "visualVerification": "pending",
+      "allStatesReviewed": false
+    }
+  ],
+  "extraSurfaceInventory": "desktop-os-surfaces.json",
+  "candidateInventory": "inventory-candidates.json",
+  "gates": {
+    "allSourceCandidatesReviewed": false,
+    "allImplementedStatesMapped": false,
+    "allControlsHaveReusableDesigns": false,
+    "visualFidelityVerified": false,
+    "tokenPropagationVerified": false,
+    "nativeExportReimportVerified": false
+  }
+}

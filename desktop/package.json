@@ -13,7 +13,11 @@
     "smoke:packaged": "node scripts/smoke-packaged.mjs",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && electron-forge package",
-    "make": "npm run typecheck && electron-forge make"
+    "make": "npm run typecheck && electron-forge make",
+    "test:settings": "node scripts/check-settings.mjs",
+    "test:voice-layout": "node scripts/check-voice-layout.mjs",
+    "test:voice-overlays": "node scripts/check-voice-overlays.mjs",
+    "test:message-images": "node scripts/check-message-images.mjs"
   },
   "dependencies": {
     "react": "19.2.8",

@@ -1,0 +1,30 @@
+[
+  {
+    "state": "recovery-edited-after-error",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfeba5a056"
+  },
+  {
+    "state": "invalid-token-error",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe869224d"
+  },
+  {
+    "state": "recovery-filled",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe77f7b35"
+  },
+  {
+    "state": "submit-hovered",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe6c42c33"
+  },
+  {
+    "state": "submit-keyboard-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe5f5a77a"
+  },
+  {
+    "state": "password-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe516cd8b"
+  },
+  {
+    "state": "token-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abfe42d7438"
+  }
+]

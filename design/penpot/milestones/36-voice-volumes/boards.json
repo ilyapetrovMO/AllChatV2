@@ -1,0 +1,22 @@
+[
+  {
+    "key": "voice-volume-microphone-min",
+    "id": "7299a615-462e-803f-8008-9bc2022f0a89",
+    "value": 0
+  },
+  {
+    "key": "voice-volume-microphone-max",
+    "id": "7299a615-462e-803f-8008-9bc2047aa0c6",
+    "value": 200
+  },
+  {
+    "key": "voice-volume-speaker-min",
+    "id": "7299a615-462e-803f-8008-9bc2074c3dc1",
+    "value": 0
+  },
+  {
+    "key": "voice-volume-speaker-half",
+    "id": "7299a615-462e-803f-8008-9bc20a067948",
+    "value": 50
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "screen": "Desktop default sign-in, existing community, signed out",
+  "entry": "Active community with no session",
+  "sources": [
+    {
+      "path": "desktop/src/renderer/app.tsx",
+      "sha256": "b91c1cf8b5ea0a3213a9fce089e2e191b64039f168ba548cbaa26a21bb0ddad5"
+    },
+    {
+      "path": "desktop/src/renderer/styles.css",
+      "sha256": "d778795ae8e3a988ac9f7e4de6ee30daf2e4344e4db1fea7512bd51ad38f299d"
+    },
+    {
+      "path": "desktop/src/main/window-policy.ts",
+      "sha256": "f3ad43d6e3022d3ea2ea5ad87f3b056dd7b0236b9dc7599f76ae8a93a70dfc44"
+    }
+  ],
+  "sourceRegions": {
+    "desktop/src/renderer/app.tsx": "login handler at 98; auth form at 368",
+    "desktop/src/renderer/styles.css": "shell/authentication styles at 241\u2013264; auth tabs at 534\u2013536"
+  },
+  "typography": "Editable Inter as declared first in desktop CSS. Electron Linux capture renders DejaVu Sans fallback, which the connected Penpot font API rejects. This is a documented fidelity gap, not a pixel-parity pass."
+}

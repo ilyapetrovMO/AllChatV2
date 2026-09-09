@@ -1,0 +1,281 @@
+{
+  "results": [
+    {
+      "shellCorrect": true,
+      "key": "relay",
+      "id": "7299a615-462e-803f-8008-9bf47f07ef26",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1325.46875,
+      "expectedHeight": 1325.46875,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone"
+      ],
+      "interactions": 0
+    },
+    {
+      "shellCorrect": true,
+      "key": "relay-bottom",
+      "id": "7299a615-462e-803f-8008-9bf4d7007747",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1325.46875,
+      "expectedHeight": 1325.46875,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "shellCorrect": true,
+      "key": "relay-middle",
+      "id": "7299a615-462e-803f-8008-9bf4d575116e",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1325.46875,
+      "expectedHeight": 1325.46875,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL"
+      ],
+      "interactions": 0
+    },
+    {
+      "shellCorrect": true,
+      "key": "default",
+      "id": "7299a615-462e-803f-8008-9bf45b69eebc",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1179.515625,
+      "expectedHeight": 1179.515625,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone"
+      ],
+      "interactions": 0
+    },
+    {
+      "shellCorrect": true,
+      "key": "default-bottom",
+      "id": "7299a615-462e-803f-8008-9bf4cac8003a",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1179.515625,
+      "expectedHeight": 1179.515625,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "shellCorrect": true,
+      "key": "default-middle",
+      "id": "7299a615-462e-803f-8008-9bf4c95dbade",
+      "width": 960,
+      "height": 640,
+      "contentWidth": 584,
+      "contentHeight": 1179.515625,
+      "expectedHeight": 1179.515625,
+      "errors": [],
+      "wrap": [
+        {
+          "name": "p text 18",
+          "copy": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "expected": "Applies immediately. Your reverse proxy must allow at least the same\nrequest size.",
+          "height": 42.40000915527344,
+          "fits": true
+        },
+        {
+          "name": "p text 23",
+          "copy": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "expected": "Used only for Android and iOS background notifications. Leave empty\nto disable mobile push.",
+          "height": 42.40000915527344,
+          "fits": true
+        }
+      ],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL"
+      ],
+      "interactions": 0
+    }
+  ],
+  "coverage": [
+    {
+      "key": "default",
+      "controls": 8,
+      "missing": []
+    },
+    {
+      "key": "relay",
+      "controls": 9,
+      "missing": []
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

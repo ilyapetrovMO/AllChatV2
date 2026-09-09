@@ -1,0 +1,97 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "vector": "sign-in.svg",
+      "layers": "sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "register",
+      "screenshot": "register.png",
+      "controls": "register.json",
+      "vector": "register.svg",
+      "layers": "register.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "account-recovery",
+      "screenshot": "account-recovery.png",
+      "controls": "account-recovery.json",
+      "vector": "account-recovery.svg",
+      "layers": "account-recovery.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "community-home",
+      "screenshot": "community-home.png",
+      "controls": "community-home.json",
+      "vector": "community-home.svg",
+      "layers": "community-home.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "text-channel",
+      "screenshot": "text-channel.png",
+      "controls": "text-channel.json",
+      "vector": "text-channel.svg",
+      "layers": "text-channel.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "image-viewer-default",
+      "screenshot": "image-viewer-default.png",
+      "controls": "image-viewer-default.json",
+      "vector": "image-viewer-default.svg",
+      "layers": "image-viewer-default.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "image-viewer-zoomed",
+      "screenshot": "image-viewer-zoomed.png",
+      "controls": "image-viewer-zoomed.json",
+      "vector": "image-viewer-zoomed.svg",
+      "layers": "image-viewer-zoomed.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "reaction-picker-empty",
+      "screenshot": "reaction-picker-empty.png",
+      "controls": "reaction-picker-empty.json",
+      "vector": "reaction-picker-empty.svg",
+      "layers": "reaction-picker-empty.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "reaction-picker-custom",
+      "screenshot": "reaction-picker-custom.png",
+      "controls": "reaction-picker-custom.json",
+      "vector": "reaction-picker-custom.svg",
+      "layers": "reaction-picker-custom.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "pending-file",
+      "screenshot": "pending-file.png",
+      "controls": "pending-file.json",
+      "vector": "pending-file.svg",
+      "layers": "pending-file.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

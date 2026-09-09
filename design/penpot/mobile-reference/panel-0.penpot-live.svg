@@ -1,0 +1,30 @@
+<svg width="795" xmlns="http://www.w3.org/2000/svg" height="111" viewBox="4000 400 795 111" style="-webkit-print-color-adjust::exact" xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" version="1.1">
+  <style>
+  </style>
+  <g id="shape-6bdc1c40-ce96-804f-8008-9a6afe70ed52">
+    <defs>
+      <clipPath id="frame-clip-6bdc1c40-ce96-804f-8008-9a6afe70ed52-render-18204" class="frame-clip frame-clip-def">
+        <rect rx="26.25" ry="26.25" x="4000" y="400" width="795" height="111" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+        </rect>
+      </clipPath>
+    </defs>
+    <g class="frame-container-wrapper">
+      <g class="frame-container-blur">
+        <g class="frame-container-shadows">
+          <g clip-path="url(#frame-clip-6bdc1c40-ce96-804f-8008-9a6afe70ed52-render-18204)" fill="none">
+            <g class="fills" id="fills-6bdc1c40-ce96-804f-8008-9a6afe70ed52">
+              <rect rx="26.25" ry="26.25" x="4000" y="400" width="795" height="111" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="frame-background" style="fill:#25272e;fill-opacity:1">
+              </rect>
+            </g>
+            <g class="frame-children">
+              <g id="shape-6bdc1c40-ce96-804f-8008-9a6afe7c0321" x="4036.75" y="400" width="721.5" height="111">
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="shape-6bdc1c40-ce96-804f-8008-9a6afe7c0321" x="4036.75" y="400" width="721.5" height="111">
+  </g>
+</svg>

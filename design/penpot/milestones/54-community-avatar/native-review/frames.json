@@ -1,0 +1,22 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bea5d9800b5",
+    "name": "Desktop / Settings / community-avatar-removed",
+    "filename": "Desktop--Settings--community-avatar-removed.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bea4bfd986d",
+    "name": "Desktop / Settings / community-avatar-uploaded",
+    "filename": "Desktop--Settings--community-avatar-uploaded.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bea3ff83350",
+    "name": "Desktop / Settings / community-avatar-fallback",
+    "filename": "Desktop--Settings--community-avatar-fallback.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bea3142f51d",
+    "name": "Desktop / Settings / community-avatar-image",
+    "filename": "Desktop--Settings--community-avatar-image.svg"
+  }
+]

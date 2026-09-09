@@ -1,0 +1,30 @@
+[
+  {
+    "key": "general-small-invalid-name",
+    "id": "7299a615-462e-803f-8008-9bfe5b91425e"
+  },
+  {
+    "key": "general-small-invalid-attachment-required",
+    "id": "7299a615-462e-803f-8008-9bfe73ba05b6"
+  },
+  {
+    "key": "general-small-invalid-attachment-min",
+    "id": "7299a615-462e-803f-8008-9bfe9351b27e"
+  },
+  {
+    "key": "general-small-invalid-attachment-max",
+    "id": "7299a615-462e-803f-8008-9bfeb6f3f1e3"
+  },
+  {
+    "key": "general-small-invalid-attachment-step",
+    "id": "7299a615-462e-803f-8008-9bfeda11cd2e"
+  },
+  {
+    "key": "general-small-invalid-attachment-number",
+    "id": "7299a615-462e-803f-8008-9bfefe005c2c"
+  },
+  {
+    "key": "general-small-invalid-relay-url",
+    "id": "7299a615-462e-803f-8008-9bff2358bd7a"
+  }
+]

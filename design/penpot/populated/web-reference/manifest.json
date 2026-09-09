@@ -1,0 +1,380 @@
+{
+  "fixture": "disposable owner and signed-out contexts; current default and empty states only",
+  "items": [
+    {
+      "name": "home",
+      "vector": "home.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/",
+      "screenshot": "home.png",
+      "controls": "home.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "profile",
+      "vector": "profile.svg",
+      "width": 1280,
+      "height": 840,
+      "route": "/profile",
+      "screenshot": "profile.png",
+      "controls": "profile.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "sessions",
+      "vector": "sessions.svg",
+      "width": 1280,
+      "height": 787,
+      "route": "/sessions",
+      "screenshot": "sessions.png",
+      "controls": "sessions.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "voice-video",
+      "vector": "voice-video.svg",
+      "width": 1280,
+      "height": 2285,
+      "route": "/voice-video",
+      "screenshot": "voice-video.png",
+      "controls": "voice-video.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "ringtone",
+      "vector": "ringtone.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/ringtone",
+      "screenshot": "ringtone.png",
+      "controls": "ringtone.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-settings",
+      "vector": "admin-settings.svg",
+      "width": 1280,
+      "height": 1258,
+      "route": "/admin/settings",
+      "screenshot": "admin-settings.png",
+      "controls": "admin-settings.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-channels",
+      "vector": "admin-channels.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/admin/channels",
+      "screenshot": "admin-channels.png",
+      "controls": "admin-channels.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-roles",
+      "vector": "admin-roles.svg",
+      "width": 1280,
+      "height": 1198,
+      "route": "/admin/roles",
+      "screenshot": "admin-roles.png",
+      "controls": "admin-roles.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-invitations",
+      "vector": "admin-invitations.svg",
+      "width": 1280,
+      "height": 1006,
+      "route": "/admin/invitations",
+      "screenshot": "admin-invitations.png",
+      "controls": "admin-invitations.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-soundboard",
+      "vector": "admin-soundboard.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/admin/soundboard",
+      "screenshot": "admin-soundboard.png",
+      "controls": "admin-soundboard.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-activities",
+      "vector": "admin-activities.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/admin/activities",
+      "screenshot": "admin-activities.png",
+      "controls": "admin-activities.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "activities",
+      "vector": "activities.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/activities",
+      "screenshot": "activities.png",
+      "controls": "activities.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "dms",
+      "vector": "dms.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/dms",
+      "screenshot": "dms.png",
+      "controls": "dms.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "search",
+      "vector": "search.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/search",
+      "screenshot": "search.png",
+      "controls": "search.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "admin-dashboard",
+      "vector": "admin-dashboard.svg",
+      "width": 1280,
+      "height": 1507,
+      "route": "/admin/dashboard",
+      "screenshot": "admin-dashboard.png",
+      "controls": "admin-dashboard.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-JGIjxz4YL5YDhXa-",
+      "vector": "channels-JGIjxz4YL5YDhXa-.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/JGIjxz4YL5YDhXa-",
+      "screenshot": "channels-JGIjxz4YL5YDhXa-.png",
+      "controls": "channels-JGIjxz4YL5YDhXa-.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-aKj2uIgCb_BwNt61",
+      "vector": "channels-aKj2uIgCb_BwNt61.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/aKj2uIgCb_BwNt61",
+      "screenshot": "channels-aKj2uIgCb_BwNt61.png",
+      "controls": "channels-aKj2uIgCb_BwNt61.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-BhcOGkOVj18id1Jm",
+      "vector": "channels-BhcOGkOVj18id1Jm.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/BhcOGkOVj18id1Jm",
+      "screenshot": "channels-BhcOGkOVj18id1Jm.png",
+      "controls": "channels-BhcOGkOVj18id1Jm.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-AyswaBtel0iDZWiq",
+      "vector": "channels-AyswaBtel0iDZWiq.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/AyswaBtel0iDZWiq",
+      "screenshot": "channels-AyswaBtel0iDZWiq.png",
+      "controls": "channels-AyswaBtel0iDZWiq.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-9l-la6OtYg1wfsG5",
+      "vector": "channels-9l-la6OtYg1wfsG5.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/9l-la6OtYg1wfsG5",
+      "screenshot": "channels-9l-la6OtYg1wfsG5.png",
+      "controls": "channels-9l-la6OtYg1wfsG5.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-Fq94LX9I_-cuRnVj",
+      "vector": "channels-Fq94LX9I_-cuRnVj.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/Fq94LX9I_-cuRnVj",
+      "screenshot": "channels-Fq94LX9I_-cuRnVj.png",
+      "controls": "channels-Fq94LX9I_-cuRnVj.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "channels-DOwvzcpeaCjFnAGK",
+      "vector": "channels-DOwvzcpeaCjFnAGK.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/channels/DOwvzcpeaCjFnAGK",
+      "screenshot": "channels-DOwvzcpeaCjFnAGK.png",
+      "controls": "channels-DOwvzcpeaCjFnAGK.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "login",
+      "vector": "login.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/login",
+      "screenshot": "login.png",
+      "controls": "login.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "recover",
+      "vector": "recover.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/recover",
+      "screenshot": "recover.png",
+      "controls": "recover.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "name": "join",
+      "vector": "join.svg",
+      "width": 1280,
+      "height": 720,
+      "route": "/join",
+      "screenshot": "join.png",
+      "controls": "join.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    }
+  ]
+}

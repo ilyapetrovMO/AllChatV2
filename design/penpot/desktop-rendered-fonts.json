@@ -1,0 +1,119 @@
+{
+  "platform": "Electron Linux",
+  "results": [
+    {
+      "selector": ".empty-state h1",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans-Bold",
+          "isCustomFont": false,
+          "glyphCount": 22
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "28px",
+        "fontWeight": "700",
+        "lineHeight": "39.2px",
+        "letterSpacing": "normal",
+        "textTransform": "none"
+      }
+    },
+    {
+      "selector": ".eyebrow",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans-Bold",
+          "isCustomFont": false,
+          "glyphCount": 14
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "12px",
+        "fontWeight": "800",
+        "lineHeight": "19.2px",
+        "letterSpacing": "normal",
+        "textTransform": "uppercase"
+      }
+    },
+    {
+      "selector": ".empty-state > p:not(.eyebrow)",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans",
+          "isCustomFont": false,
+          "glyphCount": 71
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "25.6px",
+        "letterSpacing": "normal",
+        "textTransform": "none"
+      }
+    },
+    {
+      "selector": ".onboarding-form label",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans-Bold",
+          "isCustomFont": false,
+          "glyphCount": 17
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "12.8px",
+        "fontWeight": "700",
+        "lineHeight": "17.92px",
+        "letterSpacing": "0.256px",
+        "textTransform": "uppercase"
+      }
+    },
+    {
+      "selector": ".onboarding-form input",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans-Bold",
+          "isCustomFont": false,
+          "glyphCount": 12
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "12.8px",
+        "fontWeight": "700",
+        "lineHeight": "17.92px",
+        "letterSpacing": "normal",
+        "textTransform": "none"
+      }
+    },
+    {
+      "selector": ".onboarding-form button",
+      "fonts": [
+        {
+          "familyName": "DejaVu Sans",
+          "postScriptName": "DejaVuSans-Bold",
+          "isCustomFont": false,
+          "glyphCount": 12
+        }
+      ],
+      "computed": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "lineHeight": "22.4px",
+        "letterSpacing": "normal",
+        "textTransform": "none"
+      }
+    }
+  ]
+}

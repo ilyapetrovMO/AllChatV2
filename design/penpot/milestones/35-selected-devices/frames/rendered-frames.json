@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bc135560bc6",
+    "name": "Desktop / Settings / voice-device-speaker-selected",
+    "filename": "Desktop--Settings--voice-device-speaker-selected.svg",
+    "png": "Desktop--Settings--voice-device-speaker-selected.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc13200b9a5",
+    "name": "Desktop / Settings / voice-device-microphone-selected",
+    "filename": "Desktop--Settings--voice-device-microphone-selected.svg",
+    "png": "Desktop--Settings--voice-device-microphone-selected.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc138797671",
+    "name": "Desktop / Settings / voice-device-camera-selected",
+    "filename": "Desktop--Settings--voice-device-camera-selected.svg",
+    "png": "Desktop--Settings--voice-device-camera-selected.png"
+  }
+]

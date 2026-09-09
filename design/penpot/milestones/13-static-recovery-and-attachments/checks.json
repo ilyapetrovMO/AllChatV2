@@ -1,0 +1,62 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "key": "typing",
+      "id": "7299a615-462e-803f-8008-9b9e26d687e2",
+      "required": [
+        "Sam is typing…"
+      ],
+      "textLayers": 32
+    },
+    {
+      "key": "file-download",
+      "id": "7299a615-462e-803f-8008-9b9e255460cf",
+      "required": [
+        "notes.txt",
+        "2.0 KiB",
+        "Download"
+      ],
+      "textLayers": 34
+    },
+    {
+      "key": "file-loading",
+      "id": "7299a615-462e-803f-8008-9b9e23d1d078",
+      "required": [
+        "notes.txt",
+        "2.0 KiB",
+        "Loading…"
+      ],
+      "textLayers": 34
+    },
+    {
+      "key": "file-drag",
+      "id": "7299a615-462e-803f-8008-9b9e235931b3",
+      "required": [],
+      "textLayers": 31
+    },
+    {
+      "key": "remove-hover",
+      "id": "7299a615-462e-803f-8008-9b9e21cffcca",
+      "required": [
+        "notes.txt",
+        "2.0 KiB",
+        "×"
+      ],
+      "textLayers": 34
+    },
+    {
+      "key": "file-pending",
+      "id": "7299a615-462e-803f-8008-9b9e204df504",
+      "required": [
+        "notes.txt",
+        "2.0 KiB",
+        "×"
+      ],
+      "textLayers": 34
+    }
+  ],
+  "validation": [],
+  "revision": 34
+}

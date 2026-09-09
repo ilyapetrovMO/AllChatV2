@@ -1,0 +1,141 @@
+{
+  "scope": "Selected control colors and visual placement only; not full fidelity or persistence verification",
+  "states": [
+    {
+      "state": "address-focused",
+      "visualReview": "Focus/hover treatment and placement inspected; platform typography differs",
+      "samples": [
+        {
+          "xy": [
+            480,
+            450
+          ],
+          "reference": [
+            0,
+            168,
+            252
+          ],
+          "design": [
+            0,
+            168,
+            252
+          ]
+        },
+        {
+          "xy": [
+            800,
+            430
+          ],
+          "reference": [
+            32,
+            33,
+            39
+          ],
+          "design": [
+            32,
+            33,
+            39
+          ]
+        }
+      ]
+    },
+    {
+      "state": "submit-keyboard-focused",
+      "visualReview": "Focus/hover treatment and placement inspected; platform typography differs",
+      "samples": [
+        {
+          "xy": [
+            480,
+            495
+          ],
+          "reference": [
+            0,
+            168,
+            252
+          ],
+          "design": [
+            0,
+            168,
+            252
+          ]
+        },
+        {
+          "xy": [
+            800,
+            490
+          ],
+          "reference": [
+            109,
+            117,
+            232
+          ],
+          "design": [
+            109,
+            117,
+            232
+          ]
+        }
+      ]
+    },
+    {
+      "state": "submit-hovered",
+      "visualReview": "Focus/hover treatment and placement inspected; platform typography differs",
+      "samples": [
+        {
+          "xy": [
+            800,
+            490
+          ],
+          "reference": [
+            89,
+            98,
+            214
+          ],
+          "design": [
+            89,
+            98,
+            214
+          ]
+        }
+      ]
+    },
+    {
+      "state": "address-hovered",
+      "visualReview": "Focus/hover treatment and placement inspected; platform typography differs",
+      "samples": [
+        {
+          "xy": [
+            484,
+            450
+          ],
+          "reference": [
+            63,
+            64,
+            69
+          ],
+          "design": [
+            63,
+            64,
+            69
+          ]
+        },
+        {
+          "xy": [
+            800,
+            430
+          ],
+          "reference": [
+            32,
+            33,
+            39
+          ],
+          "design": [
+            32,
+            33,
+            39
+          ]
+        }
+      ]
+    }
+  ]
+}

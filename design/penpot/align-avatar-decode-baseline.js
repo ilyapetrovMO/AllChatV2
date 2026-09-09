@@ -1,0 +1,1 @@
+const out=[];for(const b of penpot.currentPage.root.children.filter(b=>b.getPluginData('static-avatar-decode-error'))){const p=penpotUtils.findShape(s=>s.name==='Avatar decode failure clip',b),t=p.children[0];t.setPluginData('avatar-alt-target',JSON.stringify({x:-14,y:17}));t.x+=p.x-14-t.textBounds.x;t.y+=p.y+17-t.textBounds.y;out.push(b.id);}return out;

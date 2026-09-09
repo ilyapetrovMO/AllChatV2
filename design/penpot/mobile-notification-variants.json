@@ -1,0 +1,16 @@
+[
+  {
+    "variant": "muted",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a793b376b5b",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a793a23bd04",
+    "instanceId": "6bdc1c40-ce96-804f-8008-9a793b3cfe03",
+    "status": "native editable dialog component; visual verification pending"
+  },
+  {
+    "variant": "error",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a795952f23f",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a795879061d",
+    "instanceId": "6bdc1c40-ce96-804f-8008-9a795955ba74",
+    "status": "native editable dialog component; visual verification pending"
+  }
+]

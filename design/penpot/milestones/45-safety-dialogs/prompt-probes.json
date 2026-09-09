@@ -1,0 +1,17 @@
+{
+  "electron": "43.4.0",
+  "probes": [
+    {
+      "message": "Resolution outcome",
+      "result": {
+        "error": "Error: prompt() is not supported."
+      }
+    },
+    {
+      "message": "Purge records created before this RFC 3339 timestamp",
+      "result": {
+        "error": "Error: prompt() is not supported."
+      }
+    }
+  ]
+}

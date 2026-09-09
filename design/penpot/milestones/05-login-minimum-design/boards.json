@@ -1,0 +1,23 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9b8fd498d14c",
+    "name": "Desktop / Login / Minimum / empty",
+    "width": 960,
+    "height": 640,
+    "reference": "{\"sourceId\":\"7299a615-462e-803f-8008-9b8be80355cb\",\"width\":960,\"height\":640,\"mode\":\"empty\",\"scrollHeight\":612,\"kind\":\"Static initial viewport reference; use browser prototype for scroll and typing\"}"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b8fd566da64",
+    "name": "Desktop / Login / Minimum / register",
+    "width": 960,
+    "height": 640,
+    "reference": "{\"sourceId\":\"7299a615-462e-803f-8008-9b8bec6af318\",\"width\":960,\"height\":640,\"mode\":\"register\",\"scrollHeight\":636,\"kind\":\"Static initial viewport reference; use browser prototype for scroll and typing\"}"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b8fd6113afc",
+    "name": "Desktop / Login / Minimum / recovery",
+    "width": 960,
+    "height": 640,
+    "reference": "{\"sourceId\":\"7299a615-462e-803f-8008-9b8bee025681\",\"width\":960,\"height\":640,\"mode\":\"recovery\",\"scrollHeight\":612,\"kind\":\"Static initial viewport reference; use browser prototype for scroll and typing\"}"
+  }
+]

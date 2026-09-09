@@ -1,0 +1,33 @@
+{
+  "components": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe48b815",
+      "name": "Dark",
+      "path": "Mobile / Close panel"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe8fd245",
+      "name": "Empty dark",
+      "path": "Mobile / Search input"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe6e3f82",
+      "name": "Dark",
+      "path": "Mobile / Search button"
+    }
+  ],
+  "boards": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe70ed52",
+      "name": "Mobile / Search input / Empty dark"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe94b8c9",
+      "name": "Mobile / Pinned messages / Empty dark"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afed7272b",
+      "name": "Mobile / Search messages / Empty dark"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "vector": "sign-in.svg",
+      "layers": "sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "account-recovery",
+      "screenshot": "account-recovery.png",
+      "controls": "account-recovery.json",
+      "vector": "account-recovery.svg",
+      "layers": "account-recovery.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "token-focused",
+      "screenshot": "token-focused.png",
+      "controls": "token-focused.json",
+      "vector": "token-focused.svg",
+      "layers": "token-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-focused",
+      "screenshot": "password-focused.png",
+      "controls": "password-focused.json",
+      "vector": "password-focused.svg",
+      "layers": "password-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-keyboard-focused",
+      "screenshot": "submit-keyboard-focused.png",
+      "controls": "submit-keyboard-focused.json",
+      "vector": "submit-keyboard-focused.svg",
+      "layers": "submit-keyboard-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-hovered",
+      "screenshot": "submit-hovered.png",
+      "controls": "submit-hovered.json",
+      "vector": "submit-hovered.svg",
+      "layers": "submit-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "token-required",
+      "screenshot": "token-required.png",
+      "controls": "token-required.json",
+      "vector": "token-required.svg",
+      "layers": "token-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-required",
+      "screenshot": "password-required.png",
+      "controls": "password-required.json",
+      "vector": "password-required.svg",
+      "layers": "password-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-too-short",
+      "screenshot": "password-too-short.png",
+      "controls": "password-too-short.json",
+      "vector": "password-too-short.svg",
+      "layers": "password-too-short.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "recovery-filled",
+      "screenshot": "recovery-filled.png",
+      "controls": "recovery-filled.json",
+      "vector": "recovery-filled.svg",
+      "layers": "recovery-filled.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "invalid-token-error",
+      "screenshot": "invalid-token-error.png",
+      "controls": "invalid-token-error.json",
+      "vector": "invalid-token-error.svg",
+      "layers": "invalid-token-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "recovery-edited-after-error",
+      "screenshot": "recovery-edited-after-error.png",
+      "controls": "recovery-edited-after-error.json",
+      "vector": "recovery-edited-after-error.svg",
+      "layers": "recovery-edited-after-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "valid-token-filled",
+      "screenshot": "valid-token-filled.png",
+      "controls": "valid-token-filled.json",
+      "vector": "valid-token-filled.svg",
+      "layers": "valid-token-filled.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "recovery-success-sign-in",
+      "screenshot": "recovery-success-sign-in.png",
+      "controls": "recovery-success-sign-in.json",
+      "vector": "recovery-success-sign-in.svg",
+      "layers": "recovery-success-sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "recovered-member-home",
+      "screenshot": "recovered-member-home.png",
+      "controls": "recovered-member-home.json",
+      "vector": "recovered-member-home.svg",
+      "layers": "recovered-member-home.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

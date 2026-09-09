@@ -40,5 +40,5 @@ export function isAllowedExternalNavigation(target: string): boolean {
 }
 
 export function isAllowedRendererPermission(permission: string, belongsToAppWindow: boolean): boolean {
-  return belongsToAppWindow && permission === 'media';
+  return belongsToAppWindow && (permission === 'media' || permission === 'clipboard-sanitized-write');
 }

@@ -1,0 +1,152 @@
+[
+  {
+    "name": "home",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69f7b9b1a6",
+    "nativeTextLayers": 42,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "profile",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69fbc0f828",
+    "nativeTextLayers": 25,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "sessions",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69fef8f357",
+    "nativeTextLayers": 26,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "voice-video",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a0297e9fe",
+    "nativeTextLayers": 62,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "ringtone",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a093706f9",
+    "nativeTextLayers": 18,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-settings",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a0c0f175e",
+    "nativeTextLayers": 30,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-channels",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a101bc1c2",
+    "nativeTextLayers": 35,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-roles",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a150fb4b9",
+    "nativeTextLayers": 38,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-invitations",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a1a91fd61",
+    "nativeTextLayers": 35,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-soundboard",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a21e2c4ad",
+    "nativeTextLayers": 23,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-activities",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a26fba1b6",
+    "nativeTextLayers": 20,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "activities",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a2b216f6e",
+    "nativeTextLayers": 12,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "dms",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a2e043911",
+    "nativeTextLayers": 26,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "search",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a32ed3857",
+    "nativeTextLayers": 7,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "login",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a35478a56",
+    "nativeTextLayers": 5,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "recover",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a37540dda",
+    "nativeTextLayers": 5,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "join",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a397e3397",
+    "nativeTextLayers": 5,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "admin-dashboard",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cc8c18005",
+    "nativeTextLayers": 79,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-JGIjxz4YL5YDhXa-",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ccf79db16",
+    "nativeTextLayers": 36,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-aKj2uIgCb_BwNt61",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cd398591a",
+    "nativeTextLayers": 36,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-BhcOGkOVj18id1Jm",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cd7c2788e",
+    "nativeTextLayers": 36,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-AyswaBtel0iDZWiq",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cdc4177df",
+    "nativeTextLayers": 36,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-9l-la6OtYg1wfsG5",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ce0c36884",
+    "nativeTextLayers": 36,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-Fq94LX9I_-cuRnVj",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ce59b3306",
+    "nativeTextLayers": 76,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "channels-DOwvzcpeaCjFnAGK",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cedfeb095",
+    "nativeTextLayers": 12,
+    "status": "native draft; visual verification pending"
+  }
+]

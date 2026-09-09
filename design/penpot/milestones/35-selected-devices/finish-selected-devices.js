@@ -1,0 +1,1 @@
+const keys=['voice-device-microphone-selected','voice-device-speaker-selected','voice-device-camera-selected'];for(const b of penpot.currentPage.root.children.filter(b=>b.getPluginData('static-selected-device-state'))){b.x=103000+keys.indexOf(b.getPluginData('static-selected-device-state'))*1400;b.y=0;}return {placed:3};

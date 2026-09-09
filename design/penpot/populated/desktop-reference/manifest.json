@@ -1,0 +1,217 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "vector": "sign-in.svg",
+      "layers": "sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "register",
+      "screenshot": "register.png",
+      "controls": "register.json",
+      "vector": "register.svg",
+      "layers": "register.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "account-recovery",
+      "screenshot": "account-recovery.png",
+      "controls": "account-recovery.json",
+      "vector": "account-recovery.svg",
+      "layers": "account-recovery.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "community-home",
+      "screenshot": "community-home.png",
+      "controls": "community-home.json",
+      "vector": "community-home.svg",
+      "layers": "community-home.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "text-channel",
+      "screenshot": "text-channel.png",
+      "controls": "text-channel.json",
+      "vector": "text-channel.svg",
+      "layers": "text-channel.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "member-presence-menu",
+      "screenshot": "member-presence-menu.png",
+      "controls": "member-presence-menu.json",
+      "vector": "member-presence-menu.svg",
+      "layers": "member-presence-menu.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "community-menu",
+      "screenshot": "community-menu.png",
+      "controls": "community-menu.json",
+      "vector": "community-menu.svg",
+      "layers": "community-menu.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "conversation-notification-menu",
+      "screenshot": "conversation-notification-menu.png",
+      "controls": "conversation-notification-menu.json",
+      "vector": "conversation-notification-menu.svg",
+      "layers": "conversation-notification-menu.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-my-account",
+      "screenshot": "settings-my-account.png",
+      "controls": "settings-my-account.json",
+      "vector": "settings-my-account.svg",
+      "layers": "settings-my-account.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-my-account-scroll-1",
+      "screenshot": "settings-my-account-scroll-1.png",
+      "controls": "settings-my-account-scroll-1.json",
+      "vector": "settings-my-account-scroll-1.svg",
+      "layers": "settings-my-account-scroll-1.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video",
+      "screenshot": "settings-voice-video.png",
+      "controls": "settings-voice-video.json",
+      "vector": "settings-voice-video.svg",
+      "layers": "settings-voice-video.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-1",
+      "screenshot": "settings-voice-video-scroll-1.png",
+      "controls": "settings-voice-video-scroll-1.json",
+      "vector": "settings-voice-video-scroll-1.svg",
+      "layers": "settings-voice-video-scroll-1.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-2",
+      "screenshot": "settings-voice-video-scroll-2.png",
+      "controls": "settings-voice-video-scroll-2.json",
+      "vector": "settings-voice-video-scroll-2.svg",
+      "layers": "settings-voice-video-scroll-2.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-3",
+      "screenshot": "settings-voice-video-scroll-3.png",
+      "controls": "settings-voice-video-scroll-3.json",
+      "vector": "settings-voice-video-scroll-3.svg",
+      "layers": "settings-voice-video-scroll-3.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-ringtone",
+      "screenshot": "settings-ringtone.png",
+      "controls": "settings-ringtone.json",
+      "vector": "settings-ringtone.svg",
+      "layers": "settings-ringtone.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-notifications",
+      "screenshot": "settings-notifications.png",
+      "controls": "settings-notifications.json",
+      "vector": "settings-notifications.svg",
+      "layers": "settings-notifications.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-notifications-scroll-1",
+      "screenshot": "settings-notifications-scroll-1.png",
+      "controls": "settings-notifications-scroll-1.json",
+      "vector": "settings-notifications-scroll-1.svg",
+      "layers": "settings-notifications-scroll-1.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-sessions",
+      "screenshot": "settings-sessions.png",
+      "controls": "settings-sessions.json",
+      "vector": "settings-sessions.svg",
+      "layers": "settings-sessions.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-safety",
+      "screenshot": "settings-safety.png",
+      "controls": "settings-safety.json",
+      "vector": "settings-safety.svg",
+      "layers": "settings-safety.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-general",
+      "screenshot": "admin-general.png",
+      "controls": "admin-general.json",
+      "vector": "admin-general.svg",
+      "layers": "admin-general.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-dashboard",
+      "screenshot": "admin-dashboard.png",
+      "controls": "admin-dashboard.json",
+      "vector": "admin-dashboard.svg",
+      "layers": "admin-dashboard.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-channels",
+      "screenshot": "admin-channels.png",
+      "controls": "admin-channels.json",
+      "vector": "admin-channels.svg",
+      "layers": "admin-channels.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-roles",
+      "screenshot": "admin-roles.png",
+      "controls": "admin-roles.json",
+      "vector": "admin-roles.svg",
+      "layers": "admin-roles.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-invitations",
+      "screenshot": "admin-invitations.png",
+      "controls": "admin-invitations.json",
+      "vector": "admin-invitations.svg",
+      "layers": "admin-invitations.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "admin-soundboard",
+      "screenshot": "admin-soundboard.png",
+      "controls": "admin-soundboard.json",
+      "vector": "admin-soundboard.svg",
+      "layers": "admin-soundboard.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

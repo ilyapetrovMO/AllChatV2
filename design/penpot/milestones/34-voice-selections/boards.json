@@ -1,0 +1,32 @@
+[
+  {
+    "key": "voice-selected-enhanced",
+    "id": "7299a615-462e-803f-8008-9bc003cbcba1",
+    "value": "Enhanced (RNNoise)"
+  },
+  {
+    "key": "voice-selected-off",
+    "id": "7299a615-462e-803f-8008-9bc0069f8db6",
+    "value": "Off"
+  },
+  {
+    "key": "voice-selected-text",
+    "id": "7299a615-462e-803f-8008-9bc009655b2d",
+    "value": "Text"
+  },
+  {
+    "key": "voice-selected-balanced",
+    "id": "7299a615-462e-803f-8008-9bc01f6dfd81",
+    "value": "Balanced"
+  },
+  {
+    "key": "voice-selected-motion",
+    "id": "7299a615-462e-803f-8008-9bc0222922cd",
+    "value": "Motion"
+  },
+  {
+    "key": "voice-selected-data-saver",
+    "id": "7299a615-462e-803f-8008-9bc0250743a8",
+    "value": "Data saver"
+  }
+]

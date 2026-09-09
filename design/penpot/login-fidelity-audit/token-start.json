@@ -1,0 +1,39 @@
+{
+  "setActive": true,
+  "original": "#6D75E8",
+  "probe": "#FF00FF",
+  "before": [
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8c081c7",
+      "fill": [
+        {
+          "fillColor": "#6d75e8",
+          "fillOpacity": 1,
+          "fillColorGradient": null,
+          "fillColorRefFile": null,
+          "fillColorRefId": null,
+          "fillImage": null
+        }
+      ],
+      "binding": {
+        "fill": "login.color.brand"
+      }
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b942bbec",
+      "fill": [
+        {
+          "fillColor": "#6d75e8",
+          "fillOpacity": 1,
+          "fillColorGradient": null,
+          "fillColorRefFile": null,
+          "fillColorRefId": null,
+          "fillImage": null
+        }
+      ],
+      "binding": {
+        "fill": "login.color.brand"
+      }
+    }
+  ]
+}

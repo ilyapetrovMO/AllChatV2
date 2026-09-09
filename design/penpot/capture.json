@@ -1,0 +1,16 @@
+{
+  "status": "draft",
+  "sourceCommit": "6f6d9124f562a81d43224bdc1ab9a57e7250f133",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "browser": "151.0.7922.34",
+  "screen": "text-channel",
+  "theme": "dark",
+  "fixture": "disposable instance, visual-owner, general",
+  "limitations": [
+    "SVG is an editable starting point; verify text baselines, clipping, shadows and icons in Penpot.",
+    "Native Penpot components and token bindings require the connected-file import step."
+  ]
+}

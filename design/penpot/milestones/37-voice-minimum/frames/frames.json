@@ -1,0 +1,22 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bc445839346",
+    "name": "Desktop / Settings / voice-minimum",
+    "filename": "Desktop--Settings--voice-minimum.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc70c637f6f",
+    "name": "Desktop / Settings / voice-minimum-bottom",
+    "filename": "Desktop--Settings--voice-minimum-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc70b2036c6",
+    "name": "Desktop / Settings / voice-minimum-camera",
+    "filename": "Desktop--Settings--voice-minimum-camera.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc709d757b7",
+    "name": "Desktop / Settings / voice-minimum-processing",
+    "filename": "Desktop--Settings--voice-minimum-processing.svg"
+  }
+]

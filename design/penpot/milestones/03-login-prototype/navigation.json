@@ -1,0 +1,1280 @@
+{
+  "boards": {
+    "recovered-ready": "7299a615-462e-803f-8008-9b8bf1c5c162",
+    "recovered": "7299a615-462e-803f-8008-9b8bf139de30",
+    "recovery-ready": "7299a615-462e-803f-8008-9b8bf07a54f3",
+    "recovery-required": "7299a615-462e-803f-8008-9b8bef2cb596",
+    "recovery": "7299a615-462e-803f-8008-9b8bee025681",
+    "register-ready": "7299a615-462e-803f-8008-9b8bed5a34d8",
+    "register-required": "7299a615-462e-803f-8008-9b8becdabc26",
+    "register": "7299a615-462e-803f-8008-9b8bec6af318",
+    "missing-username-password-filled": "7299a615-462e-803f-8008-9b8bebe6e916",
+    "missing-password": "7299a615-462e-803f-8008-9b8beb3f116d",
+    "missing-username": "7299a615-462e-803f-8008-9b8beac8bb1b",
+    "retry": "7299a615-462e-803f-8008-9b8bea4e744e",
+    "error": "7299a615-462e-803f-8008-9b8be9d88139",
+    "invalid": "7299a615-462e-803f-8008-9b8be974eff0",
+    "ready": "7299a615-462e-803f-8008-9b8be911b523",
+    "password": "7299a615-462e-803f-8008-9b8be8b59feb",
+    "username": "7299a615-462e-803f-8008-9b8be85a4089",
+    "empty": "7299a615-462e-803f-8008-9b8be80355cb",
+    "guide": "7299a615-462e-803f-8008-9b8be7ba29a7",
+    "success": "7299a615-462e-803f-8008-9b8bf263524e"
+  },
+  "routes": [
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf256e649",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1f871d8",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1fd270b",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf201e06f",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf24c5e06",
+      "shapeName": "Fill example",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf20d3a65",
+      "shapeName": "Username input",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf20fe4b8",
+      "shapeName": "Username value",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf21dc3b4",
+      "shapeName": "Password input",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf22244e2",
+      "shapeName": "Password value",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf22a79ef",
+      "shapeName": "Submit",
+      "to": "success",
+      "targetId": "7299a615-462e-803f-8008-9b8bf263524e"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1b95ca1",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf16adf7c",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf16f1332",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf17402fa",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1aee61f",
+      "shapeName": "Fill example",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf17eb00a",
+      "shapeName": "Username input",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1893ca8",
+      "shapeName": "Password input",
+      "to": "recovered-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf1c5c162"
+    },
+    {
+      "from": "recovered",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf18d2d6c",
+      "shapeName": "Submit",
+      "to": "missing-username",
+      "targetId": "7299a615-462e-803f-8008-9b8beac8bb1b"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf12e77d5",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf0dff7a2",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf0e45fc0",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf0e8880e",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf123225a",
+      "shapeName": "Fill example",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf0f3fb8e",
+      "shapeName": "Recovery token input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf0f6e9d7",
+      "shapeName": "Recovery token value",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1053d00",
+      "shapeName": "New password input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf1080c3c",
+      "shapeName": "New password value",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf10ededc",
+      "shapeName": "Submit",
+      "to": "recovered",
+      "targetId": "7299a615-462e-803f-8008-9b8bf139de30"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf05dea77",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bef92e343",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bef9d25e8",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8befa7b486",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf04330a7",
+      "shapeName": "Fill example",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8befc4f680",
+      "shapeName": "Recovery token input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf001298d",
+      "shapeName": "New password input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf00c0935",
+      "shapeName": "Submit",
+      "to": "recovery-required",
+      "targetId": "7299a615-462e-803f-8008-9b8bef2cb596"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8bef1095b7",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8bee6d90c6",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8bee79357d",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8bee82252e",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8beef50d1f",
+      "shapeName": "Fill example",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8bee9c3f5a",
+      "shapeName": "Recovery token input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8beebccd67",
+      "shapeName": "New password input",
+      "to": "recovery-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bf07a54f3"
+    },
+    {
+      "from": "recovery",
+      "shapeId": "7299a615-462e-803f-8008-9b8beec52785",
+      "shapeName": "Submit",
+      "to": "recovery-required",
+      "targetId": "7299a615-462e-803f-8008-9b8bef2cb596"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bede6cb48",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed7ecb81",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed82e5e1",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed86a0ad",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bedd01957",
+      "shapeName": "Fill example",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed908cbe",
+      "shapeName": "Invitation token input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed936d09",
+      "shapeName": "Invitation token value",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed9fb015",
+      "shapeName": "Username input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8beda2bdc7",
+      "shapeName": "Username value",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bedaf9994",
+      "shapeName": "Password input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bedb25fd0",
+      "shapeName": "Password value",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8bedb918aa",
+      "shapeName": "Submit",
+      "to": "success",
+      "targetId": "7299a615-462e-803f-8008-9b8bf263524e"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed4fb4d2",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8becfe59c8",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed01bded",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed050ed4",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed471ed6",
+      "shapeName": "Fill example",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed0f4883",
+      "shapeName": "Invitation token input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed26d88d",
+      "shapeName": "Username input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed303b92",
+      "shapeName": "Password input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register-required",
+      "shapeId": "7299a615-462e-803f-8008-9b8bed33aa80",
+      "shapeName": "Submit",
+      "to": "register-required",
+      "targetId": "7299a615-462e-803f-8008-9b8becdabc26"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8becd072bf",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec8e5a78",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec9224f4",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec956311",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8becc6bb07",
+      "shapeName": "Fill example",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec9e3803",
+      "shapeName": "Invitation token input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8beca70440",
+      "shapeName": "Username input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8becb078a6",
+      "shapeName": "Password input",
+      "to": "register-ready",
+      "targetId": "7299a615-462e-803f-8008-9b8bed5a34d8"
+    },
+    {
+      "from": "register",
+      "shapeId": "7299a615-462e-803f-8008-9b8becb34a53",
+      "shapeName": "Submit",
+      "to": "register-required",
+      "targetId": "7299a615-462e-803f-8008-9b8becdabc26"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec610d1c",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec1407a4",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec197595",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec1c8e43",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec57d810",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec260e1e",
+      "shapeName": "Username input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec3d2b8b",
+      "shapeName": "Password input",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec3fd03f",
+      "shapeName": "Password value",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "missing-username-password-filled",
+      "shapeId": "7299a615-462e-803f-8008-9b8bec46e53d",
+      "shapeName": "Submit",
+      "to": "missing-username-password-filled",
+      "targetId": "7299a615-462e-803f-8008-9b8bebe6e916"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8bebdba318",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb6b767e",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb6ee131",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb74b2f6",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8bebcb3ccd",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb801da9",
+      "shapeName": "Username input",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb837c60",
+      "shapeName": "Username value",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb9128c0",
+      "shapeName": "Password input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "missing-password",
+      "shapeId": "7299a615-462e-803f-8008-9b8beba1a5f3",
+      "shapeName": "Submit",
+      "to": "missing-password",
+      "targetId": "7299a615-462e-803f-8008-9b8beb3f116d"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb35fba6",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beaf0ccf3",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beaf3f00e",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beaf73dd1",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb2b1d78",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beafffe4e",
+      "shapeName": "Username input",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb157e91",
+      "shapeName": "Password input",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "missing-username",
+      "shapeId": "7299a615-462e-803f-8008-9b8beb183ae4",
+      "shapeName": "Submit",
+      "to": "missing-username",
+      "targetId": "7299a615-462e-803f-8008-9b8beac8bb1b"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8beabf02f0",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea753544",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea77ea84",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea7b2caf",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8beab6d49a",
+      "shapeName": "Fill example",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea82f882",
+      "shapeName": "Username input",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea8578f1",
+      "shapeName": "Username value",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea9011fd",
+      "shapeName": "Password input",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea92b2f5",
+      "shapeName": "Password value",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "retry",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea9802ba",
+      "shapeName": "Submit",
+      "to": "success",
+      "targetId": "7299a615-462e-803f-8008-9b8bf263524e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea44a6e5",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9fd7676",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9ffe25e",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea029b78",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea3c7112",
+      "shapeName": "Fill example",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea0a325b",
+      "shapeName": "Username input",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea0c23e2",
+      "shapeName": "Username value",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea162dbe",
+      "shapeName": "Password input",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea1861a4",
+      "shapeName": "Password value",
+      "to": "retry",
+      "targetId": "7299a615-462e-803f-8008-9b8bea4e744e"
+    },
+    {
+      "from": "error",
+      "shapeId": "7299a615-462e-803f-8008-9b8bea1d2cba",
+      "shapeName": "Submit",
+      "to": "error",
+      "targetId": "7299a615-462e-803f-8008-9b8be9d88139"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9cf600c",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be99920f7",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be99b5acf",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be99e3d23",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9c74e89",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9a584ca",
+      "shapeName": "Username input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9a7dd02",
+      "shapeName": "Username value",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9b18713",
+      "shapeName": "Password input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9b3a23a",
+      "shapeName": "Password value",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "invalid",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9b7f2d3",
+      "shapeName": "Submit",
+      "to": "error",
+      "targetId": "7299a615-462e-803f-8008-9b8be9d88139"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be96bd9ef",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9349029",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be93762a3",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9399cd9",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be964c425",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be942281e",
+      "shapeName": "Username input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be94444ee",
+      "shapeName": "Username value",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be94e326e",
+      "shapeName": "Password input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9503094",
+      "shapeName": "Password value",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "ready",
+      "shapeId": "7299a615-462e-803f-8008-9b8be95633a8",
+      "shapeName": "Submit",
+      "to": "success",
+      "targetId": "7299a615-462e-803f-8008-9b8bf263524e"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be908ad2a",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8d9708b",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8dbed06",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8de58aa",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be9018138",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8e5ccfe",
+      "shapeName": "Username input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8ec6713",
+      "shapeName": "Password input",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8eeb7a3",
+      "shapeName": "Password value",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "password",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8f2f264",
+      "shapeName": "Submit",
+      "to": "missing-username-password-filled",
+      "targetId": "7299a615-462e-803f-8008-9b8bebe6e916"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8ae16ad",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be87bf9ad",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be87e5f21",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be880c386",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8a68d0b",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be888a8f8",
+      "shapeName": "Username input",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be88ae005",
+      "shapeName": "Username value",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be894da10",
+      "shapeName": "Password input",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "username",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8975be4",
+      "shapeName": "Submit",
+      "to": "missing-password",
+      "targetId": "7299a615-462e-803f-8008-9b8beb3f116d"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8525978",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8277814",
+      "shapeName": "Tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be8299048",
+      "shapeName": "Tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be82c1ac2",
+      "shapeName": "Tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be84a3e59",
+      "shapeName": "Fill example",
+      "to": "ready",
+      "targetId": "7299a615-462e-803f-8008-9b8be911b523"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be833b597",
+      "shapeName": "Username input",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be83a8ce3",
+      "shapeName": "Password input",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "empty",
+      "shapeId": "7299a615-462e-803f-8008-9b8be83cb16c",
+      "shapeName": "Submit",
+      "to": "missing-username",
+      "targetId": "7299a615-462e-803f-8008-9b8beac8bb1b"
+    },
+    {
+      "from": "guide",
+      "shapeId": "7299a615-462e-803f-8008-9b8be7cfd18e",
+      "shapeName": "Start login",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "guide",
+      "shapeId": "7299a615-462e-803f-8008-9b8be7da1967",
+      "shapeName": "Try failed login",
+      "to": "invalid",
+      "targetId": "7299a615-462e-803f-8008-9b8be974eff0"
+    },
+    {
+      "from": "guide",
+      "shapeId": "7299a615-462e-803f-8008-9b8be7e443ef",
+      "shapeName": "Try recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    },
+    {
+      "from": "success",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf2960772",
+      "shapeName": "Restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "success",
+      "shapeId": "7299a615-462e-803f-8008-9b8bf276116e",
+      "shapeName": "Success restart",
+      "to": "guide",
+      "targetId": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b93a7d7c",
+      "shapeName": "Username input",
+      "to": "username",
+      "targetId": "7299a615-462e-803f-8008-9b8be85a4089"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b940842a",
+      "shapeName": "Password input",
+      "to": "password",
+      "targetId": "7299a615-462e-803f-8008-9b8be8b59feb"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b942bbec",
+      "shapeName": "Sign in submit",
+      "to": "missing-username",
+      "targetId": "7299a615-462e-803f-8008-9b8beac8bb1b"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b9305751",
+      "shapeName": "Authentication tab / Sign in",
+      "to": "empty",
+      "targetId": "7299a615-462e-803f-8008-9b8be80355cb"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b9324b91",
+      "shapeName": "Authentication tab / Register",
+      "to": "register",
+      "targetId": "7299a615-462e-803f-8008-9b8bec6af318"
+    },
+    {
+      "from": "default",
+      "shapeId": "7299a615-462e-803f-8008-9b86b9346b9f",
+      "shapeName": "Authentication tab / Recovery",
+      "to": "recovery",
+      "targetId": "7299a615-462e-803f-8008-9b8bee025681"
+    }
+  ],
+  "flows": [
+    {
+      "name": "Desktop login — prototype",
+      "startingBoard": "7299a615-462e-803f-8008-9b8be7ba29a7"
+    },
+    {
+      "name": "Desktop login — failed sign-in",
+      "startingBoard": "7299a615-462e-803f-8008-9b8be974eff0"
+    },
+    {
+      "name": "Desktop login — sign in",
+      "startingBoard": "7299a615-462e-803f-8008-9b8be80355cb"
+    }
+  ],
+  "validation": []
+}

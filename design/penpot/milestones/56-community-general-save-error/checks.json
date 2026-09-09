@@ -1,0 +1,123 @@
+{
+  "results": [
+    {
+      "key": "top",
+      "id": "7299a615-462e-803f-8008-9befc0c9d5ac",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1203.1250000000002,
+      "scroll": 0,
+      "errors": [],
+      "message": "Could not save Community settings.",
+      "errorVisible": true,
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "input name"
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "immediate",
+      "id": "7299a615-462e-803f-8008-9bf00f604064",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1203.1250000000002,
+      "scroll": 599,
+      "errors": [],
+      "message": "Could not save Community settings.",
+      "errorVisible": false,
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "bottom",
+      "id": "7299a615-462e-803f-8008-9bf00d4f63e9",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1203.1250000000002,
+      "scroll": 599,
+      "errors": [],
+      "message": "Could not save Community settings.",
+      "errorVisible": false,
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "middle",
+      "id": "7299a615-462e-803f-8008-9bf00bb63b61",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1203.1250000000002,
+      "scroll": 500,
+      "errors": [],
+      "message": "Could not save Community settings.",
+      "errorVisible": true,
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25"
+      ],
+      "interactions": 0
+    }
+  ],
+  "missing": [],
+  "validation": [],
+  "pass": true
+}

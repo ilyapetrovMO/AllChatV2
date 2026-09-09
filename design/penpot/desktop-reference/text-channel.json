@@ -1,0 +1,207 @@
+{
+  "controls": [
+    {
+      "tag": "button",
+      "label": "Minimize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Maximize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Close window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Home",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community Instance",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Add Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Direct Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "general",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Lounge",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Open Member menu",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "User Settings",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Notifications",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Pinned Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Hide Members",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Search Messages",
+      "type": "search",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Reply",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "React",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Pin",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Edit",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Delete",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Reply",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "React",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Pin",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Edit",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Delete",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "textarea",
+      "label": "Message general",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Attach",
+      "type": "file",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Vvisual-ownerOwner",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}

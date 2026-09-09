@@ -1,0 +1,183 @@
+{
+  "results": [
+    {
+      "id": "7299a615-462e-803f-8008-9be4de9570a8",
+      "key": "relay",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1280.6875,
+      "texts": 27,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB"
+      ],
+      "interactions": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be5a1e995f0",
+      "key": "relay-bottom",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1280.6875,
+      "texts": 27,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be5a1079027",
+      "key": "relay-middle",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1280.6875,
+      "texts": 27,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "textarea relayPublicKey",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25"
+      ],
+      "interactions": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be448c4b5f3",
+      "key": "default",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "texts": 24,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB"
+      ],
+      "interactions": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be5919e19cd",
+      "key": "default-bottom",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "texts": 24,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be5906d675d",
+      "key": "default-middle",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "texts": 24,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input ringtone",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    }
+  ],
+  "coverage": [
+    {
+      "key": "default",
+      "controls": 8,
+      "missing": []
+    },
+    {
+      "key": "relay",
+      "controls": 9,
+      "missing": []
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

@@ -1,0 +1,9 @@
+# Milestone 34 — Suppression and quality selections
+
+Six editable static references show closed selectors with Enhanced (RNNoise), Off, Text, Balanced, Motion and Data saver. Together with existing defaults and menus, these represent every implemented suppression and quality choice. The source retains the explanatory text and independent processing controls for these choices; no new status message or Save button is invented. No prototype interactions or production code changes.
+
+Verified native menu text was reused to avoid stale character data. Five initial exports retained regular menu weight, so the references were moved near the origin, resized and restyled before canvas refresh. All six final exports show the expected bold closed-selector labels. Checks inspect exported text and font weight as well as stored values, clipping, selector visibility and absence of overlays/interactions. File validation has no issues; final SVG/PNG views were visually reviewed. Save and independent confirmation are recorded separately.
+
+Reconstruction: restore included milestone 30 and its prerequisites. Run author-voice-selections.js until remaining is zero (two bounded batches), then settle-voice-selections.js. Execute refresh-away.js and refresh-back.js in separate MCP calls, run check-voice-selections.js and inspect the labels. Run finish-voice-selections.js to restore final positions and review exports. Resolve page IDs by name in a reconstructed file. Repository MCP SDK, Playwright and milestone 03 Inter support helpers.
+
+The archive contains prerequisites, scripts, native SVG/PNG, IDs, checks and save evidence. It is a reconstruction backup, not a native .penpot export or verified reimport. Selected/named/long devices, microphone/speaker range values, minimum-window and full runtime/header/font fidelity, and broader desktop coverage remain open.

@@ -1,0 +1,324 @@
+[
+  {
+    "key": "loading",
+    "maps": [
+      {
+        "name": "General text 0",
+        "copy": "Community Settings",
+        "x": 328,
+        "y": 41.296875,
+        "w": 161,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)",
+        "button": null
+      },
+      {
+        "name": "General text 1",
+        "copy": "Dashboard",
+        "x": 90,
+        "y": 96,
+        "w": 83,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 88,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 2",
+        "copy": "General",
+        "x": 90,
+        "y": 134.390625,
+        "w": 58,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(240, 241, 245)",
+        "button": {
+          "x": 80,
+          "y": 126.390625,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgb(48, 50, 58)"
+        }
+      },
+      {
+        "name": "General text 3",
+        "copy": "Channels",
+        "x": 90,
+        "y": 172.78125,
+        "w": 69,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 164.78125,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 4",
+        "copy": "Roles",
+        "x": 90,
+        "y": 211.171875,
+        "w": 41,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 203.171875,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 5",
+        "copy": "Invitations",
+        "x": 90,
+        "y": 249.5625,
+        "w": 76,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 241.5625,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 6",
+        "copy": "Soundboard",
+        "x": 90,
+        "y": 287.953125,
+        "w": 93,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 279.953125,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 7",
+        "copy": "General",
+        "x": 344,
+        "y": 125.90625,
+        "w": 92,
+        "h": 29,
+        "fontSize": 24,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      },
+      {
+        "name": "General text 8",
+        "copy": "Manage AllChat Community from the desktop client.",
+        "x": 344,
+        "y": 208.40625,
+        "w": 395,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      },
+      {
+        "name": "General text 9",
+        "copy": "Loading Community settings…",
+        "x": 344,
+        "y": 276.796875,
+        "w": 229,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      }
+    ]
+  },
+  {
+    "key": "error",
+    "maps": [
+      {
+        "name": "General text 0",
+        "copy": "Community Settings",
+        "x": 328,
+        "y": 41.296875,
+        "w": 161,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)",
+        "button": null
+      },
+      {
+        "name": "General text 1",
+        "copy": "Dashboard",
+        "x": 90,
+        "y": 96,
+        "w": 83,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 88,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 2",
+        "copy": "General",
+        "x": 90,
+        "y": 134.390625,
+        "w": 58,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(240, 241, 245)",
+        "button": {
+          "x": 80,
+          "y": 126.390625,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgb(48, 50, 58)"
+        }
+      },
+      {
+        "name": "General text 3",
+        "copy": "Channels",
+        "x": 90,
+        "y": 172.78125,
+        "w": 69,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 164.78125,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 4",
+        "copy": "Roles",
+        "x": 90,
+        "y": 211.171875,
+        "w": 41,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 203.171875,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 5",
+        "copy": "Invitations",
+        "x": 90,
+        "y": 249.5625,
+        "w": 76,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 241.5625,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 6",
+        "copy": "Soundboard",
+        "x": 90,
+        "y": 287.953125,
+        "w": 93,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": {
+          "x": 80,
+          "y": 279.953125,
+          "w": 224,
+          "h": 36.390625,
+          "fill": "rgba(0, 0, 0, 0)"
+        }
+      },
+      {
+        "name": "General text 7",
+        "copy": "General",
+        "x": 344,
+        "y": 125.90625,
+        "w": 92,
+        "h": 29,
+        "fontSize": 24,
+        "fontWeight": "700",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      },
+      {
+        "name": "General text 8",
+        "copy": "Manage AllChat Community from the desktop client.",
+        "x": 344,
+        "y": 208.40625,
+        "w": 395,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      },
+      {
+        "name": "General text 9",
+        "copy": "Could not load Community settings.",
+        "x": 344,
+        "y": 276.796875,
+        "w": 271,
+        "h": 20,
+        "fontSize": 16,
+        "fontWeight": "400",
+        "color": "rgb(164, 168, 179)",
+        "button": null
+      }
+    ]
+  }
+]

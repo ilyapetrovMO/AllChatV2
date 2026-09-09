@@ -1,0 +1,11 @@
+# Milestone 13 — recovered message popovers and attachment states
+
+Penpot reconnected. All five checkpoint-12 boards were present, so none were recreated. Applied available Noto Color Emoji to 49 picker/custom glyph text nodes. Applied the pending selected-reaction badge patch to both reaction states. The reaction-empty native render was visually inspected successfully. Emoji artwork is rendered native text, not an uploaded screenshot.
+
+Added six static native boards: file pending, remove-hover, file-drag, attachment loading, attachment download, typing. The pending file has filename, formatted size (2.0 KiB), file icon and Remove control. Hover Remove is red. Drag state uses the source brand outline/shadow. The sent attachment distinguishes Loading… from Download; typing uses the source single-member wording. Source labels/native text/no-interaction checks passed, as did rechecks of checkpoint 12. No new prototype or interactions were created.
+
+Saved version Desktop design — milestone 13 attachments and recovered popovers, revision 35; independently confirmed. This resolves checkpoint 12’s named-save uncertainty. It does not resolve all visual checks: file-pending and mentions PNG exports timed out; their combined process terminated with exit 1. No successful render of those states is claimed. Other attachment states and the remaining checkpoint 12/11 states still need rendered inspection and source geometry comparison. The selected reaction and custom glyph fixes are now applied; older checkpoint 12’s pending-patch notes describe its historical state.
+
+Reconstruction backup, not native .penpot export. Includes prerequisite checkpoint 12 (which includes 07/11), attachment author/check scripts, and reaction refinement scripts. Restore checkpoint 12 first; then apply refine-reaction-font.js and refine-selected-reaction.js, then author-attachment-static-states.js. Noto Color Emoji and Inter are required. Run native verifiers afterward. SHA256SUMS covers included artifacts. Prior archives remain intact.
+
+Continue complete static coverage: remaining renders, image/video/audio attachments and viewer controls, reply excerpts, rich content, additional composer states, settings and other source-indexed families. A verified default or structural check is not proof of full screen/state coverage. The active goal remains unfinished.

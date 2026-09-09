@@ -1,0 +1,295 @@
+[
+  {
+    "key": "report-member",
+    "target": "memberId",
+    "values": [],
+    "message": "Please select an item in the list.",
+    "active": true,
+    "bounds": {
+      "x": 344,
+      "y": 288.53125,
+      "w": 584,
+      "h": 41.375
+    },
+    "scroll": 0,
+    "flags": {
+      "valueMissing": true,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 501,
+      "y": 338,
+      "w": 270,
+      "h": 41
+    }
+  },
+  {
+    "key": "report-reason",
+    "target": "reason",
+    "values": [
+      [
+        "memberId",
+        "Morgan"
+      ]
+    ],
+    "message": "Please fill out this field.",
+    "active": true,
+    "bounds": {
+      "x": 344,
+      "y": 364.203125,
+      "w": 584,
+      "h": 60.1875
+    },
+    "scroll": 0,
+    "flags": {
+      "valueMissing": true,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 531,
+      "y": 432,
+      "w": 209,
+      "h": 41
+    }
+  },
+  {
+    "key": "report-short",
+    "target": "reason",
+    "values": [
+      [
+        "memberId",
+        "Morgan"
+      ],
+      [
+        "reason",
+        "Hi"
+      ]
+    ],
+    "message": "Please lengthen this text to 3 characters or more (you are currently using 2 characters).",
+    "active": true,
+    "bounds": {
+      "x": 344,
+      "y": 364.203125,
+      "w": 584,
+      "h": 60.1875
+    },
+    "scroll": 0,
+    "flags": {
+      "valueMissing": false,
+      "tooShort": true,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 397,
+      "y": 432,
+      "w": 477,
+      "h": 57
+    }
+  },
+  {
+    "key": "moderation-reason",
+    "target": "moderationReason",
+    "values": [],
+    "message": "Please fill out this field.",
+    "active": true,
+    "bounds": {
+      "x": 344,
+      "y": 318.859375,
+      "w": 584,
+      "h": 60.1875
+    },
+    "scroll": 640,
+    "flags": {
+      "valueMissing": true,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 531,
+      "y": 387,
+      "w": 209,
+      "h": 41
+    }
+  },
+  {
+    "key": "duration",
+    "target": "duration",
+    "values": [
+      [
+        "moderationReason",
+        "Repeated unwanted messages."
+      ],
+      [
+        "duration",
+        "-1"
+      ]
+    ],
+    "message": "Value must be greater than or equal to 0.",
+    "active": true,
+    "bounds": {
+      "x": 344,
+      "y": 413.34375,
+      "w": 584,
+      "h": 42.28125
+    },
+    "scroll": 640,
+    "flags": {
+      "valueMissing": false,
+      "tooShort": false,
+      "rangeUnderflow": true,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 467,
+      "y": 464,
+      "w": 337,
+      "h": 41
+    }
+  },
+  {
+    "key": "password",
+    "target": "password",
+    "values": [],
+    "message": "Please fill out this field.",
+    "active": true,
+    "bounds": {
+      "x": 359,
+      "y": 357.21875,
+      "w": 554,
+      "h": 42.28125
+    },
+    "scroll": 1052,
+    "flags": {
+      "valueMissing": true,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 531,
+      "y": 408,
+      "w": 209,
+      "h": 41
+    }
+  },
+  {
+    "key": "confirmation",
+    "target": "confirmation",
+    "values": [
+      [
+        "password",
+        "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+      ]
+    ],
+    "message": "Please fill out this field.",
+    "active": true,
+    "bounds": {
+      "x": 359,
+      "y": 433.796875,
+      "w": 554,
+      "h": 42.28125
+    },
+    "scroll": 1052,
+    "flags": {
+      "valueMissing": true,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": false
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 531,
+      "y": 484,
+      "w": 209,
+      "h": 41
+    }
+  },
+  {
+    "key": "confirmation-pattern",
+    "target": "confirmation",
+    "values": [
+      [
+        "password",
+        "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+      ],
+      [
+        "confirmation",
+        "delete"
+      ]
+    ],
+    "message": "Please match the requested format.",
+    "active": true,
+    "bounds": {
+      "x": 359,
+      "y": 433.796875,
+      "w": 554,
+      "h": 42.28125
+    },
+    "scroll": 1052,
+    "flags": {
+      "valueMissing": false,
+      "tooShort": false,
+      "rangeUnderflow": false,
+      "patternMismatch": true
+    },
+    "style": {
+      "border": "rgba(0, 0, 0, 0)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 487,
+      "y": 484,
+      "w": 298,
+      "h": 41
+    }
+  }
+]

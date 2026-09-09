@@ -1,0 +1,56 @@
+[
+  {
+    "key": "wide",
+    "glyphRows": [
+      {
+        "source": [
+          21,
+          32
+        ],
+        "native": [
+          21,
+          32
+        ],
+        "match": true
+      },
+      {
+        "source": [
+          45,
+          54
+        ],
+        "native": [
+          45,
+          54
+        ],
+        "match": true
+      }
+    ]
+  },
+  {
+    "key": "small",
+    "glyphRows": [
+      {
+        "source": [
+          21,
+          32
+        ],
+        "native": [
+          21,
+          32
+        ],
+        "match": true
+      },
+      {
+        "source": [
+          45,
+          54
+        ],
+        "native": [
+          45,
+          54
+        ],
+        "match": true
+      }
+    ]
+  }
+]

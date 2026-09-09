@@ -20,7 +20,7 @@
   const stopScreen = async session => {
     const peer=session.connection?.peer;
     const stream=session.screenStream;
-    session.screenStream=null;
+    session.screenStream=null;session.cameraStream=null;
     stream?.getTracks().forEach(track=>{track.onended=null;track.stop()});
     session.screenSenders.forEach(sender=>{try{session.connection?.removeTrack(sender)}catch(_){}});
     const hadAudio=session.screenSenders.length>0;
@@ -72,10 +72,12 @@
   const playSound=async sound=>{try{audioContext ||= new AudioContext();await audioContext.resume();const buffer=await fetch(sound.audio_url).then(response=>response.arrayBuffer()).then(data=>audioContext.decodeAudioData(data));const source=audioContext.createBufferSource();source.buffer=buffer;source.connect(audioContext.destination);source.start()}catch(_){const audio=new Audio(sound.audio_url);audio.play().catch(()=>{})}};
   const openSoundboard=async(session,anchor)=>{
     document.querySelector(".soundboard-popover")?.remove();
-    const popover=document.createElement("div");popover.className="soundboard-popover";popover.setAttribute("role","dialog");popover.setAttribute("aria-label","Community soundboard");popover.innerHTML='<header><strong>Soundboard</strong><button type="button" aria-label="Close">×</button></header><div class="soundboard-grid"><span class="muted">Loading sounds…</span></div>';document.body.append(popover);const rect=anchor.getBoundingClientRect();popover.style.left=Math.max(8,rect.right-320)+"px";popover.style.bottom=Math.max(8,innerHeight-rect.top+8)+"px";popover.querySelector("header button").onclick=()=>popover.remove();
-    try{const response=await fetch("/api/v1/soundboard");if(!response.ok)throw new Error();const value=await response.json(),grid=popover.querySelector(".soundboard-grid");grid.replaceChildren();(value.sounds||[]).forEach(sound=>{const button=document.createElement("button");button.type="button";button.className="sound-button";button.innerHTML='<span></span><strong></strong>';button.querySelector("span").textContent=sound.emoji||"▶";button.querySelector("strong").textContent=sound.name;button.onclick=()=>{audioContext ||= new AudioContext();audioContext.resume();session.connection?.send("soundboard-play",{sound_id:sound.id});popover.remove()};grid.append(button)});if(!grid.children.length)grid.textContent="No Community sounds have been added yet."}catch(_){popover.querySelector(".soundboard-grid").textContent="Soundboard unavailable."}
+    const popover=document.createElement("div");popover.className="soundboard-popover";popover.setAttribute("role","dialog");popover.setAttribute("aria-label","Community soundboard");popover.innerHTML='<header><strong>Soundboard</strong><button type="button" aria-label="Close">×</button></header><div class="soundboard-grid"><span class="muted">Loading sounds…</span></div>';document.body.append(popover);const rect=(anchor.closest(".floating-member-panel")||anchor).getBoundingClientRect();popover.style.left=Math.max(8,Math.min(innerWidth-368,rect.left))+"px";popover.style.bottom=Math.max(8,innerHeight-rect.top+8)+"px";popover.style.maxHeight=Math.max(100,Math.min(430,rect.top-16))+"px";window.AllChatDesign?.dismissible(popover,anchor);popover.querySelector("header button").onclick=()=>popover.remove();
+    try{const response=await fetch("/api/v1/soundboard");if(!response.ok)throw new Error();const value=await response.json(),grid=popover.querySelector(".soundboard-grid");grid.replaceChildren();(value.sounds||[]).forEach(sound=>{const button=document.createElement("button");button.type="button";button.className="sound-button";button.innerHTML='<span></span><strong></strong>';button.querySelector("span").textContent=sound.emoji||"▶";button.querySelector("strong").textContent=sound.name;button.onclick=()=>{audioContext ||= new AudioContext();audioContext.resume();session.connection?.send("soundboard-play",{sound_id:sound.id});};grid.append(button)});if(!grid.children.length)grid.textContent="No Community sounds have been added yet."}catch(_){popover.querySelector(".soundboard-grid").textContent="Soundboard unavailable."}
   };
 
+  window.allchatOpenSoundboard = (connection, anchor) => openSoundboard({connection},anchor);
+  window.allchatPlaySound = playSound;
   const makePanel = (roomID, name) => {
     document.querySelector(".voice-connection-panel")?.remove();
     const panel = document.createElement("section");
@@ -120,6 +122,7 @@
     const session = active;
 	setPending(session, "Disconnecting");
     active = null;
+    window.allchatVoiceControls=null;
 	if(window.allchatActiveVoiceRoom===session.roomID)window.allchatActiveVoiceRoom="";
     session.connection?.stop({explicit});
     if (explicit) {
@@ -149,6 +152,28 @@
     const leave = panel.querySelector("[data-voice-leave]");
     const session = {roomID, name, panel, connection: null, stream: null, microphoneCapture: null, screenStream: null, screenSenders: [], screenSender: null, remoteAudios: new Map(), remoteVideos: new Map(), stoppedVideoMembers: new Set(), profile: currentProfile(), closestTextChannel: closestTextChannel(voiceLink), mediaConfig: {audio_bitrate:64000,screen_bitrate:2500000}};
     active = session;
+    const adapter = {
+      peer: () => session.connection?.peer,
+      settings: async settings => {
+        const old=session.microphoneCapture;if(!old)return;
+        if(old.settings?.microphoneID===settings.microphoneID && old.settings?.noiseSuppressionMode===settings.noiseSuppressionMode){old.setProcessing?.(settings);await old.raw?.getAudioTracks()[0]?.applyConstraints(window.AllChatVoiceSettings.constraints(settings));return;}
+        const capture=await window.AllChatVoiceSettings.capture(settings);
+        if(active!==session){capture.stop();return;}
+        try{const sender=session.connection?.peer?.getSenders().find(sender=>sender.track===session.stream.getAudioTracks()[0]);if(!sender)throw new Error('Microphone unavailable.');const track=capture.stream.getAudioTracks()[0];track.enabled=session.stream.getAudioTracks()[0].enabled;await sender.replaceTrack(track);session.microphoneCapture=capture;session.stream=session.connection.stream=capture.stream;old.stop();}catch(error){capture.stop();throw error;}
+      },
+      mute: muted => { const track=session.stream?.getAudioTracks()[0]; if(track){track.enabled=!muted;session.connection?.send("mute-state",{muted});} },
+      open: () => window.allchatNavigate?.(`/channels/${session.roomID}`),
+      camera: async () => {
+        if (!session.connection || session.connection.state !== "connected") throw new Error("Wait for Voice to connect.");
+        if(session.cameraStream){session.cameraStream.getTracks().forEach(track=>{track.onended=null;track.stop()});session.cameraStream=null;session.screenStream=null;await session.connection.clearVideoTrack();renderStage();return;}
+        if(session.screenStream)await stopScreen(session);
+        const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+        if(active!==session){stream.getTracks().forEach(track=>track.stop());return;}
+        try{await session.connection.setVideoTrack(stream.getVideoTracks()[0],stream);session.cameraStream=stream;session.screenStream=stream;stream.getVideoTracks()[0].onended=()=>adapter.camera();renderStage();}catch(error){stream.getTracks().forEach(track=>track.stop());throw error;}
+      }
+    };
+    window.allchatVoiceControls=adapter;
+    window.AllChatDesign?.connectionPanel(panel,adapter);
 	prepareEarcons();
 	setPending(session, "Connecting");
     leave.addEventListener("click", () => disconnect());
@@ -225,6 +250,7 @@
           }
         }
         if (state === "connected") {
+          window.AllChatDesign?.applyMute();
           status.textContent = "Voice Connected"; window.allchatActiveVoiceRoom=roomID;
           mute.disabled = screen.disabled = soundboard.disabled = false;
           window.allchatVoicePending?.delete(roomID);document.dispatchEvent(new CustomEvent("allchat:voice-pending"));

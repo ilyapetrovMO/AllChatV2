@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bbf303660ef",
+    "name": "Desktop / Settings / voice-hover-button",
+    "filename": "Desktop--Settings--voice-hover-button.svg",
+    "png": "Desktop--Settings--voice-hover-button.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbf2d4f792b",
+    "name": "Desktop / Settings / voice-hover-range",
+    "filename": "Desktop--Settings--voice-hover-range.svg",
+    "png": "Desktop--Settings--voice-hover-range.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbf2bed9852",
+    "name": "Desktop / Settings / voice-hover-selector",
+    "filename": "Desktop--Settings--voice-hover-selector.svg",
+    "png": "Desktop--Settings--voice-hover-selector.png"
+  }
+]

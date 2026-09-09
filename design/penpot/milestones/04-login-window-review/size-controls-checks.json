@@ -1,0 +1,32 @@
+[
+  {
+    "size": "960x640",
+    "mode": "Sign in",
+    "submitReachable": true
+  },
+  {
+    "size": "960x640",
+    "mode": "Register",
+    "submitReachable": true
+  },
+  {
+    "size": "960x640",
+    "mode": "Recovery",
+    "submitReachable": true
+  },
+  {
+    "size": "1280x800",
+    "mode": "Sign in",
+    "submitReachable": true
+  },
+  {
+    "size": "1280x800",
+    "mode": "Register",
+    "submitReachable": true
+  },
+  {
+    "size": "1280x800",
+    "mode": "Recovery",
+    "submitReachable": true
+  }
+]

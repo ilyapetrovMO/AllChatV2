@@ -1,0 +1,129 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "register",
+      "screenshot": "register.png",
+      "controls": "register.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "account-recovery",
+      "screenshot": "account-recovery.png",
+      "controls": "account-recovery.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "community-home",
+      "screenshot": "community-home.png",
+      "controls": "community-home.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "text-channel",
+      "screenshot": "text-channel.png",
+      "controls": "text-channel.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "member-presence-menu",
+      "screenshot": "member-presence-menu.png",
+      "controls": "member-presence-menu.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "community-menu",
+      "screenshot": "community-menu.png",
+      "controls": "community-menu.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "conversation-notification-menu",
+      "screenshot": "conversation-notification-menu.png",
+      "controls": "conversation-notification-menu.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-my-account",
+      "screenshot": "settings-my-account.png",
+      "controls": "settings-my-account.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-my-account-scroll-1",
+      "screenshot": "settings-my-account-scroll-1.png",
+      "controls": "settings-my-account-scroll-1.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video",
+      "screenshot": "settings-voice-video.png",
+      "controls": "settings-voice-video.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-1",
+      "screenshot": "settings-voice-video-scroll-1.png",
+      "controls": "settings-voice-video-scroll-1.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-2",
+      "screenshot": "settings-voice-video-scroll-2.png",
+      "controls": "settings-voice-video-scroll-2.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-voice-video-scroll-3",
+      "screenshot": "settings-voice-video-scroll-3.png",
+      "controls": "settings-voice-video-scroll-3.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-ringtone",
+      "screenshot": "settings-ringtone.png",
+      "controls": "settings-ringtone.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-notifications",
+      "screenshot": "settings-notifications.png",
+      "controls": "settings-notifications.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-notifications-scroll-1",
+      "screenshot": "settings-notifications-scroll-1.png",
+      "controls": "settings-notifications-scroll-1.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-sessions",
+      "screenshot": "settings-sessions.png",
+      "controls": "settings-sessions.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "settings-safety",
+      "screenshot": "settings-safety.png",
+      "controls": "settings-safety.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

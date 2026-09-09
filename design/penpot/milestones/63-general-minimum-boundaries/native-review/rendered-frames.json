@@ -1,0 +1,26 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9c010822cb27",
+    "name": "Desktop / Settings / general-small-valid-maximum-bottom",
+    "filename": "Desktop--Settings--general-small-valid-maximum-bottom.svg",
+    "png": "Desktop--Settings--general-small-valid-maximum-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9c00f5f1f920",
+    "name": "Desktop / Settings / general-small-valid-maximum-middle",
+    "filename": "Desktop--Settings--general-small-valid-maximum-middle.svg",
+    "png": "Desktop--Settings--general-small-valid-maximum-middle.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9c00e1ab2fd8",
+    "name": "Desktop / Settings / general-small-valid-minimum-bottom",
+    "filename": "Desktop--Settings--general-small-valid-minimum-bottom.svg",
+    "png": "Desktop--Settings--general-small-valid-minimum-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9c00cce82259",
+    "name": "Desktop / Settings / general-small-valid-minimum-middle",
+    "filename": "Desktop--Settings--general-small-valid-minimum-middle.svg",
+    "png": "Desktop--Settings--general-small-valid-minimum-middle.png"
+  }
+]

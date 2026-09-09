@@ -1,0 +1,263 @@
+{
+  "controls": [
+    {
+      "tag": "button",
+      "label": "Minimize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Maximize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Close window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Home",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community Instance",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Add Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "My Account",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Voice & Video",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Ringtone",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Notifications",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Sessions",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Safety",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Back to Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Direct Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "general",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Lounge",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Open Member menu",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "User Settings",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Notifications",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Pinned Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Search Messages",
+      "type": "search",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "select",
+      "label": "Microphone",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "select",
+      "label": "Speaker",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Microphone volume",
+      "type": "range",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Speaker volume",
+      "type": "range",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Mic Test",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "select",
+      "label": "Noise suppression",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Echo cancellationReduces sound from your speakers returning through the microphone.",
+      "type": "checkbox",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Automatic gain controlCompensates for microphones that are unusually quiet.",
+      "type": "checkbox",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Noise gateCloses the microphone below the sensitivity threshold.",
+      "type": "checkbox",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Input sensitivity",
+      "type": "range",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "select",
+      "label": "Camera",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Test Video",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "select",
+      "label": "Screen share quality",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Play sound",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Reset",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}

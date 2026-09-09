@@ -111,7 +111,7 @@ func validateReply(ctx context.Context, tx *sql.Tx, channelID, replyID string) e
 		return nil
 	}
 	var replyChannel string
-	if err := tx.QueryRowContext(ctx, "SELECT channel_id FROM messages WHERE id = ?", replyID).Scan(&replyChannel); err != nil || replyChannel != channelID {
+	if err := tx.QueryRowContext(ctx, "SELECT channel_id FROM messages WHERE id = ? AND call_event IS NULL", replyID).Scan(&replyChannel); err != nil || replyChannel != channelID {
 		return ErrNotFound
 	}
 	return nil
@@ -321,7 +321,7 @@ func (s *Service) SetReaction(ctx context.Context, member identity.Member, messa
 		return ErrInvalidInput
 	}
 	message, err := s.message(ctx, messageID)
-	if err != nil {
+	if err != nil || message.CallEvent != nil {
 		return ErrNotFound
 	}
 	if visible, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionViewChannels, true); !visible {
@@ -406,7 +406,7 @@ func inRuneRange(r, first, last rune) bool {
 
 func (s *Service) SetPinned(ctx context.Context, member identity.Member, messageID string, pinned bool) error {
 	message, err := s.message(ctx, messageID)
-	if err != nil {
+	if err != nil || message.CallEvent != nil {
 		return ErrNotFound
 	}
 	if allowed, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionSendMessages, false); !allowed {

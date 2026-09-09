@@ -71,6 +71,8 @@
     if (push) history.pushState({allchatOverlay: true}, "", url);
   };
   const preserveVoicePanel = sidebar => {
+    const memberPanel=document.querySelector('.channel-sidebar .member-panel');
+    if(memberPanel && sidebar && !sidebar.querySelector('.member-panel'))sidebar.append(memberPanel);
     const panel = document.querySelector(".voice-connection-panel");
     if (!panel || !sidebar) return;
     const anchor = sidebar.querySelector(".member-panel, .sidebar-footer");

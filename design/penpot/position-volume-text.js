@@ -1,0 +1,1 @@
+const b=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Settings / volume-text-reference');b.x=100;b.y=100;b.bringToFront();for(const t of b.children){t.growType='auto-height';t.resize(120,22);}penpot.selection=[...b.children];penpot.viewport.zoomIntoView([b]);return {bounds:b.children.map(t=>({copy:t.characters,bounds:t.textBounds}))};

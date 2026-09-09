@@ -1,0 +1,45 @@
+{
+  "remaining": 0,
+  "boards": [
+    {
+      "key": "community-ringtone-reset",
+      "id": "7299a615-462e-803f-8008-9be82d841ddf"
+    },
+    {
+      "key": "community-ringtone-reset-bottom",
+      "id": "7299a615-462e-803f-8008-9be8e475bd7d"
+    },
+    {
+      "key": "community-ringtone-error-custom",
+      "id": "7299a615-462e-803f-8008-9be7e4b3fb75"
+    },
+    {
+      "key": "community-ringtone-error-custom-bottom",
+      "id": "7299a615-462e-803f-8008-9be8d55ad30e"
+    },
+    {
+      "key": "community-ringtone-error",
+      "id": "7299a615-462e-803f-8008-9be76a58b1f6"
+    },
+    {
+      "key": "community-ringtone-error-bottom",
+      "id": "7299a615-462e-803f-8008-9be8c607c86a"
+    },
+    {
+      "key": "community-ringtone-saved",
+      "id": "7299a615-462e-803f-8008-9be72dd7a642"
+    },
+    {
+      "key": "community-ringtone-saved-bottom",
+      "id": "7299a615-462e-803f-8008-9be8b65538e6"
+    },
+    {
+      "key": "community-ringtone-custom",
+      "id": "7299a615-462e-803f-8008-9be6e1d91f13"
+    },
+    {
+      "key": "community-ringtone-custom-bottom",
+      "id": "7299a615-462e-803f-8008-9be8a5931a7a"
+    }
+  ]
+}

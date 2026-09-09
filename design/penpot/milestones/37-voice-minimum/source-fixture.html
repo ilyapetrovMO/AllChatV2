@@ -1,0 +1,41 @@
+<section class="settings-panel voice-video-settings" data-voice-settings>
+      <header class="voice-settings-intro">
+        <p class="eyebrow">Local media preferences</p>
+        <h2>Voice &amp; Video</h2>
+        <p>Choose how you sound and look in Voice Rooms and Direct Calls. Your microphone audio is processed locally.</p>
+      </header>
+      <section class="voice-settings-section">
+        <h3>Voice</h3>
+        <div class="voice-device-grid">
+          <label>Microphone<select aria-label="Microphone" value="" ><option value="">System default</option></select></label>
+          <label>Speaker<select aria-label="Speaker" value="" ><option value="">System default</option></select></label>
+        </div>
+        <label class="setting-row"><span><strong>Microphone volume</strong><small>Adjust the level sent to other Members.</small></span><output>100%</output><input aria-label="Microphone volume" type="range" min="0" max="2" step="0.05" value="1"  /></label>
+        <label class="setting-row"><span><strong>Speaker volume</strong><small>Adjust all incoming voice audio.</small></span><output>100%</output><input aria-label="Speaker volume" type="range" min="0" max="1" step="0.05" value="1"  /></label>
+        <button type="button" >Mic Test</button>
+      </section>
+      <section class="voice-settings-section">
+        <h3>Input processing</h3>
+        <label class="setting-row"><span><strong>Noise suppression</strong><small>Enhanced uses local RNNoise; Standard uses WebRTC.</small></span><select aria-label="Noise suppression" value="standard" ><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
+        <label class="setting-row setting-toggle"><span><strong>Echo cancellation</strong><small>Reduces sound from your speakers returning through the microphone.</small></span><input type="checkbox" checked  /></label>
+        <label class="setting-row setting-toggle"><span><strong>Automatic gain control</strong><small>Compensates for microphones that are unusually quiet.</small></span><input type="checkbox"   /></label>
+        <label class="setting-row setting-toggle"><span><strong>Noise gate</strong><small>Closes the microphone below the sensitivity threshold.</small></span><input type="checkbox" checked  /></label>
+        <label class="setting-row"><span><strong>Input sensitivity</strong></span><output>-50 dB</output><input aria-label="Input sensitivity" type="range" min="-80" max="-20" step="1" value="-50"  /></label>
+      </section>
+      <section class="voice-settings-section">
+        <h3>Camera</h3>
+        <div class="camera-test"><video  autoPlay muted playsInline hidden ></video><div class="camera-placeholder" >Camera preview is off</div></div>
+        <label>Camera<select aria-label="Camera" value="" ><option value="">System default</option></select></label>
+        <button type="button" >Test Video</button>
+      </section>
+      <section class="voice-settings-section">
+        <h3>Screen sharing</h3>
+        <label class="setting-row"><span><strong>Quality mode</strong><small>Auto protects frame delivery; Text preserves readability; Motion prioritizes smoothness.</small></span><select aria-label="Screen share quality" value="auto" ><option value="auto">Auto</option><option value="text">Text</option><option value="balanced">Balanced</option><option value="motion">Motion</option><option value="data-saver">Data saver</option></select></label>
+      </section>
+      <section class="voice-settings-section">
+        <h3>Advanced</h3>
+        <div class="setting-row"><span><strong>Speaker test</strong><small>Play a short tone through the selected output device.</small></span><button type="button" >Play sound</button></div>
+        <div class="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button class="danger-button" type="button" >Reset</button></div>
+      </section>
+      <p class="voice-settings-notice" role="status" aria-live="polite"></p>
+    </section>

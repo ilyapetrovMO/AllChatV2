@@ -1,0 +1,1 @@
+if(penpot.currentFile.id!=='c828d3cf-7d4e-8145-8008-9a4f1a6ff37f')throw Error('Wrong file');let p=penpot.currentFile.pages.find(p=>p.name==='Desktop — Main');if(!p){p=penpot.createPage();p.name='Desktop — Main';}penpot.openPage(p);return {pageId:p.id};

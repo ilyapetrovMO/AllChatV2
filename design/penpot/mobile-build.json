@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "6f6d9124f562a81d43224bdc1ab9a57e7250f133",
+  "variant": "debug",
+  "architecture": "x86_64",
+  "apkPath": "mobile/android/app/build/outputs/apk/debug/app-debug.apk",
+  "apkSHA256": "33abd923a1816b1246a285b3f586642bb7f395f663a90b4f08cd566f57545249",
+  "nativeLibraryCount": 16,
+  "build": "successful with capture-only init script",
+  "nativeRenderingVerified": false
+}

@@ -1,0 +1,109 @@
+{
+  "controls": [
+    {
+      "tag": "button",
+      "label": "Minimize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Maximize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Close window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Home",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community Instance",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Add Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Direct Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "general",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Lounge",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Open Member menu",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "User Settings",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Hide Members",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Search Messages",
+      "type": "search",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Vvisual-ownerOwner",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}

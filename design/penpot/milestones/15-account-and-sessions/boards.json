@@ -1,0 +1,22 @@
+[
+  {
+    "key": "account-top",
+    "id": "7299a615-462e-803f-8008-9ba144a91c5e"
+  },
+  {
+    "key": "account-lower",
+    "id": "7299a615-462e-803f-8008-9ba15063b716"
+  },
+  {
+    "key": "sessions-loading",
+    "id": "7299a615-462e-803f-8008-9ba15c091269"
+  },
+  {
+    "key": "sessions-empty",
+    "id": "7299a615-462e-803f-8008-9ba16126b9a0"
+  },
+  {
+    "key": "sessions-populated",
+    "id": "7299a615-462e-803f-8008-9ba165d477e3"
+  }
+]

@@ -1,0 +1,6 @@
+if(penpot.currentPage.id!=='6bdc1c40-ce96-804f-8008-9a5f830fd73b')throw Error('Desktop page required');
+const name='REFERENCE ONLY / Desktop Add Instance / Chromium required-field validation';const existing=penpot.currentPage.root.children.find(s=>s.name===name);if(existing){delete storage.desktopValidationChunks;return {boardId:existing.id,existing:true};}
+const bytes=Uint8Array.from(atob(storage.desktopValidationChunks.join('')),c=>c.charCodeAt(0));
+const media=await penpot.uploadMediaData('Desktop Chromium required-field validation.png',bytes,'image/png');
+const b=penpot.createBoard();b.name=name;b.resize(1280,720);b.x=9000;b.y=2700;const r=penpot.createRectangle();r.name='Application capture including native Chromium validation popup';r.resize(1280,720);r.x=b.x;r.y=b.y;r.fills=[{fillImage:media,fillOpacity:1}];b.appendChild(r);
+b.setPluginData('capture','design/penpot/populated/desktop-onboarding-reference/address-required.png');b.setPluginData('status','Raster reference of OS/browser-owned validation popup; application default/focus designs remain editable on adjacent boards');b.setPluginData('behavior','Required text input; native valueMissing=true prevents submission; Chromium message: Please fill out this field.');delete storage.desktopValidationChunks;return {boardId:b.id,imageShapeId:r.id,mediaId:media.id};

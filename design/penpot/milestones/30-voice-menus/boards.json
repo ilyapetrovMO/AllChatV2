@@ -1,0 +1,22 @@
+[
+  {
+    "key": "voice-menu-suppression",
+    "id": "7299a615-462e-803f-8008-9bba2c92c34c"
+  },
+  {
+    "key": "voice-menu-quality",
+    "id": "7299a615-462e-803f-8008-9bba33365d77"
+  },
+  {
+    "key": "voice-menu-microphone",
+    "id": "7299a615-462e-803f-8008-9bbac964311a"
+  },
+  {
+    "key": "voice-menu-speaker",
+    "id": "7299a615-462e-803f-8008-9bbad1a85b3a"
+  },
+  {
+    "key": "voice-menu-camera",
+    "id": "7299a615-462e-803f-8008-9bbad9787aa7"
+  }
+]

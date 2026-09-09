@@ -1,0 +1,17 @@
+{
+  "boardId": "6bdc1c40-ce96-804f-8008-9a6fee8f2b10",
+  "source": "mobile/App.tsx",
+  "components": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6fa256bf12",
+      "path": "Mobile / Account input",
+      "name": "Empty dark"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6fa2697c7f",
+      "path": "Mobile / Account submit",
+      "name": "Default dark"
+    }
+  ],
+  "status": "native draft; visual verification pending"
+}

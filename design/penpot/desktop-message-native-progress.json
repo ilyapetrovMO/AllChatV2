@@ -1,0 +1,32 @@
+[
+  {
+    "name": "image-viewer-default",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a76a7ddbf06",
+    "nativeTextLayers": 94,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "image-viewer-zoomed",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a7708d65a59",
+    "nativeTextLayers": 94,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "reaction-picker-empty",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a77194e036a",
+    "nativeTextLayers": 120,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "reaction-picker-custom",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a772e6ce06d",
+    "nativeTextLayers": 120,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "pending-file",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a774ccc7ab3",
+    "nativeTextLayers": 95,
+    "status": "native draft; visual verification pending"
+  }
+]

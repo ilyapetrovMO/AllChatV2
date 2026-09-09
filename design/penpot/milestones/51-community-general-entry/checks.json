@@ -1,0 +1,28 @@
+{
+  "results": [
+    {
+      "id": "7299a615-462e-803f-8008-9be2878d90a3",
+      "name": "Desktop / Settings / community-general-error",
+      "width": 1280,
+      "height": 800,
+      "nav": 6,
+      "textCount": 12,
+      "glyphErrors": [],
+      "interactions": 0,
+      "showInViewMode": false
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9be241a44bd2",
+      "name": "Desktop / Settings / community-general-loading",
+      "width": 1280,
+      "height": 800,
+      "nav": 6,
+      "textCount": 12,
+      "glyphErrors": [],
+      "interactions": 0,
+      "showInViewMode": false
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

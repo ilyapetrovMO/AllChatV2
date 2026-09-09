@@ -1,0 +1,38 @@
+{
+  "changed": true,
+  "remaining": 0,
+  "boards": [
+    {
+      "key": "safety-invalid-report-member",
+      "id": "7299a615-462e-803f-8008-9bd5ae9d8430"
+    },
+    {
+      "key": "safety-invalid-report-reason",
+      "id": "7299a615-462e-803f-8008-9bd5c9c1e93b"
+    },
+    {
+      "key": "safety-invalid-report-short",
+      "id": "7299a615-462e-803f-8008-9bd5d789c8ed"
+    },
+    {
+      "key": "safety-invalid-moderation-reason",
+      "id": "7299a615-462e-803f-8008-9bd5ebd951fc"
+    },
+    {
+      "key": "safety-invalid-duration",
+      "id": "7299a615-462e-803f-8008-9bd5f8172112"
+    },
+    {
+      "key": "safety-invalid-password",
+      "id": "7299a615-462e-803f-8008-9bd6090845c9"
+    },
+    {
+      "key": "safety-invalid-confirmation",
+      "id": "7299a615-462e-803f-8008-9bd61b5b3eb7"
+    },
+    {
+      "key": "safety-invalid-confirmation-pattern",
+      "id": "7299a615-462e-803f-8008-9bd62efab7ca"
+    }
+  ]
+}

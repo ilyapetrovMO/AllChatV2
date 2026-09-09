@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Option Community default",
+    "id": "7299a615-462e-803f-8008-9badfcedfeba",
+    "copy": "Community default",
+    "x": 938,
+    "y": 685,
+    "width": 192,
+    "height": 24,
+    "textBounds": {
+      "x": 48738,
+      "y": 2604.6000061035156,
+      "width": 143.76666259765625,
+      "height": 20
+    },
+    "fills": [
+      {
+        "fillColor": "#303638",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ]
+  },
+  {
+    "name": "Option All Messages",
+    "id": "7299a615-462e-803f-8008-9badfe451b96",
+    "copy": "All Messages",
+    "x": 938,
+    "y": 712,
+    "width": 192,
+    "height": 24,
+    "textBounds": {
+      "x": 48738,
+      "y": 2631.800003051758,
+      "width": 81.69999694824219,
+      "height": 16
+    },
+    "fills": [
+      {
+        "fillColor": "#f0f1f5",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ]
+  },
+  {
+    "name": "Option Only @mentions",
+    "id": "7299a615-462e-803f-8008-9bae0022d4bc",
+    "copy": "Only @mentions",
+    "x": 938,
+    "y": 739,
+    "width": 192,
+    "height": 24,
+    "textBounds": {
+      "x": 48738,
+      "y": 2658.800003051758,
+      "width": 100.73333740234375,
+      "height": 16
+    },
+    "fills": [
+      {
+        "fillColor": "#f0f1f5",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ]
+  },
+  {
+    "name": "Option Nothing",
+    "id": "7299a615-462e-803f-8008-9bae01c32c43",
+    "copy": "Nothing",
+    "x": 938,
+    "y": 766,
+    "width": 192,
+    "height": 24,
+    "textBounds": {
+      "x": 48738,
+      "y": 2685.800003051758,
+      "width": 48.33332824707031,
+      "height": 16
+    },
+    "fills": [
+      {
+        "fillColor": "#f0f1f5",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ]
+  }
+]

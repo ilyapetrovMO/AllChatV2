@@ -608,6 +608,13 @@ export class InstanceCoordinator {
       if (!response.ok || !isDirectCall(call)) throw new Error(readError(call, `Could not ${action.action} the Call.`));
       return { type: 'call', call };
     }
+    if (action.type === 'end_media_session') {
+      const response = await this.request(`${profile.baseUrl}/api/v1/media/rooms/${encodeURIComponent(action.roomId)}/session`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Could not disconnect Voice. Try again.');
+      return { type: 'accepted' };
+    }
     if (action.type === 'turn_credentials') {
       const response = await this.request(`${profile.baseUrl}/api/v1/turn-credentials`, { headers: { Authorization: `Bearer ${token}` } });
       const body = await response.json().catch(() => undefined) as { ice_servers?: unknown } | undefined;

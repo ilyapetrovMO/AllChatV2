@@ -1,0 +1,86 @@
+[
+  {
+    "mode": "Sign in",
+    "viewport": {
+      "x": 0,
+      "y": 132.765625,
+      "width": 960,
+      "height": 640,
+      "bottom": 772.765625
+    },
+    "content": {
+      "x": 72,
+      "y": 160.765625,
+      "width": 888,
+      "height": 612,
+      "bottom": 772.765625
+    },
+    "form": {
+      "x": 276,
+      "y": 194.4375,
+      "width": 480,
+      "height": 544.65625,
+      "bottom": 739.09375
+    },
+    "scrollHeight": 612,
+    "clientHeight": 612,
+    "scrollWidth": 888,
+    "clientWidth": 888
+  },
+  {
+    "mode": "Register",
+    "viewport": {
+      "x": 0,
+      "y": 132.765625,
+      "width": 960,
+      "height": 640,
+      "bottom": 772.765625
+    },
+    "content": {
+      "x": 72,
+      "y": 160.765625,
+      "width": 888,
+      "height": 612,
+      "bottom": 772.765625
+    },
+    "form": {
+      "x": 276,
+      "y": 184.765625,
+      "width": 480,
+      "height": 588.046875,
+      "bottom": 772.8125
+    },
+    "scrollHeight": 636,
+    "clientHeight": 612,
+    "scrollWidth": 888,
+    "clientWidth": 888
+  },
+  {
+    "mode": "Recovery",
+    "viewport": {
+      "x": 0,
+      "y": 132.765625,
+      "width": 960,
+      "height": 640,
+      "bottom": 772.765625
+    },
+    "content": {
+      "x": 72,
+      "y": 160.765625,
+      "width": 888,
+      "height": 612,
+      "bottom": 772.765625
+    },
+    "form": {
+      "x": 276,
+      "y": 214.03125,
+      "width": 480,
+      "height": 505.46875,
+      "bottom": 719.5
+    },
+    "scrollHeight": 612,
+    "clientHeight": 612,
+    "scrollWidth": 888,
+    "clientWidth": 888
+  }
+]

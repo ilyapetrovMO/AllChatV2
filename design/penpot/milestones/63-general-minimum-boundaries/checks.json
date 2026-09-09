@@ -1,0 +1,232 @@
+{
+  "results": [
+    {
+      "key": "maximum-bottom",
+      "id": "7299a615-462e-803f-8008-9c010822cb27",
+      "width": 960,
+      "height": 640,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "Community WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "length": 100,
+          "correct": true,
+          "geometry": true,
+          "visible": false,
+          "rendered": true,
+          "clipped": true
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "256",
+          "length": 3,
+          "correct": true,
+          "geometry": true,
+          "visible": false,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "Welcome to AllChat Community.",
+          "length": 29,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "https://push.example.com",
+          "length": 24,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "maximum-middle",
+      "id": "7299a615-462e-803f-8008-9c00f5f1f920",
+      "width": 960,
+      "height": 640,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "Community WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "length": 100,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": true
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "256",
+          "length": 3,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "Welcome to AllChat Community.",
+          "length": 29,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "https://push.example.com",
+          "length": 24,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "minimum-bottom",
+      "id": "7299a615-462e-803f-8008-9c00e1ab2fd8",
+      "width": 960,
+      "height": 640,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "A",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": false,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "1",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": false,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "minimum-middle",
+      "id": "7299a615-462e-803f-8008-9c00cce82259",
+      "width": 960,
+      "height": 640,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "A",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "1",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    }
+  ],
+  "coverage": [
+    {
+      "key": "minimum",
+      "missing": []
+    },
+    {
+      "key": "maximum",
+      "missing": []
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

@@ -1,0 +1,10 @@
+const boards=penpot.currentPage.root.children.filter(b=>b.getPluginData('static-camera-preview-state')),problems=[];
+for(const b of boards){const shapes=penpotUtils.findShapes(()=>true,b),find=n=>shapes.find(s=>s.name===n),key=b.getPluginData('static-camera-preview-state'),preview=find('Camera preview'),frame=find('Synthetic video frame'),button=find('Stop Video button'),label=find('Stop Video label'),notice=find('Voice settings notice');const ratio=Number(b.getPluginData('camera-aspect-ratio'));
+if(preview.width!==854||preview.height!==320||Math.abs(frame.width-320*ratio)>.1||frame.height!==320||Math.abs(frame.x-(preview.x+(854-frame.width)/2))>.1)problems.push(key+': preview geometry');
+if(shapes.some(s=>s.type==='text'&&['Camera preview is off','Test Video'].includes(s.characters)))problems.push(key+': stale off state');
+if(label?.characters!=='Stop Video'||notice?.characters!=='Camera preview started.')problems.push(key+': copy');
+if(!label?.textBounds?.width||!notice?.textBounds?.width)problems.push(key+': unrendered text');
+if(Math.abs(label.x+label.textBounds.width/2-button.x-button.width/2)>1)problems.push(key+': button alignment');
+if(key.endsWith('notice')){if(notice.y<b.y+76||notice.y+notice.height>b.y+b.height)problems.push(key+': notice not visible');}else if(button.y<b.y+76||button.y+button.height>b.y+b.height)problems.push(key+': stop button not visible');
+if(shapes.some(s=>s.interactions.length))problems.push(key+': prototype interaction');
+}const validation=penpot.currentFile.validate();return {pass:boards.length===3&&!problems.length&&!validation.length,problems,validation,revision:penpot.currentFile.revn};

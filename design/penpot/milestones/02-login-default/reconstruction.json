@@ -1,0 +1,1738 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "pageId": "7299a615-462e-803f-8008-9b83cd5d80df",
+  "revision": 12,
+  "versions": [
+    {
+      "label": "Desktop login \u2014 milestone 02 default screen",
+      "createdAt": "2026-09-08T12:46:21.024Z",
+      "isAutosave": false
+    },
+    {
+      "label": "Desktop login \u2014 milestone 01 save check",
+      "createdAt": "2026-09-08T12:30:35.476Z",
+      "isAutosave": false
+    }
+  ],
+  "screen": {
+    "id": "7299a615-462e-803f-8008-9b86b8dfca4b",
+    "name": "Desktop / Login / Default",
+    "type": "board",
+    "x": 640,
+    "y": 0,
+    "width": 1280,
+    "height": 720,
+    "fills": [
+      {
+        "fillColor": "#0d0e11",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ],
+    "strokes": [],
+    "shadows": [],
+    "borderRadius": 0,
+    "tokens": {
+      "fill": "login.color.rail"
+    },
+    "children": [
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8e3497e",
+        "name": "Desktop title bar",
+        "type": "board",
+        "x": 640,
+        "y": 0,
+        "width": 1280,
+        "height": 28.000000000000004,
+        "fills": [
+          {
+            "fillColor": "#0d0e11",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 0,
+        "tokens": {
+          "fill": "login.color.rail"
+        },
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8e6cb0d",
+            "name": "Application name",
+            "type": "text",
+            "x": 650,
+            "y": 5.8,
+            "width": 80,
+            "height": 15.399999999999999,
+            "fills": [
+              {
+                "fillColor": "#727784",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {
+              "fill": "login.color.faint"
+            },
+            "text": {
+              "characters": "AllChat",
+              "fontId": "gfont-inter",
+              "fontFamily": "Inter",
+              "fontSize": "11",
+              "fontWeight": "700",
+              "align": "left",
+              "letterSpacing": "0",
+              "lineHeight": "1.2",
+              "bounds": {
+                "x": 650,
+                "y": 5.400006103515626,
+                "width": 39.58332824707031,
+                "height": 14
+              }
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8eb3719",
+            "name": "Title bar divider",
+            "type": "rectangle",
+            "x": 640,
+            "y": 27,
+            "width": 1280,
+            "height": 1,
+            "fills": [
+              {
+                "fillColor": "#18191e",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": 0,
+            "tokens": {
+              "fill": "login.color.surface"
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8ee8ec8",
+            "name": "Minimize",
+            "type": "group",
+            "x": 1819,
+            "y": 7.5,
+            "width": 12,
+            "height": 12,
+            "fills": [],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {},
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8ef52fc",
+                "name": "base-background",
+                "type": "rectangle",
+                "x": 1819,
+                "y": 7.5,
+                "width": 12,
+                "height": 12,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": null,
+                    "strokeCapEnd": null,
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": 0,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8ef89bf",
+                "name": "svg-path",
+                "type": "path",
+                "x": 1821,
+                "y": 14,
+                "width": 8,
+                "height": 0.01,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              }
+            ]
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8f20fcd",
+            "name": "Maximize",
+            "type": "group",
+            "x": 1857,
+            "y": 7.5,
+            "width": 12,
+            "height": 12,
+            "fills": [],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {},
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8f254f0",
+                "name": "base-background",
+                "type": "rectangle",
+                "x": 1857,
+                "y": 7.5,
+                "width": 12,
+                "height": 12,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": null,
+                    "strokeCapEnd": null,
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": 0,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8f28aed",
+                "name": "svg-path",
+                "type": "path",
+                "x": 1859.25,
+                "y": 9.75,
+                "width": 7.5,
+                "height": 7.5,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              }
+            ]
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8f51db5",
+            "name": "Close",
+            "type": "group",
+            "x": 1895,
+            "y": 7.5,
+            "width": 12,
+            "height": 12,
+            "fills": [],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {},
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8f54a18",
+                "name": "base-background",
+                "type": "rectangle",
+                "x": 1895,
+                "y": 7.5,
+                "width": 12,
+                "height": 12,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": null,
+                    "strokeCapEnd": null,
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": 0,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b8f54a19",
+                "name": "svg-path",
+                "type": "path",
+                "x": 1897.5,
+                "y": 10,
+                "width": 7,
+                "height": 7,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.25,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8f7d152",
+        "name": "Community rail",
+        "type": "board",
+        "x": 640,
+        "y": 28,
+        "width": 72,
+        "height": 692,
+        "fills": [
+          {
+            "fillColor": "#0d0e11",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 0,
+        "tokens": {
+          "fill": "login.color.rail"
+        },
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8fb2f17",
+            "name": "Home button",
+            "type": "rectangle",
+            "x": 652,
+            "y": 40,
+            "width": 48,
+            "height": 48,
+            "fills": [
+              {
+                "fillColor": "#6d75e8",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": 16,
+            "tokens": {
+              "fill": "login.color.brand"
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8ff84d1",
+            "name": "Home icon",
+            "type": "group",
+            "x": 667.38,
+            "y": 55.379999999999995,
+            "width": 17.25,
+            "height": 17.25,
+            "fills": [],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {},
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b90010d1",
+                "name": "base-background",
+                "type": "rectangle",
+                "x": 667.38,
+                "y": 55.379999999999995,
+                "width": 17.25,
+                "height": 17.25,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#ffffff",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 2,
+                    "strokeAlignment": null,
+                    "strokeCapStart": null,
+                    "strokeCapEnd": null,
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": 0,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b90010d2",
+                "name": "svg-path",
+                "type": "path",
+                "x": 669.53625,
+                "y": 57.536249999999995,
+                "width": 12.9375,
+                "height": 5.75,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#ffffff",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.4375,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b90010d3",
+                "name": "svg-path",
+                "type": "path",
+                "x": 670.97375,
+                "y": 62.567499999999995,
+                "width": 10.0625,
+                "height": 7.1875,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#ffffff",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.4375,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b90043d2",
+                "name": "svg-path",
+                "type": "path",
+                "x": 673.84875,
+                "y": 65.4425,
+                "width": 4.3125,
+                "height": 4.3125,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#ffffff",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.4375,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              }
+            ]
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b902f036",
+            "name": "Selected community",
+            "type": "rectangle",
+            "x": 652,
+            "y": 98,
+            "width": 48,
+            "height": 48,
+            "fills": [
+              {
+                "fillColor": "#5962d6",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": 12,
+            "tokens": {
+              "fill": "login.color.selected"
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b9062768",
+            "name": "Community initial",
+            "type": "text",
+            "x": 652,
+            "y": 114,
+            "width": 48,
+            "height": 21,
+            "fills": [
+              {
+                "fillColor": "#ffffff",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {
+              "fill": "login.color.white"
+            },
+            "text": {
+              "characters": "1",
+              "fontId": "gfont-inter",
+              "fontFamily": "Inter",
+              "fontSize": "15",
+              "fontWeight": "800",
+              "align": "center",
+              "letterSpacing": "0",
+              "lineHeight": "1.2",
+              "bounds": {
+                "x": 672.6833343505859,
+                "y": 113.5,
+                "width": 6.616668701171875,
+                "height": 19
+              }
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b90a8958",
+            "name": "Selected community indicator",
+            "type": "rectangle",
+            "x": 640,
+            "y": 102,
+            "width": 4,
+            "height": 40,
+            "fills": [
+              {
+                "fillColor": "#ffffff",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": 2,
+            "tokens": {
+              "fill": "login.color.white"
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b90e3954",
+            "name": "Add community button",
+            "type": "rectangle",
+            "x": 652,
+            "y": 660,
+            "width": 48,
+            "height": 48,
+            "fills": [
+              {
+                "fillColor": "#26282f",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": 16,
+            "tokens": {
+              "fill": "login.color.hover"
+            }
+          },
+          {
+            "id": "7299a615-462e-803f-8008-9b86b911cdd5",
+            "name": "Add community icon",
+            "type": "group",
+            "x": 665,
+            "y": 673,
+            "width": 22,
+            "height": 22,
+            "fills": [],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {},
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b9122ddb",
+                "name": "base-background",
+                "type": "rectangle",
+                "x": 665,
+                "y": 673,
+                "width": 22,
+                "height": 22,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 2,
+                    "strokeAlignment": null,
+                    "strokeCapStart": null,
+                    "strokeCapEnd": null,
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": 0,
+                "tokens": {}
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b9122ddc",
+                "name": "svg-path",
+                "type": "path",
+                "x": 669.5833333333334,
+                "y": 677.5833333333334,
+                "width": 12.833333333333371,
+                "height": 12.833333333333258,
+                "fills": [],
+                "strokes": [
+                  {
+                    "strokeColor": "#a4a8b3",
+                    "strokeColorRefFile": null,
+                    "strokeColorRefId": null,
+                    "strokeOpacity": 1,
+                    "strokeStyle": null,
+                    "strokeWidth": 1.8333333333333333,
+                    "strokeAlignment": null,
+                    "strokeCapStart": "round",
+                    "strokeCapEnd": "round",
+                    "strokeColorGradient": null
+                  }
+                ],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b914e967",
+        "name": "Authentication background",
+        "type": "board",
+        "x": 712,
+        "y": 28,
+        "width": 1208,
+        "height": 692,
+        "fills": [
+          {
+            "fillColor": null,
+            "fillOpacity": null,
+            "fillColorGradient": {
+              "type": "radial",
+              "startX": 0.5,
+              "startY": 0,
+              "endX": 0.7889385834770247,
+              "endY": 0,
+              "width": 1.745664739884393,
+              "stops": [
+                {
+                  "color": "#404eed",
+                  "opacity": 1,
+                  "offset": 0
+                },
+                {
+                  "color": "#0d0e11",
+                  "opacity": 1,
+                  "offset": 1
+                }
+              ]
+            },
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 0,
+        "tokens": {},
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b91915e9",
+            "name": "Authentication card",
+            "type": "board",
+            "x": 1076,
+            "y": 101.67,
+            "width": 480,
+            "height": 544.66,
+            "fills": [
+              {
+                "fillColor": "#18191e",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b91cd885",
+                "style": "drop-shadow",
+                "offsetX": 0,
+                "offsetY": 12,
+                "blur": 32,
+                "spread": 0,
+                "hidden": false,
+                "color": {
+                  "color": "#000000",
+                  "opacity": 0.46
+                }
+              }
+            ],
+            "borderRadius": 8,
+            "tokens": {
+              "fill": "login.color.surface"
+            },
+            "children": [
+              {
+                "id": "7299a615-462e-803f-8008-9b86b91d3f96",
+                "name": "Community name",
+                "type": "text",
+                "x": 1124,
+                "y": 151.67000000000002,
+                "width": 384,
+                "height": 16.80000000000001,
+                "fills": [
+                  {
+                    "fillColor": "#727784",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.faint"
+                },
+                "text": {
+                  "characters": "127.0.0.1:4187",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "12",
+                  "fontWeight": "800",
+                  "align": "center",
+                  "letterSpacing": "0",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1274.6000061035156,
+                    "y": 151.3699969482422,
+                    "width": 82.79998779296875,
+                    "height": 15
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b921ae68",
+                "name": "Login heading line 1",
+                "type": "text",
+                "x": 1124,
+                "y": 195.86,
+                "width": 384,
+                "height": 39.19999999999999,
+                "fills": [
+                  {
+                    "fillColor": "#f0f1f5",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.text"
+                },
+                "text": {
+                  "characters": "Sign in to your",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "28",
+                  "fontWeight": "700",
+                  "align": "center",
+                  "letterSpacing": "0",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1218.2666625976562,
+                    "y": 195.66000305175783,
+                    "width": 195.4499969482422,
+                    "height": 34
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b92617d6",
+                "name": "Login heading line 2",
+                "type": "text",
+                "x": 1124,
+                "y": 235.05,
+                "width": 384,
+                "height": 39.19999999999999,
+                "fills": [
+                  {
+                    "fillColor": "#f0f1f5",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.text"
+                },
+                "text": {
+                  "characters": "Community",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "28",
+                  "fontWeight": "700",
+                  "align": "center",
+                  "letterSpacing": "0",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1236.4166717529297,
+                    "y": 234.85000305175782,
+                    "width": 159.14999389648438,
+                    "height": 34
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b92ace35",
+                "name": "Community address",
+                "type": "text",
+                "x": 1124,
+                "y": 282.23,
+                "width": 384,
+                "height": 22.399999999999977,
+                "fills": [
+                  {
+                    "fillColor": "#a4a8b3",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.muted"
+                },
+                "text": {
+                  "characters": "http://127.0.0.1:4187",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "16",
+                  "fontWeight": "400",
+                  "align": "center",
+                  "letterSpacing": "0",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1242.6166687011719,
+                    "y": 281.83000610351564,
+                    "width": 146.76666259765625,
+                    "height": 20
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b9305751",
+                "name": "Authentication tab / Sign in",
+                "type": "board",
+                "x": 1124,
+                "y": 328.83,
+                "width": 125.33333300000004,
+                "height": 43.170000000000016,
+                "fills": [
+                  {
+                    "fillColor": "#30323a",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {
+                  "fill": "login.color.active"
+                },
+                "componentId": "7299a615-462e-803f-8008-9b86b8de378f",
+                "children": [
+                  {
+                    "id": "7299a615-462e-803f-8008-9b86b9305752",
+                    "name": "Selected tab label",
+                    "type": "text",
+                    "x": 1124,
+                    "y": 340.21999999999997,
+                    "width": 125.33333300000004,
+                    "height": 22.399999999999977,
+                    "fills": [
+                      {
+                        "fillColor": "#f0f1f5",
+                        "fillOpacity": 1,
+                        "fillColorGradient": null,
+                        "fillColorRefFile": null,
+                        "fillColorRefId": null,
+                        "fillImage": null
+                      }
+                    ],
+                    "strokes": [],
+                    "shadows": [],
+                    "borderRadius": null,
+                    "tokens": {
+                      "fill": "login.color.text"
+                    },
+                    "componentId": "7299a615-462e-803f-8008-9b86b8de378f",
+                    "text": {
+                      "characters": "Sign in",
+                      "fontId": "gfont-inter",
+                      "fontFamily": "Inter",
+                      "fontSize": "16",
+                      "fontWeight": "700",
+                      "align": "center",
+                      "letterSpacing": "0",
+                      "lineHeight": "1.2",
+                      "bounds": {
+                        "x": 1160.1666717529297,
+                        "y": 339.8200061035156,
+                        "width": 52.98332214355469,
+                        "height": 20
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b9324b91",
+                "name": "Authentication tab / Register",
+                "type": "board",
+                "x": 1253.333333,
+                "y": 328.83,
+                "width": 125.33333300000004,
+                "height": 43.170000000000016,
+                "fills": [],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {},
+                "componentId": "7299a615-462e-803f-8008-9b86b8df2ae4",
+                "children": [
+                  {
+                    "id": "7299a615-462e-803f-8008-9b86b9324b92",
+                    "name": "Idle tab label",
+                    "type": "text",
+                    "x": 1253.333333,
+                    "y": 340.21999999999997,
+                    "width": 125.33333300000004,
+                    "height": 22.399999999999977,
+                    "fills": [
+                      {
+                        "fillColor": "#a4a8b3",
+                        "fillOpacity": 1,
+                        "fillColorGradient": null,
+                        "fillColorRefFile": null,
+                        "fillColorRefId": null,
+                        "fillImage": null
+                      }
+                    ],
+                    "strokes": [],
+                    "shadows": [],
+                    "borderRadius": null,
+                    "tokens": {
+                      "fill": "login.color.muted"
+                    },
+                    "componentId": "7299a615-462e-803f-8008-9b86b8df2ae4",
+                    "text": {
+                      "characters": "Register",
+                      "fontId": "gfont-inter",
+                      "fontFamily": "Inter",
+                      "fontSize": "16",
+                      "fontWeight": "700",
+                      "align": "center",
+                      "letterSpacing": "0",
+                      "lineHeight": "1.2",
+                      "bounds": {
+                        "x": 1283.4833268964844,
+                        "y": 339.8200061035156,
+                        "width": 65.01667785644531,
+                        "height": 20
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b9346b9f",
+                "name": "Authentication tab / Recovery",
+                "type": "board",
+                "x": 1382.666666,
+                "y": 328.83,
+                "width": 125.33333300000004,
+                "height": 43.170000000000016,
+                "fills": [],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {},
+                "componentId": "7299a615-462e-803f-8008-9b86b8df2ae4",
+                "children": [
+                  {
+                    "id": "7299a615-462e-803f-8008-9b86b9346ba0",
+                    "name": "Idle tab label",
+                    "type": "text",
+                    "x": 1382.666666,
+                    "y": 340.21999999999997,
+                    "width": 125.33333300000004,
+                    "height": 22.399999999999977,
+                    "fills": [
+                      {
+                        "fillColor": "#a4a8b3",
+                        "fillOpacity": 1,
+                        "fillColorGradient": null,
+                        "fillColorRefFile": null,
+                        "fillColorRefId": null,
+                        "fillImage": null
+                      }
+                    ],
+                    "strokes": [],
+                    "shadows": [],
+                    "borderRadius": null,
+                    "tokens": {
+                      "fill": "login.color.muted"
+                    },
+                    "componentId": "7299a615-462e-803f-8008-9b86b8df2ae4",
+                    "text": {
+                      "characters": "Recovery",
+                      "fontId": "gfont-inter",
+                      "fontFamily": "Inter",
+                      "fontSize": "16",
+                      "fontWeight": "700",
+                      "align": "center",
+                      "letterSpacing": "0",
+                      "lineHeight": "1.2",
+                      "bounds": {
+                        "x": 1408.3166598964845,
+                        "y": 339.8200061035156,
+                        "width": 74.03334045410156,
+                        "height": 20
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b935f0b9",
+                "name": "Username label",
+                "type": "text",
+                "x": 1124,
+                "y": 391,
+                "width": 384,
+                "height": 17.920000000000016,
+                "fills": [
+                  {
+                    "fillColor": "#a4a8b3",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.muted"
+                },
+                "text": {
+                  "characters": "USERNAME",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "12.8",
+                  "fontWeight": "700",
+                  "align": "left",
+                  "letterSpacing": ".256",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1124,
+                    "y": 391.1666717529297,
+                    "width": 74.91667175292969,
+                    "height": 15
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b93a7d7c",
+                "name": "Username input",
+                "type": "board",
+                "x": 1124,
+                "y": 414.3,
+                "width": 384,
+                "height": 42.28000000000003,
+                "fills": [
+                  {
+                    "fillColor": "#202127",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {
+                  "fill": "login.color.input"
+                },
+                "componentId": "7299a615-462e-803f-8008-9b86b8dc2122",
+                "children": []
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b93c3632",
+                "name": "Password label",
+                "type": "text",
+                "x": 1124,
+                "y": 473.58000000000004,
+                "width": 384,
+                "height": 17.920000000000016,
+                "fills": [
+                  {
+                    "fillColor": "#a4a8b3",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": null,
+                "tokens": {
+                  "fill": "login.color.muted"
+                },
+                "text": {
+                  "characters": "PASSWORD",
+                  "fontId": "gfont-inter",
+                  "fontFamily": "Inter",
+                  "fontSize": "12.8",
+                  "fontWeight": "700",
+                  "align": "left",
+                  "letterSpacing": ".256",
+                  "lineHeight": "1.2",
+                  "bounds": {
+                    "x": 1124,
+                    "y": 473.74667175292973,
+                    "width": 75.85000610351562,
+                    "height": 15
+                  }
+                }
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b940842a",
+                "name": "Password input",
+                "type": "board",
+                "x": 1124,
+                "y": 496.88,
+                "width": 384,
+                "height": 42.27999999999997,
+                "fills": [
+                  {
+                    "fillColor": "#202127",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {
+                  "fill": "login.color.input"
+                },
+                "componentId": "7299a615-462e-803f-8008-9b86b8dc2122",
+                "children": []
+              },
+              {
+                "id": "7299a615-462e-803f-8008-9b86b942bbec",
+                "name": "Sign in submit",
+                "type": "board",
+                "x": 1124,
+                "y": 555.16,
+                "width": 384,
+                "height": 43.16999999999996,
+                "fills": [
+                  {
+                    "fillColor": "#6d75e8",
+                    "fillOpacity": 1,
+                    "fillColorGradient": null,
+                    "fillColorRefFile": null,
+                    "fillColorRefId": null,
+                    "fillImage": null
+                  }
+                ],
+                "strokes": [],
+                "shadows": [],
+                "borderRadius": 4,
+                "tokens": {
+                  "fill": "login.color.brand"
+                },
+                "componentId": "7299a615-462e-803f-8008-9b86b8dd54d0",
+                "children": [
+                  {
+                    "id": "7299a615-462e-803f-8008-9b86b942bbed",
+                    "name": "Button label",
+                    "type": "text",
+                    "x": 1124,
+                    "y": 566.55,
+                    "width": 384,
+                    "height": 22.400000000000006,
+                    "fills": [
+                      {
+                        "fillColor": "#ffffff",
+                        "fillOpacity": 1,
+                        "fillColorGradient": null,
+                        "fillColorRefFile": null,
+                        "fillColorRefId": null,
+                        "fillImage": null
+                      }
+                    ],
+                    "strokes": [],
+                    "shadows": [],
+                    "borderRadius": null,
+                    "tokens": {
+                      "fill": "login.color.white"
+                    },
+                    "componentId": "7299a615-462e-803f-8008-9b86b8dd54d0",
+                    "text": {
+                      "characters": "Sign in",
+                      "fontId": "gfont-inter",
+                      "fontFamily": "Inter",
+                      "fontSize": "16",
+                      "fontWeight": "700",
+                      "align": "center",
+                      "letterSpacing": "0",
+                      "lineHeight": "1.2",
+                      "bounds": {
+                        "x": 1289.5,
+                        "y": 566.1500061035156,
+                        "width": 52.98333740234375,
+                        "height": 20
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "controls": {
+    "id": "7299a615-462e-803f-8008-9b86b8b05f9e",
+    "name": "Login / Reusable controls",
+    "type": "board",
+    "x": 2040,
+    "y": 0,
+    "width": 480,
+    "height": 520,
+    "fills": [
+      {
+        "fillColor": "#18191e",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ],
+    "strokes": [],
+    "shadows": [],
+    "borderRadius": 8,
+    "tokens": {
+      "fill": "login.color.surface"
+    },
+    "children": [
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8b512d3",
+        "name": "Control kit title",
+        "type": "text",
+        "x": 2088,
+        "y": 28,
+        "width": 384,
+        "height": 28,
+        "fills": [
+          {
+            "fillColor": "#f0f1f5",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": null,
+        "tokens": {
+          "fill": "login.color.text"
+        },
+        "text": {
+          "characters": "Login controls",
+          "fontId": "gfont-inter",
+          "fontFamily": "Inter",
+          "fontSize": "20",
+          "fontWeight": "700",
+          "align": "left",
+          "letterSpacing": "0",
+          "lineHeight": "1.2",
+          "bounds": {
+            "x": 2088,
+            "y": 28,
+            "width": 139.14999389648438,
+            "height": 24
+          }
+        }
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8bc328c",
+        "name": "Desktop / Login / Empty input",
+        "type": "board",
+        "x": 2088,
+        "y": 100,
+        "width": 384,
+        "height": 42.28,
+        "fills": [
+          {
+            "fillColor": "#202127",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 4,
+        "tokens": {
+          "fill": "login.color.input"
+        },
+        "componentId": "7299a615-462e-803f-8008-9b86b8dc2122",
+        "children": []
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8c081c7",
+        "name": "Desktop / Login / Primary button",
+        "type": "board",
+        "x": 2088,
+        "y": 180,
+        "width": 384,
+        "height": 43.170000000000016,
+        "fills": [
+          {
+            "fillColor": "#6d75e8",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 4,
+        "tokens": {
+          "fill": "login.color.brand"
+        },
+        "componentId": "7299a615-462e-803f-8008-9b86b8dd54d0",
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8ccfca1",
+            "name": "Button label",
+            "type": "text",
+            "x": 2088,
+            "y": 191.39,
+            "width": 384,
+            "height": 22.400000000000006,
+            "fills": [
+              {
+                "fillColor": "#ffffff",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {
+              "fill": "login.color.white"
+            },
+            "text": {
+              "characters": "Sign in",
+              "fontId": "gfont-inter",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "700",
+              "align": "center",
+              "letterSpacing": "0",
+              "lineHeight": "1.2",
+              "bounds": {
+                "x": 2253.5,
+                "y": 190.9900061035156,
+                "width": 52.98333740234375,
+                "height": 20
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8c53882",
+        "name": "Desktop / Login / Selected tab",
+        "type": "board",
+        "x": 2088,
+        "y": 270,
+        "width": 125.33333300000004,
+        "height": 43.170000000000016,
+        "fills": [
+          {
+            "fillColor": "#30323a",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 4,
+        "tokens": {
+          "fill": "login.color.active"
+        },
+        "componentId": "7299a615-462e-803f-8008-9b86b8de378f",
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8d19a1a",
+            "name": "Selected tab label",
+            "type": "text",
+            "x": 2088,
+            "y": 281.39,
+            "width": 125.33333300000004,
+            "height": 22.399999999999977,
+            "fills": [
+              {
+                "fillColor": "#f0f1f5",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {
+              "fill": "login.color.text"
+            },
+            "text": {
+              "characters": "Sign in",
+              "fontId": "gfont-inter",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "700",
+              "align": "center",
+              "letterSpacing": "0",
+              "lineHeight": "1.2",
+              "bounds": {
+                "x": 2124.1666717529297,
+                "y": 280.9900061035156,
+                "width": 52.98332214355469,
+                "height": 20
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b86b8c9c67f",
+        "name": "Desktop / Login / Idle tab",
+        "type": "board",
+        "x": 2088,
+        "y": 360,
+        "width": 125.33333300000004,
+        "height": 43.170000000000016,
+        "fills": [],
+        "strokes": [],
+        "shadows": [],
+        "borderRadius": 4,
+        "tokens": {},
+        "componentId": "7299a615-462e-803f-8008-9b86b8df2ae4",
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b86b8d6be79",
+            "name": "Idle tab label",
+            "type": "text",
+            "x": 2088,
+            "y": 371.39,
+            "width": 125.33333300000004,
+            "height": 22.399999999999977,
+            "fills": [
+              {
+                "fillColor": "#a4a8b3",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "strokes": [],
+            "shadows": [],
+            "borderRadius": null,
+            "tokens": {
+              "fill": "login.color.muted"
+            },
+            "text": {
+              "characters": "Register",
+              "fontId": "gfont-inter",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "700",
+              "align": "center",
+              "letterSpacing": "0",
+              "lineHeight": "1.2",
+              "bounds": {
+                "x": 2118.1499938964844,
+                "y": 370.9900061035156,
+                "width": 65.01667785644531,
+                "height": 20
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8dc2122",
+      "name": "Empty input",
+      "path": "Desktop / Login",
+      "mainId": "7299a615-462e-803f-8008-9b86b8bc328c"
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8dd54d0",
+      "name": "Primary button",
+      "path": "Desktop / Login",
+      "mainId": "7299a615-462e-803f-8008-9b86b8c081c7"
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8de378f",
+      "name": "Selected tab",
+      "path": "Desktop / Login",
+      "mainId": "7299a615-462e-803f-8008-9b86b8c53882"
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8df2ae4",
+      "name": "Idle tab",
+      "path": "Desktop / Login",
+      "mainId": "7299a615-462e-803f-8008-9b86b8c9c67f"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "login.color.rail",
+      "type": "color",
+      "value": "#0D0E11",
+      "resolvedValue": "#0D0E11"
+    },
+    {
+      "name": "login.color.surface",
+      "type": "color",
+      "value": "#18191E",
+      "resolvedValue": "#18191E"
+    },
+    {
+      "name": "login.color.input",
+      "type": "color",
+      "value": "#202127",
+      "resolvedValue": "#202127"
+    },
+    {
+      "name": "login.color.text",
+      "type": "color",
+      "value": "#F0F1F5",
+      "resolvedValue": "#F0F1F5"
+    },
+    {
+      "name": "login.color.muted",
+      "type": "color",
+      "value": "#A4A8B3",
+      "resolvedValue": "#A4A8B3"
+    },
+    {
+      "name": "login.color.faint",
+      "type": "color",
+      "value": "#727784",
+      "resolvedValue": "#727784"
+    },
+    {
+      "name": "login.color.brand",
+      "type": "color",
+      "value": "#6D75E8",
+      "resolvedValue": "#6D75E8"
+    },
+    {
+      "name": "login.color.selected",
+      "type": "color",
+      "value": "#5962D6",
+      "resolvedValue": "#5962D6"
+    },
+    {
+      "name": "login.color.active",
+      "type": "color",
+      "value": "#30323A",
+      "resolvedValue": "#30323A"
+    },
+    {
+      "name": "login.color.hover",
+      "type": "color",
+      "value": "#26282F",
+      "resolvedValue": "#26282F"
+    },
+    {
+      "name": "login.color.white",
+      "type": "color",
+      "value": "#FFFFFF",
+      "resolvedValue": "#FFFFFF"
+    }
+  ],
+  "validation": []
+}

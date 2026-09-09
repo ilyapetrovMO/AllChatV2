@@ -1,0 +1,69 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "state": "notifications",
+      "id": "7299a615-462e-803f-8008-9b99d943ce27",
+      "textLayers": 40,
+      "interactions": 0,
+      "requiredLabels": [
+        "Notifications",
+        "Community",
+        "All Messages",
+        "Mute Community",
+        "Notification sound",
+        "This conversation",
+        "Default",
+        "Mute conversation"
+      ]
+    },
+    {
+      "state": "search-filters",
+      "id": "7299a615-462e-803f-8008-9b99d7bf7fc6",
+      "textLayers": 47,
+      "interactions": 0,
+      "requiredLabels": [
+        "From a specific user",
+        "Sent in a specific channel",
+        "Includes a file",
+        "Includes an image",
+        "Includes a link",
+        "Mentions a specific user",
+        "Sent before a date",
+        "Sent after a date"
+      ]
+    },
+    {
+      "state": "presence",
+      "id": "7299a615-462e-803f-8008-9b99d71e936b",
+      "textLayers": 33,
+      "interactions": 0,
+      "requiredLabels": [
+        "Online",
+        "Do Not Disturb"
+      ]
+    },
+    {
+      "state": "community-member",
+      "id": "7299a615-462e-803f-8008-9b99d6995243",
+      "textLayers": 32,
+      "interactions": 0,
+      "requiredLabels": [
+        "Community Home"
+      ]
+    },
+    {
+      "state": "community-owner",
+      "id": "7299a615-462e-803f-8008-9b99d5b7163a",
+      "textLayers": 33,
+      "interactions": 0,
+      "requiredLabels": [
+        "Community Home",
+        "Community Settings"
+      ]
+    }
+  ],
+  "validation": [],
+  "revision": 27
+}

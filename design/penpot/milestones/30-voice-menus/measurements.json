@@ -1,0 +1,109 @@
+[
+  {
+    "key": "suppression",
+    "fontSize": "12.8px",
+    "fontWeight": "700",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "bounds": {
+      "x": 793,
+      "y": 182,
+      "width": 190,
+      "height": 38,
+      "top": 182,
+      "right": 983,
+      "bottom": 220,
+      "left": 793
+    },
+    "options": [
+      "Standard",
+      "Enhanced (RNNoise)",
+      "Off"
+    ]
+  },
+  {
+    "key": "quality",
+    "fontSize": "12.8px",
+    "fontWeight": "700",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "bounds": {
+      "x": 862,
+      "y": 372,
+      "width": 121,
+      "height": 38,
+      "top": 372,
+      "right": 983,
+      "bottom": 410,
+      "left": 862
+    },
+    "options": [
+      "Auto",
+      "Text",
+      "Balanced",
+      "Motion",
+      "Data saver"
+    ]
+  },
+  {
+    "key": "microphone",
+    "fontSize": "12.8px",
+    "fontWeight": "700",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "bounds": {
+      "x": 365,
+      "y": 302,
+      "width": 420,
+      "height": 38,
+      "top": 302,
+      "right": 785,
+      "bottom": 340,
+      "left": 365
+    },
+    "options": [
+      "System default",
+      "Microphone 1",
+      "Microphone 2"
+    ]
+  },
+  {
+    "key": "speaker",
+    "fontSize": "12.8px",
+    "fontWeight": "700",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "bounds": {
+      "x": 799,
+      "y": 302,
+      "width": 420,
+      "height": 38,
+      "top": 302,
+      "right": 1219,
+      "bottom": 340,
+      "left": 799
+    },
+    "options": [
+      "System default",
+      "Speaker 1",
+      "Speaker 2"
+    ]
+  },
+  {
+    "key": "camera",
+    "fontSize": "12.8px",
+    "fontWeight": "700",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+    "bounds": {
+      "x": 365,
+      "y": 391,
+      "width": 854,
+      "height": 38,
+      "top": 391,
+      "right": 1219,
+      "bottom": 429,
+      "left": 365
+    },
+    "options": [
+      "System default",
+      "Camera 1",
+      "Camera 2"
+    ]
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "key": "loading",
+      "width": 960,
+      "height": 640,
+      "errors": [],
+      "nav": 6,
+      "shell": true,
+      "interactions": 0
+    },
+    {
+      "key": "error",
+      "width": 960,
+      "height": 640,
+      "errors": [],
+      "nav": 6,
+      "shell": true,
+      "interactions": 0
+    }
+  ],
+  "pass": true
+}

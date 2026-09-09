@@ -1,0 +1,22 @@
+[
+  {
+    "key": "reaction-empty",
+    "id": "7299a615-462e-803f-8008-9b9cbbe9057a"
+  },
+  {
+    "key": "reaction-custom",
+    "id": "7299a615-462e-803f-8008-9b9cc31a4150"
+  },
+  {
+    "key": "mentions",
+    "id": "7299a615-462e-803f-8008-9b9cca2d2c61"
+  },
+  {
+    "key": "pins-empty",
+    "id": "7299a615-462e-803f-8008-9b9ccb85b974"
+  },
+  {
+    "key": "pins-populated",
+    "id": "7299a615-462e-803f-8008-9b9cccb6de3d"
+  }
+]

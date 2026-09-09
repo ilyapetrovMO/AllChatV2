@@ -1,0 +1,247 @@
+[
+  {
+    "key": "name",
+    "target": "name",
+    "entered": "",
+    "message": "Please fill out this field.",
+    "value": "",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 112.203125,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": true,
+      "rangeUnderflow": false,
+      "rangeOverflow": false,
+      "stepMismatch": false,
+      "badInput": false,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 691,
+      "y": 158,
+      "w": 212,
+      "h": 41
+    }
+  },
+  {
+    "key": "attachment-required",
+    "target": "maxAttachmentMiB",
+    "entered": "",
+    "message": "Please fill out this field.",
+    "value": "",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 186.109375,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": true,
+      "rangeUnderflow": false,
+      "rangeOverflow": false,
+      "stepMismatch": false,
+      "badInput": false,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 691,
+      "y": 232,
+      "w": 212,
+      "h": 41
+    }
+  },
+  {
+    "key": "attachment-min",
+    "target": "maxAttachmentMiB",
+    "entered": "0",
+    "message": "Value must be greater than or equal to 1.",
+    "value": "0",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 186.109375,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": false,
+      "rangeUnderflow": true,
+      "rangeOverflow": false,
+      "stepMismatch": false,
+      "badInput": false,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 627,
+      "y": 232,
+      "w": 339,
+      "h": 41
+    }
+  },
+  {
+    "key": "attachment-max",
+    "target": "maxAttachmentMiB",
+    "entered": "257",
+    "message": "Value must be less than or equal to 256.",
+    "value": "257",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 186.109375,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": false,
+      "rangeUnderflow": false,
+      "rangeOverflow": true,
+      "stepMismatch": false,
+      "badInput": false,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 630,
+      "y": 232,
+      "w": 332,
+      "h": 41
+    }
+  },
+  {
+    "key": "attachment-step",
+    "target": "maxAttachmentMiB",
+    "entered": "1.5",
+    "message": "Please enter a valid value. The two nearest valid values are 1 and 2.",
+    "value": "1.5",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 186.109375,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": false,
+      "rangeUnderflow": false,
+      "rangeOverflow": false,
+      "stepMismatch": true,
+      "badInput": false,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 533,
+      "y": 232,
+      "w": 527,
+      "h": 41
+    }
+  },
+  {
+    "key": "attachment-number",
+    "target": "maxAttachmentMiB",
+    "entered": "e",
+    "message": "Please enter a number.",
+    "value": "",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 186.109375,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": true,
+      "rangeUnderflow": false,
+      "rangeOverflow": false,
+      "stepMismatch": false,
+      "badInput": true,
+      "typeMismatch": false
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 691,
+      "y": 232,
+      "w": 212,
+      "h": 41
+    }
+  },
+  {
+    "key": "relay-url",
+    "target": "pushRelayURL",
+    "entered": "not-a-url",
+    "message": "Please enter a URL.",
+    "value": "not-a-url",
+    "active": true,
+    "bounds": {
+      "x": 361,
+      "y": 523.5625,
+      "w": 870,
+      "h": 38
+    },
+    "scroll": 531,
+    "flags": {
+      "valueMissing": false,
+      "rangeUnderflow": false,
+      "rangeOverflow": false,
+      "stepMismatch": false,
+      "badInput": false,
+      "typeMismatch": true
+    },
+    "style": {
+      "border": "rgb(109, 117, 232)",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+    },
+    "popup": {
+      "x": 704,
+      "y": 570,
+      "w": 186,
+      "h": 41
+    }
+  }
+]

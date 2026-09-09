@@ -1,0 +1,105 @@
+{
+  "height": 564,
+  "scrollHeight": 758,
+  "items": [
+    {
+      "tag": "P",
+      "cls": "eyebrow",
+      "text": "Member settings",
+      "bounds": {
+        "x": 344,
+        "y": 104,
+        "w": 584,
+        "h": 16.796875
+      }
+    },
+    {
+      "tag": "P",
+      "cls": "",
+      "text": "Choose when this Community may notify you. Electron delivers native operating-system notifications.",
+      "bounds": {
+        "x": 344,
+        "y": 192.78125,
+        "w": 584,
+        "h": 44.78125
+      }
+    },
+    {
+      "tag": "SECTION",
+      "cls": "settings-card",
+      "text": "Desktop notificationsNative notifications enabled",
+      "bounds": {
+        "x": 344,
+        "y": 253.5625,
+        "w": 584,
+        "h": 102.59375
+      }
+    },
+    {
+      "tag": "SECTION",
+      "cls": "settings-card",
+      "text": "Community defaultsNotification levelOnly @mentionsMute CommunityNotification sound",
+      "bounds": {
+        "x": 344,
+        "y": 372.15625,
+        "w": 584,
+        "h": 206.421875
+      }
+    },
+    {
+      "tag": "SELECT",
+      "cls": "",
+      "text": "Only @mentions",
+      "bounds": {
+        "x": 365,
+        "y": 455.265625,
+        "w": 542,
+        "h": 38
+      }
+    },
+    {
+      "tag": "SECTION",
+      "cls": "settings-card channel-overrides",
+      "text": "Channel overrides# generalCommunity defaultMute",
+      "bounds": {
+        "x": 344,
+        "y": 594.578125,
+        "w": 584,
+        "h": 143.203125
+      }
+    },
+    {
+      "tag": "DIV",
+      "cls": "channel-override",
+      "text": "# generalCommunity defaultMute",
+      "bounds": {
+        "x": 365,
+        "y": 651.78125,
+        "w": 542,
+        "h": 65
+      }
+    },
+    {
+      "tag": "SELECT",
+      "cls": "",
+      "text": "Community default",
+      "bounds": {
+        "x": 613,
+        "y": 664.78125,
+        "w": 220,
+        "h": 40
+      }
+    },
+    {
+      "tag": "P",
+      "cls": "",
+      "text": "",
+      "bounds": {
+        "x": 344,
+        "y": 753.78125,
+        "w": 584,
+        "h": 0
+      }
+    }
+  ]
+}

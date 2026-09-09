@@ -1,0 +1,452 @@
+{
+  "results": [
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfbae8f58b2",
+      "key": "reset",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc24cb72d4",
+      "key": "reset-bottom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc236b3444",
+      "key": "reset-middle",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfb849b49fd",
+      "key": "error-custom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc171c3f1b",
+      "key": "error-custom-bottom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc15ecf889",
+      "key": "error-custom-middle",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfb5ec6db32",
+      "key": "error",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc0aa99149",
+      "key": "error-bottom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfc0954e443",
+      "key": "error-middle",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1201.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfb3a650a51",
+      "key": "saved",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfbfddc9c1b",
+      "key": "saved-bottom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfbfca4bf8d",
+      "key": "saved-middle",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1242.296875,
+      "texts": 26,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfb197c0761",
+      "key": "custom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1219.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input avatar",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfbf16b8ecb",
+      "key": "custom-bottom",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1219.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings"
+      ],
+      "interactions": 0
+    },
+    {
+      "layoutCorrect": true,
+      "stateCorrect": true,
+      "id": "7299a615-462e-803f-8008-9bfbf00d1c57",
+      "key": "custom-middle",
+      "width": 960,
+      "height": 640,
+      "contentHeight": 1219.90625,
+      "texts": 25,
+      "errors": [],
+      "controls": [
+        "input avatar",
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown",
+        "input pushRelayURL",
+        "summary text 25",
+        "button Save settings",
+        "input ringtone",
+        "button Remove custom ringto"
+      ],
+      "visible": [
+        "input name",
+        "input maxAttachmentMiB",
+        "textarea homeMarkdown"
+      ],
+      "interactions": 0
+    }
+  ],
+  "coverage": [
+    {
+      "key": "custom",
+      "controls": 9,
+      "missing": []
+    },
+    {
+      "key": "saved",
+      "controls": 9,
+      "missing": []
+    },
+    {
+      "key": "error",
+      "controls": 8,
+      "missing": []
+    },
+    {
+      "key": "error-custom",
+      "controls": 9,
+      "missing": []
+    },
+    {
+      "key": "reset",
+      "controls": 8,
+      "missing": []
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

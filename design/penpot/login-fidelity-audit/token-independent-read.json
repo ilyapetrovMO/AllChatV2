@@ -1,0 +1,20 @@
+{
+  "value": "#FF00FF",
+  "pass": false,
+  "shapes": [
+    {
+      "id": "7299a615-462e-803f-8008-9b86b8c081c7",
+      "fill": "#6d75e8",
+      "binding": {
+        "fill": "login.color.brand"
+      }
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b942bbec",
+      "fill": "#6d75e8",
+      "binding": {
+        "fill": "login.color.brand"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bbc353658e5",
+    "name": "Desktop / Settings / voice-processing-threshold-max",
+    "filename": "Desktop--Settings--voice-processing-threshold-max.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbc32bc811a",
+    "name": "Desktop / Settings / voice-processing-threshold-min",
+    "filename": "Desktop--Settings--voice-processing-threshold-min.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbc12efc7e4",
+    "name": "Desktop / Settings / voice-processing-gate-off",
+    "filename": "Desktop--Settings--voice-processing-gate-off.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbc0f34b992",
+    "name": "Desktop / Settings / voice-processing-gain-on",
+    "filename": "Desktop--Settings--voice-processing-gain-on.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbc0cb96e68",
+    "name": "Desktop / Settings / voice-processing-echo-off",
+    "filename": "Desktop--Settings--voice-processing-echo-off.svg"
+  }
+]

@@ -1,0 +1,2730 @@
+[
+  {
+    "name": "board-list",
+    "displayName": "board-list",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"852\" viewBox=\"0 0 1280 852\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"852\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"header.sketchboard-heading\"><g id=\"layer-4\" aria-label=\"div\"><g id=\"layer-5\" aria-label=\"p.eyebrow\" /><g id=\"layer-8\" aria-label=\"h1\" /><g id=\"layer-11\" aria-label=\"p\" /></g><g id=\"layer-15\" aria-label=\"#create-board\"><g id=\"layer-16\" aria-label=\"label\"><g id=\"layer-18\" aria-label=\"input\"><rect x=\"879.55\" y=\"65\" width=\"220\" height=\"34\" rx=\"5\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g></g><g id=\"layer-23\" aria-label=\"#create-board-button\"><rect x=\"1107.55\" y=\"62\" width=\"132.45\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g><g id=\"layer-29\" aria-label=\"#board-grid\" /></g></g></svg>",
+    "texts": [
+      {
+        "x": "40",
+        "y": "36",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "800",
+        "fill": "rgb(148, 156, 247)",
+        "text": "AllChat Activity"
+      },
+      {
+        "x": "40",
+        "y": "72",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "32px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Sketchboard"
+      },
+      {
+        "x": "40",
+        "y": "96",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Pick a board or create a new shared canvas."
+      },
+      {
+        "x": "879.55",
+        "y": "58",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Board name"
+      },
+      {
+        "x": "889.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(117, 117, 117)",
+        "text": "Design ideas"
+      },
+      {
+        "x": "1121.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Create board"
+      },
+      {
+        "x": "40",
+        "y": "135",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "No sketchboards yet. Create the "
+      },
+      {
+        "x": "40",
+        "y": "154",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "first one."
+      }
+    ],
+    "width": 1280.0,
+    "height": 852.0,
+    "reference": "sketchboard-reference/board-list.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "board-list-populated",
+    "displayName": "board-list-populated",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"852\" viewBox=\"0 0 1280 852\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"852\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"header.sketchboard-heading\"><g id=\"layer-4\" aria-label=\"div\"><g id=\"layer-5\" aria-label=\"p.eyebrow\" /><g id=\"layer-8\" aria-label=\"h1\" /><g id=\"layer-11\" aria-label=\"p\" /></g><g id=\"layer-15\" aria-label=\"#create-board\"><g id=\"layer-16\" aria-label=\"label\"><g id=\"layer-18\" aria-label=\"input\"><rect x=\"879.55\" y=\"65\" width=\"220\" height=\"34\" rx=\"5\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g></g><g id=\"layer-23\" aria-label=\"#create-board-button\"><rect x=\"1107.55\" y=\"62\" width=\"132.45\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g><g id=\"layer-29\" aria-label=\"#board-grid\"><g id=\"layer-30\" aria-label=\"article.board-card\"><rect x=\"40\" y=\"119\" width=\"289.5\" height=\"180\" rx=\"10\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(53, 54, 60)\" stroke-width=\"1\" /><g id=\"layer-32\" aria-label=\"h2\" /><g id=\"layer-35\" aria-label=\"p\" /><g id=\"layer-38\" aria-label=\"div.participant-chips\"><g id=\"layer-39\" aria-label=\"small\" /></g><g id=\"layer-43\" aria-label=\"footer\"><g id=\"layer-44\" aria-label=\"button\"><rect x=\"57\" y=\"245\" width=\"70.95\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button.delete-board\"><rect x=\"231.92\" y=\"245\" width=\"80.58\" height=\"37\" rx=\"5\" fill=\"rgb(218, 55, 60)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "40",
+        "y": "36",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "800",
+        "fill": "rgb(148, 156, 247)",
+        "text": "AllChat Activity"
+      },
+      {
+        "x": "40",
+        "y": "72",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "32px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Sketchboard"
+      },
+      {
+        "x": "40",
+        "y": "96",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Pick a board or create a new shared canvas."
+      },
+      {
+        "x": "879.55",
+        "y": "58",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Board name"
+      },
+      {
+        "x": "889.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(117, 117, 117)",
+        "text": "Design ideas"
+      },
+      {
+        "x": "1121.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Create board"
+      },
+      {
+        "x": "57",
+        "y": "160",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "57",
+        "y": "192",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Owned by visual-owner"
+      },
+      {
+        "x": "57",
+        "y": "220.33",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "13.3333px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "No active participants"
+      },
+      {
+        "x": "71",
+        "y": "270",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Enter"
+      },
+      {
+        "x": "245.92",
+        "y": "270",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Delete"
+      }
+    ],
+    "width": 1280.0,
+    "height": 852.0,
+    "reference": "sketchboard-reference/board-list-populated.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "delete-confirmation",
+    "displayName": "delete-confirmation",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"852\" viewBox=\"0 0 1280 852\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"852\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"header.sketchboard-heading\"><g id=\"layer-4\" aria-label=\"div\"><g id=\"layer-5\" aria-label=\"p.eyebrow\" /><g id=\"layer-8\" aria-label=\"h1\" /><g id=\"layer-11\" aria-label=\"p\" /></g><g id=\"layer-15\" aria-label=\"#create-board\"><g id=\"layer-16\" aria-label=\"label\"><g id=\"layer-18\" aria-label=\"input\"><rect x=\"879.55\" y=\"65\" width=\"220\" height=\"34\" rx=\"5\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g></g><g id=\"layer-23\" aria-label=\"#create-board-button\"><rect x=\"1107.55\" y=\"62\" width=\"132.45\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g><g id=\"layer-29\" aria-label=\"#board-grid\"><g id=\"layer-30\" aria-label=\"article.board-card\"><rect x=\"40\" y=\"119\" width=\"289.5\" height=\"180\" rx=\"10\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(53, 54, 60)\" stroke-width=\"1\" /><g id=\"layer-32\" aria-label=\"h2\" /><g id=\"layer-35\" aria-label=\"p\" /><g id=\"layer-38\" aria-label=\"div.participant-chips\"><g id=\"layer-39\" aria-label=\"small\" /></g><g id=\"layer-43\" aria-label=\"footer\"><g id=\"layer-44\" aria-label=\"button\"><rect x=\"57\" y=\"245\" width=\"70.95\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button.delete-board\"><rect x=\"165.94\" y=\"245\" width=\"146.56\" height=\"37\" rx=\"5\" fill=\"rgb(218, 55, 60)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "40",
+        "y": "36",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "800",
+        "fill": "rgb(148, 156, 247)",
+        "text": "AllChat Activity"
+      },
+      {
+        "x": "40",
+        "y": "72",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "32px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Sketchboard"
+      },
+      {
+        "x": "40",
+        "y": "96",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Pick a board or create a new shared canvas."
+      },
+      {
+        "x": "879.55",
+        "y": "58",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Board name"
+      },
+      {
+        "x": "889.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "12px",
+        "font-weight": "400",
+        "fill": "rgb(117, 117, 117)",
+        "text": "Design ideas"
+      },
+      {
+        "x": "1121.55",
+        "y": "87",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Create board"
+      },
+      {
+        "x": "57",
+        "y": "160",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "57",
+        "y": "192",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Owned by visual-owner"
+      },
+      {
+        "x": "57",
+        "y": "220.33",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "13.3333px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "No active participants"
+      },
+      {
+        "x": "71",
+        "y": "270",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Enter"
+      },
+      {
+        "x": "179.94",
+        "y": "270",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Confirm delete"
+      }
+    ],
+    "width": 1280.0,
+    "height": 852.0,
+    "reference": "sketchboard-reference/delete-confirmation.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-pen",
+    "displayName": "workspace-pen",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button.active\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-pen.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-highlighter",
+    "displayName": "workspace-highlighter",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button.active\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-highlighter.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-line",
+    "displayName": "workspace-line",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button.active\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-line.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-rectangle",
+    "displayName": "workspace-rectangle",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button.active\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-rectangle.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-ellipse",
+    "displayName": "workspace-ellipse",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button.active\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-ellipse.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-text",
+    "displayName": "workspace-text",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button.active\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label.text-tool\"><g id=\"layer-67\" aria-label=\"#element-text\"><rect x=\"726.13\" y=\"803\" width=\"220\" height=\"33\" rx=\"5\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-color\"><rect x=\"1007.91\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"label\"><g id=\"layer-81\" aria-label=\"#stroke-size\"><rect x=\"1112.75\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-86\" aria-label=\"div.tool-group\"><g id=\"layer-87\" aria-label=\"#undo\"><rect x=\"1255.75\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Content "
+      },
+      {
+        "x": "733.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(117, 117, 117)",
+        "text": "Type, then click the board"
+      },
+      {
+        "x": "958.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "1009.91",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "1069.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "1112.75",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "1264.75",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-text.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-note",
+    "displayName": "workspace-note",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button.active\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label.text-tool\"><g id=\"layer-67\" aria-label=\"#element-text\"><rect x=\"726.13\" y=\"803\" width=\"220\" height=\"33\" rx=\"5\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-color\"><rect x=\"1007.91\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"label\"><g id=\"layer-81\" aria-label=\"#stroke-size\"><rect x=\"1112.75\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-86\" aria-label=\"div.tool-group\"><g id=\"layer-87\" aria-label=\"#undo\"><rect x=\"1255.75\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Content "
+      },
+      {
+        "x": "733.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(117, 117, 117)",
+        "text": "Type, then click the board"
+      },
+      {
+        "x": "958.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "1009.91",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "1069.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "1112.75",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "1264.75",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-note.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-eraser",
+    "displayName": "workspace-eraser",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button.active\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-eraser.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-pan",
+    "displayName": "workspace-pan",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"32\" y=\"803\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"83.06\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"177.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"232.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"334.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"408.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"462.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"522.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-60\" aria-label=\"button.active\"><rect x=\"595.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-65\" aria-label=\"label\"><g id=\"layer-67\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-72\" aria-label=\"label\"><g id=\"layer-74\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-79\" aria-label=\"div.tool-group\"><g id=\"layer-80\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-92\" aria-label=\"#zoom-level\" /><g id=\"layer-95\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-103\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "41",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-pan.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "clear-confirmation",
+    "displayName": "clear-confirmation",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"903\" viewBox=\"0 0 1280 903\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"903\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#activity-status\" /><g id=\"layer-6\" aria-label=\"#board-workspace\"><g id=\"layer-7\" aria-label=\"header\"><g id=\"layer-8\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"80\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-12\" aria-label=\"div\"><g id=\"layer-13\" aria-label=\"#board-title\" /><g id=\"layer-16\" aria-label=\"#board-participants\" /></g><g id=\"layer-20\" aria-label=\"#clear-board\"><rect x=\"1120.38\" y=\"80\" width=\"135.63\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-25\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"132\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-28\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"830\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-30\" aria-label=\"div.tool-group\"><g id=\"layer-31\" aria-label=\"button\"><rect x=\"32\" y=\"838\" width=\"47.06\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-35\" aria-label=\"button\"><rect x=\"83.06\" y=\"838\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-39\" aria-label=\"button\"><rect x=\"177.3\" y=\"838\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-43\" aria-label=\"button\"><rect x=\"232.64\" y=\"838\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-47\" aria-label=\"button\"><rect x=\"334.34\" y=\"838\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-51\" aria-label=\"button\"><rect x=\"408.13\" y=\"838\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-55\" aria-label=\"button\"><rect x=\"462.48\" y=\"838\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-59\" aria-label=\"button\"><rect x=\"522.36\" y=\"838\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-63\" aria-label=\"button.active\"><rect x=\"595.61\" y=\"838\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-68\" aria-label=\"label\"><g id=\"layer-70\" aria-label=\"#stroke-color\"><rect x=\"704.27\" y=\"841\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-75\" aria-label=\"label\"><g id=\"layer-77\" aria-label=\"#stroke-size\"><rect x=\"809.11\" y=\"846.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-82\" aria-label=\"div.tool-group\"><g id=\"layer-83\" aria-label=\"#undo\"><rect x=\"952.11\" y=\"838\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-87\" aria-label=\"#redo\"><rect x=\"1015.91\" y=\"838\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-91\" aria-label=\"#zoom-out\"><rect x=\"1078.09\" y=\"838\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-95\" aria-label=\"#zoom-level\" /><g id=\"layer-98\" aria-label=\"#zoom-in\"><rect x=\"1163.25\" y=\"838\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-102\" aria-label=\"#reset-view\"><rect x=\"1198.66\" y=\"838\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-106\" aria-label=\"#export-board\"><rect x=\"1239.42\" y=\"838\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "24",
+        "y": "56",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Press Confirm clear to erase the board for everyone."
+      },
+      {
+        "x": "38",
+        "y": "105",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "99",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "119",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1134.38",
+        "y": "105",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Confirm clear"
+      },
+      {
+        "x": "41",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pen"
+      },
+      {
+        "x": "92.06",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "186.3",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "241.64",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "343.34",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "417.13",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "471.48",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "531.36",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "604.61",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "654.48",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "706.27",
+        "y": "858",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "766.27",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "809.11",
+        "y": "862.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "961.11",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "1024.91",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "1087.09",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1113.5",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1172.25",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1207.66",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1248.42",
+        "y": "861",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 903.0,
+    "reference": "sketchboard-reference/clear-confirmation.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  },
+  {
+    "name": "workspace-toolbar-right",
+    "displayName": "workspace-toolbar-right",
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1280\" height=\"868\" viewBox=\"0 0 1280 868\"><g id=\"layer-0\" aria-label=\"body.sketchboard-activity\"><g id=\"layer-1\" aria-label=\"main\"><rect x=\"0\" y=\"0\" width=\"1280\" height=\"868\" rx=\"0\" fill=\"rgb(17, 18, 20)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-3\" aria-label=\"#board-workspace\"><g id=\"layer-4\" aria-label=\"header\"><g id=\"layer-5\" aria-label=\"#back-to-boards\"><rect x=\"24\" y=\"45\" width=\"101.86\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-9\" aria-label=\"div\"><g id=\"layer-10\" aria-label=\"#board-title\" /><g id=\"layer-13\" aria-label=\"#board-participants\" /></g><g id=\"layer-17\" aria-label=\"#clear-board\"><rect x=\"1186.16\" y=\"45\" width=\"69.84\" height=\"37\" rx=\"5\" fill=\"rgb(88, 101, 242)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-22\" aria-label=\"#sketch-canvas\"><rect x=\"24\" y=\"97\" width=\"1232\" height=\"698\" rx=\"8\" fill=\"rgb(255, 255, 255)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /></g><g id=\"layer-25\" aria-label=\"div.sketch-tools\"><rect x=\"24\" y=\"795\" width=\"1232\" height=\"49\" rx=\"0\" fill=\"rgb(30, 31, 34)\" stroke=\"rgb(242, 243, 245)\" stroke-width=\"0\" /><g id=\"layer-27\" aria-label=\"div.tool-group\"><g id=\"layer-28\" aria-label=\"button\"><rect x=\"-17.94\" y=\"803\" width=\"90.23\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-32\" aria-label=\"button\"><rect x=\"76.3\" y=\"803\" width=\"51.34\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-36\" aria-label=\"button\"><rect x=\"131.64\" y=\"803\" width=\"97.7\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-40\" aria-label=\"button\"><rect x=\"233.34\" y=\"803\" width=\"69.78\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-44\" aria-label=\"button\"><rect x=\"307.13\" y=\"803\" width=\"50.36\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-48\" aria-label=\"button\"><rect x=\"361.48\" y=\"803\" width=\"55.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-52\" aria-label=\"button\"><rect x=\"421.36\" y=\"803\" width=\"69.25\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-56\" aria-label=\"button\"><rect x=\"494.61\" y=\"803\" width=\"46.88\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-61\" aria-label=\"label\"><g id=\"layer-63\" aria-label=\"#stroke-color\"><rect x=\"603.27\" y=\"806\" width=\"50\" height=\"27\" rx=\"5\" fill=\"rgb(107, 107, 107)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g><g id=\"layer-68\" aria-label=\"label\"><g id=\"layer-70\" aria-label=\"#stroke-size\"><rect x=\"708.11\" y=\"811.5\" width=\"129\" height=\"16\" rx=\"5\" fill=\"rgb(59, 59, 59)\" stroke=\"rgb(157, 150, 142)\" stroke-width=\"0\" /></g></g><g id=\"layer-75\" aria-label=\"div.tool-group\"><g id=\"layer-76\" aria-label=\"#undo\"><rect x=\"851.11\" y=\"803\" width=\"59.8\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-80\" aria-label=\"#redo\"><rect x=\"914.91\" y=\"803\" width=\"58.19\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-84\" aria-label=\"#zoom-out\"><rect x=\"977.09\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-88\" aria-label=\"#zoom-level\" /><g id=\"layer-91\" aria-label=\"#zoom-in\"><rect x=\"1062.25\" y=\"803\" width=\"31.41\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-95\" aria-label=\"#reset-view\"><rect x=\"1097.66\" y=\"803\" width=\"36.77\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g><g id=\"layer-99\" aria-label=\"#export-board\"><rect x=\"1138.42\" y=\"803\" width=\"109.48\" height=\"33\" rx=\"5\" fill=\"rgb(43, 45, 49)\" stroke=\"rgb(255, 255, 255)\" stroke-width=\"0\" /></g></g></g></g></g></g></svg>",
+    "texts": [
+      {
+        "x": "38",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2190 Boards"
+      },
+      {
+        "x": "143.86",
+        "y": "64",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "24px",
+        "font-weight": "700",
+        "fill": "rgb(242, 243, 245)",
+        "text": "Catalog sketch"
+      },
+      {
+        "x": "143.86",
+        "y": "84",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "visual-owner"
+      },
+      {
+        "x": "1200.16",
+        "y": "70",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Clear"
+      },
+      {
+        "x": "-8.94",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Highlight"
+      },
+      {
+        "x": "85.3",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Line"
+      },
+      {
+        "x": "140.64",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Rectangle"
+      },
+      {
+        "x": "242.34",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Ellipse"
+      },
+      {
+        "x": "316.13",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Text"
+      },
+      {
+        "x": "370.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Note"
+      },
+      {
+        "x": "430.36",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Eraser"
+      },
+      {
+        "x": "503.61",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Pan"
+      },
+      {
+        "x": "553.48",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Color "
+      },
+      {
+        "x": "605.27",
+        "y": "823",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "#5865f2"
+      },
+      {
+        "x": "665.27",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(181, 186, 193)",
+        "text": "Size "
+      },
+      {
+        "x": "708.11",
+        "y": "827.5",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(157, 150, 142)",
+        "text": "4"
+      },
+      {
+        "x": "860.11",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Undo"
+      },
+      {
+        "x": "923.91",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Redo"
+      },
+      {
+        "x": "986.09",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "\u2212"
+      },
+      {
+        "x": "1012.5",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(242, 243, 245)",
+        "text": "100%"
+      },
+      {
+        "x": "1071.25",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "+"
+      },
+      {
+        "x": "1106.66",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Fit"
+      },
+      {
+        "x": "1147.42",
+        "y": "826",
+        "font-family": "Inter, system-ui, sans-serif",
+        "font-size": "16px",
+        "font-weight": "400",
+        "fill": "rgb(255, 255, 255)",
+        "text": "Export PNG"
+      }
+    ],
+    "width": 1280.0,
+    "height": 868.0,
+    "reference": "sketchboard-reference/workspace-toolbar-right.png",
+    "status": "draft; clipping, images, fonts and component extraction require verification"
+  }
+]

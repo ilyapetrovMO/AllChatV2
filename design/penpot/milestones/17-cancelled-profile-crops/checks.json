@@ -1,0 +1,16 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "boards": [
+    {
+      "id": "7299a615-462e-803f-8008-9ba568d424aa",
+      "name": "Desktop / Settings / banner-crop-cancelled"
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9ba5684f5c22",
+      "name": "Desktop / Settings / avatar-crop-cancelled"
+    }
+  ],
+  "revision": 43
+}

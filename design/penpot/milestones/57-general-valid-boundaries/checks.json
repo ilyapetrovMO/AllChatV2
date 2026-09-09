@@ -1,0 +1,114 @@
+{
+  "results": [
+    {
+      "key": "maximum",
+      "id": "7299a615-462e-803f-8008-9bf1b28ced93",
+      "width": 1280,
+      "height": 800,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "Community WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "length": 100,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": true
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "256",
+          "length": 3,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "Welcome to AllChat Community.",
+          "length": 29,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "https://push.example.com",
+          "length": 24,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    },
+    {
+      "key": "minimum",
+      "id": "7299a615-462e-803f-8008-9bf1a393738d",
+      "width": 1280,
+      "height": 800,
+      "sourceValid": true,
+      "fields": [
+        {
+          "colorCorrect": true,
+          "name": "name",
+          "value": "A",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "maxAttachmentMiB",
+          "value": "1",
+          "length": 1,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "homeMarkdown",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        },
+        {
+          "colorCorrect": true,
+          "name": "pushRelayURL",
+          "value": "",
+          "length": 0,
+          "correct": true,
+          "geometry": true,
+          "visible": true,
+          "rendered": true,
+          "clipped": false
+        }
+      ],
+      "interactions": 0
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

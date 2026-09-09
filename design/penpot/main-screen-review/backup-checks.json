@@ -1,0 +1,39 @@
+[
+  {
+    "archive": "01-login-save-check.tar.gz",
+    "checksumVerified": true,
+    "note": "Earlier save-probe directory packaged during final audit; no native-export claim"
+  },
+  {
+    "archive": "02-login-default.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "03-login-prototype.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "04-login-window-review.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "05-login-minimum-design.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "06-login-interaction-states.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "07-main-conversation-default.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "08-main-browser-prototype.tar.gz",
+    "checksumVerified": true
+  },
+  {
+    "archive": "09-main-native-prototype.tar.gz",
+    "checksumVerified": true
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "made": 1,
+  "remaining": 2,
+  "boards": [
+    {
+      "key": "safety-small-member",
+      "id": "7299a615-462e-803f-8008-9bd9b340caa8"
+    },
+    {
+      "key": "safety-small-loading",
+      "id": "7299a615-462e-803f-8008-9bd9bf6d659c"
+    },
+    {
+      "key": "safety-small-reports",
+      "id": "7299a615-462e-803f-8008-9bd9cd4ef0b8"
+    }
+  ]
+}

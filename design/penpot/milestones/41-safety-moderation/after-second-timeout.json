@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Desktop / Settings / safety-records",
+    "id": "7299a615-462e-803f-8008-9bcf6ec5a874",
+    "state": "records",
+    "texts": 30
+  },
+  {
+    "name": "Desktop / Settings / safety-moderator",
+    "id": "7299a615-462e-803f-8008-9bce87708b78",
+    "state": "moderator",
+    "texts": 28
+  },
+  {
+    "name": "Desktop / Settings / safety-reports",
+    "id": "7299a615-462e-803f-8008-9bce50c7fec0",
+    "state": "reports",
+    "texts": 16
+  }
+]

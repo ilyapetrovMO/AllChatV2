@@ -1,0 +1,22 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9babc636b1cd",
+    "name": "Desktop / Settings / notifications-empty",
+    "filename": "Desktop--Settings--notifications-empty.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baba02cddd8",
+    "name": "Desktop / Settings / notifications-overrides",
+    "filename": "Desktop--Settings--notifications-overrides.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bab8dded5b7",
+    "name": "Desktop / Settings / notifications-muted",
+    "filename": "Desktop--Settings--notifications-muted.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bab7c636cf4",
+    "name": "Desktop / Settings / notifications-default",
+    "filename": "Desktop--Settings--notifications-default.svg"
+  }
+]

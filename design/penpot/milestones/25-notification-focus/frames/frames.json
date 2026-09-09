@@ -1,0 +1,27 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9baee03dd0c5",
+    "name": "Desktop / Settings / notifications-focus-channel-mute",
+    "filename": "Desktop--Settings--notifications-focus-channel-mute.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baedf1217f8",
+    "name": "Desktop / Settings / notifications-focus-channel-level",
+    "filename": "Desktop--Settings--notifications-focus-channel-level.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baeddeaaf9b",
+    "name": "Desktop / Settings / notifications-focus-sound",
+    "filename": "Desktop--Settings--notifications-focus-sound.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baedcf274b4",
+    "name": "Desktop / Settings / notifications-focus-community-mute",
+    "filename": "Desktop--Settings--notifications-focus-community-mute.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baedbc4b79f",
+    "name": "Desktop / Settings / notifications-focus-community-level",
+    "filename": "Desktop--Settings--notifications-focus-community-level.svg"
+  }
+]

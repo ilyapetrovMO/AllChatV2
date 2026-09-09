@@ -1,0 +1,74 @@
+[
+  {
+    "bounds": [
+      32,
+      300,
+      1049,
+      479
+    ],
+    "initial": "V",
+    "name": "visual-owner (You)",
+    "username": "@visual-owner \u00b7 Owner",
+    "presence": "idle"
+  },
+  {
+    "bounds": [
+      32,
+      733,
+      1049,
+      911
+    ],
+    "initial": "A",
+    "name": "alex",
+    "username": "@alex",
+    "presence": "offline"
+  },
+  {
+    "bounds": [
+      32,
+      932,
+      1049,
+      1111
+    ],
+    "initial": "J",
+    "name": "jordan",
+    "username": "@jordan",
+    "presence": "offline"
+  },
+  {
+    "bounds": [
+      32,
+      1132,
+      1049,
+      1310
+    ],
+    "initial": "M",
+    "name": "mobile-member",
+    "username": "@mobile-member",
+    "presence": "offline"
+  },
+  {
+    "bounds": [
+      32,
+      1331,
+      1049,
+      1510
+    ],
+    "initial": "S",
+    "name": "sam",
+    "username": "@sam",
+    "presence": "offline"
+  },
+  {
+    "bounds": [
+      32,
+      1531,
+      1049,
+      1709
+    ],
+    "initial": "T",
+    "name": "taylor",
+    "username": "@taylor",
+    "presence": "offline"
+  }
+]

@@ -1,0 +1,860 @@
+[
+  {
+    "name": "add-instance-dark",
+    "reference": "add-instance-dark.png",
+    "controls": [
+      {
+        "label": "Instance address",
+        "class": "android.widget.EditText",
+        "bounds": "[73,1075][1006,1213]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      },
+      {
+        "label": "Username",
+        "class": "android.widget.EditText",
+        "bounds": "[73,1248][1006,1386]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      },
+      {
+        "label": "Password",
+        "class": "android.widget.EditText",
+        "bounds": "[73,1422][1006,1559]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      },
+      {
+        "label": "Sign in",
+        "class": "android.widget.Button",
+        "bounds": "[74,1606][1007,1742]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "community-home-dark",
+    "reference": "community-home-dark.png",
+    "controls": [
+      {
+        "label": "Community Members",
+        "class": "android.view.ViewGroup",
+        "bounds": "[534,97][639,202]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Moderation Reports",
+        "class": "android.view.ViewGroup",
+        "bounds": "[639,97][744,202]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Notification Settings",
+        "class": "android.view.ViewGroup",
+        "bounds": "[744,97][849,202]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Toggle Do Not Disturb",
+        "class": "android.view.ViewGroup",
+        "bounds": "[849,97][954,202]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Manage Instances",
+        "class": "android.widget.Button",
+        "bounds": "[954,97][1059,202]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Show all Direct Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[903,263][1049,314]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Direct Message with taylor",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,316][1049,426]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Direct Message with jordan",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,439][1049,550]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Direct Message with mobile-member",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,563][1049,673]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "#, general",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,1009][1049,1151]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Lounge",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,1169][1049,1311]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "text-channel-dark",
+    "reference": "text-channel-dark.png",
+    "controls": [
+      {
+        "label": "Back to conversations",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,83][104,215]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Pinned Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[692,91][807,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Search Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[807,91][923,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Conversation Notifications",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,91][1038,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Open allchat-icon.png",
+        "class": "android.widget.ImageButton",
+        "bounds": "[37,707][1043,1358]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Add Attachments",
+        "class": "android.view.ViewGroup",
+        "bounds": "[26,2195][142,2311]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Message",
+        "class": "android.widget.EditText",
+        "bounds": "[162,2195][918,2311]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "pinned-messages-dark",
+    "reference": "pinned-messages-dark.png",
+    "controls": [
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,28][1038,144]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "search-messages-dark",
+    "reference": "search-messages-dark.png",
+    "controls": [
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,28][1038,144]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Search Messages",
+        "class": "android.widget.EditText",
+        "bounds": "[31,204][826,315]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      },
+      {
+        "label": "Search",
+        "class": "android.view.ViewGroup",
+        "bounds": "[848,205][1049,314]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "conversation-notifications-dark",
+    "reference": "conversation-notifications-dark.png",
+    "controls": [
+      {
+        "label": "Default",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,838][965,947]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "All Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,968][965,1076]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Mentions Only",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1098][965,1207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Nothing",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1227][965,1336]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Not muted",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1357][965,1471]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Save",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1513][965,1632]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1632][965,1751]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "conversation-notifications-muted-dark",
+    "reference": "conversation-notifications-muted-dark.png",
+    "controls": [
+      {
+        "label": "Default",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,838][965,947]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "All Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,968][965,1076]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Mentions Only",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1098][965,1207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Nothing",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1227][965,1336]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Muted",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1357][965,1471]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Save",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1513][965,1632]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1632][965,1751]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "conversation-notifications-save-result-dark",
+    "reference": "conversation-notifications-save-result-dark.png",
+    "controls": [
+      {
+        "label": "Default",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,800][965,909]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "All Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,930][965,1038]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Mentions Only",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1060][965,1169]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Nothing",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1189][965,1298]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Muted",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1319][965,1433]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Save",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1552][965,1671]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1671][965,1790]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "conversation-notifications-default-light",
+    "reference": "conversation-notifications-default-light.png",
+    "controls": [
+      {
+        "label": "Default",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,838][965,947]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "All Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,968][965,1076]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Mentions Only",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1098][965,1207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Nothing",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1227][965,1336]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Not muted",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1357][965,1471]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Save",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1513][965,1632]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1632][965,1751]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "conversation-notifications-save-result-light",
+    "reference": "conversation-notifications-save-result-light.png",
+    "controls": [
+      {
+        "label": "Default",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,800][965,909]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "All Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,930][965,1038]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Mentions Only",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1060][965,1169]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Nothing",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1189][965,1298]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Muted",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1319][965,1433]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Save",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1552][965,1671]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Close",
+        "class": "android.view.ViewGroup",
+        "bounds": "[116,1671][965,1790]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "own-message-actions-light",
+    "reference": "own-message-actions-light.png",
+    "controls": [
+      {
+        "label": "Message actions",
+        "class": "android.view.ViewGroup",
+        "bounds": "[0,0][1080,2400]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "React with \ud83d\udc4d",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,1643][158,1759]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "React with \u2764\ufe0f",
+        "class": "android.view.ViewGroup",
+        "bounds": "[179,1643][294,1759]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "React with \ud83d\ude02",
+        "class": "android.view.ViewGroup",
+        "bounds": "[315,1643][431,1759]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "React with \ud83c\udf89",
+        "class": "android.view.ViewGroup",
+        "bounds": "[452,1643][567,1759]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "React with \ud83d\ude2e",
+        "class": "android.view.ViewGroup",
+        "bounds": "[588,1643][704,1759]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Reply",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,1790][1038,1927]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Pin Message",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,1927][1038,2064]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Edit Message",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,2063][1038,2199]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Delete Message",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,2200][1038,2337]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "reply-composer-light",
+    "reference": "reply-composer-light.png",
+    "controls": [
+      {
+        "label": "Back to conversations",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,83][104,215]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Pinned Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[692,91][807,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Search Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[807,91][923,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Conversation Notifications",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,91][1038,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Open allchat-icon.png",
+        "class": "android.widget.ImageButton",
+        "bounds": "[37,565][1043,1216]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Cancel Message action",
+        "class": "android.view.ViewGroup",
+        "bounds": "[940,2047][1022,2147]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Add Attachments",
+        "class": "android.view.ViewGroup",
+        "bounds": "[26,2195][142,2311]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Message",
+        "class": "android.widget.EditText",
+        "bounds": "[162,2195][918,2311]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "edit-composer-light",
+    "reference": "edit-composer-light.png",
+    "controls": [
+      {
+        "label": "Back to conversations",
+        "class": "android.view.ViewGroup",
+        "bounds": "[42,83][104,215]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Pinned Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[692,91][807,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Search Messages",
+        "class": "android.view.ViewGroup",
+        "bounds": "[807,91][923,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Conversation Notifications",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,91][1038,207]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Open allchat-icon.png",
+        "class": "android.widget.ImageButton",
+        "bounds": "[37,517][1043,1168]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Cancel Message action",
+        "class": "android.view.ViewGroup",
+        "bounds": "[940,1999][1022,2099]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Add Attachments",
+        "class": "android.view.ViewGroup",
+        "bounds": "[26,2196][142,2312]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "Message",
+        "class": "android.widget.EditText",
+        "bounds": "[162,2147][918,2311]",
+        "enabled": true,
+        "selected": false,
+        "editable": true
+      },
+      {
+        "label": "Send Message",
+        "class": "android.view.ViewGroup",
+        "bounds": "[938,2196][1054,2312]",
+        "enabled": false,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  },
+  {
+    "name": "members-panel-light",
+    "reference": "members-panel-light.png",
+    "controls": [
+      {
+        "label": "Close Members",
+        "class": "android.view.ViewGroup",
+        "bounds": "[923,28][1038,144]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "V, visual-owner (You), @visual-owner \u00b7 Owner, idle",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,300][1049,479]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "A, alex, @alex, offline",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,733][1049,911]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "J, jordan, @jordan, offline",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,932][1049,1111]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "M, mobile-member, @mobile-member, offline",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,1132][1049,1310]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "S, sam, @sam, offline",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,1331][1049,1510]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      },
+      {
+        "label": "T, taylor, @taylor, offline",
+        "class": "android.view.ViewGroup",
+        "bounds": "[32,1531][1049,1709]",
+        "enabled": true,
+        "selected": false,
+        "editable": false
+      }
+    ],
+    "status": "observed native controls; offscreen and other states pending"
+  }
+]

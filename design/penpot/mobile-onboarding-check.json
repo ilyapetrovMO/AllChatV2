@@ -1,0 +1,15 @@
+{
+  "id": "6bdc1c40-ce96-804f-8008-9a6fee8f2b10",
+  "width": 1080,
+  "height": 2400,
+  "texts": [
+    "ALLCHAT MOBILE",
+    "Add an Instance",
+    "Sign in with the address and Member account for your Community.",
+    "https://chat.example.com",
+    "Username",
+    "Password",
+    "Sign in"
+  ],
+  "status": "Native editable draft. Roboto 800 uses 700 fallback; negative title letter spacing, text baselines, OS bars and component overrides require visual verification."
+}

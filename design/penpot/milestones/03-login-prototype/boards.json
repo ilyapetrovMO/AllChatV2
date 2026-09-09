@@ -1,0 +1,135 @@
+{
+  "guide": {
+    "boardId": "7299a615-462e-803f-8008-9b8be7ba29a7",
+    "key": "guide",
+    "label": "Choose a login scenario"
+  },
+  "empty": {
+    "boardId": "7299a615-462e-803f-8008-9b8be80355cb",
+    "key": "empty",
+    "label": "Sign in"
+  },
+  "username": {
+    "boardId": "7299a615-462e-803f-8008-9b8be85a4089",
+    "key": "username",
+    "label": "Username entered",
+    "username": "visual-owner"
+  },
+  "password": {
+    "boardId": "7299a615-462e-803f-8008-9b8be8b59feb",
+    "key": "password",
+    "label": "Password entered",
+    "password": true
+  },
+  "ready": {
+    "boardId": "7299a615-462e-803f-8008-9b8be911b523",
+    "key": "ready",
+    "label": "Ready to sign in",
+    "username": "visual-owner",
+    "password": true
+  },
+  "invalid": {
+    "boardId": "7299a615-462e-803f-8008-9b8be974eff0",
+    "key": "invalid",
+    "label": "Invalid credentials example",
+    "username": "catalog-no-such-member",
+    "password": true,
+    "invalid": true
+  },
+  "error": {
+    "boardId": "7299a615-462e-803f-8008-9b8be9d88139",
+    "key": "error",
+    "label": "Login failed",
+    "username": "catalog-no-such-member",
+    "password": true,
+    "invalid": true,
+    "error": true
+  },
+  "retry": {
+    "boardId": "7299a615-462e-803f-8008-9b8bea4e744e",
+    "key": "retry",
+    "label": "Corrected credentials — error retained",
+    "username": "visual-owner",
+    "password": true,
+    "error": true
+  },
+  "missing-username": {
+    "boardId": "7299a615-462e-803f-8008-9b8beac8bb1b",
+    "key": "missing-username",
+    "label": "Username required",
+    "required": "Username"
+  },
+  "missing-password": {
+    "boardId": "7299a615-462e-803f-8008-9b8beb3f116d",
+    "key": "missing-password",
+    "label": "Password required",
+    "username": "visual-owner",
+    "required": "Password"
+  },
+  "missing-username-password-filled": {
+    "boardId": "7299a615-462e-803f-8008-9b8bebe6e916",
+    "key": "missing-username-password-filled",
+    "label": "Username required",
+    "password": true,
+    "required": "Username"
+  },
+  "register": {
+    "boardId": "7299a615-462e-803f-8008-9b8bec6af318",
+    "key": "register",
+    "label": "Register",
+    "mode": "register"
+  },
+  "register-required": {
+    "boardId": "7299a615-462e-803f-8008-9b8becdabc26",
+    "key": "register-required",
+    "label": "Invitation token required",
+    "mode": "register",
+    "required": "Invitation token"
+  },
+  "register-ready": {
+    "boardId": "7299a615-462e-803f-8008-9b8bed5a34d8",
+    "key": "register-ready",
+    "label": "Registration example filled",
+    "mode": "register",
+    "filled": true
+  },
+  "recovery": {
+    "boardId": "7299a615-462e-803f-8008-9b8bee025681",
+    "key": "recovery",
+    "label": "Recovery",
+    "mode": "recover"
+  },
+  "recovery-required": {
+    "boardId": "7299a615-462e-803f-8008-9b8bef2cb596",
+    "key": "recovery-required",
+    "label": "Recovery token required",
+    "mode": "recover",
+    "required": "Recovery token"
+  },
+  "recovery-ready": {
+    "boardId": "7299a615-462e-803f-8008-9b8bf07a54f3",
+    "key": "recovery-ready",
+    "label": "Recovery example filled",
+    "mode": "recover",
+    "filled": true
+  },
+  "recovered": {
+    "boardId": "7299a615-462e-803f-8008-9b8bf139de30",
+    "key": "recovered",
+    "label": "Password replaced",
+    "confirmation": true
+  },
+  "recovered-ready": {
+    "boardId": "7299a615-462e-803f-8008-9b8bf1c5c162",
+    "key": "recovered-ready",
+    "label": "Sign in with replacement password",
+    "confirmation": true,
+    "username": "visual-owner",
+    "password": true
+  },
+  "success": {
+    "boardId": "7299a615-462e-803f-8008-9b8bf263524e",
+    "key": "success",
+    "label": "Signed in — prototype complete"
+  }
+}

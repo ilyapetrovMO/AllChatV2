@@ -1,0 +1,236 @@
+[
+  {
+    "key": "community-general-default",
+    "id": "7299a615-462e-803f-8008-9be448c4b5f3",
+    "texts": [
+      {
+        "name": "file content avatar Choose File",
+        "copy": "Choose File",
+        "x": 276,
+        "y": 34.78645324707031,
+        "target": "{\"x\":276,\"y\":34.953125}"
+      },
+      {
+        "name": "file content avatar No file chosen",
+        "copy": "No file chosen",
+        "x": 369,
+        "y": 34.78645324707031,
+        "target": "{\"x\":369,\"y\":34.953125}"
+      },
+      {
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104.26666259765625,
+        "target": "{\"x\":21,\"y\":104}"
+      },
+      {
+        "name": "p text 6",
+        "copy": "Generated tone",
+        "x": 21,
+        "y": 158.60311889648438,
+        "target": "{\"x\":21,\"y\":158.203125}"
+      },
+      {
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.4270782470703,
+        "target": "{\"x\":21,\"y\":208.59375}"
+      },
+      {
+        "name": "file content ringtone Choose File",
+        "copy": "Choose File",
+        "x": 31,
+        "y": 239.3333282470703,
+        "target": "{\"x\":31,\"y\":239.5}"
+      },
+      {
+        "name": "file content ringtone No file chosen",
+        "copy": "No file chosen",
+        "x": 124,
+        "y": 239.3333282470703,
+        "target": "{\"x\":124,\"y\":239.5}"
+      }
+    ]
+  },
+  {
+    "key": "community-ringtone-custom",
+    "id": "7299a615-462e-803f-8008-9be6e1d91f13",
+    "texts": [
+      {
+        "name": "file content avatar Choose File",
+        "copy": "Choose File",
+        "x": 276,
+        "y": 34.78645324707031,
+        "target": "{\"x\":276,\"y\":34.953125}"
+      },
+      {
+        "name": "file content avatar No file chosen",
+        "copy": "No file chosen",
+        "x": 369,
+        "y": 34.78645324707031,
+        "target": "{\"x\":369,\"y\":34.953125}"
+      },
+      {
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104.26666259765625,
+        "target": "{\"x\":21,\"y\":104}"
+      },
+      {
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.4270782470703,
+        "target": "{\"x\":21,\"y\":208.59375}"
+      },
+      {
+        "name": "file content ringtone Choose File",
+        "copy": "Choose File",
+        "x": 31,
+        "y": 239.3333282470703,
+        "target": "{\"x\":31,\"y\":239.5}"
+      },
+      {
+        "name": "Ringtone filename",
+        "copy": "No file chosen",
+        "x": 124,
+        "y": 239.3333282470703,
+        "target": "{\"x\":124,\"y\":239.5}"
+      },
+      {
+        "name": "p text 6",
+        "copy": "Custom audio is active.",
+        "x": 21,
+        "y": 158.60311889648438,
+        "target": "{\"x\":21,\"y\":158.203125}"
+      },
+      {
+        "name": "button text 9",
+        "copy": "Remove custom ringtone",
+        "x": 358,
+        "y": 281.8999938964844,
+        "target": "{\"x\":358,\"y\":281.5}"
+      }
+    ]
+  },
+  {
+    "key": "general-small-default",
+    "id": "7299a615-462e-803f-8008-9bf45b69eebc",
+    "texts": [
+      {
+        "name": "file content avatar Choose File",
+        "copy": "Choose File",
+        "x": 276,
+        "y": 34.78645324707031,
+        "target": "{\"x\":276,\"y\":34.953125}"
+      },
+      {
+        "name": "file content avatar No file chosen",
+        "copy": "No file chosen",
+        "x": 369,
+        "y": 34.78645324707031,
+        "target": "{\"x\":369,\"y\":34.953125}"
+      },
+      {
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104.26666259765625,
+        "target": "{\"x\":21,\"y\":104}"
+      },
+      {
+        "name": "p text 6",
+        "copy": "Generated tone",
+        "x": 21,
+        "y": 158.60311889648438,
+        "target": "{\"x\":21,\"y\":158.203125}"
+      },
+      {
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.4270782470703,
+        "target": "{\"x\":21,\"y\":208.59375}"
+      },
+      {
+        "name": "file content ringtone Choose File",
+        "copy": "Choose File",
+        "x": 31,
+        "y": 239.3333282470703,
+        "target": "{\"x\":31,\"y\":239.5}"
+      },
+      {
+        "name": "file content ringtone No file chosen",
+        "copy": "No file chosen",
+        "x": 124,
+        "y": 239.3333282470703,
+        "target": "{\"x\":124,\"y\":239.5}"
+      }
+    ]
+  },
+  {
+    "key": "ringtone-small-custom",
+    "id": "7299a615-462e-803f-8008-9bfb197c0761",
+    "texts": [
+      {
+        "name": "file content avatar Choose File",
+        "copy": "Choose File",
+        "x": 276,
+        "y": 34.78645324707031,
+        "target": "{\"x\":276,\"y\":34.953125}"
+      },
+      {
+        "name": "file content avatar No file chosen",
+        "copy": "No file chosen",
+        "x": 369,
+        "y": 34.78645324707031,
+        "target": "{\"x\":369,\"y\":34.953125}"
+      },
+      {
+        "name": "h3 text 5",
+        "copy": "Community ringtone",
+        "x": 21,
+        "y": 104.26666259765625,
+        "target": "{\"x\":21,\"y\":104}"
+      },
+      {
+        "name": "label text 7",
+        "copy": "Choose audio file",
+        "x": 21,
+        "y": 208.4270782470703,
+        "target": "{\"x\":21,\"y\":208.59375}"
+      },
+      {
+        "name": "file content ringtone Choose File",
+        "copy": "Choose File",
+        "x": 31,
+        "y": 239.3333282470703,
+        "target": "{\"x\":31,\"y\":239.5}"
+      },
+      {
+        "name": "Ringtone filename",
+        "copy": "No file chosen",
+        "x": 124,
+        "y": 239.3333282470703,
+        "target": "{\"x\":124,\"y\":239.5}"
+      },
+      {
+        "name": "p text 6",
+        "copy": "Custom audio is active.",
+        "x": 21,
+        "y": 158.60311889648438,
+        "target": "{\"x\":21,\"y\":158.203125}"
+      },
+      {
+        "name": "button text 9",
+        "copy": "Remove custom ringtone",
+        "x": 198,
+        "y": 281.8999938964844,
+        "target": "{\"x\":198,\"y\":281.5}"
+      }
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "key": "banner-updated",
+      "id": "7299a615-462e-803f-8008-9ba3d0ee18f8",
+      "textLayers": 38
+    },
+    {
+      "key": "avatar-updated",
+      "id": "7299a615-462e-803f-8008-9ba3cf5eb09b",
+      "textLayers": 38
+    },
+    {
+      "key": "banner-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3cb947ca0",
+      "textLayers": 42
+    },
+    {
+      "key": "banner-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c8684a29",
+      "textLayers": 42
+    },
+    {
+      "key": "avatar-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3c52fd1ec",
+      "textLayers": 42
+    },
+    {
+      "key": "avatar-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c1c1216a",
+      "textLayers": 42
+    }
+  ],
+  "validation": [],
+  "revision": 43
+}

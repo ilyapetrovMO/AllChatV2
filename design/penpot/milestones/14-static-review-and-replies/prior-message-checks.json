@@ -1,0 +1,84 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "key": "edit-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d94f293",
+      "actions": [],
+      "expected": [],
+      "textLayers": 33
+    },
+    {
+      "key": "reply-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d431b5a",
+      "actions": [],
+      "expected": [],
+      "textLayers": 33
+    },
+    {
+      "key": "deleted",
+      "id": "7299a615-462e-803f-8008-9b9b1d22f537",
+      "actions": [],
+      "expected": [],
+      "textLayers": 31
+    },
+    {
+      "key": "pinned-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c8158a0",
+      "actions": [
+        "Reply",
+        "React",
+        "Unpin",
+        "Edit",
+        "Delete"
+      ],
+      "expected": [
+        "Reply",
+        "React",
+        "Unpin",
+        "Edit",
+        "Delete"
+      ],
+      "textLayers": 37
+    },
+    {
+      "key": "other-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c0a8649",
+      "actions": [
+        "Reply",
+        "React",
+        "Pin",
+        "Report"
+      ],
+      "expected": [
+        "Reply",
+        "React",
+        "Pin",
+        "Report"
+      ],
+      "textLayers": 35
+    },
+    {
+      "key": "own-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1b7f9d73",
+      "actions": [
+        "Reply",
+        "React",
+        "Pin",
+        "Edit",
+        "Delete"
+      ],
+      "expected": [
+        "Reply",
+        "React",
+        "Pin",
+        "Edit",
+        "Delete"
+      ],
+      "textLayers": 36
+    }
+  ],
+  "validation": [],
+  "revision": 36
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bf94d5dda05",
+    "name": "Desktop / Settings / avatar-small-removed",
+    "filename": "Desktop--Settings--avatar-small-removed.svg",
+    "png": "Desktop--Settings--avatar-small-removed.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf938571467",
+    "name": "Desktop / Settings / avatar-small-uploaded",
+    "filename": "Desktop--Settings--avatar-small-uploaded.svg",
+    "png": "Desktop--Settings--avatar-small-uploaded.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf929f8278d",
+    "name": "Desktop / Settings / avatar-small-fallback",
+    "filename": "Desktop--Settings--avatar-small-fallback.svg",
+    "png": "Desktop--Settings--avatar-small-fallback.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf915b81703",
+    "name": "Desktop / Settings / avatar-small-image",
+    "filename": "Desktop--Settings--avatar-small-image.svg",
+    "png": "Desktop--Settings--avatar-small-image.png"
+  }
+]

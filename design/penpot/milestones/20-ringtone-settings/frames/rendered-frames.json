@@ -1,0 +1,44 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9ba8ba893bb0",
+    "name": "Desktop / Settings / ringtone-muted",
+    "filename": "Desktop--Settings--ringtone-muted.svg",
+    "png": "Desktop--Settings--ringtone-muted.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba8b3589d3c",
+    "name": "Desktop / Settings / ringtone-reset",
+    "filename": "Desktop--Settings--ringtone-reset.svg",
+    "png": "Desktop--Settings--ringtone-reset.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba8ac6d87a6",
+    "name": "Desktop / Settings / ringtone-error",
+    "filename": "Desktop--Settings--ringtone-error.svg",
+    "png": "Desktop--Settings--ringtone-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba8a546b65d",
+    "name": "Desktop / Settings / ringtone-saved",
+    "filename": "Desktop--Settings--ringtone-saved.svg",
+    "png": "Desktop--Settings--ringtone-saved.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba89e4e86ec",
+    "name": "Desktop / Settings / ringtone-custom",
+    "filename": "Desktop--Settings--ringtone-custom.svg",
+    "png": "Desktop--Settings--ringtone-custom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba897b59b5f",
+    "name": "Desktop / Settings / ringtone-community",
+    "filename": "Desktop--Settings--ringtone-community.svg",
+    "png": "Desktop--Settings--ringtone-community.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba890dc36cd",
+    "name": "Desktop / Settings / ringtone-generated",
+    "filename": "Desktop--Settings--ringtone-generated.svg",
+    "png": "Desktop--Settings--ringtone-generated.png"
+  }
+]

@@ -1,0 +1,97 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-focused",
+      "screenshot": "address-focused.png",
+      "controls": "address-focused.json",
+      "vector": "address-focused.svg",
+      "layers": "address-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-keyboard-focused",
+      "screenshot": "submit-keyboard-focused.png",
+      "controls": "submit-keyboard-focused.json",
+      "vector": "submit-keyboard-focused.svg",
+      "layers": "submit-keyboard-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-hovered",
+      "screenshot": "submit-hovered.png",
+      "controls": "submit-hovered.json",
+      "vector": "submit-hovered.svg",
+      "layers": "submit-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-hovered",
+      "screenshot": "address-hovered.png",
+      "controls": "address-hovered.json",
+      "vector": "address-hovered.svg",
+      "layers": "address-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-required",
+      "screenshot": "address-required.png",
+      "controls": "address-required.json",
+      "vector": "address-required.svg",
+      "layers": "address-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-insecure-error",
+      "screenshot": "address-insecure-error.png",
+      "controls": "address-insecure-error.json",
+      "vector": "address-insecure-error.svg",
+      "layers": "address-insecure-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-invalid-error",
+      "screenshot": "address-invalid-error.png",
+      "controls": "address-invalid-error.json",
+      "vector": "address-invalid-error.svg",
+      "layers": "address-invalid-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "address-filled-after-error",
+      "screenshot": "address-filled-after-error.png",
+      "controls": "address-filled-after-error.json",
+      "vector": "address-filled-after-error.svg",
+      "layers": "address-filled-after-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "add-instance-success-sign-in",
+      "screenshot": "add-instance-success-sign-in.png",
+      "controls": "add-instance-success-sign-in.json",
+      "vector": "add-instance-success-sign-in.svg",
+      "layers": "add-instance-success-sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "add-another-community",
+      "screenshot": "add-another-community.png",
+      "controls": "add-another-community.json",
+      "vector": "add-another-community.svg",
+      "layers": "add-another-community.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "checks": [
+    {
+      "id": "7299a615-462e-803f-8008-9b8fd6113afc",
+      "name": "Desktop / Login / Minimum / recovery",
+      "width": 960,
+      "height": 640,
+      "card": {
+        "x": 276,
+        "y": 81.266,
+        "width": 480,
+        "height": 505.46999999999974
+      },
+      "textRendered": true,
+      "interactionCount": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b8fd566da64",
+      "name": "Desktop / Login / Minimum / register",
+      "width": 960,
+      "height": 640,
+      "card": {
+        "x": 276,
+        "y": 52,
+        "width": 480,
+        "height": 588.0499999999997
+      },
+      "textRendered": true,
+      "interactionCount": 0
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b8fd498d14c",
+      "name": "Desktop / Login / Minimum / empty",
+      "width": 960,
+      "height": 640,
+      "card": {
+        "x": 276,
+        "y": 61.672,
+        "width": 480,
+        "height": 544.6599999999999
+      },
+      "textRendered": true,
+      "interactionCount": 0
+    }
+  ],
+  "validation": [],
+  "revision": 16
+}

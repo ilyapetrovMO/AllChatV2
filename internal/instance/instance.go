@@ -31,7 +31,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schemaVersion = 30
+const schemaVersion = 31
 
 //go:embed web/*
 var embeddedWeb embed.FS
@@ -154,6 +154,19 @@ func Open(config Config, logger *slog.Logger) (_ *Instance, err error) {
 	if mediaErr != nil {
 		return nil, fmt.Errorf("configure media limits: %w", mediaErr)
 	}
+	if err := communityService.RecoverCallHistory(context.Background()); err != nil {
+		return nil, fmt.Errorf("recover call history: %w", err)
+	}
+	mediaManager.SetCallRecorder(func(call media.DirectCall) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err := communityService.RecordCallEvent(ctx, call)
+		if err != nil {
+			logger.Error("record call history", "call_id", call.ID, "error", err)
+		}
+		return err
+	})
+
 	webPush, err := newWebPushService(db, communityService, config.DataDir, logger)
 	if err != nil {
 		return nil, fmt.Errorf("initialize Web Push: %w", err)
@@ -1023,6 +1036,25 @@ func initializeSchema(db *sql.DB) error {
 			return err
 		}
 	}
+	if currentVersion < 31 {
+		exists, err := schemaColumnExists(ctx, tx, "messages", "call_event")
+		if err != nil {
+			return err
+		}
+		if !exists {
+			if _, err := tx.ExecContext(ctx, "ALTER TABLE messages ADD COLUMN call_event TEXT"); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.ExecContext(ctx, "CREATE INDEX IF NOT EXISTS messages_call_events ON messages(channel_id) WHERE call_event IS NOT NULL"); err != nil {
+			return err
+		}
+
+		if _, err := tx.ExecContext(ctx, "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)", 31, time.Now().UTC().Format(time.RFC3339Nano)); err != nil {
+			return err
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit schema initialization: %w", err)
 	}

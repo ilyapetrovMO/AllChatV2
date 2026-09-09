@@ -1,0 +1,54 @@
+[
+  {
+    "key": "username-hover",
+    "value": "alex",
+    "validationMessage": "",
+    "valueMissing": false,
+    "background": "rgb(32, 33, 39)",
+    "color": "rgb(240, 241, 245)",
+    "border": "1px solid rgba(255, 255, 255, 0.14)",
+    "borderRadius": "4px",
+    "outline": "rgb(240, 241, 245) none 0px",
+    "outlineOffset": "0px",
+    "boxShadow": "none"
+  },
+  {
+    "key": "username-focus",
+    "value": "alex",
+    "validationMessage": "",
+    "valueMissing": false,
+    "background": "rgb(32, 33, 39)",
+    "color": "rgb(240, 241, 245)",
+    "border": "1px solid rgba(0, 0, 0, 0)",
+    "borderRadius": "4px",
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "boxShadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+  },
+  {
+    "key": "save-focus",
+    "value": "",
+    "validationMessage": "",
+    "valueMissing": false,
+    "background": "rgb(109, 117, 232)",
+    "color": "rgb(255, 255, 255)",
+    "border": "0px none rgb(255, 255, 255)",
+    "borderRadius": "4px",
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "boxShadow": "none"
+  },
+  {
+    "key": "username-required",
+    "value": "",
+    "validationMessage": "Please fill out this field.",
+    "valueMissing": true,
+    "background": "rgb(32, 33, 39)",
+    "color": "rgb(240, 241, 245)",
+    "border": "1px solid rgba(0, 0, 0, 0)",
+    "borderRadius": "4px",
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "boxShadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px"
+  }
+]

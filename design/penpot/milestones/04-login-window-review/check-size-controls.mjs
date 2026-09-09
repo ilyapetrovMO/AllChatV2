@@ -1,0 +1,8 @@
+import {chromium} from '/home/gosha/src/AllChatV2/node_modules/playwright/index.mjs';
+import fs from 'node:fs/promises';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1400,height:1100}});const results=[];
+try{await page.goto('file:///tmp/allchat-login-interactive/desktop/prototypes/login.prototype.html');await page.evaluate(()=>document.fonts.ready);
+for(const size of ['960x640','1280x800']){await page.getByLabel('Window size').selectOption(size);const box=await page.locator('#viewport').boundingBox();if(`${box.width}x${box.height}`!==size)throw Error('Wrong dimensions '+size);
+for(const mode of ['Sign in','Register','Recovery']){await page.getByRole('button',{name:mode,exact:true}).first().click();await page.getByRole('button',{name:'Fill demo values',exact:true}).click();const button=page.locator('form button[type=submit]');await button.scrollIntoViewIfNeeded();const visible=await button.evaluate(e=>{const r=e.getBoundingClientRect(),c=document.querySelector('.content').getBoundingClientRect();return r.top>=c.top&&r.bottom<=c.bottom});if(!visible)throw Error('Clipped submit '+mode);results.push({size,mode,submitReachable:true});}
+await page.locator('#viewport').screenshot({path:`/home/gosha/src/AllChatV2/design/penpot/milestones/04-login-window-review/recovery-${size}.png`});}
+await fs.writeFile('/home/gosha/src/AllChatV2/design/penpot/milestones/04-login-window-review/size-controls-checks.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results));}finally{await browser.close()}

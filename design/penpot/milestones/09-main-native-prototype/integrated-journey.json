@@ -1,0 +1,37 @@
+{
+  "pass": true,
+  "problems": [],
+  "reachable": 26,
+  "route": [
+    {
+      "action": "Start login",
+      "destination": "Login prototype / empty"
+    },
+    {
+      "action": "Username input",
+      "destination": "Login prototype / username"
+    },
+    {
+      "action": "Password input",
+      "destination": "Login prototype / ready"
+    },
+    {
+      "action": "Submit",
+      "destination": "Login prototype / success"
+    },
+    {
+      "action": "Open community",
+      "destination": "Main prototype / default"
+    },
+    {
+      "action": "Composer placeholder",
+      "destination": "Main prototype / draft"
+    },
+    {
+      "action": "Send message",
+      "destination": "Main prototype / sent"
+    }
+  ],
+  "revision": 23,
+  "validation": []
+}

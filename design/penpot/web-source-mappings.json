@@ -1,0 +1,252 @@
+[
+  {
+    "surfaceId": "web-001",
+    "source": "internal/instance/activity_http.go",
+    "line": 437,
+    "anchor": "template.New(\"activities\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a2b216f6e",
+    "capture": "populated/web-reference/activities.png",
+    "routeState": "activities",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-002",
+    "source": "internal/instance/activity_http.go",
+    "line": 438,
+    "anchor": "template.New(\"activities-admin\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a26fba1b6",
+    "capture": "populated/web-reference/admin-activities.png",
+    "routeState": "admin-activities",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-004",
+    "source": "internal/instance/admin_dashboard.go",
+    "line": 194,
+    "anchor": "template.New(\"admin-dashboard\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cc8c18005",
+    "capture": "populated/web-reference/admin-dashboard.png",
+    "routeState": "admin-dashboard",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-005",
+    "source": "internal/instance/auth_http.go",
+    "line": 282,
+    "anchor": "template.New(\"auth\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a35478a56",
+    "capture": "populated/web-reference/login.png",
+    "routeState": "login",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-006",
+    "source": "internal/instance/channel_http.go",
+    "line": 277,
+    "anchor": "template.New(\"home\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69f7b9b1a6",
+    "capture": "populated/web-reference/home.png",
+    "routeState": "home",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-007",
+    "source": "internal/instance/channel_http.go",
+    "line": 278,
+    "anchor": "template.New(\"channels-admin\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a101bc1c2",
+    "capture": "populated/web-reference/admin-channels.png",
+    "routeState": "admin-channels",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-008",
+    "source": "internal/instance/direct_message_http.go",
+    "line": 214,
+    "anchor": "template.New(\"direct-messages\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a2e043911",
+    "capture": "populated/web-reference/dms.png",
+    "routeState": "dms",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-010",
+    "source": "internal/instance/member_http.go",
+    "line": 374,
+    "anchor": "template.New(\"join\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a397e3397",
+    "capture": "populated/web-reference/join.png",
+    "routeState": "join",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-011",
+    "source": "internal/instance/member_http.go",
+    "line": 382,
+    "anchor": "template.New(\"profile\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69fbc0f828",
+    "capture": "populated/web-reference/profile.png",
+    "routeState": "profile",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-012",
+    "source": "internal/instance/member_http.go",
+    "line": 384,
+    "anchor": "template.New(\"invitations\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a1a91fd61",
+    "capture": "populated/web-reference/admin-invitations.png",
+    "routeState": "admin-invitations",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-014",
+    "source": "internal/instance/ringtone_settings_http.go",
+    "line": 21,
+    "anchor": "template.New(\"ringtone-settings\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a093706f9",
+    "capture": "populated/web-reference/ringtone.png",
+    "routeState": "ringtone",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-015",
+    "source": "internal/instance/role_http.go",
+    "line": 220,
+    "anchor": "template.New(\"roles\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a150fb4b9",
+    "capture": "populated/web-reference/admin-roles.png",
+    "routeState": "admin-roles",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-016",
+    "source": "internal/instance/search_http.go",
+    "line": 44,
+    "anchor": "template.New(\"search\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a32ed3857",
+    "capture": "populated/web-reference/search.png",
+    "routeState": "search",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-017",
+    "source": "internal/instance/session_http.go",
+    "line": 241,
+    "anchor": "template.New(\"sessions\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a69fef8f357",
+    "capture": "populated/web-reference/sessions.png",
+    "routeState": "sessions",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-018",
+    "source": "internal/instance/session_http.go",
+    "line": 243,
+    "anchor": "template.New(\"recovery\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a37540dda",
+    "capture": "populated/web-reference/recover.png",
+    "routeState": "recover",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-019",
+    "source": "internal/instance/settings_http.go",
+    "line": 240,
+    "anchor": "template.New(\"community-settings\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a0c0f175e",
+    "capture": "populated/web-reference/admin-settings.png",
+    "routeState": "admin-settings",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-020",
+    "source": "internal/instance/soundboard_http.go",
+    "line": 144,
+    "anchor": "template.New(\"soundboard\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a21e2c4ad",
+    "capture": "populated/web-reference/admin-soundboard.png",
+    "routeState": "admin-soundboard",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-021",
+    "source": "internal/instance/voice_settings_http.go",
+    "line": 16,
+    "anchor": "template.New(\"voice-video-settings\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6a0297e9fe",
+    "capture": "populated/web-reference/voice-video.png",
+    "routeState": "voice-video",
+    "status": "editable default-state draft; other states and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ccf79db16",
+    "capture": "populated/web-reference/channels-JGIjxz4YL5YDhXa-.png",
+    "routeState": "channels-JGIjxz4YL5YDhXa-",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cd398591a",
+    "capture": "populated/web-reference/channels-aKj2uIgCb_BwNt61.png",
+    "routeState": "channels-aKj2uIgCb_BwNt61",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cd7c2788e",
+    "capture": "populated/web-reference/channels-BhcOGkOVj18id1Jm.png",
+    "routeState": "channels-BhcOGkOVj18id1Jm",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cdc4177df",
+    "capture": "populated/web-reference/channels-AyswaBtel0iDZWiq.png",
+    "routeState": "channels-AyswaBtel0iDZWiq",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ce0c36884",
+    "capture": "populated/web-reference/channels-9l-la6OtYg1wfsG5.png",
+    "routeState": "channels-9l-la6OtYg1wfsG5",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-013",
+    "source": "internal/instance/message_http.go",
+    "line": 273,
+    "anchor": "template.New(\"channel\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6ce59b3306",
+    "capture": "populated/web-reference/channels-Fq94LX9I_-cuRnVj.png",
+    "routeState": "channels-Fq94LX9I_-cuRnVj",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  },
+  {
+    "surfaceId": "web-009",
+    "source": "internal/instance/media_http.go",
+    "line": 279,
+    "anchor": "template.New(\"voice-room\")",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6cedfeb095",
+    "capture": "populated/web-reference/channels-DOwvzcpeaCjFnAGK.png",
+    "routeState": "channels-DOwvzcpeaCjFnAGK",
+    "status": "editable captured-state draft; media interactions and visual fidelity pending"
+  }
+]

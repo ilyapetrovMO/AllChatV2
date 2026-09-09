@@ -1,0 +1,419 @@
+{
+  "controls": [
+    {
+      "tag": "input",
+      "id": "",
+      "label": "Design ideas",
+      "title": "",
+      "type": "text",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "create-board-button",
+      "label": "Create board",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Enter",
+      "title": "",
+      "type": "submit",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Confirm delete",
+      "title": "",
+      "type": "submit",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "back-to-boards",
+      "label": "← Boards",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 24,
+        "y": 45,
+        "width": 101.859375,
+        "height": 37
+      }
+    },
+    {
+      "tag": "button",
+      "id": "clear-board",
+      "label": "Clear",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1186.15625,
+        "y": 45,
+        "width": 69.84375,
+        "height": 37
+      }
+    },
+    {
+      "tag": "canvas",
+      "id": "sketch-canvas",
+      "label": "Shared sketchboard",
+      "title": "",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 24,
+        "y": 97,
+        "width": 1232,
+        "height": 698
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Pen",
+      "title": "Pen (P)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 32,
+        "y": 803,
+        "width": 47.0625,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Highlight",
+      "title": "Highlighter (H)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 83.0625,
+        "y": 803,
+        "width": 90.234375,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Line",
+      "title": "Line (L)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 177.296875,
+        "y": 803,
+        "width": 51.34375,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Rectangle",
+      "title": "Rectangle (R)",
+      "type": "button",
+      "selected": true,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 232.640625,
+        "y": 803,
+        "width": 97.703125,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Ellipse",
+      "title": "Ellipse (O)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 334.34375,
+        "y": 803,
+        "width": 69.78125,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Text",
+      "title": "Text (T)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 408.125,
+        "y": 803,
+        "width": 50.359375,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Note",
+      "title": "Sticky note (N)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 462.484375,
+        "y": 803,
+        "width": 55.875,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Eraser",
+      "title": "Eraser (E)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 522.359375,
+        "y": 803,
+        "width": 69.25,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Pan",
+      "title": "Pan (Space)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 595.609375,
+        "y": 803,
+        "width": 46.875,
+        "height": 33
+      }
+    },
+    {
+      "tag": "input",
+      "id": "element-text",
+      "label": "Type, then click the board",
+      "title": "",
+      "type": "text",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "input",
+      "id": "stroke-color",
+      "label": "",
+      "title": "",
+      "type": "color",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 704.265625,
+        "y": 806,
+        "width": 50,
+        "height": 27
+      }
+    },
+    {
+      "tag": "input",
+      "id": "stroke-size",
+      "label": "",
+      "title": "",
+      "type": "range",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 809.109375,
+        "y": 811.5,
+        "width": 129,
+        "height": 16
+      }
+    },
+    {
+      "tag": "button",
+      "id": "undo",
+      "label": "Undo",
+      "title": "Undo (Ctrl+Z)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 952.109375,
+        "y": 803,
+        "width": 59.796875,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "redo",
+      "label": "Redo",
+      "title": "Redo (Ctrl+Y)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1015.90625,
+        "y": 803,
+        "width": 58.1875,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "zoom-out",
+      "label": "Zoom out",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1078.09375,
+        "y": 803,
+        "width": 31.40625,
+        "height": 33
+      }
+    },
+    {
+      "tag": "output",
+      "id": "zoom-level",
+      "label": "100%",
+      "title": "",
+      "type": "output",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1113.5,
+        "y": 810,
+        "width": 45.75,
+        "height": 19
+      }
+    },
+    {
+      "tag": "button",
+      "id": "zoom-in",
+      "label": "Zoom in",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1163.25,
+        "y": 803,
+        "width": 31.40625,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "reset-view",
+      "label": "Fit",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1198.65625,
+        "y": 803,
+        "width": 36.765625,
+        "height": 33
+      }
+    },
+    {
+      "tag": "button",
+      "id": "export-board",
+      "label": "Export PNG",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1239.421875,
+        "y": 803,
+        "width": 109.484375,
+        "height": 33
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bdf3e80de8c",
+    "name": "Desktop / Settings / safety-empty-wide",
+    "filename": "Desktop--Settings--safety-empty-wide.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdf8e801997",
+    "name": "Desktop / Settings / safety-empty-wide-expanded",
+    "filename": "Desktop--Settings--safety-empty-wide-expanded.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdf8988f7c8",
+    "name": "Desktop / Settings / safety-empty-wide-bottom",
+    "filename": "Desktop--Settings--safety-empty-wide-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdf8458af53",
+    "name": "Desktop / Settings / safety-empty-wide-middle",
+    "filename": "Desktop--Settings--safety-empty-wide-middle.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdf580a7e15",
+    "name": "Desktop / Settings / safety-empty-small",
+    "filename": "Desktop--Settings--safety-empty-small.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdfb2273b0b",
+    "name": "Desktop / Settings / safety-empty-small-expanded",
+    "filename": "Desktop--Settings--safety-empty-small-expanded.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdfa2495faa",
+    "name": "Desktop / Settings / safety-empty-small-bottom",
+    "filename": "Desktop--Settings--safety-empty-small-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdf9c8862de",
+    "name": "Desktop / Settings / safety-empty-small-middle",
+    "filename": "Desktop--Settings--safety-empty-small-middle.svg"
+  }
+]

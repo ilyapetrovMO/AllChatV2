@@ -1,0 +1,12 @@
+[
+  {
+    "field": "username",
+    "valueMissing": true,
+    "message": "Please fill out this field."
+  },
+  {
+    "field": "password",
+    "valueMissing": true,
+    "message": "Please fill out this field."
+  }
+]

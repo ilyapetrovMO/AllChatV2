@@ -1,0 +1,49 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "report",
+      "options": [
+        "Choose a Member",
+        "Alex",
+        "Morgan"
+      ],
+      "menu": {
+        "x": 344,
+        "y": 329.90625,
+        "w": 584,
+        "h": 74
+      }
+    },
+    {
+      "key": "member",
+      "options": [
+        "Alex",
+        "Morgan"
+      ],
+      "menu": {
+        "x": 344,
+        "y": 284.5625,
+        "w": 584,
+        "h": 50
+      }
+    },
+    {
+      "key": "action",
+      "options": [
+        "Warn",
+        "Timeout",
+        "Suspend",
+        "Kick"
+      ],
+      "menu": {
+        "x": 344,
+        "y": 208.890625,
+        "w": 584,
+        "h": 98
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9baa96c73618",
+    "name": "Desktop / Settings / ringtone-minimum-scrolled",
+    "filename": "Desktop--Settings--ringtone-minimum-scrolled.svg",
+    "png": "Desktop--Settings--ringtone-minimum-scrolled.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baa95f10334",
+    "name": "Desktop / Settings / ringtone-minimum-custom",
+    "filename": "Desktop--Settings--ringtone-minimum-custom.svg",
+    "png": "Desktop--Settings--ringtone-minimum-custom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baa94a6184f",
+    "name": "Desktop / Settings / ringtone-reset-focus",
+    "filename": "Desktop--Settings--ringtone-reset-focus.svg",
+    "png": "Desktop--Settings--ringtone-reset-focus.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baa9531a870",
+    "name": "Desktop / Settings / ringtone-minimum",
+    "filename": "Desktop--Settings--ringtone-minimum.svg",
+    "png": "Desktop--Settings--ringtone-minimum.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baa94e88bca",
+    "name": "Desktop / Settings / ringtone-volume-focus",
+    "filename": "Desktop--Settings--ringtone-volume-focus.svg",
+    "png": "Desktop--Settings--ringtone-volume-focus.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9baa945abd7e",
+    "name": "Desktop / Settings / ringtone-file-focus",
+    "filename": "Desktop--Settings--ringtone-file-focus.svg",
+    "png": "Desktop--Settings--ringtone-file-focus.png"
+  }
+]

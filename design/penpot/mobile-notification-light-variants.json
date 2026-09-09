@@ -1,0 +1,18 @@
+[
+  {
+    "variant": "default",
+    "theme": "light",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a79fb7dcc1f",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a79fa912211",
+    "instanceId": "6bdc1c40-ce96-804f-8008-9a79fb80f46b",
+    "status": "native editable dialog component; visual verification pending"
+  },
+  {
+    "variant": "error",
+    "theme": "light",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a7a230dc77c",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a7a220d9218",
+    "instanceId": "6bdc1c40-ce96-804f-8008-9a7a231409c5",
+    "status": "native editable dialog component; visual verification pending"
+  }
+]

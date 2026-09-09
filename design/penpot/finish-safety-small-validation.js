@@ -1,0 +1,1 @@
+const b=penpot.currentPage.root.children.find(b=>b.getPluginData('static-safety-small-validation-state')==='report-short');if(!b)throw Error('Missing short-text state');const t=penpotUtils.findShape(s=>s.name==='Native validation message',b);if(!t.textBounds?.width)throw Error('Unrendered long message');b.x=192200;b.y=0;return {id:b.id,bounds:t.textBounds};

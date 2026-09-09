@@ -1,0 +1,11 @@
+{
+  "flow": "Desktop main — prototype",
+  "states": [
+    "no-results",
+    "search",
+    "sent",
+    "draft",
+    "members-hidden",
+    "default"
+  ]
+}

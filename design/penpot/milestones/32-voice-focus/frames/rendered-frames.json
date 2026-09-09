@@ -1,0 +1,26 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bbe40fd3951",
+    "name": "Desktop / Settings / voice-focus-button",
+    "filename": "Desktop--Settings--voice-focus-button.svg",
+    "png": "Desktop--Settings--voice-focus-button.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbe3cf1827d",
+    "name": "Desktop / Settings / voice-focus-range",
+    "filename": "Desktop--Settings--voice-focus-range.svg",
+    "png": "Desktop--Settings--voice-focus-range.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbe3b0d0686",
+    "name": "Desktop / Settings / voice-focus-selector",
+    "filename": "Desktop--Settings--voice-focus-selector.svg",
+    "png": "Desktop--Settings--voice-focus-selector.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bbe3f19ab74",
+    "name": "Desktop / Settings / voice-focus-checkbox",
+    "filename": "Desktop--Settings--voice-focus-checkbox.svg",
+    "png": "Desktop--Settings--voice-focus-checkbox.png"
+  }
+]

@@ -281,7 +281,7 @@ func sourceIP(request *http.Request) string {
 
 var authPage = template.Must(template.New("auth").Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.Title}} — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/htmx.min.js" defer></script></head>
+<title>{{.Title}} — AllChat</title><link rel="stylesheet" href="/assets/app.css"><script src="/assets/htmx.min.js" defer></script><link rel="stylesheet" href="/assets/desktop-design.css"><script src="/assets/desktop-design.js" defer></script></head>
 <body class="auth-layout"><main class="auth-card"><h1>{{.Title}}</h1><p class="subtitle">Welcome to your AllChat Community</p><form method="post" action="{{.Action}}">
 {{if .Token}}<input type="hidden" name="token" value="{{.Token}}">{{end}}
 <label>Username <input name="username" required autocomplete="username"></label>

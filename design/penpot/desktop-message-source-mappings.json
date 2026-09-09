@@ -1,0 +1,47 @@
+[
+  {
+    "name": "image-viewer-default",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a76a7ddbf06",
+    "nativeTextLayers": 94,
+    "status": "native draft; image assets, paint order and visual verification pending",
+    "source": "desktop/src/renderer/app.tsx",
+    "line": 3059,
+    "reference": "populated/desktop-message-reference/image-viewer-default.png"
+  },
+  {
+    "name": "image-viewer-zoomed",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a7708d65a59",
+    "nativeTextLayers": 94,
+    "status": "native draft; image assets, paint order and visual verification pending",
+    "source": "desktop/src/renderer/app.tsx",
+    "line": 3059,
+    "reference": "populated/desktop-message-reference/image-viewer-zoomed.png"
+  },
+  {
+    "name": "reaction-picker-empty",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a77194e036a",
+    "nativeTextLayers": 120,
+    "status": "native draft; image assets, paint order and visual verification pending",
+    "source": "desktop/src/renderer/app.tsx",
+    "line": 2781,
+    "reference": "populated/desktop-message-reference/reaction-picker-empty.png"
+  },
+  {
+    "name": "reaction-picker-custom",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a772e6ce06d",
+    "nativeTextLayers": 120,
+    "status": "native draft; image assets, paint order and visual verification pending",
+    "source": "desktop/src/renderer/app.tsx",
+    "line": 2781,
+    "reference": "populated/desktop-message-reference/reaction-picker-custom.png"
+  },
+  {
+    "name": "pending-file",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a774ccc7ab3",
+    "nativeTextLayers": 95,
+    "status": "native draft; image assets, paint order and visual verification pending",
+    "source": "desktop/src/renderer/app.tsx",
+    "line": 2818,
+    "reference": "populated/desktop-message-reference/pending-file.png"
+  }
+]

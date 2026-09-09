@@ -27,6 +27,7 @@ export interface DirectMessage {
 }
 
 export interface Message {
+  call_event?: import("./instance-actions").DirectCall;
   id: string;
   channel_id: string;
   author_id: string;

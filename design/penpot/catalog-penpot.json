@@ -1,0 +1,58 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "status": "live-authored; hosted persistence unverified",
+  "pages": {
+    "coverage": "6bdc1c40-ce96-804f-8008-9a5f8308e065",
+    "web": "6bdc1c40-ce96-804f-8008-9a5f830cfd86",
+    "desktop": "6bdc1c40-ce96-804f-8008-9a5f830fd73b",
+    "mobile": "6bdc1c40-ce96-804f-8008-9a5f83122d4a",
+    "components": "6bdc1c40-ce96-804f-8008-9a5f831396c8",
+    "sketchboard": "6bdc1c40-ce96-804f-8008-9a6e2260fff5"
+  },
+  "coverageBoards": {
+    "web": "6bdc1c40-ce96-804f-8008-9a5fcdf38cb6",
+    "desktop": "6bdc1c40-ce96-804f-8008-9a5fd25a89f3",
+    "mobile": "6bdc1c40-ce96-804f-8008-9a5fd6326dc8"
+  },
+  "sourceSurfacesIndexed": 63,
+  "referenceBoards": [
+    {
+      "platform": "desktop",
+      "name": "Text channel / populated",
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6060f02885",
+      "source": "populated/desktop-reference/text-channel.png",
+      "status": "raster-reference-only; editable reconstruction pending"
+    }
+  ],
+  "nativeComponents": [
+    {
+      "name": "Desktop / Primary button / Default",
+      "componentId": "6bdc1c40-ce96-804f-8008-9a60dea91158",
+      "mainId": "6bdc1c40-ce96-804f-8008-9a60de4222a3",
+      "instanceId": "6bdc1c40-ce96-804f-8008-9a60deacf508",
+      "source": "populated/desktop-reference/add-instance.json",
+      "status": "native-authored; typography and token propagation verification pending"
+    }
+  ],
+  "editableScreenDrafts": [
+    {
+      "name": "Desktop / Add Instance / Draft",
+      "boardId": "6bdc1c40-ce96-804f-8008-9a624d6665de",
+      "nativeTextLayers": 8,
+      "source": "populated/desktop-reference/add-instance.svg",
+      "status": "native-authored; visual verification pending"
+    }
+  ],
+  "mobileEvidenceIndex": {
+    "boardId": "6bdc1c40-ce96-804f-8008-9a67e2e20523",
+    "nativeCaptures": 6,
+    "observedControls": 33,
+    "source": "mobile-reference/controls.json",
+    "status": "native editable evidence index; screen reconstruction and visual verification pending"
+  },
+  "coverageAuditBoard": {
+    "id": "6bdc1c40-ce96-804f-8008-9a6f29027a87",
+    "source": "coverage-evidence.json",
+    "status": "Incomplete: 30 of 63 surfaces have partial mapped drafts; zero fully verified"
+  }
+}

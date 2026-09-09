@@ -1,0 +1,1 @@
+const b=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Settings / camera-text-reference');b.x=0;b.y=0;for(const t of b.children){t.growType='auto-height';t.resize(360,24);}penpot.viewport.zoomIntoView([b]);return {id:b.id,children:b.children.map(t=>({id:t.id,x:t.x,y:t.y,text:t.characters,font:t.fontFamily,weight:t.fontWeight,bounds:t.textBounds}))};

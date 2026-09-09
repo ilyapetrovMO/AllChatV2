@@ -1,0 +1,242 @@
+[
+  {
+    "key": "minimum-middle",
+    "attemptedNameLength": 1,
+    "valid": true,
+    "scroll": 500,
+    "fields": [
+      {
+        "name": "name",
+        "value": "A",
+        "length": 1,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 143.203125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "maxAttachmentMiB",
+        "value": "1",
+        "length": 1,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 217.109375,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "homeMarkdown",
+        "value": "",
+        "length": 0,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 379.796875,
+        "w": 550,
+        "h": 161.25,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "pushRelayURL",
+        "value": "",
+        "length": 0,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 576.953125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      }
+    ]
+  },
+  {
+    "key": "minimum-bottom",
+    "attemptedNameLength": 1,
+    "valid": true,
+    "scroll": 736,
+    "fields": [
+      {
+        "name": "name",
+        "value": "A",
+        "length": 1,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": -92.796875,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "maxAttachmentMiB",
+        "value": "1",
+        "length": 1,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": -18.890625,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "homeMarkdown",
+        "value": "",
+        "length": 0,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 143.796875,
+        "w": 550,
+        "h": 161.25,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "pushRelayURL",
+        "value": "",
+        "length": 0,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 340.953125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      }
+    ]
+  },
+  {
+    "key": "maximum-middle",
+    "attemptedNameLength": 101,
+    "valid": true,
+    "scroll": 500,
+    "fields": [
+      {
+        "name": "name",
+        "value": "Community WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "length": 100,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 143.203125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "maxAttachmentMiB",
+        "value": "256",
+        "length": 3,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 217.109375,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "homeMarkdown",
+        "value": "Welcome to AllChat Community.",
+        "length": 29,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 379.796875,
+        "w": 550,
+        "h": 161.25,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "pushRelayURL",
+        "value": "https://push.example.com",
+        "length": 24,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 576.953125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      }
+    ]
+  },
+  {
+    "key": "maximum-bottom",
+    "attemptedNameLength": 101,
+    "valid": true,
+    "scroll": 736,
+    "fields": [
+      {
+        "name": "name",
+        "value": "Community WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "length": 100,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": -92.796875,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "maxAttachmentMiB",
+        "value": "256",
+        "length": 3,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": -18.890625,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "homeMarkdown",
+        "value": "Welcome to AllChat Community.",
+        "length": 29,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 143.796875,
+        "w": 550,
+        "h": 161.25,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      },
+      {
+        "name": "pushRelayURL",
+        "value": "https://push.example.com",
+        "length": 24,
+        "scrollLeft": 0,
+        "x": 361,
+        "y": 340.953125,
+        "w": 550,
+        "h": 38,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "color": "rgb(240, 241, 245)"
+      }
+    ]
+  }
+]

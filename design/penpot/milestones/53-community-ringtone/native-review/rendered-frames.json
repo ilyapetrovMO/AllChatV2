@@ -1,0 +1,62 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9be82d841ddf",
+    "name": "Desktop / Settings / community-ringtone-reset",
+    "filename": "Desktop--Settings--community-ringtone-reset.svg",
+    "png": "Desktop--Settings--community-ringtone-reset.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be8e475bd7d",
+    "name": "Desktop / Settings / community-ringtone-reset-bottom",
+    "filename": "Desktop--Settings--community-ringtone-reset-bottom.svg",
+    "png": "Desktop--Settings--community-ringtone-reset-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be7e4b3fb75",
+    "name": "Desktop / Settings / community-ringtone-error-custom",
+    "filename": "Desktop--Settings--community-ringtone-error-custom.svg",
+    "png": "Desktop--Settings--community-ringtone-error-custom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be8d55ad30e",
+    "name": "Desktop / Settings / community-ringtone-error-custom-bottom",
+    "filename": "Desktop--Settings--community-ringtone-error-custom-bottom.svg",
+    "png": "Desktop--Settings--community-ringtone-error-custom-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be76a58b1f6",
+    "name": "Desktop / Settings / community-ringtone-error",
+    "filename": "Desktop--Settings--community-ringtone-error.svg",
+    "png": "Desktop--Settings--community-ringtone-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be8c607c86a",
+    "name": "Desktop / Settings / community-ringtone-error-bottom",
+    "filename": "Desktop--Settings--community-ringtone-error-bottom.svg",
+    "png": "Desktop--Settings--community-ringtone-error-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be72dd7a642",
+    "name": "Desktop / Settings / community-ringtone-saved",
+    "filename": "Desktop--Settings--community-ringtone-saved.svg",
+    "png": "Desktop--Settings--community-ringtone-saved.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be8b65538e6",
+    "name": "Desktop / Settings / community-ringtone-saved-bottom",
+    "filename": "Desktop--Settings--community-ringtone-saved-bottom.svg",
+    "png": "Desktop--Settings--community-ringtone-saved-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be6e1d91f13",
+    "name": "Desktop / Settings / community-ringtone-custom",
+    "filename": "Desktop--Settings--community-ringtone-custom.svg",
+    "png": "Desktop--Settings--community-ringtone-custom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be8a5931a7a",
+    "name": "Desktop / Settings / community-ringtone-custom-bottom",
+    "filename": "Desktop--Settings--community-ringtone-custom-bottom.svg",
+    "png": "Desktop--Settings--community-ringtone-custom-bottom.png"
+  }
+]

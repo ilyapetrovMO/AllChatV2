@@ -1,0 +1,62 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bd9bf6d659c",
+    "name": "Desktop / Settings / safety-small-loading",
+    "filename": "Desktop--Settings--safety-small-loading.svg",
+    "png": "Desktop--Settings--safety-small-loading.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd9b340caa8",
+    "name": "Desktop / Settings / safety-small-member",
+    "filename": "Desktop--Settings--safety-small-member.svg",
+    "png": "Desktop--Settings--safety-small-member.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bda38ecfcc8",
+    "name": "Desktop / Settings / safety-small-member-bottom",
+    "filename": "Desktop--Settings--safety-small-member-bottom.svg",
+    "png": "Desktop--Settings--safety-small-member-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd9f96ac8ab",
+    "name": "Desktop / Settings / safety-small-records",
+    "filename": "Desktop--Settings--safety-small-records.svg",
+    "png": "Desktop--Settings--safety-small-records.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bda56fa511e",
+    "name": "Desktop / Settings / safety-small-records-bottom",
+    "filename": "Desktop--Settings--safety-small-records-bottom.svg",
+    "png": "Desktop--Settings--safety-small-records-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd9dca2a90f",
+    "name": "Desktop / Settings / safety-small-moderator",
+    "filename": "Desktop--Settings--safety-small-moderator.svg",
+    "png": "Desktop--Settings--safety-small-moderator.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bda51d2303f",
+    "name": "Desktop / Settings / safety-small-moderator-bottom",
+    "filename": "Desktop--Settings--safety-small-moderator-bottom.svg",
+    "png": "Desktop--Settings--safety-small-moderator-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bda4c752cac",
+    "name": "Desktop / Settings / safety-small-moderator-middle",
+    "filename": "Desktop--Settings--safety-small-moderator-middle.svg",
+    "png": "Desktop--Settings--safety-small-moderator-middle.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd9cd4ef0b8",
+    "name": "Desktop / Settings / safety-small-reports",
+    "filename": "Desktop--Settings--safety-small-reports.svg",
+    "png": "Desktop--Settings--safety-small-reports.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bda3f1ad689",
+    "name": "Desktop / Settings / safety-small-reports-bottom",
+    "filename": "Desktop--Settings--safety-small-reports-bottom.svg",
+    "png": "Desktop--Settings--safety-small-reports-bottom.png"
+  }
+]

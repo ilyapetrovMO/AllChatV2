@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bd24d80f037",
+    "name": "Desktop / Settings / safety-menu-report",
+    "filename": "Desktop--Settings--safety-menu-report.svg",
+    "png": "Desktop--Settings--safety-menu-report.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd2819896ab",
+    "name": "Desktop / Settings / safety-menu-member",
+    "filename": "Desktop--Settings--safety-menu-member.svg",
+    "png": "Desktop--Settings--safety-menu-member.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bd266fb2b9c",
+    "name": "Desktop / Settings / safety-menu-action",
+    "filename": "Desktop--Settings--safety-menu-action.svg",
+    "png": "Desktop--Settings--safety-menu-action.png"
+  }
+]

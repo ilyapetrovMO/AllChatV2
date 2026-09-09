@@ -1,0 +1,62 @@
+[
+  {
+    "key": "selector",
+    "before": {
+      "background": "rgb(32, 33, 39)",
+      "border": "rgba(255, 255, 255, 0.067)",
+      "accent": "auto",
+      "cursor": "default"
+    },
+    "after": {
+      "background": "rgb(32, 33, 39)",
+      "border": "rgba(255, 255, 255, 0.18)",
+      "accent": "auto",
+      "cursor": "default"
+    }
+  },
+  {
+    "key": "range",
+    "before": {
+      "background": "rgb(59, 59, 59)",
+      "border": "rgb(157, 150, 142)",
+      "accent": "rgb(109, 117, 232)",
+      "cursor": "pointer"
+    },
+    "after": {
+      "background": "rgb(59, 59, 59)",
+      "border": "rgb(157, 150, 142)",
+      "accent": "rgb(109, 117, 232)",
+      "cursor": "pointer"
+    }
+  },
+  {
+    "key": "checkbox",
+    "before": {
+      "background": "rgb(109, 117, 232)",
+      "border": "rgb(109, 117, 232)",
+      "accent": "auto",
+      "cursor": "pointer"
+    },
+    "after": {
+      "background": "rgb(109, 117, 232)",
+      "border": "rgb(109, 117, 232)",
+      "accent": "auto",
+      "cursor": "pointer"
+    }
+  },
+  {
+    "key": "button",
+    "before": {
+      "background": "rgb(107, 107, 107)",
+      "border": "rgb(255, 255, 255)",
+      "accent": "auto",
+      "cursor": "pointer"
+    },
+    "after": {
+      "background": "rgb(107, 107, 107)",
+      "border": "rgb(255, 255, 255)",
+      "accent": "auto",
+      "cursor": "pointer"
+    }
+  }
+]

@@ -4,32 +4,35 @@ package community
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 	"unicode/utf8"
 
 	"allchat/internal/identity"
+	"allchat/internal/media"
 )
 
 type Message struct {
-	ID              string        `json:"id"`
-	ChannelID       string        `json:"channel_id"`
-	AuthorID        string        `json:"author_id"`
-	AuthorName      string        `json:"author_name"`
-	AuthorAvatarURL string        `json:"author_avatar_url,omitempty"`
-	Sequence        int64         `json:"sequence"`
-	Body            string        `json:"body,omitempty"`
-	CreatedAt       string        `json:"created_at"`
-	EditedAt        string        `json:"edited_at,omitempty"`
-	Deleted         bool          `json:"deleted"`
-	RenderedHTML    string        `json:"rendered_html,omitempty"`
-	Reply           *ReplyPreview `json:"reply,omitempty"`
-	Mentions        []Mention     `json:"mentions,omitempty"`
-	Reactions       []Reaction    `json:"reactions,omitempty"`
-	Pinned          bool          `json:"pinned,omitempty"`
-	Attachments     []Attachment  `json:"attachments,omitempty"`
-	ClientID        string        `json:"client_id,omitempty"`
+	CallEvent       *media.DirectCall `json:"call_event,omitempty"`
+	ID              string            `json:"id"`
+	ChannelID       string            `json:"channel_id"`
+	AuthorID        string            `json:"author_id"`
+	AuthorName      string            `json:"author_name"`
+	AuthorAvatarURL string            `json:"author_avatar_url,omitempty"`
+	Sequence        int64             `json:"sequence"`
+	Body            string            `json:"body,omitempty"`
+	CreatedAt       string            `json:"created_at"`
+	EditedAt        string            `json:"edited_at,omitempty"`
+	Deleted         bool              `json:"deleted"`
+	RenderedHTML    string            `json:"rendered_html,omitempty"`
+	Reply           *ReplyPreview     `json:"reply,omitempty"`
+	Mentions        []Mention         `json:"mentions,omitempty"`
+	Reactions       []Reaction        `json:"reactions,omitempty"`
+	Pinned          bool              `json:"pinned,omitempty"`
+	Attachments     []Attachment      `json:"attachments,omitempty"`
+	ClientID        string            `json:"client_id,omitempty"`
 }
 
 type MessageInput struct {
@@ -116,7 +119,7 @@ func (s *Service) listMessages(ctx context.Context, member identity.Member, chan
 		msg.sequence, COALESCE(msg.body, ''), msg.created_at, COALESCE(msg.edited_at, ''),
 		msg.deleted_at IS NOT NULL, msg.rendered_html, COALESCE(msg.reply_to_message_id, ''),
 		COALESCE(NULLIF(reply_author.display_name, ''), reply_author.username, ''),
-		COALESCE(reply.body, ''), COALESCE(reply.deleted_at IS NOT NULL, FALSE)
+		COALESCE(reply.body, ''), COALESCE(reply.deleted_at IS NOT NULL, FALSE), COALESCE(msg.call_event, '')
 		FROM messages msg JOIN members m ON m.id = msg.author_id
 		LEFT JOIN messages reply ON reply.id = msg.reply_to_message_id
 		LEFT JOIN members reply_author ON reply_author.id = reply.author_id
@@ -128,15 +131,20 @@ func (s *Service) listMessages(ctx context.Context, member identity.Member, chan
 	for rows.Next() {
 		var message Message
 		var authorHasAvatar bool
-		var replyID, replyAuthor, replyBody string
+		var replyID, replyAuthor, replyBody, callJSON string
 		var replyDeleted bool
-		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.AuthorName, &authorHasAvatar, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted, &message.RenderedHTML, &replyID, &replyAuthor, &replyBody, &replyDeleted); err != nil {
+		if err := rows.Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.AuthorName, &authorHasAvatar, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted, &message.RenderedHTML, &replyID, &replyAuthor, &replyBody, &replyDeleted, &callJSON); err != nil {
 			return nil, err
 		}
 		// Render from the canonical body so formatter improvements also apply
 		// to Messages created before the current release.
 		if !message.Deleted {
 			message.RenderedHTML = renderMarkdown(message.Body)
+		}
+		if callJSON != "" {
+			if err := json.Unmarshal([]byte(callJSON), &message.CallEvent); err != nil {
+				return nil, err
+			}
 		}
 		if authorHasAvatar {
 			message.AuthorAvatarURL = "/api/v1/members/" + message.AuthorID + "/avatar"
@@ -170,7 +178,7 @@ func (s *Service) EditMessage(ctx context.Context, member identity.Member, messa
 		return Message{}, err
 	}
 	message, err := s.message(ctx, messageID)
-	if err != nil || message.AuthorID != member.ID || message.Deleted {
+	if err != nil || message.AuthorID != member.ID || message.Deleted || message.CallEvent != nil {
 		return Message{}, ErrNotFound
 	}
 	allowed, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionSendMessages, false)
@@ -220,7 +228,7 @@ func (s *Service) EditMessage(ctx context.Context, member identity.Member, messa
 
 func (s *Service) DeleteMessage(ctx context.Context, member identity.Member, messageID string) error {
 	message, err := s.message(ctx, messageID)
-	if err != nil || message.AuthorID != member.ID || message.Deleted {
+	if err != nil || message.AuthorID != member.ID || message.Deleted || message.CallEvent != nil {
 		return ErrNotFound
 	}
 	allowed, _ := s.CanUseChannel(ctx, member.ID, message.ChannelID, PermissionSendMessages, false)
@@ -250,8 +258,12 @@ func (s *Service) DeleteMessage(ctx context.Context, member identity.Member, mes
 
 func (s *Service) message(ctx context.Context, messageID string) (Message, error) {
 	var message Message
-	err := s.db.QueryRowContext(ctx, `SELECT id, channel_id, author_id, sequence, COALESCE(body, ''), created_at, COALESCE(edited_at, ''), deleted_at IS NOT NULL FROM messages WHERE id = ?`, messageID).
-		Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted)
+	var callJSON string
+	err := s.db.QueryRowContext(ctx, `SELECT id, channel_id, author_id, sequence, COALESCE(body, ''), created_at, COALESCE(edited_at, ''), deleted_at IS NOT NULL, COALESCE(call_event, '') FROM messages WHERE id = ?`, messageID).
+		Scan(&message.ID, &message.ChannelID, &message.AuthorID, &message.Sequence, &message.Body, &message.CreatedAt, &message.EditedAt, &message.Deleted, &callJSON)
+	if err == nil && callJSON != "" {
+		err = json.Unmarshal([]byte(callJSON), &message.CallEvent)
+	}
 	if errors.Is(err, sql.ErrNoRows) {
 		return Message{}, ErrNotFound
 	}

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bdb1e3960a9",
+    "name": "Desktop / Settings / safety-small-menu-report",
+    "filename": "Desktop--Settings--safety-small-menu-report.svg",
+    "png": "Desktop--Settings--safety-small-menu-report.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdb309bf7e8",
+    "name": "Desktop / Settings / safety-small-menu-member",
+    "filename": "Desktop--Settings--safety-small-menu-member.svg",
+    "png": "Desktop--Settings--safety-small-menu-member.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdb26c9471c",
+    "name": "Desktop / Settings / safety-small-menu-action",
+    "filename": "Desktop--Settings--safety-small-menu-action.svg",
+    "png": "Desktop--Settings--safety-small-menu-action.png"
+  }
+]

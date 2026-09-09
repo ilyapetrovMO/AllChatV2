@@ -1,0 +1,158 @@
+{
+  "controls": [
+    {
+      "tag": "button",
+      "label": "Minimize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Maximize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Close window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Home",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community Instance",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Add Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "My Account",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Voice & Video",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Ringtone",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Notifications",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Sessions",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Safety",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Back to Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "AllChat Community",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Direct Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "general",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Lounge",
+      "type": "button",
+      "disabled": false,
+      "visible": false
+    },
+    {
+      "tag": "button",
+      "label": "Open Member menu",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "User Settings",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Notifications",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Pinned Messages",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Search Messages",
+      "type": "search",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}

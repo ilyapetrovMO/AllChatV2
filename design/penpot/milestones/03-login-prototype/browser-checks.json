@@ -1,0 +1,20 @@
+{
+  "passed": [
+    "Empty username blocked by native validation",
+    "Empty password blocked by native validation",
+    "Invalid credentials display login error",
+    "Editing retains error",
+    "Retry reaches signed-in preview",
+    "Restart returns to empty sign-in",
+    "Register tab navigates",
+    "Demo registration signs in",
+    "Invalid recovery token shows error",
+    "Recovery rejects short passwords",
+    "Recovery returns to sign-in with confirmation",
+    "Replacement password signs in",
+    "Keyboard moves from username to password",
+    "Keyboard reaches submit",
+    "No JavaScript errors"
+  ],
+  "errors": []
+}

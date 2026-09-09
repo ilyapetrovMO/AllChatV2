@@ -1,0 +1,56 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bb58f618355",
+    "name": "Desktop / Settings / voice-feedback-reset",
+    "filename": "Desktop--Settings--voice-feedback-reset.svg",
+    "png": "Desktop--Settings--voice-feedback-reset.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb58d67aea9",
+    "name": "Desktop / Settings / voice-feedback-speaker-played",
+    "filename": "Desktop--Settings--voice-feedback-speaker-played.svg",
+    "png": "Desktop--Settings--voice-feedback-speaker-played.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb58b558a22",
+    "name": "Desktop / Settings / voice-feedback-camera-error",
+    "filename": "Desktop--Settings--voice-feedback-camera-error.svg",
+    "png": "Desktop--Settings--voice-feedback-camera-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb57e5c043c",
+    "name": "Desktop / Settings / voice-feedback-camera-stopped",
+    "filename": "Desktop--Settings--voice-feedback-camera-stopped.svg",
+    "png": "Desktop--Settings--voice-feedback-camera-stopped.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb57c9ef8fa",
+    "name": "Desktop / Settings / voice-feedback-microphone-error",
+    "filename": "Desktop--Settings--voice-feedback-microphone-error.svg",
+    "png": "Desktop--Settings--voice-feedback-microphone-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb57ad8b1ae",
+    "name": "Desktop / Settings / voice-feedback-microphone-fallback",
+    "filename": "Desktop--Settings--voice-feedback-microphone-fallback.svg",
+    "png": "Desktop--Settings--voice-feedback-microphone-fallback.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb55d8b0147",
+    "name": "Desktop / Settings / voice-feedback-microphone-enhanced",
+    "filename": "Desktop--Settings--voice-feedback-microphone-enhanced.svg",
+    "png": "Desktop--Settings--voice-feedback-microphone-enhanced.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb55befc1de",
+    "name": "Desktop / Settings / voice-feedback-microphone-working",
+    "filename": "Desktop--Settings--voice-feedback-microphone-working.svg",
+    "png": "Desktop--Settings--voice-feedback-microphone-working.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb55a23d4c4",
+    "name": "Desktop / Settings / voice-feedback-devices-unavailable",
+    "filename": "Desktop--Settings--voice-feedback-devices-unavailable.svg",
+    "png": "Desktop--Settings--voice-feedback-devices-unavailable.png"
+  }
+]

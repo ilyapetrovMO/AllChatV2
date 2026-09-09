@@ -1,0 +1,101 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "pageId": "7299a615-462e-803f-8008-9b83cd5d80df",
+  "revision": 8,
+  "shape": {
+    "id": "7299a615-462e-803f-8008-9b83e3eb7f44",
+    "type": "board",
+    "name": "Login / Save verification",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 240,
+    "fills": [
+      {
+        "fillColor": "#18191e",
+        "fillOpacity": 1,
+        "fillColorGradient": null,
+        "fillColorRefFile": null,
+        "fillColorRefId": null,
+        "fillImage": null
+      }
+    ],
+    "borderRadius": 8,
+    "children": [
+      {
+        "id": "7299a615-462e-803f-8008-9b83e402695e",
+        "type": "text",
+        "name": "Editable login heading",
+        "x": 48,
+        "y": 40,
+        "width": 384,
+        "height": 48,
+        "fills": [
+          {
+            "fillColor": "#f0f1f5",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "borderRadius": null,
+        "characters": "Desktop sign-in",
+        "fontId": "sourcesanspro",
+        "fontFamily": "sourcesanspro",
+        "fontSize": "28",
+        "fontWeight": "700",
+        "align": "left"
+      },
+      {
+        "id": "7299a615-462e-803f-8008-9b83e426ae85",
+        "type": "board",
+        "name": "Sign in button",
+        "x": 48,
+        "y": 132,
+        "width": 384,
+        "height": 44,
+        "fills": [
+          {
+            "fillColor": "#6d75e8",
+            "fillOpacity": 1,
+            "fillColorGradient": null,
+            "fillColorRefFile": null,
+            "fillColorRefId": null,
+            "fillImage": null
+          }
+        ],
+        "borderRadius": 4,
+        "children": [
+          {
+            "id": "7299a615-462e-803f-8008-9b83e42df80c",
+            "type": "text",
+            "name": "Editable button label",
+            "x": 48,
+            "y": 142,
+            "width": 384,
+            "height": 24,
+            "fills": [
+              {
+                "fillColor": "#ffffff",
+                "fillOpacity": 1,
+                "fillColorGradient": null,
+                "fillColorRefFile": null,
+                "fillColorRefId": null,
+                "fillImage": null
+              }
+            ],
+            "borderRadius": null,
+            "characters": "Sign in",
+            "fontId": "sourcesanspro",
+            "fontFamily": "sourcesanspro",
+            "fontSize": "16",
+            "fontWeight": "700",
+            "align": "center"
+          }
+        ]
+      }
+    ]
+  }
+}

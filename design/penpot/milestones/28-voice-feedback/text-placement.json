@@ -1,0 +1,92 @@
+[
+  {
+    "key": "voice-feedback-reset",
+    "id": "7299a615-462e-803f-8008-9bb6b13b731c",
+    "bounds": {
+      "x": 61744,
+      "y": 2623.6000061035156,
+      "width": 258.41668701171875,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-speaker-played",
+    "id": "7299a615-462e-803f-8008-9bb6b20ef7ae",
+    "bounds": {
+      "x": 60344,
+      "y": 2623.6000061035156,
+      "width": 154.26666259765625,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-camera-error",
+    "id": "7299a615-462e-803f-8008-9bb6b2d130b9",
+    "bounds": {
+      "x": 58944,
+      "y": 2623.6000061035156,
+      "width": 521.2333374023438,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-camera-stopped",
+    "id": "7299a615-462e-803f-8008-9bb6b3b6f0a9",
+    "bounds": {
+      "x": 61744,
+      "y": 1663.6000061035156,
+      "width": 194.0833282470703,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-microphone-error",
+    "id": "7299a615-462e-803f-8008-9bb6b478f096",
+    "bounds": {
+      "x": 60344,
+      "y": 1663.6000061035156,
+      "width": 552.683349609375,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-microphone-fallback",
+    "id": "7299a615-462e-803f-8008-9bb6b5347869",
+    "bounds": {
+      "x": 58944,
+      "y": 1663.6000061035156,
+      "width": 566.4833374023438,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-microphone-enhanced",
+    "id": "7299a615-462e-803f-8008-9bb6b5e007b4",
+    "bounds": {
+      "x": 61744,
+      "y": 703.6000061035156,
+      "width": 283.3666687011719,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-microphone-working",
+    "id": "7299a615-462e-803f-8008-9bb6b694bfb8",
+    "bounds": {
+      "x": 60344,
+      "y": 703.6000061035156,
+      "width": 177.01666259765625,
+      "height": 20
+    }
+  },
+  {
+    "key": "voice-feedback-devices-unavailable",
+    "id": "7299a615-462e-803f-8008-9bb6b73904ee",
+    "bounds": {
+      "x": 58944,
+      "y": 703.6000061035156,
+      "width": 232.5833282470703,
+      "height": 20
+    }
+  }
+]

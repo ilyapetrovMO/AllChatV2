@@ -66,7 +66,7 @@ export interface DesktopBridge {
 export interface IncomingCallNotification { callId: string; callerName: string }
 
 export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
-export type DesktopDiagnosticEvent = 'rnnoise_initialization_failed' | 'screen_share_quality';
+export type DesktopDiagnosticEvent = 'image_action_failed' | 'rnnoise_initialization_failed' | 'screen_share_quality';
 
 export type DesktopUpdateState =
   | { status: 'idle' }

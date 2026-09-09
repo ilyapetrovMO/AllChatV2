@@ -1,0 +1,25 @@
+{
+  "revision": 54,
+  "boards": [
+    {
+      "key": "voice-default",
+      "id": "7299a615-462e-803f-8008-9bb0ebcfd0d7",
+      "name": "Desktop / Settings / voice-default"
+    },
+    {
+      "key": "voice-advanced",
+      "id": "7299a615-462e-803f-8008-9bb14fcc7637",
+      "name": "Desktop / Settings / voice-advanced"
+    },
+    {
+      "key": "voice-camera",
+      "id": "7299a615-462e-803f-8008-9bb14e93241c",
+      "name": "Desktop / Settings / voice-camera"
+    },
+    {
+      "key": "voice-processing",
+      "id": "7299a615-462e-803f-8008-9bb14d65a9f9",
+      "name": "Desktop / Settings / voice-processing"
+    }
+  ]
+}

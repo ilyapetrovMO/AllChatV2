@@ -1,0 +1,17 @@
+if(penpot.currentPage.name!=='Desktop — Main')throw Error('Expected main page');const base=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Main / Text channel');if(!base)throw Error('Missing base');
+const font=penpot.fonts.findAllByName('Inter').find(f=>f.name==='Inter');
+function box(parent,name,x,y,w,h,color='#202127',r=8){const s=penpot.createBoard();s.name=name;s.resize(w,h);s.fills=[{fillColor:color,fillOpacity:1}];s.borderRadius=r;parent.appendChild(s);s.x=parent.x+x;s.y=parent.y+y;return s;}
+function text(parent,name,copy,x,y,w,size=14,weight=400,color='#F0F1F5'){const t=penpot.createText(copy);t.name=name;font.applyToText(t,font.variants.find(v=>v.fontWeight===String(weight)&&v.fontStyle==='normal'));t.fontSize=String(size);t.resize(w,size*1.4);t.fills=[{fillColor:color,fillOpacity:1}];parent.appendChild(t);t.x=parent.x+x;t.y=parent.y+y;return t;}
+function panel(b,name,x,y,w,h){const s=box(b,name,x,y,w,h);s.strokes=[{strokeColor:'#FFFFFF',strokeOpacity:.065,strokeWidth:1,strokeStyle:'solid',strokeAlignment:'inner'}];s.shadows=[{style:'drop-shadow',offsetX:0,offsetY:12,blur:32,spread:0,color:{color:'#000000',opacity:.46}}];return s;}
+function copyIcon(b,parent,original,name,x,y){const s=penpotUtils.findShape(s=>s.name===original,b).clone();s.name=name;parent.appendChild(s);s.x=parent.x+x;s.y=parent.y+y;return s;}
+
+const configs=[['voice-menu-suppression','voice-processing','Noise suppression',['Standard','Enhanced (RNNoise)','Off']],['voice-menu-quality','voice-advanced','Screen share quality',['Auto','Text','Balanced','Motion','Data saver']],['voice-menu-microphone','voice-default','Microphone device',['System default','Microphone 1','Microphone 2']],['voice-menu-speaker','voice-default','Speaker device',['System default','Speaker 1','Speaker 2']],['voice-menu-camera','voice-camera','Camera device',['System default','Camera 1','Camera 2']]],results=[];
+for(const [i,[key,baseKey,controlName,options]] of configs.entries()){
+ let b=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Settings / '+key);
+ if(!b){const source=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Settings / '+baseKey);if(!source)throw Error('Missing source '+baseKey);b=source.clone();b.name='Desktop / Settings / '+key;b.x=i*1400;b.y=0;b.setPluginData('static-voice-settings-state','');b.showInViewMode=false;const control=penpotUtils.findShape(s=>s.name===controlName,b);
+ const focus=box(b,'Native select focus',control.x-b.x-4,control.y-b.y-4,control.width+8,46,'#18191E',8);focus.fills=[];focus.strokes=[{strokeColor:'#00A8FC',strokeWidth:3,strokeStyle:'solid',strokeAlignment:'inner'}];
+ const menuWidth=Math.min(800,control.width),menu=box(b,'Native voice select menu',control.x-b.x+control.width-menuWidth,control.y-b.y+38,menuWidth,options.length*24+2,'#202127',0);menu.strokes=[{strokeColor:'#858585',strokeWidth:1,strokeStyle:'solid',strokeAlignment:'inner'}];
+ for(const [j,label] of options.entries()){if(j===0)box(menu,'Selected native option',1,1,menu.width-2,24,'#99C8FF',0);text(menu,'Menu option '+label,label,14,5+j*24,menu.width-20,12.8,400,j===0?'#303638':'#F0F1F5');}
+ b.setPluginData('static-voice-menu-state',key);b.setPluginData('menu-control',controlName);b.setPluginData('menu-options',JSON.stringify(options));for(const s of [b,...penpotUtils.findShapes(()=>true,b)])for(const a of [...s.interactions])s.removeInteraction(a);
+ }results.push({key,id:b.id});
+}return results;

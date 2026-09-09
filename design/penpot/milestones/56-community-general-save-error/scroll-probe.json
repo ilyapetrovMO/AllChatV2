@@ -1,0 +1,19 @@
+{
+  "before": {
+    "scroll": 531,
+    "formTop": 71.296875
+  },
+  "after": {
+    "scroll": 599,
+    "maxScroll": 599,
+    "formTop": 71.6875,
+    "error": {
+      "top": 19.296875,
+      "bottom": 41.6875,
+      "text": "Could not save Community settings."
+    },
+    "errorVisible": false,
+    "active": "Save settings"
+  },
+  "scope": "Local source-derived DOM insertion simulating the error paragraph while retaining the form node; not a live backend/React session."
+}

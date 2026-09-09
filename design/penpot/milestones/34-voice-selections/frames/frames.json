@@ -1,0 +1,32 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bc0250743a8",
+    "name": "Desktop / Settings / voice-selected-data-saver",
+    "filename": "Desktop--Settings--voice-selected-data-saver.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc0222922cd",
+    "name": "Desktop / Settings / voice-selected-motion",
+    "filename": "Desktop--Settings--voice-selected-motion.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc01f6dfd81",
+    "name": "Desktop / Settings / voice-selected-balanced",
+    "filename": "Desktop--Settings--voice-selected-balanced.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc009655b2d",
+    "name": "Desktop / Settings / voice-selected-text",
+    "filename": "Desktop--Settings--voice-selected-text.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc0069f8db6",
+    "name": "Desktop / Settings / voice-selected-off",
+    "filename": "Desktop--Settings--voice-selected-off.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc003cbcba1",
+    "name": "Desktop / Settings / voice-selected-enhanced",
+    "filename": "Desktop--Settings--voice-selected-enhanced.svg"
+  }
+]

@@ -1,0 +1,1 @@
+const b=penpot.currentPage.root.children.find(b=>b.name==='Desktop / Settings / general-valid-maximum'),t=penpotUtils.findShape(s=>s.name==='value pushRelayURL',b);t.fills=[{fillColor:'#F0F1F5',fillOpacity:1}];return {id:t.id,text:t.characters,fills:t.fills};

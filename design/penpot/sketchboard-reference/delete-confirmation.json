@@ -1,0 +1,419 @@
+{
+  "controls": [
+    {
+      "tag": "input",
+      "id": "",
+      "label": "Design ideas",
+      "title": "",
+      "type": "text",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 879.546875,
+        "y": 65,
+        "width": 220,
+        "height": 34
+      }
+    },
+    {
+      "tag": "button",
+      "id": "create-board-button",
+      "label": "Create board",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 1107.546875,
+        "y": 62,
+        "width": 132.453125,
+        "height": 37
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Enter",
+      "title": "",
+      "type": "submit",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 57,
+        "y": 245,
+        "width": 70.953125,
+        "height": 37
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Confirm delete",
+      "title": "",
+      "type": "submit",
+      "selected": false,
+      "disabled": false,
+      "visible": true,
+      "bounds": {
+        "x": 165.9375,
+        "y": 245,
+        "width": 146.5625,
+        "height": 37
+      }
+    },
+    {
+      "tag": "button",
+      "id": "back-to-boards",
+      "label": "← Boards",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "clear-board",
+      "label": "Clear",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "canvas",
+      "id": "sketch-canvas",
+      "label": "Shared sketchboard",
+      "title": "",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Pen",
+      "title": "Pen (P)",
+      "type": "button",
+      "selected": true,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Highlight",
+      "title": "Highlighter (H)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Line",
+      "title": "Line (L)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Rectangle",
+      "title": "Rectangle (R)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Ellipse",
+      "title": "Ellipse (O)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Text",
+      "title": "Text (T)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Note",
+      "title": "Sticky note (N)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Eraser",
+      "title": "Eraser (E)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "label": "Pan",
+      "title": "Pan (Space)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "input",
+      "id": "element-text",
+      "label": "Type, then click the board",
+      "title": "",
+      "type": "text",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "input",
+      "id": "stroke-color",
+      "label": "",
+      "title": "",
+      "type": "color",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "input",
+      "id": "stroke-size",
+      "label": "",
+      "title": "",
+      "type": "range",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "undo",
+      "label": "Undo",
+      "title": "Undo (Ctrl+Z)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "redo",
+      "label": "Redo",
+      "title": "Redo (Ctrl+Y)",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "zoom-out",
+      "label": "Zoom out",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "output",
+      "id": "zoom-level",
+      "label": "100%",
+      "title": "",
+      "type": "output",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "zoom-in",
+      "label": "Zoom in",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "reset-view",
+      "label": "Fit",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "tag": "button",
+      "id": "export-board",
+      "label": "Export PNG",
+      "title": "",
+      "type": "button",
+      "selected": false,
+      "disabled": false,
+      "visible": false,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    }
+  ]
+}

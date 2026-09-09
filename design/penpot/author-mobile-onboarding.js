@@ -1,0 +1,16 @@
+if(penpot.currentFile.id!=='c828d3cf-7d4e-8145-8008-9a4f1a6ff37f'||penpot.currentPage.name!=='03 — Mobile')throw Error('Wrong target');
+const name='Mobile / Add an Instance / Empty dark';const existing=penpot.currentPage.root.children.find(s=>s.name===name);if(existing?.getPluginData('source'))return {existing:true};if(existing)existing.remove();
+const font=penpot.fonts.findAllByName('Roboto').find(f=>f.name==='Roboto');const colors={bg:'#191a1f',field:'#25272e',border:'#393c46',text:'#f5f6fb',muted:'#aeb2c0',placeholder:'#747988',accent:'#5865f2'};
+function frame(name,x,y,w,h,color){const b=penpot.createBoard();b.name=name;b.resize(w,h);b.x=x;b.y=y;b.fills=[{fillColor:color,fillOpacity:1}];return b;}
+function text(b,value,x,y,w,h,size,color,weight='400',align='left'){const t=penpot.createText(value);font.applyToText(t,font.variants.find(v=>v.fontWeight===weight&&v.fontStyle==='normal'));t.name=value;t.fontSize=String(size);t.growType='fixed';t.resize(w,h);t.align=align;t.verticalAlign='center';t.fills=[{fillColor:color,fillOpacity:1}];b.appendChild(t);t.x=b.x+x;t.y=b.y+y;return t;}
+function component(name,create){const old=penpot.library.local.components.find(c=>[c.path,c.name].filter(Boolean).join(' / ')===name);if(old)return old;const b=create();b.setPluginData('source','mobile/App.tsx:137-143; styles:266-269');const c=penpot.library.local.createComponent([b]);c.name=name;return c;}
+const input=component('Mobile / Account input / Empty dark',()=>{const b=frame('Account input',5200,0,933,138,colors.field);b.borderRadius=26.25;b.strokes=[{strokeColor:colors.border,strokeOpacity:1,strokeWidth:2.625,strokeAlignment:'inner',strokeStyle:'solid'}];text(b,'https://chat.example.com',42,0,849,138,42,colors.placeholder);return b;});
+const submit=component('Mobile / Account submit / Default dark',()=>{const b=frame('Sign in',5200,250,933,136,colors.accent);b.borderRadius=26.25;text(b,'Sign in',0,0,933,136,42,'#ffffff','700','center');return b;});
+const b=frame(name,1400,2700,1080,2400,colors.bg);
+const eyebrow=text(b,'ALLCHAT MOBILE',73,657,933,43,31.5,colors.accent,'800');eyebrow.letterSpacing='3.675';
+const title=text(b,'Add an Instance',73,747,933,106,78.75,colors.text,'800');// Native Penpot API rejects negative letter spacing; source value remains documented.
+text(b,'Sign in with the address and Member account for your Community.',73,890,933,122,42,colors.muted).lineHeight='1.4375';
+for(const [value,y] of [['https://chat.example.com',1075],['Username',1248],['Password',1422]]){const i=input.instance();b.appendChild(i);i.x=b.x+73;i.y=b.y+y;i.name=value==='https://chat.example.com'?'Instance address':value;const t=i.children.find(s=>s.type==='text');if(!t)throw Error('Missing editable input label');t.characters=value;}
+const button=submit.instance();b.appendChild(button);button.x=b.x+74;button.y=b.y+1606;
+b.setPluginData('source','mobile/App.tsx:79-95,121-147');b.setPluginData('capture','mobile-reference/add-instance-dark.png');b.setPluginData('status','Native editable draft. Exact Roboto family selected; negative title letter spacing, text baselines, OS bars and component overrides require visual verification.');
+return {boardId:b.id,source:'mobile/App.tsx',components:[input,submit].map(c=>({id:c.id,path:c.path,name:c.name})),status:'native draft; visual verification pending'};

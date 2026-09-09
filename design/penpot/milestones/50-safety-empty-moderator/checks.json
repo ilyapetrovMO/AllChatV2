@@ -1,0 +1,71 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "wide",
+      "scroll": 0
+    },
+    {
+      "key": "wide-expanded",
+      "scroll": 420
+    },
+    {
+      "key": "wide-bottom",
+      "scroll": 706
+    },
+    {
+      "key": "wide-middle",
+      "scroll": 420
+    },
+    {
+      "key": "small",
+      "scroll": 0
+    },
+    {
+      "key": "small-expanded",
+      "scroll": 420
+    },
+    {
+      "key": "small-bottom",
+      "scroll": 866
+    },
+    {
+      "key": "small-middle",
+      "scroll": 420
+    }
+  ],
+  "visibleControls": {
+    "wide": [
+      "select memberId",
+      "textarea reason",
+      "button Submit Report",
+      "select action",
+      "select moderationMember",
+      "textarea moderationReason",
+      "input duration",
+      "button Apply Action",
+      "button Purge Old Records",
+      "button Export Account Data",
+      "input password",
+      "input confirmation",
+      "button Delete Account"
+    ],
+    "small": [
+      "select memberId",
+      "textarea reason",
+      "button Submit Report",
+      "select action",
+      "select moderationMember",
+      "textarea moderationReason",
+      "input duration",
+      "button Apply Action",
+      "button Purge Old Records",
+      "button Export Account Data",
+      "input password",
+      "input confirmation",
+      "button Delete Account"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bb0ebcfd0d7",
+    "name": "Desktop / Settings / voice-default",
+    "filename": "Desktop--Settings--voice-default.svg",
+    "png": "Desktop--Settings--voice-default.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb20b8a0f3c",
+    "name": "Desktop / Settings / voice-advanced",
+    "filename": "Desktop--Settings--voice-advanced.svg",
+    "png": "Desktop--Settings--voice-advanced.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb209ca9b77",
+    "name": "Desktop / Settings / voice-camera",
+    "filename": "Desktop--Settings--voice-camera.svg",
+    "png": "Desktop--Settings--voice-camera.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb207cf6191",
+    "name": "Desktop / Settings / voice-processing",
+    "filename": "Desktop--Settings--voice-processing.svg",
+    "png": "Desktop--Settings--voice-processing.png"
+  }
+]

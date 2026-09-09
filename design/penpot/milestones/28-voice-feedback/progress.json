@@ -1,0 +1,51 @@
+{
+  "created": 3,
+  "remaining": 0,
+  "boards": [
+    {
+      "key": "voice-feedback-devices-unavailable",
+      "id": "7299a615-462e-803f-8008-9bb55a23d4c4",
+      "notice": "Media devices are unavailable."
+    },
+    {
+      "key": "voice-feedback-microphone-working",
+      "id": "7299a615-462e-803f-8008-9bb55befc1de",
+      "notice": "Microphone is working."
+    },
+    {
+      "key": "voice-feedback-microphone-enhanced",
+      "id": "7299a615-462e-803f-8008-9bb55d8b0147",
+      "notice": "Microphone is working with RNNoise."
+    },
+    {
+      "key": "voice-feedback-microphone-fallback",
+      "id": "7299a615-462e-803f-8008-9bb57ad8b1ae",
+      "notice": "Enhanced RNNoise is unavailable; standard WebRTC suppression is active."
+    },
+    {
+      "key": "voice-feedback-microphone-error",
+      "id": "7299a615-462e-803f-8008-9bb57c9ef8fa",
+      "notice": "Microphone permission was denied or the selected device is unavailable."
+    },
+    {
+      "key": "voice-feedback-camera-stopped",
+      "id": "7299a615-462e-803f-8008-9bb57e5c043c",
+      "notice": "Camera preview stopped."
+    },
+    {
+      "key": "voice-feedback-camera-error",
+      "id": "7299a615-462e-803f-8008-9bb58b558a22",
+      "notice": "Camera permission was denied or the selected device is unavailable."
+    },
+    {
+      "key": "voice-feedback-speaker-played",
+      "id": "7299a615-462e-803f-8008-9bb58d67aea9",
+      "notice": "Speaker test played."
+    },
+    {
+      "key": "voice-feedback-reset",
+      "id": "7299a615-462e-803f-8008-9bb58f618355",
+      "notice": "Voice & Video settings were reset."
+    }
+  ]
+}

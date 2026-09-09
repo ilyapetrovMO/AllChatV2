@@ -19,6 +19,7 @@ type DirectCall struct {
 	State           string `json:"state"`
 	CreatedAt       string `json:"created_at"`
 	ExpiresAt       string `json:"expires_at,omitempty"`
+	AcceptedAt      string `json:"accepted_at,omitempty"`
 	FinishedAt      string `json:"finished_at,omitempty"`
 }
 
@@ -37,6 +38,8 @@ func (m *Manager) StartDirectCall(dmID, callerID, recipientID string) (DirectCal
 	expires := now.Add(30 * time.Second)
 	call := DirectCall{ID: id, DirectMessageID: dmID, CallerID: callerID, RecipientID: recipientID, State: "ringing", CreatedAt: now.Format(time.RFC3339Nano), ExpiresAt: expires.Format(time.RFC3339Nano)}
 	m.calls[id] = &call
+	m.recordCallLocked(call)
+	m.scheduleCallsLocked()
 	return call, nil
 }
 
@@ -86,7 +89,9 @@ func (m *Manager) AcceptDirectCall(callID, memberID string) (DirectCall, error) 
 		return DirectCall{}, ErrCallState
 	}
 	call.State = "accepted"
+	call.AcceptedAt = m.now().UTC().Format(time.RFC3339Nano)
 	call.ExpiresAt = ""
+	m.recordCallLocked(*call)
 	return *call, nil
 }
 func (m *Manager) DeclineDirectCall(callID, memberID string) (DirectCall, error) {
@@ -97,13 +102,24 @@ func (m *Manager) EndDirectCall(callID, memberID string) (DirectCall, error) {
 }
 func (m *Manager) finishCall(callID, memberID, state string) (DirectCall, error) {
 	m.mu.Lock()
+	m.expireCallsLocked()
 	call := m.calls[callID]
 	if call == nil || (call.CallerID != memberID && call.RecipientID != memberID) {
 		m.mu.Unlock()
 		return DirectCall{}, ErrCallState
 	}
+	if call.State != "ringing" && call.State != "accepted" {
+		result := *call
+		m.mu.Unlock()
+		return result, nil
+	}
+	if state == "declined" && (memberID != call.RecipientID || call.State != "ringing") {
+		m.mu.Unlock()
+		return DirectCall{}, ErrCallState
+	}
 	call.State = state
 	call.FinishedAt = m.now().UTC().Format(time.RFC3339Nano)
+	m.recordCallLocked(*call)
 	result := *call
 	participants := []string{call.CallerID, call.RecipientID}
 	m.mu.Unlock()
@@ -144,6 +160,7 @@ func (m *Manager) endCalls(state string, matches func(*DirectCall) bool) []Direc
 		if matches(call) {
 			call.State = state
 			call.FinishedAt = now
+			m.recordCallLocked(*call)
 			ended = append(ended, *call)
 			participants[call.CallerID] = struct{}{}
 			participants[call.RecipientID] = struct{}{}
@@ -176,7 +193,8 @@ func (m *Manager) expireCallsLocked() {
 			expires, _ := time.Parse(time.RFC3339Nano, call.ExpiresAt)
 			if !now.Before(expires) {
 				call.State = "missed"
-				call.FinishedAt = now.UTC().Format(time.RFC3339Nano)
+				call.FinishedAt = expires.UTC().Format(time.RFC3339Nano)
+				m.recordCallLocked(*call)
 			}
 		} else if call.FinishedAt != "" {
 			finished, _ := time.Parse(time.RFC3339Nano, call.FinishedAt)

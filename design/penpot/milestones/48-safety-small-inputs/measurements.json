@@ -1,0 +1,156 @@
+[
+  {
+    "key": "report",
+    "scroll": 0,
+    "fields": [
+      {
+        "name": "memberId",
+        "copy": "Morgan",
+        "x": 344,
+        "y": 288.53125,
+        "w": 584,
+        "h": 41.375,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": null,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      },
+      {
+        "name": "reason",
+        "copy": "Repeated unwanted messages.",
+        "x": 344,
+        "y": 364.203125,
+        "w": 584,
+        "h": 60.1875,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": 17.92,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      }
+    ]
+  },
+  {
+    "key": "moderation",
+    "scroll": 640,
+    "fields": [
+      {
+        "name": "action",
+        "copy": "Timeout",
+        "x": 344,
+        "y": 167.515625,
+        "w": 584,
+        "h": 41.375,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": null,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      },
+      {
+        "name": "moderationMember",
+        "copy": "Morgan",
+        "x": 344,
+        "y": 243.1875,
+        "w": 584,
+        "h": 41.375,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": null,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      },
+      {
+        "name": "moderationReason",
+        "copy": "Repeated unwanted messages.",
+        "x": 344,
+        "y": 318.859375,
+        "w": 584,
+        "h": 60.1875,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": 17.92,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      },
+      {
+        "name": "duration",
+        "copy": "30",
+        "x": 344,
+        "y": 413.34375,
+        "w": 584,
+        "h": 42.28125,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": 17.92,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      }
+    ]
+  },
+  {
+    "key": "delete",
+    "scroll": 301,
+    "fields": [
+      {
+        "name": "password",
+        "copy": "••••••••••••",
+        "x": 359,
+        "y": 357.421875,
+        "w": 554,
+        "h": 42.28125,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": 17.92,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      },
+      {
+        "name": "confirmation",
+        "copy": "DELETE",
+        "x": 359,
+        "y": 434,
+        "w": 554,
+        "h": 42.28125,
+        "paddingLeft": 12,
+        "paddingTop": 11.2,
+        "fontSize": 12.8,
+        "fontWeight": "700",
+        "lineHeight": 17.92,
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "color": "rgb(240, 241, 245)",
+        "valid": true
+      }
+    ]
+  }
+]

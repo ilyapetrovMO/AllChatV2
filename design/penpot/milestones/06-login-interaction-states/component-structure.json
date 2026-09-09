@@ -1,0 +1,25 @@
+{
+  "component": {
+    "id": "7299a615-462e-803f-8008-9b86b8dd54d0",
+    "libraryId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+    "name": "Primary button",
+    "path": "Desktop / Login",
+    "variantProps": null,
+    "variantError": null
+  },
+  "instance": [
+    {
+      "id": "7299a615-462e-803f-8008-9b86b942bbec",
+      "name": "Sign in submit",
+      "radius": 4,
+      "parent": "7299a615-462e-803f-8008-9b86b91915e9"
+    },
+    {
+      "id": "7299a615-462e-803f-8008-9b86b942bbed",
+      "name": "Button label",
+      "radius": null,
+      "parent": "7299a615-462e-803f-8008-9b86b942bbec"
+    }
+  ],
+  "main": 4
+}

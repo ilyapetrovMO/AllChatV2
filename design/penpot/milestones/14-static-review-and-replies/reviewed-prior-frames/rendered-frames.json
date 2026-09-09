@@ -1,0 +1,104 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9b9e26d687e2",
+    "name": "Desktop / Main / Attachment / typing",
+    "filename": "Desktop--Main--Attachment--typing.svg",
+    "png": "Desktop--Main--Attachment--typing.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9e255460cf",
+    "name": "Desktop / Main / Attachment / file-download",
+    "filename": "Desktop--Main--Attachment--file-download.svg",
+    "png": "Desktop--Main--Attachment--file-download.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9e23d1d078",
+    "name": "Desktop / Main / Attachment / file-loading",
+    "filename": "Desktop--Main--Attachment--file-loading.svg",
+    "png": "Desktop--Main--Attachment--file-loading.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9e235931b3",
+    "name": "Desktop / Main / Attachment / file-drag",
+    "filename": "Desktop--Main--Attachment--file-drag.svg",
+    "png": "Desktop--Main--Attachment--file-drag.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9e21cffcca",
+    "name": "Desktop / Main / Attachment / remove-hover",
+    "filename": "Desktop--Main--Attachment--remove-hover.svg",
+    "png": "Desktop--Main--Attachment--remove-hover.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9e204df504",
+    "name": "Desktop / Main / Attachment / file-pending",
+    "filename": "Desktop--Main--Attachment--file-pending.svg",
+    "png": "Desktop--Main--Attachment--file-pending.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9cccb6de3d",
+    "name": "Desktop / Main / Message detail / pins-populated",
+    "filename": "Desktop--Main--Message-detail--pins-populated.svg",
+    "png": "Desktop--Main--Message-detail--pins-populated.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9ccb85b974",
+    "name": "Desktop / Main / Message detail / pins-empty",
+    "filename": "Desktop--Main--Message-detail--pins-empty.svg",
+    "png": "Desktop--Main--Message-detail--pins-empty.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9cca2d2c61",
+    "name": "Desktop / Main / Message detail / mentions",
+    "filename": "Desktop--Main--Message-detail--mentions.svg",
+    "png": "Desktop--Main--Message-detail--mentions.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1d94f293",
+    "name": "Desktop / Main / Message / edit-composer",
+    "filename": "Desktop--Main--Message--edit-composer.svg",
+    "png": "Desktop--Main--Message--edit-composer.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1d431b5a",
+    "name": "Desktop / Main / Message / reply-composer",
+    "filename": "Desktop--Main--Message--reply-composer.svg",
+    "png": "Desktop--Main--Message--reply-composer.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1d22f537",
+    "name": "Desktop / Main / Message / deleted",
+    "filename": "Desktop--Main--Message--deleted.svg",
+    "png": "Desktop--Main--Message--deleted.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1c8158a0",
+    "name": "Desktop / Main / Message / pinned-actions",
+    "filename": "Desktop--Main--Message--pinned-actions.svg",
+    "png": "Desktop--Main--Message--pinned-actions.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1c0a8649",
+    "name": "Desktop / Main / Message / other-actions",
+    "filename": "Desktop--Main--Message--other-actions.svg",
+    "png": "Desktop--Main--Message--other-actions.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9b1b7f9d73",
+    "name": "Desktop / Main / Message / own-actions",
+    "filename": "Desktop--Main--Message--own-actions.svg",
+    "png": "Desktop--Main--Message--own-actions.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9cc31a4150",
+    "name": "Desktop / Main / Message detail / reaction-custom",
+    "filename": "Desktop--Main--Message-detail--reaction-custom.svg",
+    "png": "Desktop--Main--Message-detail--reaction-custom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b9cbbe9057a",
+    "name": "Desktop / Main / Message detail / reaction-empty",
+    "filename": "Desktop--Main--Message-detail--reaction-empty.svg",
+    "png": "Desktop--Main--Message-detail--reaction-empty.png"
+  }
+]

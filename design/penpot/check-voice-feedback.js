@@ -1,0 +1,10 @@
+const boards=penpot.currentPage.root.children.filter(b=>b.getPluginData('static-voice-feedback-state')),problems=[];
+const results=boards.map(b=>{const shapes=penpotUtils.findShapes(()=>true,b),notice=shapes.find(s=>s.name==='Voice settings notice'),c=shapes.find(s=>s.name==='Settings scroll content'),advanced=shapes.find(s=>s.name==='Advanced section');const key=b.getPluginData('static-voice-feedback-state');
+if(!notice||notice.characters!==b.getPluginData('voice-feedback-copy'))problems.push(key+': notice mismatch');
+if(notice&&(notice.y<advanced.y+advanced.height+19||notice.y+notice.height>b.y+b.height||notice.x<b.x||notice.x+notice.width>b.x+b.width))problems.push(key+': notice placement');
+if(notice&&(!Number.isFinite(notice.textBounds.width)||!notice.textBounds.width))problems.push(key+': no rendered notice');
+if(shapes.some(s=>s.interactions.length))problems.push(key+': interaction');
+const enhanced=key.endsWith('enhanced')||key.endsWith('fallback');if(shapes.find(s=>s.name==='Noise suppression value').characters!==(enhanced?'Enhanced (RNNoise)':'Standard'))problems.push(key+': suppression fixture');
+if(!shapes.some(s=>s.type==='text'&&s.characters==='Camera preview is off')||!shapes.some(s=>s.type==='text'&&s.characters==='Test Video'))problems.push(key+': camera off fixture');
+return {key,id:b.id,notice:notice?.characters,noticeBounds:notice?.textBounds,scroll:c.y-b.y};});
+const validation=penpot.currentFile.validate();return {pass:boards.length===9&&!problems.length&&!validation.length,problems,validation,boards:results,revision:penpot.currentFile.revn};

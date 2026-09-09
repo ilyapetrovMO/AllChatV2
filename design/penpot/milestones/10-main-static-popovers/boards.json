@@ -1,0 +1,22 @@
+[
+  {
+    "key": "community-owner",
+    "id": "7299a615-462e-803f-8008-9b99d5b7163a"
+  },
+  {
+    "key": "community-member",
+    "id": "7299a615-462e-803f-8008-9b99d6995243"
+  },
+  {
+    "key": "presence",
+    "id": "7299a615-462e-803f-8008-9b99d71e936b"
+  },
+  {
+    "key": "search-filters",
+    "id": "7299a615-462e-803f-8008-9b99d7bf7fc6"
+  },
+  {
+    "key": "notifications",
+    "id": "7299a615-462e-803f-8008-9b99d943ce27"
+  }
+]

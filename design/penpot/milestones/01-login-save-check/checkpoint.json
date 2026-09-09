@@ -1,0 +1,59 @@
+{
+  "status": "incomplete-native-backup-and-reopen-verification-pending",
+  "scope": "Small save verification board only; not the finished login screen",
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "pageId": "7299a615-462e-803f-8008-9b83cd5d80df",
+  "boardId": "7299a615-462e-803f-8008-9b83e3eb7f44",
+  "namedVersion": "Desktop login \u2014 milestone 01 save check",
+  "latestObservedRevision": 8,
+  "verified": [
+    "Named save returned successfully",
+    "Independent findVersions query lists named checkpoint",
+    "Hosted PNG export contains editable heading and button label; visually inspected",
+    "Local reconstruction JSON and SVG saved"
+  ],
+  "notVerified": [
+    "Native .penpot export and reimport",
+    "Saved contents after file reopening"
+  ],
+  "exportAttempts": [
+    {
+      "format": "penpot",
+      "libraries": "all",
+      "result": "Error: No matching clause: "
+    },
+    {
+      "format": "penpot",
+      "libraries": "default",
+      "result": "Error: No matching clause: "
+    },
+    {
+      "format": "zip",
+      "libraries": "all",
+      "result": "Error: No matching clause: "
+    }
+  ],
+  "nextAction": "Export the file through Penpot UI, retain .penpot locally, then inspect/reimport before constructing the full login screen.",
+  "artifacts": {
+    "preview.svg": {
+      "bytes": 9344,
+      "sha256": "a4dc2fe56e249ca93d74cd43242133abe0f0a631fb5f17f6dfd489b66f42db8d"
+    },
+    "preview.png": {
+      "bytes": 6217,
+      "sha256": "27f8380b25a73adec7ad96bfd7ebfa759c728f8437802a0ddc67f4c331918aea"
+    },
+    "reconstruction.json": {
+      "bytes": 2616,
+      "sha256": "0fd5411e39c33e115c52d0b04c828bf39b0f79f79c1926b11c849beec0ce0f89"
+    },
+    "creation.json": {
+      "bytes": 283,
+      "sha256": "d90a97f691301f29db25cfaa8ec9a40e191113b8e1ad3af458a4bdb91a8f6dad"
+    },
+    "save-verification.json": {
+      "bytes": 1978,
+      "sha256": "ba87e17b4b14f503bb1a889fd97ee8c9832a73e75e265968d87feccd6727b754"
+    }
+  }
+}

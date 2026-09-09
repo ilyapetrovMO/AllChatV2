@@ -76,3 +76,68 @@ func TestPolicyChangeEndsCallAndReleasesBusyState(t *testing.T) {
 		t.Fatalf("terminal call retained busy state: %v", err)
 	}
 }
+
+func TestCallHistoryRecordsTransitionsOnceAndRetriesInOrder(t *testing.T) {
+	manager := NewManager(time.Second)
+	defer manager.Close()
+	now := time.Now().UTC()
+	manager.now = func() time.Time { return now }
+	var recorded []DirectCall
+	fail := true
+	manager.SetCallRecorder(func(call DirectCall) error {
+		if fail {
+			return errors.New("database unavailable")
+		}
+		recorded = append(recorded, call)
+		return nil
+	})
+	call, err := manager.StartDirectCall("dm", "caller", "recipient")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fail = false
+	now = now.Add(5 * time.Second)
+	accepted, err := manager.AcceptDirectCall(call.ID, "recipient")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if accepted.AcceptedAt != now.Format(time.RFC3339Nano) {
+		t.Fatal("missing acceptance timestamp")
+	}
+	manager.AcceptDirectCall(call.ID, "recipient")
+	now = now.Add(754 * time.Second)
+	manager.EndDirectCall(call.ID, "caller")
+	manager.EndDirectCall(call.ID, "recipient")
+	if len(recorded) != 3 || recorded[0].State != "ringing" || recorded[1].State != "accepted" || recorded[2].State != "ended" {
+		t.Fatalf("events: %+v", recorded)
+	}
+}
+
+func TestCallHistoryIncludesMissedDeclinedAndPolicyTermination(t *testing.T) {
+	for _, state := range []string{"missed", "declined", "ended"} {
+		t.Run(state, func(t *testing.T) {
+			manager := NewManager(time.Second)
+			defer manager.Close()
+			now := time.Now().UTC()
+			manager.now = func() time.Time { return now }
+			var recorded []DirectCall
+			manager.SetCallRecorder(func(call DirectCall) error { recorded = append(recorded, call); return nil })
+			call, err := manager.StartDirectCall("dm", "caller", "recipient")
+			if err != nil {
+				t.Fatal(err)
+			}
+			switch state {
+			case "missed":
+				now = now.Add(time.Minute)
+				manager.CurrentDirectCall("caller")
+			case "declined":
+				manager.DeclineDirectCall(call.ID, "recipient")
+			default:
+				manager.EndCallsBetween("caller", "recipient", "ended")
+			}
+			if len(recorded) != 2 || recorded[1].State != state || recorded[1].FinishedAt == "" {
+				t.Fatalf("events: %+v", recorded)
+			}
+		})
+	}
+}

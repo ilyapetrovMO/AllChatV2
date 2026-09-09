@@ -1,0 +1,36 @@
+{
+  "page": "Desktop — Main",
+  "revision": 49,
+  "boards": [
+    {
+      "name": "Desktop / Settings / notifications-empty",
+      "id": "7299a615-462e-803f-8008-9babc636b1cd",
+      "complete": "notifications-empty",
+      "children": 5
+    },
+    {
+      "name": "Desktop / Settings / notifications-overrides",
+      "id": "7299a615-462e-803f-8008-9baba02cddd8",
+      "complete": "notifications-overrides",
+      "children": 5
+    },
+    {
+      "name": "Desktop / Settings / notifications-muted",
+      "id": "7299a615-462e-803f-8008-9bab8dded5b7",
+      "complete": "notifications-muted",
+      "children": 5
+    },
+    {
+      "name": "Desktop / Settings / notifications-default",
+      "id": "7299a615-462e-803f-8008-9bab7c636cf4",
+      "complete": "notifications-default",
+      "children": 5
+    },
+    {
+      "name": "Desktop / Settings / ringtone-file-hover",
+      "id": "7299a615-462e-803f-8008-9babd6d4ddb7",
+      "complete": null,
+      "children": 5
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "key": "wide",
+    "narrow": false,
+    "image": {
+      "x": 536,
+      "y": 116,
+      "w": 64,
+      "h": 64
+    },
+    "complete": true,
+    "naturalWidth": 0,
+    "alt": "Community avatar",
+    "fontSize": "16px",
+    "fontWeight": "800",
+    "lineHeight": "22.4px",
+    "background": "rgb(109, 117, 232)",
+    "contentHeight": 1134.734375
+  },
+  {
+    "key": "small",
+    "narrow": true,
+    "image": {
+      "x": 536,
+      "y": 116,
+      "w": 64,
+      "h": 64
+    },
+    "complete": true,
+    "naturalWidth": 0,
+    "alt": "Community avatar",
+    "fontSize": "16px",
+    "fontWeight": "800",
+    "lineHeight": "22.4px",
+    "background": "rgb(109, 117, 232)",
+    "contentHeight": 1179.515625
+  }
+]

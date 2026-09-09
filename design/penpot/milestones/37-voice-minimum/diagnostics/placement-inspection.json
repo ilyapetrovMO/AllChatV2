@@ -1,0 +1,54 @@
+{
+  "rootId": "7299a615-462e-803f-8008-9bc445839346",
+  "stageExists": false,
+  "labels": [
+    {
+      "name": "Mic Test label",
+      "characters": "Mic Test",
+      "width": 534,
+      "height": 22.399999999999977,
+      "bounds": {
+        "x": 703.9666595458984,
+        "y": 620.7468719482422,
+        "width": 64.06668090820312,
+        "height": 20
+      }
+    },
+    {
+      "name": "Quality mode description",
+      "characters": "Auto protects frame delivery; Text preserves readability; Motion prioritizes smoothness.",
+      "width": 182,
+      "height": 44.8125,
+      "bounds": {
+        "x": 465,
+        "y": 1625.5291595458984,
+        "width": 174.31666564941406,
+        "height": 42.866668701171875
+      }
+    },
+    {
+      "name": "Speaker test description",
+      "characters": "Play a short tone through the selected output device.",
+      "width": 191,
+      "height": 37.3125,
+      "bounds": {
+        "x": 465,
+        "y": 1815.4895782470703,
+        "width": 185.9499969482422,
+        "height": 34.66667175292969
+      }
+    },
+    {
+      "name": "Voice introduction",
+      "characters": "Choose how you sound and look in Voice Rooms and Direct Calls. Your microphone audio is processed locally.",
+      "width": 584,
+      "height": 44.78125,
+      "bounds": {
+        "x": 444,
+        "y": 269.9812469482422,
+        "width": 539.7000122070312,
+        "height": 42.40000915527344
+      }
+    }
+  ]
+}

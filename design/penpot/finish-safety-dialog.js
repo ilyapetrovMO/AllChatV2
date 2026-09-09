@@ -1,0 +1,1 @@
+const b=penpot.currentPage.root.children.find(b=>b.getPluginData('static-safety-dialog-state')==='safety-delete-confirm');if(!b)throw Error('Missing board');const t=penpotUtils.findShape(s=>s.name==='Confirmation question',b);if(!t.textBounds?.width)throw Error('Question not rendered');b.x=167000;b.y=0;return {id:b.id};

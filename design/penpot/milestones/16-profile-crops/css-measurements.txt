@@ -1,0 +1,196 @@
+avatar [
+  {
+    tag: 'SECTION',
+    cls: 'image-crop-dialog',
+    x: 360,
+    y: 95.8125,
+    w: 560,
+    h: 608.375,
+    bg: 'rgb(32, 33, 39)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '1px solid rgba(255, 255, 255, 0.067)'
+  },
+  {
+    tag: 'H2',
+    cls: '',
+    x: 385,
+    y: 120.8125,
+    w: 510,
+    h: 33.59375,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(240, 241, 245)',
+    font: '700 24px / 33.6px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'DIV',
+    cls: 'image-crop-preview image-crop-avatar',
+    x: 440,
+    y: 170.40625,
+    w: 400,
+    h: 400,
+    bg: 'rgb(32, 33, 39)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'LABEL',
+    cls: '',
+    x: 385,
+    y: 586.40625,
+    w: 510,
+    h: 48.390625,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(164, 168, 179)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(164, 168, 179)'
+  },
+  {
+    tag: 'INPUT',
+    cls: '',
+    x: 387,
+    y: 616.796875,
+    w: 506,
+    h: 16,
+    bg: 'rgb(59, 59, 59)',
+    color: 'rgb(157, 150, 142)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(157, 150, 142)'
+  },
+  {
+    tag: 'DIV',
+    cls: 'dialog-actions',
+    x: 385,
+    y: 650.796875,
+    w: 510,
+    h: 28.390625,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'BUTTON',
+    cls: '',
+    x: 687.90625,
+    y: 650.796875,
+    w: 128.890625,
+    h: 28.390625,
+    bg: 'rgb(107, 107, 107)',
+    color: 'rgb(255, 255, 255)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px outset rgb(255, 255, 255)'
+  },
+  {
+    tag: 'BUTTON',
+    cls: '',
+    x: 824.796875,
+    y: 650.796875,
+    w: 70.203125,
+    h: 28.390625,
+    bg: 'rgb(107, 107, 107)',
+    color: 'rgb(255, 255, 255)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px outset rgb(255, 255, 255)'
+  }
+]
+banner [
+  {
+    tag: 'SECTION',
+    cls: 'image-crop-dialog',
+    x: 360,
+    y: 222.71875,
+    w: 560,
+    h: 354.5625,
+    bg: 'rgb(32, 33, 39)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '1px solid rgba(255, 255, 255, 0.067)'
+  },
+  {
+    tag: 'H2',
+    cls: '',
+    x: 385,
+    y: 247.71875,
+    w: 510,
+    h: 33.59375,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(240, 241, 245)',
+    font: '700 24px / 33.6px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'DIV',
+    cls: 'image-crop-preview image-crop-banner',
+    x: 385,
+    y: 297.3125,
+    w: 510,
+    h: 146.1875,
+    bg: 'rgb(32, 33, 39)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'LABEL',
+    cls: '',
+    x: 385,
+    y: 459.5,
+    w: 510,
+    h: 48.390625,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(164, 168, 179)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(164, 168, 179)'
+  },
+  {
+    tag: 'INPUT',
+    cls: '',
+    x: 387,
+    y: 489.890625,
+    w: 506,
+    h: 16,
+    bg: 'rgb(59, 59, 59)',
+    color: 'rgb(157, 150, 142)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(157, 150, 142)'
+  },
+  {
+    tag: 'DIV',
+    cls: 'dialog-actions',
+    x: 385,
+    y: 523.890625,
+    w: 510,
+    h: 28.390625,
+    bg: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(240, 241, 245)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '0px none rgb(240, 241, 245)'
+  },
+  {
+    tag: 'BUTTON',
+    cls: '',
+    x: 682.984375,
+    y: 523.890625,
+    w: 133.8125,
+    h: 28.390625,
+    bg: 'rgb(107, 107, 107)',
+    color: 'rgb(255, 255, 255)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px outset rgb(255, 255, 255)'
+  },
+  {
+    tag: 'BUTTON',
+    cls: '',
+    x: 824.796875,
+    y: 523.890625,
+    w: 70.203125,
+    h: 28.390625,
+    bg: 'rgb(107, 107, 107)',
+    color: 'rgb(255, 255, 255)',
+    font: '16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    border: '2px outset rgb(255, 255, 255)'
+  }
+]

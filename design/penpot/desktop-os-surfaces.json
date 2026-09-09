@@ -1,0 +1,41 @@
+{
+  "status": "source-reviewed; native OS captures and Penpot references pending",
+  "items": [
+    {
+      "name": "Tray menu",
+      "source": "desktop/src/main/tray-menu.ts:5",
+      "owner": "Electron native menu",
+      "controls": ["Show AllChat", "Status submenu", "Online radio", "Do Not Disturb radio", "Quit AllChat"],
+      "states": ["Online checked when presence is available", "Do Not Disturb checked when presence is dnd"],
+      "behavior": "Show restores the app; status invokes setPresence; Quit invokes quit. Closing the window hides it unless quitting.",
+      "platformVerification": "Windows, Linux, macOS appearance pending"
+    },
+    {
+      "name": "Update available dialog",
+      "source": "desktop/src/main/main.ts:118",
+      "owner": "Electron native message box",
+      "controls": ["Download update (default)", "Later (cancel)"],
+      "states": ["New version offered once per process", "Current and offered version interpolated into text"],
+      "behavior": "Download enters the renderer download state; Later returns without downloading.",
+      "platformVerification": "Windows, Linux, macOS appearance pending"
+    },
+    {
+      "name": "Screen share source picker",
+      "source": "desktop/src/main/main.ts:585",
+      "owner": "Electron native message box",
+      "controls": ["One button per available screen or window", "Cancel"],
+      "states": ["Dynamic source list", "Selected source", "Cancellation"],
+      "behavior": "Returns the selected source index or null on cancellation; default index is zero.",
+      "platformVerification": "Platform-specific display-media handler branches still require review"
+    },
+    {
+      "name": "Update status and installation control",
+      "source": "desktop/src/renderer/app.tsx:439",
+      "owner": "AllChat renderer",
+      "controls": ["Upgrade to VERSION button", "Update failed tooltip"],
+      "states": ["Idle hidden", "Downloading with unknown total", "Downloading with percentage", "Ready to upgrade", "Failed with error title"],
+      "behavior": "The ready button opens the verified downloaded installer. Windows quits after launching it; other platforms do not use that quit branch.",
+      "platformVerification": "Editable state variants and runtime captures pending"
+    }
+  ]
+}

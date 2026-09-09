@@ -1,0 +1,32 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bc8d6603dca",
+    "name": "Desktop / Settings / voice-small-menu-speaker",
+    "filename": "Desktop--Settings--voice-small-menu-speaker.svg",
+    "png": "Desktop--Settings--voice-small-menu-speaker.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc8d29f8944",
+    "name": "Desktop / Settings / voice-small-menu-microphone",
+    "filename": "Desktop--Settings--voice-small-menu-microphone.svg",
+    "png": "Desktop--Settings--voice-small-menu-microphone.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc9210c160a",
+    "name": "Desktop / Settings / voice-small-menu-quality",
+    "filename": "Desktop--Settings--voice-small-menu-quality.svg",
+    "png": "Desktop--Settings--voice-small-menu-quality.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc91cd760f4",
+    "name": "Desktop / Settings / voice-small-menu-camera",
+    "filename": "Desktop--Settings--voice-small-menu-camera.svg",
+    "png": "Desktop--Settings--voice-small-menu-camera.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc8da666fcf",
+    "name": "Desktop / Settings / voice-small-menu-suppression",
+    "filename": "Desktop--Settings--voice-small-menu-suppression.svg",
+    "png": "Desktop--Settings--voice-small-menu-suppression.png"
+  }
+]

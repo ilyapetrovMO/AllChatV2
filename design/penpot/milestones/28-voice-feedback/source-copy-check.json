@@ -1,0 +1,8 @@
+{
+  "pass": true,
+  "checkedMessages": 9,
+  "sources": [
+    "desktop/src/renderer/app.tsx",
+    "desktop/src/renderer/voice-capture.ts"
+  ]
+}

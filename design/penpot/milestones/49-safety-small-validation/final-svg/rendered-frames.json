@@ -1,0 +1,50 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bdd79f3a325",
+    "name": "Desktop / Settings / safety-small-invalid-report-short",
+    "filename": "Desktop--Settings--safety-small-invalid-report-short.svg",
+    "png": "Desktop--Settings--safety-small-invalid-report-short.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdd683a1300",
+    "name": "Desktop / Settings / safety-small-invalid-report-reason",
+    "filename": "Desktop--Settings--safety-small-invalid-report-reason.svg",
+    "png": "Desktop--Settings--safety-small-invalid-report-reason.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdd5fe7426c",
+    "name": "Desktop / Settings / safety-small-invalid-report-member",
+    "filename": "Desktop--Settings--safety-small-invalid-report-member.svg",
+    "png": "Desktop--Settings--safety-small-invalid-report-member.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bddbf1a9c26",
+    "name": "Desktop / Settings / safety-small-invalid-confirmation-pattern",
+    "filename": "Desktop--Settings--safety-small-invalid-confirmation-pattern.svg",
+    "png": "Desktop--Settings--safety-small-invalid-confirmation-pattern.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bddb448c80d",
+    "name": "Desktop / Settings / safety-small-invalid-confirmation",
+    "filename": "Desktop--Settings--safety-small-invalid-confirmation.svg",
+    "png": "Desktop--Settings--safety-small-invalid-confirmation.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdda49b74ef",
+    "name": "Desktop / Settings / safety-small-invalid-password",
+    "filename": "Desktop--Settings--safety-small-invalid-password.svg",
+    "png": "Desktop--Settings--safety-small-invalid-password.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdd98b8ed40",
+    "name": "Desktop / Settings / safety-small-invalid-duration",
+    "filename": "Desktop--Settings--safety-small-invalid-duration.svg",
+    "png": "Desktop--Settings--safety-small-invalid-duration.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdd891a43cb",
+    "name": "Desktop / Settings / safety-small-invalid-moderation-reason",
+    "filename": "Desktop--Settings--safety-small-invalid-moderation-reason.svg",
+    "png": "Desktop--Settings--safety-small-invalid-moderation-reason.png"
+  }
+]

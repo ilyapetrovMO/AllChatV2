@@ -1,0 +1,18 @@
+[
+  {
+    "key": "username-hover",
+    "id": "7299a615-462e-803f-8008-9ba66a5a66c7"
+  },
+  {
+    "key": "username-focus",
+    "id": "7299a615-462e-803f-8008-9ba66af05c14"
+  },
+  {
+    "key": "save-focus",
+    "id": "7299a615-462e-803f-8008-9ba66ba256f4"
+  },
+  {
+    "key": "username-required",
+    "id": "7299a615-462e-803f-8008-9ba66c3a5936"
+  }
+]

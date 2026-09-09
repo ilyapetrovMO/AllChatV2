@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bdc291551f0",
+    "name": "Desktop / Settings / safety-small-filled-report",
+    "filename": "Desktop--Settings--safety-small-filled-report.svg",
+    "png": "Desktop--Settings--safety-small-filled-report.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdc398eb677",
+    "name": "Desktop / Settings / safety-small-filled-delete",
+    "filename": "Desktop--Settings--safety-small-filled-delete.svg",
+    "png": "Desktop--Settings--safety-small-filled-delete.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bdc2f742f09",
+    "name": "Desktop / Settings / safety-small-filled-moderation",
+    "filename": "Desktop--Settings--safety-small-filled-moderation.svg",
+    "png": "Desktop--Settings--safety-small-filled-moderation.png"
+  }
+]

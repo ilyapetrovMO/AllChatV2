@@ -1,0 +1,23 @@
+{
+  "revision": 5,
+  "text": {
+    "id": "6bdc1c40-ce96-804f-8008-9a6fee956626",
+    "characters": "ALLCHAT MOBILE",
+    "fontId": "gfont-roboto",
+    "fontFamily": "Roboto",
+    "fontSize": "31.5",
+    "bounds": {
+      "x": 1473,
+      "y": 3357,
+      "width": 933,
+      "height": 43
+    },
+    "textBounds": {
+      "x": null,
+      "y": null,
+      "width": null,
+      "height": null
+    }
+  },
+  "markup": "<svg width=\"933\" xmlns=\"http://www.w3.org/2000/svg\" height=\"43\" id=\"screenshot-6bdc1c40-ce96-804f-8008-9a6fee956626\" viewBox=\"1473 3357 933 43\" style=\"-webkit-print-color-adjust::exact\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fill=\"none\" version=\"1.1\">\n  <style>\n  </style>\n  <g id=\"shape-6bdc1c40-ce96-804f-8008-9a6fee956626\" x=\"1473\" y=\"3357\" width=\"933\" height=\"43\">\n  </g>\n</svg>"
+}

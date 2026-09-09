@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "key": "small-absent",
+      "id": "7299a615-462e-803f-8008-9c092d0a3d19",
+      "dimensions": true,
+      "contentHeight": true,
+      "fileGeometry": true,
+      "copy": true,
+      "fullFilename": true,
+      "fit": true,
+      "removeState": true,
+      "textErrors": [],
+      "interactions": 0
+    },
+    {
+      "key": "small-present",
+      "id": "7299a615-462e-803f-8008-9c09370f67dd",
+      "dimensions": true,
+      "contentHeight": true,
+      "fileGeometry": true,
+      "copy": true,
+      "fullFilename": true,
+      "fit": true,
+      "removeState": true,
+      "textErrors": [],
+      "interactions": 0
+    },
+    {
+      "key": "wide-absent",
+      "id": "7299a615-462e-803f-8008-9c0918cf41b1",
+      "dimensions": true,
+      "contentHeight": true,
+      "fileGeometry": true,
+      "copy": true,
+      "fullFilename": true,
+      "fit": true,
+      "removeState": true,
+      "textErrors": [],
+      "interactions": 0
+    },
+    {
+      "key": "wide-present",
+      "id": "7299a615-462e-803f-8008-9c0922438f79",
+      "dimensions": true,
+      "contentHeight": true,
+      "fileGeometry": true,
+      "copy": true,
+      "fullFilename": true,
+      "fit": true,
+      "removeState": true,
+      "textErrors": [],
+      "interactions": 0
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

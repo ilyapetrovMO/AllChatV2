@@ -1,0 +1,33 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "key": "sessions-populated",
+      "id": "7299a615-462e-803f-8008-9ba165d477e3",
+      "textLayers": 23
+    },
+    {
+      "key": "sessions-empty",
+      "id": "7299a615-462e-803f-8008-9ba16126b9a0",
+      "textLayers": 18
+    },
+    {
+      "key": "sessions-loading",
+      "id": "7299a615-462e-803f-8008-9ba15c091269",
+      "textLayers": 19
+    },
+    {
+      "key": "account-lower",
+      "id": "7299a615-462e-803f-8008-9ba15063b716",
+      "textLayers": 37
+    },
+    {
+      "key": "account-top",
+      "id": "7299a615-462e-803f-8008-9ba144a91c5e",
+      "textLayers": 37
+    }
+  ],
+  "validation": [],
+  "revision": 40
+}

@@ -1,0 +1,63 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "loading",
+      "scroll": 0
+    },
+    {
+      "key": "member",
+      "scroll": 0
+    },
+    {
+      "key": "member-bottom",
+      "scroll": 301
+    },
+    {
+      "key": "records",
+      "scroll": 640
+    },
+    {
+      "key": "records-bottom",
+      "scroll": 1124
+    },
+    {
+      "key": "moderator",
+      "scroll": 0
+    },
+    {
+      "key": "moderator-bottom",
+      "scroll": 1052
+    },
+    {
+      "key": "moderator-middle",
+      "scroll": 640
+    },
+    {
+      "key": "reports",
+      "scroll": 0
+    },
+    {
+      "key": "reports-bottom",
+      "scroll": 445
+    }
+  ],
+  "visibleControls": [
+    "select memberId",
+    "textarea reason",
+    "button Submit Report",
+    "button Export Account Data",
+    "input password",
+    "input confirmation",
+    "button Delete Account",
+    "select action",
+    "select moderationMember",
+    "textarea moderationReason",
+    "input duration",
+    "button Apply Action",
+    "button Purge Old Records",
+    "button Resolve"
+  ]
+}

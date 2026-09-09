@@ -1,0 +1,36 @@
+{
+  "results": [
+    {
+      "key": "small",
+      "id": "7299a615-462e-803f-8008-9c066daecafa",
+      "dimensions": true,
+      "contentHeight": true,
+      "sourceDecodeFailure": true,
+      "avatarGeometry": true,
+      "copy": true,
+      "textPosition": true,
+      "textClipped": true,
+      "removePresent": true,
+      "initialAbsent": true,
+      "textErrors": [],
+      "interactions": 0
+    },
+    {
+      "key": "wide",
+      "id": "7299a615-462e-803f-8008-9c06630bedff",
+      "dimensions": true,
+      "contentHeight": true,
+      "sourceDecodeFailure": true,
+      "avatarGeometry": true,
+      "copy": true,
+      "textPosition": true,
+      "textClipped": true,
+      "removePresent": true,
+      "initialAbsent": true,
+      "textErrors": [],
+      "interactions": 0
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

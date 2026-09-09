@@ -1,0 +1,7 @@
+{
+  "status": "disconnected",
+  "evidence": "No Penpot instance connected for user token",
+  "renderProcess": "terminal, exit 1 after two export timeouts",
+  "namedVersionSaved": false,
+  "pendingPatchApplied": false
+}

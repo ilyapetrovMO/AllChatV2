@@ -1,0 +1,62 @@
+[
+  {
+    "key": "report",
+    "options": [
+      "Choose a Member",
+      "Alex",
+      "Morgan"
+    ],
+    "bounds": {
+      "x": 344,
+      "y": 288.53125,
+      "width": 584,
+      "height": 41.375
+    },
+    "style": {
+      "border": "rgba(255, 255, 255, 0.14)",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px"
+    }
+  },
+  {
+    "key": "action",
+    "options": [
+      "Warn",
+      "Timeout",
+      "Suspend",
+      "Kick"
+    ],
+    "bounds": {
+      "x": 344,
+      "y": 167.515625,
+      "width": 584,
+      "height": 41.375
+    },
+    "style": {
+      "border": "rgba(255, 255, 255, 0.14)",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px"
+    }
+  },
+  {
+    "key": "member",
+    "options": [
+      "Alex",
+      "Morgan"
+    ],
+    "bounds": {
+      "x": 344,
+      "y": 243.1875,
+      "width": 584,
+      "height": 41.375
+    },
+    "style": {
+      "border": "rgba(255, 255, 255, 0.14)",
+      "shadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px"
+    }
+  }
+]

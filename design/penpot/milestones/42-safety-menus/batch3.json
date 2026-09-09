@@ -1,0 +1,18 @@
+{
+  "made": 1,
+  "remaining": 0,
+  "boards": [
+    {
+      "key": "safety-menu-report",
+      "id": "7299a615-462e-803f-8008-9bd24d80f037"
+    },
+    {
+      "key": "safety-menu-action",
+      "id": "7299a615-462e-803f-8008-9bd266fb2b9c"
+    },
+    {
+      "key": "safety-menu-member",
+      "id": "7299a615-462e-803f-8008-9bd2819896ab"
+    }
+  ]
+}

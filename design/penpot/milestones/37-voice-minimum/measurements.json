@@ -1,0 +1,702 @@
+{
+  "width": 584,
+  "height": 1799.515625,
+  "scrollHeight": 1908,
+  "viewportHeight": 564,
+  "maxScroll": 1344,
+  "maps": [
+    {
+      "name": "Voice eyebrow",
+      "x": 0,
+      "y": 0,
+      "w": 584,
+      "h": 16.796875,
+      "fontSize": 12,
+      "fontWeight": "800"
+    },
+    {
+      "name": "Voice title",
+      "x": 0,
+      "y": 24.796875,
+      "w": 584,
+      "h": 33.59375,
+      "fontSize": 24,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Voice introduction",
+      "x": 0,
+      "y": 64.78125,
+      "w": 584,
+      "h": 44.78125,
+      "fontSize": 16,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Voice section",
+      "x": 0,
+      "y": 137.5625,
+      "w": 584,
+      "h": 324.375
+    },
+    {
+      "name": "Voice section heading",
+      "x": 21,
+      "y": 158.5625,
+      "w": 542,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Microphone volume divider",
+      "x": 21,
+      "y": 270.859375,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Microphone volume label",
+      "x": 21,
+      "y": 281.859375,
+      "w": 253,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Microphone volume description",
+      "x": 21,
+      "y": 302.765625,
+      "w": 253,
+      "h": 14.9375,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Microphone volume output",
+      "x": 290,
+      "y": 290.828125,
+      "w": 37,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Microphone volume track",
+      "x": 345,
+      "y": 295.78125,
+      "w": 216,
+      "h": 8
+    },
+    {
+      "name": "Microphone volume fill",
+      "x": 345,
+      "y": 295.78125,
+      "w": 108,
+      "h": 8
+    },
+    {
+      "name": "Microphone volume thumb",
+      "x": 445,
+      "y": 291.78125,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "Speaker volume divider",
+      "x": 21,
+      "y": 341.703125,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Speaker volume label",
+      "x": 21,
+      "y": 352.703125,
+      "w": 253,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Speaker volume description",
+      "x": 21,
+      "y": 373.609375,
+      "w": 253,
+      "h": 14.9375,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Speaker volume output",
+      "x": 290,
+      "y": 361.671875,
+      "w": 37,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Speaker volume track",
+      "x": 345,
+      "y": 366.625,
+      "w": 216,
+      "h": 8
+    },
+    {
+      "name": "Speaker volume fill",
+      "x": 345,
+      "y": 366.625,
+      "w": 208,
+      "h": 8
+    },
+    {
+      "name": "Speaker volume thumb",
+      "x": 545,
+      "y": 362.625,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "Microphone device",
+      "x": 21,
+      "y": 218.859375,
+      "w": 264,
+      "h": 38
+    },
+    {
+      "name": "Microphone device label",
+      "x": 21,
+      "y": 194.953125,
+      "w": 264,
+      "h": 17.92,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Microphone device value",
+      "x": 35,
+      "y": 228.859375,
+      "w": 226,
+      "h": 18,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Microphone device arrow",
+      "x": 265,
+      "y": 225.859375,
+      "w": 16,
+      "h": 22.4
+    },
+    {
+      "name": "Speaker device",
+      "x": 299,
+      "y": 218.859375,
+      "w": 264,
+      "h": 38
+    },
+    {
+      "name": "Speaker device label",
+      "x": 299,
+      "y": 194.953125,
+      "w": 264,
+      "h": 17.92,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Speaker device value",
+      "x": 313,
+      "y": 228.859375,
+      "w": 226,
+      "h": 18,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Speaker device arrow",
+      "x": 543,
+      "y": 225.859375,
+      "w": 16,
+      "h": 22.4
+    },
+    {
+      "name": "Mic Test button",
+      "x": 21,
+      "y": 412.546875,
+      "w": 542,
+      "h": 28.390625
+    },
+    {
+      "name": "Mic Test label",
+      "x": 25,
+      "y": 415.546875,
+      "w": 534,
+      "h": 22.4,
+      "fontSize": 16,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Input processing section",
+      "x": 0,
+      "y": 481.9375,
+      "w": 584,
+      "h": 432.640625
+    },
+    {
+      "name": "Input processing heading",
+      "x": 21,
+      "y": 502.9375,
+      "w": 542,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Noise suppression divider",
+      "x": 21,
+      "y": 539.328125,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Noise suppression label",
+      "x": 21,
+      "y": 550.328125,
+      "w": 118,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Noise suppression description",
+      "x": 21,
+      "y": 571.234375,
+      "w": 118,
+      "h": 44.8125,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Echo cancellation divider",
+      "x": 21,
+      "y": 640.046875,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Echo cancellation label",
+      "x": 21,
+      "y": 651.046875,
+      "w": 506,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Echo cancellation description",
+      "x": 21,
+      "y": 671.953125,
+      "w": 506,
+      "h": 14.9375,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Echo cancellation checkbox",
+      "x": 543,
+      "y": 658.96875,
+      "w": 20,
+      "h": 20
+    },
+    {
+      "name": "Echo cancellation tick",
+      "x": 546,
+      "y": 659.96875,
+      "w": 16,
+      "h": 19.6
+    },
+    {
+      "name": "Automatic gain control divider",
+      "x": 21,
+      "y": 710.890625,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Automatic gain control label",
+      "x": 21,
+      "y": 721.890625,
+      "w": 506,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Automatic gain control description",
+      "x": 21,
+      "y": 742.796875,
+      "w": 506,
+      "h": 14.9375,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Automatic gain control checkbox",
+      "x": 543,
+      "y": 729.8125,
+      "w": 20,
+      "h": 20
+    },
+    {
+      "name": "Noise gate divider",
+      "x": 21,
+      "y": 781.734375,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Noise gate label",
+      "x": 21,
+      "y": 792.734375,
+      "w": 506,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Noise gate description",
+      "x": 21,
+      "y": 813.640625,
+      "w": 506,
+      "h": 14.9375,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Noise gate checkbox",
+      "x": 543,
+      "y": 800.65625,
+      "w": 20,
+      "h": 20
+    },
+    {
+      "name": "Noise gate tick",
+      "x": 546,
+      "y": 801.65625,
+      "w": 16,
+      "h": 19.6
+    },
+    {
+      "name": "Input sensitivity divider",
+      "x": 21,
+      "y": 852.578125,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Input sensitivity label",
+      "x": 21,
+      "y": 864.625,
+      "w": 248,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Input sensitivity output",
+      "x": 285,
+      "y": 864.625,
+      "w": 42,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Input sensitivity track",
+      "x": 345,
+      "y": 869.578125,
+      "w": 216,
+      "h": 8
+    },
+    {
+      "name": "Input sensitivity fill",
+      "x": 345,
+      "y": 869.578125,
+      "w": 108,
+      "h": 8
+    },
+    {
+      "name": "Input sensitivity thumb",
+      "x": 445,
+      "y": 865.578125,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "name": "Noise suppression",
+      "x": 155,
+      "y": 564.1875,
+      "w": 172,
+      "h": 38
+    },
+    {
+      "name": "Noise suppression value",
+      "x": 169,
+      "y": 574.1875,
+      "w": 134,
+      "h": 18,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Noise suppression arrow",
+      "x": 307,
+      "y": 571.1875,
+      "w": 16,
+      "h": 22.4
+    },
+    {
+      "name": "Camera section",
+      "x": 0,
+      "y": 934.578125,
+      "w": 584,
+      "h": 376.6875
+    },
+    {
+      "name": "Camera heading",
+      "x": 21,
+      "y": 955.578125,
+      "w": 542,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Camera device",
+      "x": 21,
+      "y": 1209.875,
+      "w": 542,
+      "h": 38
+    },
+    {
+      "name": "Camera device label",
+      "x": 21,
+      "y": 1185.96875,
+      "w": 542,
+      "h": 17.92,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Camera device value",
+      "x": 35,
+      "y": 1219.875,
+      "w": 504,
+      "h": 18,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Camera device arrow",
+      "x": 543,
+      "y": 1216.875,
+      "w": 16,
+      "h": 22.4
+    },
+    {
+      "name": "Camera preview",
+      "x": 21,
+      "y": 991.96875,
+      "w": 542,
+      "h": 180
+    },
+    {
+      "name": "Camera preview status",
+      "x": 21,
+      "y": 1069.96875,
+      "w": 542,
+      "h": 22.4
+    },
+    {
+      "name": "Test Video button",
+      "x": 21,
+      "y": 1261.875,
+      "w": 542,
+      "h": 28.390625
+    },
+    {
+      "name": "Test Video label",
+      "x": 25,
+      "y": 1264.875,
+      "w": 534,
+      "h": 22.4,
+      "fontSize": 16,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Screen sharing section",
+      "x": 0,
+      "y": 1331.265625,
+      "w": 584,
+      "h": 165.109375
+    },
+    {
+      "name": "Screen sharing heading",
+      "x": 21,
+      "y": 1352.265625,
+      "w": 542,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Quality mode divider",
+      "x": 21,
+      "y": 1388.65625,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Quality mode label",
+      "x": 21,
+      "y": 1399.65625,
+      "w": 182,
+      "h": 17.90625,
+      "fontSize": 12.8,
+      "fontWeight": "900"
+    },
+    {
+      "name": "Quality mode description",
+      "x": 21,
+      "y": 1420.5625,
+      "w": 182,
+      "h": 44.8125,
+      "fontSize": 10.6667,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Screen share quality",
+      "x": 219,
+      "y": 1413.515625,
+      "w": 108,
+      "h": 38
+    },
+    {
+      "name": "Screen share quality value",
+      "x": 233,
+      "y": 1423.515625,
+      "w": 70,
+      "h": 18,
+      "fontSize": 12.8,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Screen share quality arrow",
+      "x": 307,
+      "y": 1420.515625,
+      "w": 16,
+      "h": 22.4
+    },
+    {
+      "name": "Advanced section",
+      "x": 0,
+      "y": 1516.375,
+      "w": 584,
+      "h": 241.140625
+    },
+    {
+      "name": "Advanced heading",
+      "x": 21,
+      "y": 1537.375,
+      "w": 542,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Speaker test divider",
+      "x": 21,
+      "y": 1573.765625,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Speaker test label",
+      "x": 21,
+      "y": 1584.765625,
+      "w": 191,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Speaker test description",
+      "x": 21,
+      "y": 1610.15625,
+      "w": 191,
+      "h": 37.3125,
+      "fontSize": 13.3333,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Reset Voice & Video settings divider",
+      "x": 21,
+      "y": 1671.46875,
+      "w": 542,
+      "h": 1
+    },
+    {
+      "name": "Reset Voice & Video settings label",
+      "x": 21,
+      "y": 1682.46875,
+      "w": 233,
+      "h": 22.390625,
+      "fontSize": 16,
+      "fontWeight": "700"
+    },
+    {
+      "name": "Reset Voice & Video settings description",
+      "x": 21,
+      "y": 1707.859375,
+      "w": 233,
+      "h": 18.65625,
+      "fontSize": 13.3333,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Play sound button",
+      "x": 228,
+      "y": 1601.921875,
+      "w": 99,
+      "h": 28.390625
+    },
+    {
+      "name": "Play sound label",
+      "x": 232,
+      "y": 1604.921875,
+      "w": 91,
+      "h": 22.4,
+      "fontSize": 16,
+      "fontWeight": "400"
+    },
+    {
+      "name": "Reset button",
+      "x": 270,
+      "y": 1690.296875,
+      "w": 57,
+      "h": 28.390625
+    },
+    {
+      "name": "Reset label",
+      "x": 274,
+      "y": 1693.296875,
+      "w": 49,
+      "h": 22.4,
+      "fontSize": 16,
+      "fontWeight": "400"
+    }
+  ]
+}

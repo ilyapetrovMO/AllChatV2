@@ -1,0 +1,22 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "fileName": "New File 1",
+  "pageName": "AllChat Design Trial",
+  "boardId": "6bdc1c40-ce96-804f-8008-9a51814a4b8d",
+  "status": "components-created-verification-pending",
+  "candidateTokens": 50,
+  "pending": [
+    "Resolve exported preview showing stale icon positions and hidden labels",
+    "Verify shared token updates (initial check observed 0 of 8 updated shapes)",
+    "Visual review and approval",
+    "Native file export and reimport verification"
+  ],
+  "components": [
+    "Avatar / Message",
+    "Navigation / Channel selected",
+    "Message / Row",
+    "Composer / Default",
+    "Button / Home"
+  ],
+  "colorBindings": 36
+}

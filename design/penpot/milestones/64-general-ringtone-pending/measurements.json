@@ -1,0 +1,62 @@
+[
+  {
+    "key": "wide-generated",
+    "active": false,
+    "narrow": false,
+    "card": {
+      "x": 344,
+      "y": 198,
+      "w": 904,
+      "h": 248.5
+    },
+    "filename": "ringtone.ogg",
+    "copy": "Community ringtone\n\nGenerated tone\n\nChoose audio file",
+    "disabled": false,
+    "notice": ""
+  },
+  {
+    "key": "wide-custom",
+    "active": true,
+    "narrow": false,
+    "card": {
+      "x": 344,
+      "y": 198,
+      "w": 904,
+      "h": 288.890625
+    },
+    "filename": "ringtone.ogg",
+    "copy": "Community ringtone\n\nCustom audio is active.\n\nChoose audio file\nRemove custom ringtone",
+    "disabled": false,
+    "notice": ""
+  },
+  {
+    "key": "small-generated",
+    "active": false,
+    "narrow": true,
+    "card": {
+      "x": 344,
+      "y": 198,
+      "w": 584,
+      "h": 248.5
+    },
+    "filename": "ringtone.ogg",
+    "copy": "Community ringtone\n\nGenerated tone\n\nChoose audio file",
+    "disabled": false,
+    "notice": ""
+  },
+  {
+    "key": "small-custom",
+    "active": true,
+    "narrow": true,
+    "card": {
+      "x": 344,
+      "y": 198,
+      "w": 584,
+      "h": 288.890625
+    },
+    "filename": "ringtone.ogg",
+    "copy": "Community ringtone\n\nCustom audio is active.\n\nChoose audio file\nRemove custom ringtone",
+    "disabled": false,
+    "notice": ""
+  }
+]

@@ -1,0 +1,11 @@
+// Capture-only dependency resolution: same checked-in AAR, exposed as an external module.
+allprojects { p ->
+    p.repositories { flatDir { dirs new File(p.rootProject.projectDir, 'app/libs') } }
+    p.afterEvaluate {
+        if (p.name == 'react-native-webrtc') {
+            def api = p.configurations.findByName('api')
+            api.dependencies.removeAll { d -> d instanceof org.gradle.api.artifacts.FileCollectionDependency && d.files.files.any { it.name == 'allchat-webrtc-m124-rnnoise.aar' } }
+            p.dependencies.add('api', [name: 'allchat-webrtc-m124-rnnoise', ext: 'aar'])
+        }
+    }
+}

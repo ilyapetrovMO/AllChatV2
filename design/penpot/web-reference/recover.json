@@ -1,0 +1,40 @@
+{
+  "title": "Recover account — AllChat",
+  "heading": "Recover account",
+  "controls": [
+    {
+      "tag": "input",
+      "id": "",
+      "name": "password",
+      "type": "password",
+      "label": "New password",
+      "disabled": false,
+      "visible": true,
+      "x": 432,
+      "y": 382.203125,
+      "width": 416,
+      "height": 42.28125,
+      "color": "rgb(240, 241, 245)",
+      "background": "rgb(32, 33, 39)",
+      "fontSize": "12.8px",
+      "radius": "4px"
+    },
+    {
+      "tag": "button",
+      "id": "",
+      "name": null,
+      "type": null,
+      "label": "Replace password",
+      "disabled": false,
+      "visible": true,
+      "x": 432,
+      "y": 440.484375,
+      "width": 416,
+      "height": 43.171875,
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(109, 117, 232)",
+      "fontSize": "16px",
+      "radius": "4px"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "checks": [
+    "Successful login enters general",
+    "Enter sends message",
+    "Composer clears",
+    "Whitespace does not send",
+    "Members hide",
+    "Draft survives member toggle",
+    "Members return",
+    "Search finds sent message",
+    "Jump focuses matching message",
+    "No results state",
+    "Controls fit minimum window",
+    "Restart returns to login",
+    "No JavaScript errors"
+  ],
+  "errors": [],
+  "geometry": [
+    {
+      "name": "header-search",
+      "inside": true
+    },
+    {
+      "name": "demo-composer",
+      "inside": true
+    },
+    {
+      "name": "member-directory",
+      "inside": true
+    }
+  ]
+}

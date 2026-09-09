@@ -109,7 +109,7 @@ describe('DirectCallControls remote lifecycle', () => {
     </>);
 
     const controls = await screen.findByRole('region', {name:'Call controls'});
-    expect(within(controls).getByText('Connecting')).toBeVisible();
+    expect(within(controls).getByText('Connecting…')).toBeVisible();
     expect(controls).toHaveTextContent('mobile');
     expect(controls).not.toHaveTextContent('text channel');
     fireEvent.click(screen.getByRole('button', {name:'Return to Direct Message with mobile'}));
@@ -248,6 +248,80 @@ it('keeps Connected visible when transport connects before answer processing fin
   try {
     await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({type: 'join'})));
     await act(async () => {receive({type: 'answer', negotiation_id: 'client-1', sdp: {type: 'answer', sdp: 'answer'}});});
-    expect(within(screen.getByRole('region', {name: 'Voice controls'})).getByText('Connected', {exact: true})).toBeVisible();
+    expect(within(screen.getByRole('region', {name: 'Voice controls'})).getByText('Voice Connected', {exact: true})).toBeVisible();
   } finally {view.unmount(); vi.unstubAllGlobals(); vi.restoreAllMocks();}
+});
+
+it('publishes and stops camera video through the call transport', async () => {
+  const track = {kind: 'audio', enabled: true};
+  vi.spyOn(voiceCapture, 'captureDesktopMicrophone').mockResolvedValue({stream: {getTracks: () => [track], getAudioTracks: () => [track]} as unknown as MediaStream, enhanced: false, stop: vi.fn()});
+  const replaceVideo = vi.fn(async () => {});
+  const videoTrack = {kind: 'video', stop: vi.fn(), onended: null};
+  const camera = {getTracks: () => [videoTrack], getVideoTracks: () => [videoTrack], getAudioTracks: () => []} as unknown as MediaStream;
+  vi.stubGlobal('navigator', {mediaDevices: {getUserMedia: vi.fn(async () => camera)}});
+  class Peer {
+    connectionState = 'new'; iceConnectionState = 'new'; iceGatheringState = 'complete'; signalingState = 'stable';
+    localDescription: RTCSessionDescriptionInit | null = null;
+    onconnectionstatechange?: () => void;
+    addTrack() {} close() {}
+    addTransceiver(kind: string) { return {sender: {replaceTrack: kind === 'video' ? replaceVideo : async () => {}}, setCodecPreferences() {}}; }
+    async createOffer() { return {type: 'offer' as const, sdp: 'offer'}; }
+    async setLocalDescription(value: RTCSessionDescriptionInit) { this.localDescription = value; this.signalingState = 'have-local-offer'; }
+    async setRemoteDescription() { this.signalingState = 'stable'; this.connectionState = 'connected'; this.iceConnectionState = 'connected'; this.onconnectionstatechange?.(); }
+  }
+  vi.stubGlobal('RTCPeerConnection', Peer);
+  vi.stubGlobal('RTCRtpSender', {getCapabilities: () => ({codecs: []})});
+  let receive!: (frame: unknown) => void;
+  const send = vi.fn();
+  const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult> => action.type === 'turn_credentials' ? {type: 'turn_credentials', iceServers: []} : {type: 'call', call: null});
+  const view = render(<><div id="desktop-call-controls" /><DirectCallControls conversation={null} currentMemberId="me" instanceId="instance" requestedVoiceRoom="room" requestedVoiceRoomName="Room" focusedMediaMemberId={null} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()} onAction={onAction} connectMedia={async (_instance, onFrame) => {receive = onFrame; return {send, close: vi.fn()};}} /></>);
+  try {
+    await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({type: 'join'})));
+    await act(async () => {receive({type: 'answer', negotiation_id: 'client-1', sdp: {type: 'answer', sdp: 'answer'}});});
+    expect(within(screen.getByRole('region', {name: 'Voice controls'})).getByText('Voice Connected', {exact: true})).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name: 'Start camera share'}));
+    await waitFor(() => expect(replaceVideo).toHaveBeenCalledWith(videoTrack));
+    expect(send).toHaveBeenCalledWith({version: 1, type: 'video-started'});
+    fireEvent.click(await screen.findByRole('button', {name: 'Stop camera share'}));
+    await waitFor(() => expect(replaceVideo).toHaveBeenCalledWith(null));
+    expect(videoTrack.stop).toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith({version: 1, type: 'video-stopped'});
+  } finally {view.unmount(); vi.unstubAllGlobals(); vi.restoreAllMocks();}
+});
+
+it('waits for explicit server voice leave before starting a direct call', async () => {
+  const ended = deferred<InstanceActionResult>();
+  const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult> => {
+    if (action.type === 'end_media_session') return ended.promise;
+    if (action.type === 'current_call') return {type:'call',call:null};
+    return {type:'accepted'};
+  });
+  vi.stubGlobal('navigator', {mediaDevices:{getUserMedia:vi.fn(async()=>({getTracks:()=>[]}))}});
+  render(<><div id="desktop-call-controls"/><DirectCallControls conversation={{id:'dm',name:'Sam',type:'dm'}} currentMemberId="me" instanceId="home" onAction={onAction} requestedVoiceRoom="voice" requestedVoiceRoomName="Lounge" focusedMediaMemberId={null} onVoiceRoomChange={vi.fn()} onCallChange={vi.fn()}/></>);
+  fireEvent.click(await screen.findByRole('button',{name:'Disconnect voice'}));
+  expect(onAction).toHaveBeenCalledWith({type:'end_media_session',roomId:'voice'});
+  expect(screen.queryByRole('button',{name:'Start Call'})).not.toBeInTheDocument();
+  await act(async()=>{});
+  expect(onAction).not.toHaveBeenCalledWith({type:'start_call',directMessageId:'dm'});
+  await act(async()=>ended.resolve({type:'accepted'}));
+  fireEvent.click(screen.getByRole('button',{name:'Start Call'}));
+  await waitFor(()=>expect(onAction).toHaveBeenCalledWith({type:'start_call',directMessageId:'dm'}));
+});
+
+it('keeps failed voice disconnects visible and lets the user retry', async () => {
+  let attempts = 0;
+  const onVoiceRoomChange = vi.fn();
+  const onAction = vi.fn(async (action: InstanceAction): Promise<InstanceActionResult> => {
+    if (action.type === 'end_media_session' && ++attempts === 1) throw new Error('Could not disconnect Voice. Try again.');
+    if (action.type === 'current_call') return {type: 'call', call: null};
+    return {type: 'accepted'};
+  });
+  render(<><div id="desktop-call-controls"/><DirectCallControls conversation={null} currentMemberId="me" instanceId="home" onAction={onAction} requestedVoiceRoom="voice" requestedVoiceRoomName="Lounge" focusedMediaMemberId={null} onVoiceRoomChange={onVoiceRoomChange} onCallChange={vi.fn()}/></>);
+  fireEvent.click(await screen.findByRole('button', {name: 'Disconnect voice'}));
+  expect(await screen.findByText('Could not disconnect Voice. Try again.')).toBeVisible();
+  expect(onVoiceRoomChange).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name: 'Disconnect voice'}));
+  await waitFor(() => expect(onVoiceRoomChange).toHaveBeenCalledWith(null));
+  expect(attempts).toBe(2);
+  expect(screen.queryByRole('region', {name: 'Voice controls'})).not.toBeInTheDocument();
 });

@@ -1,0 +1,50 @@
+[
+  {
+    "tag": "SELECT",
+    "type": "select-one",
+    "width": 1238,
+    "height": 38,
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "borderRadius": "5px",
+    "boxShadow": "rgba(109, 117, 232, 0.24) 0px 0px 0px 2px",
+    "borderColor": "rgb(109, 117, 232)",
+    "focusVisible": true
+  },
+  {
+    "tag": "INPUT",
+    "type": "range",
+    "width": 220,
+    "height": 16,
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "borderRadius": "0px",
+    "boxShadow": "none",
+    "borderColor": "rgb(157, 150, 142)",
+    "focusVisible": true
+  },
+  {
+    "tag": "INPUT",
+    "type": "checkbox",
+    "width": 20,
+    "height": 20,
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "borderRadius": "4px",
+    "boxShadow": "none",
+    "borderColor": "rgb(109, 117, 232)",
+    "focusVisible": true
+  },
+  {
+    "tag": "BUTTON",
+    "type": "submit",
+    "width": 1238,
+    "height": 28.390625,
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "outlineOffset": "2px",
+    "borderRadius": "0px",
+    "boxShadow": "none",
+    "borderColor": "rgb(255, 255, 255)",
+    "focusVisible": true
+  }
+]

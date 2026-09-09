@@ -1,0 +1,6 @@
+const page=penpot.currentPage;if(page.name!=='Desktop — Login')throw Error('Expected integrated login page');
+const success=page.root.children.find(b=>b.name==='Login prototype / success'),main=page.root.children.find(b=>b.name==='Main prototype / default');if(!success||!main)throw Error('Missing integration boards');
+let button=penpotUtils.findShape(s=>s.name==='Open community',success);
+if(!button){button=penpot.createBoard();button.name='Open community';button.resize(300,40);button.fills=[{fillColor:'#6D75E8',fillOpacity:1}];button.borderRadius=4;success.appendChild(button);button.x=success.x+490;button.y=success.y+450;const t=penpot.createText('Open community');const font=penpot.fonts.findAllByName('Inter').find(f=>f.name==='Inter');font.applyToText(t,font.variants.find(v=>v.fontWeight==='700'&&v.fontStyle==='normal'));t.name='Open community label';t.fontSize='14';t.resize(300,22);t.align='center';t.fills=[{fillColor:'#FFFFFF',fillOpacity:1}];button.appendChild(t);t.x=button.x;t.y=button.y+9;}
+for(const s of [button,...penpotUtils.findShapes(()=>true,button)]){for(const i of [...s.interactions])s.removeInteraction(i);s.addInteraction('click',{type:'navigate-to',destination:main,preserveScrollPosition:false});}
+return {success:success.id,button:button.id,destination:main.id};

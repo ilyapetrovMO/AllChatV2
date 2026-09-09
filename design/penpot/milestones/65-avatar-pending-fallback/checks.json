@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "key": "small",
+      "id": "7299a615-462e-803f-8008-9c0495be10a4",
+      "dimensions": true,
+      "contentHeight": true,
+      "filename": true,
+      "initial": true,
+      "fileGeometry": true,
+      "buttonGeometry": true,
+      "labelFits": true,
+      "labelLines": true,
+      "textErrors": [],
+      "interactions": 0
+    },
+    {
+      "key": "wide",
+      "id": "7299a615-462e-803f-8008-9c048cbba0a4",
+      "dimensions": true,
+      "contentHeight": true,
+      "filename": true,
+      "initial": true,
+      "fileGeometry": true,
+      "buttonGeometry": true,
+      "labelFits": true,
+      "labelLines": true,
+      "textErrors": [],
+      "interactions": 0
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

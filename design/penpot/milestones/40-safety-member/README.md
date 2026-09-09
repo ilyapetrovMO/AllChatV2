@@ -1,0 +1,9 @@
+# Milestone 40 — Safety Member layouts
+
+Three editable static 1280×800 views show Safety loading, the Member form at the top, and its bottom scroll position. The source-derived fixture has an empty report list and no moderation records access. It includes the Member selector, report reason, Submit Report, Export Account Data, password, DELETE confirmation and Delete Account. The source currently renders two content headings named Safety; both are preserved. No extra empty-state or export success message was invented.
+
+The source CSS yields 896px content width, 757.453125px Member content height and 141px maximum scroll. Native shapes follow measured controls, borders, colors and text locations. All three native SVG/PNG exports were visually reviewed; every Member control has a fully visible reference. Native text, file validation and no-interaction checks pass. Save revision 70 and independent confirmation are included.
+
+Reconstruction: restore included milestones 15 and 27 and their prerequisites. Run author-safety-member.js, export initial SVG to settle text layout, run finish-safety-member.js to align rendered text and create the bottom view, then check-safety-member.js and inspect final exports. The scripts use the repository MCP SDK and renderer helpers. Source measurement uses milestone 03 embedded fonts. Synthetic Member names are fixtures; no reports, account exports or deletions were executed.
+
+This is a reconstruction backup, not a native .penpot export or verified reimport. Native selector arrow/textarea affordances are representative; inherited settings shell and exact typography/platform fidelity remain open. Moderator forms, populated reports, menus, validation, dialogs, minimum-window references and broader desktop coverage remain unfinished. No prototype interactions or production code changes.

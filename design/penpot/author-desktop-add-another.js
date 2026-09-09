@@ -1,0 +1,10 @@
+if(penpot.currentPage.id!=='6bdc1c40-ce96-804f-8008-9a5f830fd73b')throw Error('Desktop page required');
+const name='Desktop / Add Instance / add-another-community';const existing=penpot.currentPage.root.children.find(s=>s.name===name);if(existing)return {boardId:existing.id,existing:true};
+const font=penpot.fonts.findAllByName('Inter').find(f=>f.name==='Inter');
+const base=penpotUtils.findShapeById('6bdc1c40-ce96-804f-8008-9a624d6665de'),b=base.clone();b.name=name;b.x=7600;b.y=3600;
+let heading;function walk(s){if(s.type==='text'&&s.characters==='Add your first Instance')heading=s;for(const c of s.children||[])walk(c)}walk(b);heading.characters='Add a Community';
+let component=penpot.library.local.components.find(c=>c.path==='Desktop / Shell / Community icon'&&c.name==='Selected');
+if(!component){const main=penpot.createBoard();main.name='Selected';main.resize(48,48);main.x=6000;main.y=840;main.borderRadius=12;main.fills=[{fillColor:'#5962D6',fillOpacity:1}];const t=penpot.createText('1');font.applyToText(t,font.variants.find(v=>v.fontWeight==='700'&&v.fontStyle==='normal'));t.fontSize='16';t.resize(48,20);t.x=main.x;t.y=main.y+14;t.align='center';t.fills=[{fillColor:'#FFFFFF',fillOpacity:1}];main.appendChild(t);component=penpot.library.local.createComponent([main]);component.path='Desktop / Shell / Community icon';component.name='Selected';}
+const icon=component.instance();b.appendChild(icon);icon.x=b.x+12;icon.y=b.y+98;
+const mark=penpot.createRectangle();mark.name='Selected community indicator';mark.resize(4,36);mark.x=b.x;mark.y=b.y+104;mark.borderRadius=2;mark.fills=[{fillColor:'#FFFFFF',fillOpacity:1}];b.appendChild(mark);
+b.setPluginData('onboarding-instances','');b.setPluginData('capture','design/penpot/populated/desktop-onboarding-reference/add-another-community.png');b.setPluginData('status','Editable existing-community entry; reusable selected icon; visual comparison and platform typography pending');return {boardId:b.id,iconComponentId:component.id,iconInstanceId:icon.id};

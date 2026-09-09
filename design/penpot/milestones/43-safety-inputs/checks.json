@@ -1,0 +1,30 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "report",
+      "fields": [
+        "Morgan",
+        "Repeated unwanted messages."
+      ]
+    },
+    {
+      "key": "moderation",
+      "fields": [
+        "Timeout",
+        "Morgan",
+        "Repeated unwanted messages.",
+        "30"
+      ]
+    },
+    {
+      "key": "delete",
+      "fields": [
+        "••••••••••••",
+        "DELETE"
+      ]
+    }
+  ]
+}

@@ -528,7 +528,7 @@ test('Direct Call keeps remote screen media when tracks arrive with the SDP answ
   if(layout.mobile)expect(layout.chat.y).toBeGreaterThan(layout.stage.y);else expect(layout.chat.x).toBeGreaterThan(layout.stage.x);
   await page.evaluate(()=>window.__directCallSockets[0].close());
   await expect.poll(()=>page.evaluate(()=>window.__directCallSockets.length)).toBe(2);
-  await expect(page.locator('[data-call-status]')).toHaveText('Direct Call connected');
+  await expect(page.locator('[data-call-status]')).toHaveText('Voice Connected');
 });
 
 test('incoming Direct Call chime stops when the call stops ringing', async ({page})=>{
@@ -702,11 +702,14 @@ test('clicking a voice channel joins in place without replacing the text convers
     <link rel="stylesheet" href="/assets/channel.css">
     <div class="app-shell">
       <a id="dm-navigation" href="/dms">Direct Messages</a>
-      <aside class="channel-sidebar" data-open="true"><nav class="channel-nav"><a class="channel-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two">second</a></nav><a href="/profile">Settings</a></aside>
+      <aside class="channel-sidebar" data-open="true"><nav class="channel-nav"><a class="channel-link" href="/channels/voice-one">General</a><a class="channel-link" href="/channels/text-two">second</a></nav><a href="/profile">Settings</a><div class="member-panel"><a class="member-summary" href="/profile"><span class="member-avatar">A</span><span class="member-identity"><strong>Akko</strong></span></a><a class="member-settings" href="/profile" aria-label="User Settings">Settings</a></div></aside>
       <main class="content-shell" id="text-conversation">Text conversation remains open</main>
     </div>
     <script src="/assets/app.js"></script>
   `);
+  await page.evaluate(() => delete window.AllChatDesign);
+  await page.addStyleTag({url:'/assets/desktop-design.css'});
+  await page.addScriptTag({url:'/assets/desktop-design.js'});
   await expect(page.locator('.channel-nav')).toHaveAttribute('data-voice-sidebar-ready', 'true');
   const voiceStarted = Date.now();
   await page.locator('a[href="/channels/voice-one"]').dispatchEvent('click');
@@ -766,7 +769,7 @@ test('clicking a voice channel joins in place without replacing the text convers
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, trackStopped: window.voiceTrackStopped || false}))).toEqual({captureRequests: 1, trackStopped: false});
   expect(new URL(page.url()).pathname).toBe('/channels/text-two');
-  await page.locator('a[href="/profile"]').dispatchEvent('click');
+  await page.getByRole('link',{name:'User Settings',exact:true}).dispatchEvent('click');
   await expect(page.locator('[data-app-overlay] #profile-settings')).toBeVisible();
   await expect(page.locator('[data-voice-connection="voice-one"] strong')).toHaveText('Voice Connected');
   await page.locator('[data-app-overlay] a[href="/sessions"]').evaluate(link => link.click());
@@ -780,14 +783,14 @@ test('clicking a voice channel joins in place without replacing the text convers
   expect(await page.evaluate(() => ({captureRequests: window.voiceCaptureRequests, trackStopped: window.voiceTrackStopped || false}))).toEqual({captureRequests: 1, trackStopped: false});
   const mobileMenu = page.locator('#dm-home [data-sidebar-toggle]');
   if (await mobileMenu.isVisible()) await mobileMenu.click();
-  const mute = page.locator('[data-voice-mute]');
+  const mute = page.locator('[data-audio-toggle="input"]');
   await expect(mute.locator('svg')).toBeVisible();
-  await expect(mute).toHaveCSS('color', 'rgb(255, 93, 98)');
+  await expect(mute).toHaveAttribute('aria-pressed', 'false');
   await mute.click();
   expect(await page.evaluate(() => window.voiceMuteFrame)).toMatchObject({type: 'mute-state', muted: true});
   const hangup = page.locator('[data-voice-leave]');
   await expect(hangup.locator('svg')).toHaveAttribute('data-lucide', 'phone');
-  await expect(hangup).toHaveCSS('color', 'rgb(255, 93, 98)');
+  await expect(hangup).toHaveAttribute('aria-label', 'Disconnect voice');
   await hangup.click();
   await expect(page.locator('[data-voice-connection="voice-one"]')).toHaveCount(0);
   expect(await page.evaluate(() => window.voiceTrackStopped)).toBe(true);

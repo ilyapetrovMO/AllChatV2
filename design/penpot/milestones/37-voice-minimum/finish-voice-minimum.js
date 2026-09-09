@@ -1,0 +1,1 @@
+const keys=['voice-minimum','voice-minimum-processing','voice-minimum-camera','voice-minimum-bottom'];for(const b of penpot.currentPage.root.children.filter(b=>b.getPluginData('static-voice-minimum-state'))){b.x=115000+keys.indexOf(b.getPluginData('static-voice-minimum-state'))*1100;b.y=0;}return {placed:4};

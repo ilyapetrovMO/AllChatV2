@@ -4,7 +4,7 @@ import type { Attachment, Category, Channel, DirectMessage, Message, SearchResul
 export interface SessionInfo { id: string; device: string; created_at: string; last_activity: string; current: boolean }
 export interface Report { id: string; reporter_id: string; target_member_id?: string; target_message_id?: string; reason: string; status: string; created_at: string; outcome?: string }
 export interface ModerationRecord { id: number; actor_id: string; action: string; target_member_id?: string; target_message_id?: string; target_resource_id?: string; report_id?: string; reason: string; outcome: string; created_at: string }
-export interface DirectCall { id: string; direct_message_id: string; caller_id: string; recipient_id: string; state: string; created_at: string; expires_at?: string; finished_at?: string }
+export interface DirectCall { id: string; direct_message_id: string; caller_id: string; recipient_id: string; state: string; created_at: string; expires_at?: string; finished_at?: string; accepted_at?: string }
 export interface VoiceParticipant { member_id: string; room_id: string; connected: boolean; joined_at: string; rejoin_before?: string; server_muted: boolean; speaking: boolean; muted: boolean; screen_sharing: boolean }
 export interface AdminDashboard { checked_at: string; uptime_seconds: number; health: Record<string, string>; counts: { members: number; online_members: number; messages: number; attachments: number }; resources: { cpu_seconds: number; cpu_cores: number; memory_bytes: number; heap_bytes: number; disk_total_bytes: number; disk_available_bytes: number; app_storage_bytes: number }; storage_sources: Array<{ name: string; bytes: number }>; message_rate: { messages_per_minute: number; buckets: Array<{ at: string; count: number }> } }
 export interface CommunityRole { id: string; name: string; position: number; default: boolean; owner: boolean; permissions: string[] }
@@ -53,6 +53,7 @@ export type InstanceAction =
   | { type: 'start_call'; directMessageId: string }
   | { type: 'call_action'; callId: string; action: 'accept' | 'decline' | 'end' }
   | { type: 'turn_credentials' }
+  | { type: 'end_media_session'; roomId: string }
   | { type: 'list_voice_participants'; channelId: string }
   | { type: 'moderate_voice_participant'; roomId: string; memberId: string; action: 'mute' | 'unmute' | 'disconnect' }
   | { type: 'admin_dashboard' }

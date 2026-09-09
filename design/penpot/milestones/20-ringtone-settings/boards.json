@@ -1,0 +1,30 @@
+[
+  {
+    "key": "ringtone-generated",
+    "id": "7299a615-462e-803f-8008-9ba890dc36cd"
+  },
+  {
+    "key": "ringtone-community",
+    "id": "7299a615-462e-803f-8008-9ba897b59b5f"
+  },
+  {
+    "key": "ringtone-custom",
+    "id": "7299a615-462e-803f-8008-9ba89e4e86ec"
+  },
+  {
+    "key": "ringtone-saved",
+    "id": "7299a615-462e-803f-8008-9ba8a546b65d"
+  },
+  {
+    "key": "ringtone-error",
+    "id": "7299a615-462e-803f-8008-9ba8ac6d87a6"
+  },
+  {
+    "key": "ringtone-reset",
+    "id": "7299a615-462e-803f-8008-9ba8b3589d3c"
+  },
+  {
+    "key": "ringtone-muted",
+    "id": "7299a615-462e-803f-8008-9ba8ba893bb0"
+  }
+]

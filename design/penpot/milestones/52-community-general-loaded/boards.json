@@ -1,0 +1,26 @@
+[
+  {
+    "key": "community-general-default",
+    "id": "7299a615-462e-803f-8008-9be448c4b5f3"
+  },
+  {
+    "key": "community-general-default-middle",
+    "id": "7299a615-462e-803f-8008-9be5906d675d"
+  },
+  {
+    "key": "community-general-default-bottom",
+    "id": "7299a615-462e-803f-8008-9be5919e19cd"
+  },
+  {
+    "key": "community-general-relay",
+    "id": "7299a615-462e-803f-8008-9be4de9570a8"
+  },
+  {
+    "key": "community-general-relay-middle",
+    "id": "7299a615-462e-803f-8008-9be5a1079027"
+  },
+  {
+    "key": "community-general-relay-bottom",
+    "id": "7299a615-462e-803f-8008-9be5a1e995f0"
+  }
+]

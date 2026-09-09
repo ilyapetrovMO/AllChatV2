@@ -1,0 +1,66 @@
+{
+  "results": [
+    {
+      "key": "removed",
+      "id": "7299a615-462e-803f-8008-9bea5d9800b5",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "errors": [],
+      "removePresent": false,
+      "removeVisible": true,
+      "selected": "avatar.png",
+      "image": false,
+      "initial": true,
+      "stateCorrect": true,
+      "interactions": 0
+    },
+    {
+      "key": "uploaded",
+      "id": "7299a615-462e-803f-8008-9bea4bfd986d",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "errors": [],
+      "removePresent": true,
+      "removeVisible": true,
+      "selected": "avatar.png",
+      "image": true,
+      "initial": false,
+      "stateCorrect": true,
+      "interactions": 0
+    },
+    {
+      "key": "fallback",
+      "id": "7299a615-462e-803f-8008-9bea3ff83350",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "errors": [],
+      "removePresent": true,
+      "removeVisible": true,
+      "selected": "",
+      "image": false,
+      "initial": true,
+      "stateCorrect": true,
+      "interactions": 0
+    },
+    {
+      "key": "image",
+      "id": "7299a615-462e-803f-8008-9bea3142f51d",
+      "width": 1280,
+      "height": 800,
+      "contentHeight": 1134.734375,
+      "errors": [],
+      "removePresent": true,
+      "removeVisible": true,
+      "selected": "",
+      "image": true,
+      "initial": false,
+      "stateCorrect": true,
+      "interactions": 0
+    }
+  ],
+  "validation": [],
+  "pass": true
+}

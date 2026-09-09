@@ -1,0 +1,124 @@
+{
+  "page": "Desktop — Main",
+  "existing": [],
+  "base": [
+    {
+      "name": "Desktop / Settings / voice-minimum-camera",
+      "shapes": [
+        {
+          "name": "Camera section",
+          "x": 344,
+          "y": 103.578125,
+          "w": 584,
+          "h": 376.6875
+        },
+        {
+          "name": "Camera preview",
+          "x": 365,
+          "y": 160.96875,
+          "w": 542,
+          "h": 180
+        },
+        {
+          "name": "Camera device",
+          "x": 365,
+          "y": 378.875,
+          "w": 542,
+          "h": 38
+        },
+        {
+          "name": "Test Video button",
+          "x": 365,
+          "y": 430.875,
+          "w": 542,
+          "h": 28.390625
+        },
+        {
+          "name": "Camera device label",
+          "x": 365,
+          "y": 354.96875,
+          "w": 542,
+          "h": 17.920000000000073,
+          "bounds": {
+            "x": 117565,
+            "y": 356.4187469482422,
+            "width": 48.68333435058594,
+            "height": 15
+          }
+        }
+      ]
+    },
+    {
+      "name": "Desktop / Settings / voice-camera-on-landscape",
+      "shapes": [
+        {
+          "name": "Camera section",
+          "x": 344,
+          "y": 114,
+          "w": 896,
+          "h": 510
+        },
+        {
+          "name": "Camera preview",
+          "x": 365,
+          "y": 171,
+          "w": 854,
+          "h": 320
+        },
+        {
+          "name": "Synthetic video frame",
+          "x": 507.55555555555475,
+          "y": 171,
+          "w": 568.8888888888905,
+          "h": 320
+        },
+        {
+          "name": "Camera device label",
+          "x": 365,
+          "y": 507,
+          "w": 854,
+          "h": 18.199999999999818,
+          "bounds": {
+            "x": 63365,
+            "y": 1466.8000030517578,
+            "width": 49.44999694824219,
+            "height": 16
+          }
+        },
+        {
+          "name": "Camera device",
+          "x": 365,
+          "y": 531,
+          "w": 854,
+          "h": 38
+        },
+        {
+          "name": "Stop Video label",
+          "x": 750.5500030517578,
+          "y": 586,
+          "w": 360,
+          "h": 24,
+          "bounds": {
+            "x": 63750.55000305176,
+            "y": 1545.6000061035156,
+            "width": 82.89999389648438,
+            "height": 20
+          }
+        },
+        {
+          "name": "Voice settings notice",
+          "x": 344,
+          "y": 1044,
+          "w": 360,
+          "h": 24,
+          "bounds": {
+            "x": 63344,
+            "y": 2003.6000061035156,
+            "width": 185.4499969482422,
+            "height": 20
+          }
+        }
+      ]
+    }
+  ]
+}

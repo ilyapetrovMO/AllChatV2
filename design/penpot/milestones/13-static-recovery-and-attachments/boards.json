@@ -1,0 +1,26 @@
+[
+  {
+    "key": "file-pending",
+    "id": "7299a615-462e-803f-8008-9b9e204df504"
+  },
+  {
+    "key": "remove-hover",
+    "id": "7299a615-462e-803f-8008-9b9e21cffcca"
+  },
+  {
+    "key": "file-drag",
+    "id": "7299a615-462e-803f-8008-9b9e235931b3"
+  },
+  {
+    "key": "file-loading",
+    "id": "7299a615-462e-803f-8008-9b9e23d1d078"
+  },
+  {
+    "key": "file-download",
+    "id": "7299a615-462e-803f-8008-9b9e255460cf"
+  },
+  {
+    "key": "typing",
+    "id": "7299a615-462e-803f-8008-9b9e26d687e2"
+  }
+]

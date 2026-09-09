@@ -80,6 +80,10 @@ func (c *rtpContinuity) rewrite(packet *rtp.Packet) {
 // Manager is the process-local authority for all Voice Rooms and Direct Calls.
 // Restart intentionally clears it so clients never display stale participation.
 type Manager struct {
+	recordCall          func(DirectCall) error
+	pendingCalls        []DirectCall
+	callTimer           *time.Timer
+	closed              bool
 	screenRequests      map[*webrtc.TrackLocalStaticRTP]func()
 	mu                  sync.Mutex
 	api                 *webrtc.API
@@ -392,7 +396,13 @@ func (m *Manager) DisconnectMember(roomID, memberID string) error {
 }
 
 func (m *Manager) Close() {
+	m.endCalls("ended", func(*DirectCall) bool { return true })
 	m.mu.Lock()
+	m.closed = true
+	if m.callTimer != nil {
+		m.callTimer.Stop()
+	}
+	m.flushCallsLocked()
 	peers := make([]*Peer, 0, len(m.peers))
 	for _, peer := range m.peers {
 		peers = append(peers, peer)

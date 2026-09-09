@@ -1,0 +1,32 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9ba165d477e3",
+    "name": "Desktop / Settings / sessions-populated",
+    "filename": "Desktop--Settings--sessions-populated.svg",
+    "png": "Desktop--Settings--sessions-populated.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba16126b9a0",
+    "name": "Desktop / Settings / sessions-empty",
+    "filename": "Desktop--Settings--sessions-empty.svg",
+    "png": "Desktop--Settings--sessions-empty.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba15c091269",
+    "name": "Desktop / Settings / sessions-loading",
+    "filename": "Desktop--Settings--sessions-loading.svg",
+    "png": "Desktop--Settings--sessions-loading.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba15063b716",
+    "name": "Desktop / Settings / account-lower",
+    "filename": "Desktop--Settings--account-lower.svg",
+    "png": "Desktop--Settings--account-lower.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba144a91c5e",
+    "name": "Desktop / Settings / account-top",
+    "filename": "Desktop--Settings--account-top.svg",
+    "png": "Desktop--Settings--account-top.png"
+  }
+]

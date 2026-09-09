@@ -1,0 +1,62 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bf6d1ccba9f",
+    "name": "Desktop / Settings / general-small-error",
+    "filename": "Desktop--Settings--general-small-error.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf6cad6284a",
+    "name": "Desktop / Settings / general-small-loading",
+    "filename": "Desktop--Settings--general-small-loading.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf47f07ef26",
+    "name": "Desktop / Settings / general-small-relay",
+    "filename": "Desktop--Settings--general-small-relay.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4d7007747",
+    "name": "Desktop / Settings / general-small-relay-bottom",
+    "filename": "Desktop--Settings--general-small-relay-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4d575116e",
+    "name": "Desktop / Settings / general-small-relay-middle",
+    "filename": "Desktop--Settings--general-small-relay-middle.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf45b69eebc",
+    "name": "Desktop / Settings / general-small-default",
+    "filename": "Desktop--Settings--general-small-default.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf74b5d6d42",
+    "name": "Desktop / Settings / general-small-save-error",
+    "filename": "Desktop--Settings--general-small-save-error.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf75a980662",
+    "name": "Desktop / Settings / general-small-save-error-immediate",
+    "filename": "Desktop--Settings--general-small-save-error-immediate.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf759224780",
+    "name": "Desktop / Settings / general-small-save-error-bottom",
+    "filename": "Desktop--Settings--general-small-save-error-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf7577db77e",
+    "name": "Desktop / Settings / general-small-save-error-middle",
+    "filename": "Desktop--Settings--general-small-save-error-middle.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4cac8003a",
+    "name": "Desktop / Settings / general-small-default-bottom",
+    "filename": "Desktop--Settings--general-small-default-bottom.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4c95dbade",
+    "name": "Desktop / Settings / general-small-default-middle",
+    "filename": "Desktop--Settings--general-small-default-middle.svg"
+  }
+]

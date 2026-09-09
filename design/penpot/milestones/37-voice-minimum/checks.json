@@ -1,0 +1,24 @@
+{
+  "pass": true,
+  "boards": [
+    {
+      "key": "voice-minimum",
+      "id": "7299a615-462e-803f-8008-9bc445839346"
+    },
+    {
+      "key": "voice-minimum-bottom",
+      "id": "7299a615-462e-803f-8008-9bc70c637f6f"
+    },
+    {
+      "key": "voice-minimum-camera",
+      "id": "7299a615-462e-803f-8008-9bc70b2036c6"
+    },
+    {
+      "key": "voice-minimum-processing",
+      "id": "7299a615-462e-803f-8008-9bc709d757b7"
+    }
+  ],
+  "problems": [],
+  "validation": [],
+  "revision": 66
+}

@@ -1,0 +1,9 @@
+# Milestone 44 — Safety native validation
+
+Eight editable static references cover required report Member and reason, two-character report reason, required moderation reason, negative duration, required deletion password, required confirmation and lowercase confirmation mismatch. Source validation messages and validity flags were captured from local Chromium with synthetic inputs and prevented submissions. No live action was performed.
+
+Local captures wait for native bubble animations to settle. A pixel measurement helper extracts bubble border geometry. Native editable bubble shapes, orange warning icons, text and field focus rings reflect those references. The clicked submit button keeps its captured hover appearance, including the source's brand-colored Delete Account hover. All message copy, entered values, focus positions, popup bounds, visibility and zero interactions checked; native exports visually reviewed.
+
+Reconstruction: restore included milestone 41 and its prerequisites, run author-safety-validation.js until remaining is zero (eight bounded batches), export initial SVG to settle text, then finish-safety-validation.js until remaining is zero (eight bounded steps). Run check-safety-validation.js and inspect final exports. For source recapture run measure-safety-validation.mjs followed by measure-validation-bubbles.py. Repository MCP/Playwright, Pillow and milestone 03 fonts support these helpers.
+
+This is a reconstruction backup, not a native .penpot export or verified reimport. Browser-owned bubble typography, pointer/shadow rendering and inherited shell retain approximation; native cross-platform fidelity is not proven. Native dialogs, other input/validation edge cases, minimum-window references and broader desktop design coverage remain unfinished. No prototypes or production changes.

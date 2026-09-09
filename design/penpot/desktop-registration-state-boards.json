@@ -1,0 +1,107 @@
+[
+  {
+    "state": "submit-hovered",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abbd13a8b83",
+    "texts": [
+      "1",
+      " ",
+      " ",
+      " ",
+      "Create Account",
+      "AllChat",
+      "127.0.0.1:4187",
+      "Join your Community",
+      "http://127.0.0.1:4187",
+      "Invitation token",
+      "Username",
+      "Password",
+      "Sign in",
+      "Register",
+      "Recovery"
+    ]
+  },
+  {
+    "state": "submit-keyboard-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abbd06b9087",
+    "texts": [
+      "1",
+      " ",
+      " ",
+      " ",
+      "Create Account",
+      "AllChat",
+      "127.0.0.1:4187",
+      "Join your Community",
+      "http://127.0.0.1:4187",
+      "Invitation token",
+      "Username",
+      "Password",
+      "Sign in",
+      "Register",
+      "Recovery"
+    ]
+  },
+  {
+    "state": "password-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abbcfaa9091",
+    "texts": [
+      "1",
+      " ",
+      " ",
+      " ",
+      "Create Account",
+      "AllChat",
+      "127.0.0.1:4187",
+      "Join your Community",
+      "http://127.0.0.1:4187",
+      "Invitation token",
+      "Username",
+      "Password",
+      "Sign in",
+      "Register",
+      "Recovery"
+    ]
+  },
+  {
+    "state": "username-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abbcee4e813",
+    "texts": [
+      "1",
+      " ",
+      " ",
+      " ",
+      "Create Account",
+      "AllChat",
+      "127.0.0.1:4187",
+      "Join your Community",
+      "http://127.0.0.1:4187",
+      "Invitation token",
+      "Username",
+      "Password",
+      "Sign in",
+      "Register",
+      "Recovery"
+    ]
+  },
+  {
+    "state": "invitation-focused",
+    "boardId": "6bdc1c40-ce96-804f-8008-9abbce005777",
+    "texts": [
+      "1",
+      " ",
+      " ",
+      " ",
+      "Create Account",
+      "AllChat",
+      "127.0.0.1:4187",
+      "Join your Community",
+      "http://127.0.0.1:4187",
+      "Invitation token",
+      "Username",
+      "Password",
+      "Sign in",
+      "Register",
+      "Recovery"
+    ]
+  }
+]

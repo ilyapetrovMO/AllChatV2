@@ -1,0 +1,3644 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "pageId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff380",
+  "pageName": "AllChat Design Trial",
+  "shapes": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a51814a4b8d",
+      "name": "Text channel — desktop dark — draft",
+      "type": "board",
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [
+        {
+          "fillColor": "#FFFFFF",
+          "fillOpacity": 1,
+          "fillColorGradient": null,
+          "fillColorRefFile": null,
+          "fillColorRefId": null,
+          "fillImage": null
+        }
+      ],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a518168044e",
+          "name": "Current UI — editable import",
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a518172dba7",
+              "name": "base-background",
+              "type": "rectangle",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720,
+              "rotation": 0,
+              "hidden": true,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a5181733a91",
+              "name": "svg-g",
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 1280,
+              "height": 720,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": [
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a51817356cd",
+                  "name": "svg-rect",
+                  "type": "rectangle",
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [
+                    {
+                      "fillColor": "#18191e",
+                      "fillOpacity": 1,
+                      "fillColorGradient": null,
+                      "fillColorRefFile": null,
+                      "fillColorRefId": null,
+                      "fillImage": null
+                    }
+                  ],
+                  "strokes": [],
+                  "tokens": {
+                    "fill": "bg-main"
+                  },
+                  "children": []
+                },
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a518173bace",
+                  "name": "svg-g",
+                  "type": "group",
+                  "x": 0,
+                  "y": 0,
+                  "width": 1280,
+                  "height": 720,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [],
+                  "tokens": {},
+                  "children": [
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a518173f425",
+                      "name": "svg-g",
+                      "type": "group",
+                      "x": 0,
+                      "y": 0,
+                      "width": 72,
+                      "height": 720,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [],
+                      "strokes": [],
+                      "tokens": {},
+                      "children": [
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a518174318a",
+                          "name": "svg-rect",
+                          "type": "rectangle",
+                          "x": 0,
+                          "y": 0,
+                          "width": 72,
+                          "height": 720,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [
+                            {
+                              "fillColor": "#0d0e11",
+                              "fillOpacity": 1,
+                              "fillColorGradient": null,
+                              "fillColorRefFile": null,
+                              "fillColorRefId": null,
+                              "fillImage": null
+                            }
+                          ],
+                          "strokes": [],
+                          "tokens": {
+                            "fill": "bg-rail"
+                          },
+                          "children": []
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a531c0e2866",
+                          "name": "Button / Home",
+                          "type": "board",
+                          "x": 12,
+                          "y": 12,
+                          "width": 48,
+                          "height": 48,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a531c0e2867",
+                              "name": "Button / Home",
+                              "type": "group",
+                              "x": 12,
+                              "y": 12,
+                              "width": 48,
+                              "height": 48,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a531c0e2868",
+                                  "name": "svg-rect",
+                                  "type": "rectangle",
+                                  "x": 12,
+                                  "y": 12,
+                                  "width": 48,
+                                  "height": 48,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [
+                                    {
+                                      "fillColor": "#6d75e8",
+                                      "fillOpacity": 1,
+                                      "fillColorGradient": null,
+                                      "fillColorRefFile": null,
+                                      "fillColorRefId": null,
+                                      "fillImage": null
+                                    }
+                                  ],
+                                  "strokes": [],
+                                  "tokens": {
+                                    "fill": "brand"
+                                  },
+                                  "children": []
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a531c0e2869",
+                                  "name": "Icon / home",
+                                  "type": "group",
+                                  "x": 27.75,
+                                  "y": 27.75,
+                                  "width": 16.5,
+                                  "height": 15.583333333333371,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531c0e286a",
+                                      "name": "svg-path",
+                                      "type": "path",
+                                      "x": 27.75,
+                                      "y": 27.75,
+                                      "width": 16.5,
+                                      "height": 7.333333333333371,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [
+                                        {
+                                          "strokeColor": "#ffffff",
+                                          "strokeColorRefFile": null,
+                                          "strokeColorRefId": null,
+                                          "strokeOpacity": 1,
+                                          "strokeStyle": null,
+                                          "strokeWidth": 2,
+                                          "strokeAlignment": null,
+                                          "strokeCapStart": "round",
+                                          "strokeCapEnd": "round",
+                                          "strokeColorGradient": null
+                                        }
+                                      ],
+                                      "tokens": {},
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531c0e286b",
+                                      "name": "svg-path",
+                                      "type": "path",
+                                      "x": 29.583333333333258,
+                                      "y": 34.16666666666663,
+                                      "width": 12.833333333333485,
+                                      "height": 9.166666666666742,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [
+                                        {
+                                          "strokeColor": "#ffffff",
+                                          "strokeColorRefFile": null,
+                                          "strokeColorRefId": null,
+                                          "strokeOpacity": 1,
+                                          "strokeStyle": null,
+                                          "strokeWidth": 2,
+                                          "strokeAlignment": null,
+                                          "strokeCapStart": "round",
+                                          "strokeCapEnd": "round",
+                                          "strokeColorGradient": null
+                                        }
+                                      ],
+                                      "tokens": {},
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531c0e286c",
+                                      "name": "svg-path",
+                                      "type": "path",
+                                      "x": 33.25,
+                                      "y": 37.83333333333337,
+                                      "width": 5.5,
+                                      "height": 5.5,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [
+                                        {
+                                          "strokeColor": "#ffffff",
+                                          "strokeColorRefFile": null,
+                                          "strokeColorRefId": null,
+                                          "strokeOpacity": 1,
+                                          "strokeStyle": null,
+                                          "strokeWidth": 2,
+                                          "strokeAlignment": null,
+                                          "strokeCapStart": "round",
+                                          "strokeCapEnd": "round",
+                                          "strokeColorGradient": null
+                                        }
+                                      ],
+                                      "tokens": {},
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a5181761ec4",
+                      "name": "svg-g",
+                      "type": "group",
+                      "x": 72,
+                      "y": 0,
+                      "width": 240,
+                      "height": 720,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [],
+                      "strokes": [],
+                      "tokens": {},
+                      "children": [
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a5181761ec5",
+                          "name": "svg-rect",
+                          "type": "rectangle",
+                          "x": 72,
+                          "y": 0,
+                          "width": 240,
+                          "height": 720,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [
+                            {
+                              "fillColor": "#111216",
+                              "fillOpacity": 1,
+                              "fillColorGradient": null,
+                              "fillColorRefFile": null,
+                              "fillColorRefId": null,
+                              "fillImage": null
+                            }
+                          ],
+                          "strokes": [],
+                          "tokens": {
+                            "fill": "bg-sidebar"
+                          },
+                          "children": []
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a51817672d5",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 88,
+                          "y": 13.800000000000011,
+                          "width": 202.40250000000003,
+                          "height": 20,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a51817672d6",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 88,
+                              "y": 13.800000000000011,
+                              "width": 202.40250000000003,
+                              "height": 20,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817672d9",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 281.20750000000004,
+                                  "y": 18.50625,
+                                  "width": 9.194999999999993,
+                                  "height": 4.5975,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a518176bb73",
+                                      "name": "Icon / chevron-down",
+                                      "type": "group",
+                                      "x": 281.20750000000004,
+                                      "y": 18.50625,
+                                      "width": 9.194999999999993,
+                                      "height": 4.5975,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a5181772607",
+                                          "name": "svg-path",
+                                          "type": "path",
+                                          "x": 281.20750000000004,
+                                          "y": 18.50625,
+                                          "width": 9.194999999999993,
+                                          "height": 4.5975,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [
+                                            {
+                                              "strokeColor": "#ffffff",
+                                              "strokeColorRefFile": null,
+                                              "strokeColorRefId": null,
+                                              "strokeOpacity": 1,
+                                              "strokeStyle": null,
+                                              "strokeWidth": 2,
+                                              "strokeAlignment": null,
+                                              "strokeCapStart": "round",
+                                              "strokeCapEnd": "round",
+                                              "strokeColorGradient": null
+                                            }
+                                          ],
+                                          "tokens": {},
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51e8d005b9",
+                                  "name": "AllChat Community",
+                                  "type": "text",
+                                  "x": 88,
+                                  "y": 13.800000000000011,
+                                  "width": 146,
+                                  "height": 20,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [
+                                    {
+                                      "fillColor": "#ffffff",
+                                      "fillOpacity": 1,
+                                      "fillColorGradient": null,
+                                      "fillColorRefFile": null,
+                                      "fillColorRefId": null,
+                                      "fillImage": null
+                                    }
+                                  ],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "characters": "AllChat Community",
+                                  "fontFamily": "Inter",
+                                  "fontSize": "16",
+                                  "fontWeight": "400",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a5181772608",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 80,
+                          "y": 79,
+                          "width": 223,
+                          "height": 120.2199999999998,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a5181772609",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 88,
+                              "y": 79,
+                              "width": 96,
+                              "height": 14,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a52268dd36f",
+                                  "name": "Direct Messages",
+                                  "type": "text",
+                                  "x": 88,
+                                  "y": 79,
+                                  "width": 96,
+                                  "height": 14,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [
+                                    {
+                                      "fillColor": "#727784",
+                                      "fillOpacity": 1,
+                                      "fillColorGradient": null,
+                                      "fillColorRefFile": null,
+                                      "fillColorRefId": null,
+                                      "fillImage": null
+                                    }
+                                  ],
+                                  "strokes": [],
+                                  "tokens": {
+                                    "fill": "faint"
+                                  },
+                                  "characters": "Direct Messages",
+                                  "fontFamily": "Inter",
+                                  "fontSize": "11.52",
+                                  "fontWeight": "400",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a531ba51464",
+                              "name": "Navigation / Channel selected",
+                              "type": "board",
+                              "x": 80,
+                              "y": 132.22,
+                              "width": 223,
+                              "height": 40,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a531ba51465",
+                                  "name": "Navigation / Channel selected",
+                                  "type": "group",
+                                  "x": 80,
+                                  "y": 132.22,
+                                  "width": 223,
+                                  "height": 40,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531ba51466",
+                                      "name": "svg-rect",
+                                      "type": "rectangle",
+                                      "x": 80,
+                                      "y": 132.22,
+                                      "width": 223,
+                                      "height": 40,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#30323a",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "bg-active"
+                                      },
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531ba51467",
+                                      "name": "#",
+                                      "type": "text",
+                                      "x": 89,
+                                      "y": 142.2199999999998,
+                                      "width": 13,
+                                      "height": 24,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#727784",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "faint"
+                                      },
+                                      "characters": "#",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "20",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531ba51468",
+                                      "name": "general",
+                                      "type": "text",
+                                      "x": 113.77000000000044,
+                                      "y": 142.01999999999998,
+                                      "width": 58,
+                                      "height": 20,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#f0f1f5",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "text"
+                                      },
+                                      "characters": "general",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "16",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a5226a39fcf",
+                              "name": "Community",
+                              "type": "text",
+                              "x": 88,
+                              "y": 113.1099999999999,
+                              "width": 67,
+                              "height": 14,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#727784",
+                                  "fillOpacity": 1,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {
+                                "fill": "faint"
+                              },
+                              "characters": "Community",
+                              "fontFamily": "Inter",
+                              "fontSize": "11.52",
+                              "fontWeight": "400",
+                              "children": []
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a5226d87dbf",
+                              "name": "Lounge",
+                              "type": "text",
+                              "x": 113,
+                              "y": 179.2199999999998,
+                              "width": 58,
+                              "height": 20,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#a4a8b3",
+                                  "fillOpacity": 1,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {
+                                "fill": "muted"
+                              },
+                              "characters": "Lounge",
+                              "fontFamily": "Inter",
+                              "fontSize": "16",
+                              "fontWeight": "400",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a51817866cb",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 72,
+                          "y": 668,
+                          "width": 239,
+                          "height": 52,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a518178d45d",
+                              "name": "svg-rect",
+                              "type": "rectangle",
+                              "x": 72,
+                              "y": 668,
+                              "width": 239,
+                              "height": 52,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#0e0f12",
+                                  "fillOpacity": null,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": []
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a518178d45e",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 83,
+                              "y": 678,
+                              "width": 36,
+                              "height": 32,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817900d6",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 83,
+                                  "y": 678,
+                                  "width": 32,
+                                  "height": 32,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817900d7",
+                                      "name": "svg-rect",
+                                      "type": "rectangle",
+                                      "x": 83,
+                                      "y": 678,
+                                      "width": 32,
+                                      "height": 32,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#6d75e8",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "brand"
+                                      },
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5226e81ad7",
+                                      "name": "V",
+                                      "type": "text",
+                                      "x": 92.79999999999995,
+                                      "y": 683.7999999999993,
+                                      "width": 13,
+                                      "height": 20,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#ffffff",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "characters": "V",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "16",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817976ff",
+                                  "name": "svg-rect",
+                                  "type": "rectangle",
+                                  "x": 107,
+                                  "y": 698,
+                                  "width": 12,
+                                  "height": 12,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [
+                                    {
+                                      "fillColor": "#35b978",
+                                      "fillOpacity": 1,
+                                      "fillColorGradient": null,
+                                      "fillColorRefFile": null,
+                                      "fillColorRefId": null,
+                                      "fillImage": null
+                                    }
+                                  ],
+                                  "strokes": [
+                                    {
+                                      "strokeColor": "#0e0f12",
+                                      "strokeColorRefFile": null,
+                                      "strokeColorRefId": null,
+                                      "strokeOpacity": 1,
+                                      "strokeStyle": null,
+                                      "strokeWidth": 3,
+                                      "strokeAlignment": null,
+                                      "strokeCapStart": null,
+                                      "strokeCapEnd": null,
+                                      "strokeColorGradient": null
+                                    }
+                                  ],
+                                  "tokens": {
+                                    "fill": "green"
+                                  },
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a51817996e7",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 278.0492126835372,
+                              "y": 685.1833333333333,
+                              "width": 15.901574367707894,
+                              "height": 17.633333333333326,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817996e8",
+                                  "name": "Icon / settings",
+                                  "type": "group",
+                                  "x": 278.0492126835372,
+                                  "y": 685.1833333333333,
+                                  "width": 15.901574367707894,
+                                  "height": 17.633333333333326,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817ae73b",
+                                      "name": "svg-path",
+                                      "type": "path",
+                                      "x": 278.0492126835372,
+                                      "y": 685.1833333333333,
+                                      "width": 15.901574367707894,
+                                      "height": 17.633333333333326,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [
+                                        {
+                                          "strokeColor": "#a4a8b3",
+                                          "strokeColorRefFile": null,
+                                          "strokeColorRefId": null,
+                                          "strokeOpacity": 1,
+                                          "strokeStyle": null,
+                                          "strokeWidth": 2,
+                                          "strokeAlignment": null,
+                                          "strokeCapStart": "round",
+                                          "strokeCapEnd": "round",
+                                          "strokeColorGradient": null
+                                        }
+                                      ],
+                                      "tokens": {},
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817ae73c",
+                                      "name": "svg-circle",
+                                      "type": "ellipse",
+                                      "x": 283.355,
+                                      "y": 691.3549999999999,
+                                      "width": 5.2900000000000205,
+                                      "height": 5.290000000000077,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [
+                                        {
+                                          "strokeColor": "#a4a8b3",
+                                          "strokeColorRefFile": null,
+                                          "strokeColorRefId": null,
+                                          "strokeOpacity": 1,
+                                          "strokeStyle": null,
+                                          "strokeWidth": 2,
+                                          "strokeAlignment": null,
+                                          "strokeCapStart": null,
+                                          "strokeCapEnd": null,
+                                          "strokeColorGradient": null
+                                        }
+                                      ],
+                                      "tokens": {},
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a51817b18bf",
+                      "name": "svg-g",
+                      "type": "group",
+                      "x": 312,
+                      "y": 0,
+                      "width": 968,
+                      "height": 720,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [],
+                      "strokes": [],
+                      "tokens": {},
+                      "children": [
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a51817b585b",
+                          "name": "svg-rect",
+                          "type": "rectangle",
+                          "x": 312,
+                          "y": 0,
+                          "width": 968,
+                          "height": 720,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [
+                            {
+                              "fillColor": "#18191e",
+                              "fillOpacity": 1,
+                              "fillColorGradient": null,
+                              "fillColorRefFile": null,
+                              "fillColorRefId": null,
+                              "fillImage": null
+                            }
+                          ],
+                          "strokes": [],
+                          "tokens": {
+                            "fill": "bg-main"
+                          },
+                          "children": []
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a51817b585c",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 312,
+                          "y": 0,
+                          "width": 968,
+                          "height": 48,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a51817bd830",
+                              "name": "svg-rect",
+                              "type": "rectangle",
+                              "x": 312,
+                              "y": 0,
+                              "width": 968,
+                              "height": 48,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#16171b",
+                                  "fillOpacity": null,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": []
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a51817c5827",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 1008.0107222412972,
+                              "y": 9.5,
+                              "width": 255.98927775870277,
+                              "height": 28,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817c836a",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 1008.0107222412972,
+                                  "y": 15.065833333333334,
+                                  "width": 15.168555669512443,
+                                  "height": 16.855346159934996,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817c836b",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 1008.0107222412972,
+                                      "y": 15.065833333333334,
+                                      "width": 15.168555669512443,
+                                      "height": 16.855346159934996,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a51817c836c",
+                                          "name": "Icon / bell",
+                                          "type": "group",
+                                          "x": 1008.0107222412972,
+                                          "y": 15.065833333333334,
+                                          "width": 15.168555669512443,
+                                          "height": 16.855346159934996,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "children": [
+                                            {
+                                              "id": "6bdc1c40-ce96-804f-8008-9a51817d2f96",
+                                              "name": "svg-path",
+                                              "type": "path",
+                                              "x": 1014.1367545525234,
+                                              "y": 31.08125,
+                                              "width": 2.9164908949534265,
+                                              "height": 0.839929493268329,
+                                              "rotation": 0,
+                                              "hidden": false,
+                                              "fills": [],
+                                              "strokes": [
+                                                {
+                                                  "strokeColor": "#a4a8b3",
+                                                  "strokeColorRefFile": null,
+                                                  "strokeColorRefId": null,
+                                                  "strokeOpacity": 1,
+                                                  "strokeStyle": null,
+                                                  "strokeWidth": 2,
+                                                  "strokeAlignment": null,
+                                                  "strokeCapStart": "round",
+                                                  "strokeCapEnd": "round",
+                                                  "strokeColorGradient": null
+                                                }
+                                              ],
+                                              "tokens": {},
+                                              "children": []
+                                            },
+                                            {
+                                              "id": "6bdc1c40-ce96-804f-8008-9a51817d5cd1",
+                                              "name": "svg-path",
+                                              "type": "path",
+                                              "x": 1008.0107222412972,
+                                              "y": 15.065833333333334,
+                                              "width": 15.168555669512443,
+                                              "height": 12.643749999999997,
+                                              "rotation": 0,
+                                              "hidden": false,
+                                              "fills": [],
+                                              "strokes": [
+                                                {
+                                                  "strokeColor": "#a4a8b3",
+                                                  "strokeColorRefFile": null,
+                                                  "strokeColorRefId": null,
+                                                  "strokeOpacity": 1,
+                                                  "strokeStyle": null,
+                                                  "strokeWidth": 2,
+                                                  "strokeAlignment": null,
+                                                  "strokeCapStart": "round",
+                                                  "strokeCapEnd": "round",
+                                                  "strokeColorGradient": null
+                                                }
+                                              ],
+                                              "tokens": {},
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817d5cd2",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 1051.1425,
+                                  "y": 16.592654626243785,
+                                  "width": 14.564845647183802,
+                                  "height": 14.564845373756214,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817d9dde",
+                                      "name": "Icon / messages",
+                                      "type": "group",
+                                      "x": 1051.1425,
+                                      "y": 16.592654626243785,
+                                      "width": 14.564845647183802,
+                                      "height": 14.564845373756214,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a51817de175",
+                                          "name": "svg-path",
+                                          "type": "path",
+                                          "x": 1051.1425,
+                                          "y": 16.592654626243785,
+                                          "width": 14.564845647183802,
+                                          "height": 14.564845373756214,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [
+                                            {
+                                              "strokeColor": "#a4a8b3",
+                                              "strokeColorRefFile": null,
+                                              "strokeColorRefId": null,
+                                              "strokeOpacity": 1,
+                                              "strokeStyle": null,
+                                              "strokeWidth": 2,
+                                              "strokeAlignment": null,
+                                              "strokeCapStart": "round",
+                                              "strokeCapEnd": "round",
+                                              "strokeColorGradient": null
+                                            }
+                                          ],
+                                          "tokens": {},
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51817de176",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 1083,
+                                  "y": 9.5,
+                                  "width": 181,
+                                  "height": 28,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a51817e694f",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 1084,
+                                      "y": 9.5,
+                                      "width": 180,
+                                      "height": 28,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a51817e8d6d",
+                                          "name": "svg-rect",
+                                          "type": "rectangle",
+                                          "x": 1084,
+                                          "y": 9.5,
+                                          "width": 180,
+                                          "height": 28,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#202127",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "bg-elevated"
+                                          },
+                                          "children": []
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a5227372e8b",
+                                          "name": "Search",
+                                          "type": "text",
+                                          "x": 1092,
+                                          "y": 13.5,
+                                          "width": 46,
+                                          "height": 17,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#757575",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "characters": "Search",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "13.6",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a52272707b4",
+                                      "name": "Search Messages",
+                                      "type": "text",
+                                      "x": 1083,
+                                      "y": 9.5,
+                                      "width": 112,
+                                      "height": 16,
+                                      "rotation": 0,
+                                      "hidden": true,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#a4a8b3",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "muted"
+                                      },
+                                      "characters": "Search Messages",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "12.8",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a5226f6a0be",
+                              "name": "#",
+                              "type": "text",
+                              "x": 328,
+                              "y": 9.810000000000002,
+                              "width": 15,
+                              "height": 27,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#727784",
+                                  "fillOpacity": 1,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {
+                                "fill": "faint"
+                              },
+                              "characters": "#",
+                              "fontFamily": "Inter",
+                              "fontSize": "22.4",
+                              "fontWeight": "400",
+                              "children": []
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a52270a106d",
+                              "name": "general",
+                              "type": "text",
+                              "x": 356.77000000000044,
+                              "y": 13.300000000000011,
+                              "width": 60,
+                              "height": 20,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#f0f1f5",
+                                  "fillOpacity": 1,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {
+                                "fill": "text"
+                              },
+                              "characters": "general",
+                              "fontFamily": "Inter",
+                              "fontSize": "16",
+                              "fontWeight": "400",
+                              "children": []
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a522718aa25",
+                              "name": "Community Text Channel",
+                              "type": "text",
+                              "x": 435.4799999999959,
+                              "y": 13.300000000000011,
+                              "width": 191,
+                              "height": 20,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [
+                                {
+                                  "fillColor": "#a4a8b3",
+                                  "fillOpacity": 1,
+                                  "fillColorGradient": null,
+                                  "fillColorRefFile": null,
+                                  "fillColorRefId": null,
+                                  "fillImage": null
+                                }
+                              ],
+                              "strokes": [],
+                              "tokens": {
+                                "fill": "muted"
+                              },
+                              "characters": "Community Text Channel",
+                              "fontFamily": "Inter",
+                              "fontSize": "16",
+                              "fontWeight": "400",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a51817f29e3",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 328,
+                          "y": 48,
+                          "width": 952,
+                          "height": 672,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a51817f29e4",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 328,
+                              "y": 70,
+                              "width": 411,
+                              "height": 94.17000000000007,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a531bc7e2c6",
+                                  "name": "Message / Row",
+                                  "type": "board",
+                                  "x": 328,
+                                  "y": 70,
+                                  "width": 383,
+                                  "height": 41.3900000000001,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531bc7e2c7",
+                                      "name": "Message / Row",
+                                      "type": "group",
+                                      "x": 328,
+                                      "y": 70,
+                                      "width": 383,
+                                      "height": 41.3900000000001,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bc7e2c8",
+                                          "name": "Avatar / Message",
+                                          "type": "board",
+                                          "x": 328,
+                                          "y": 70,
+                                          "width": 40,
+                                          "height": 40,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "children": [
+                                            {
+                                              "id": "6bdc1c40-ce96-804f-8008-9a531bc7e2c9",
+                                              "name": "Avatar / Message",
+                                              "type": "group",
+                                              "x": 328,
+                                              "y": 70,
+                                              "width": 40,
+                                              "height": 40,
+                                              "rotation": 0,
+                                              "hidden": false,
+                                              "fills": [],
+                                              "strokes": [],
+                                              "tokens": {},
+                                              "children": [
+                                                {
+                                                  "id": "6bdc1c40-ce96-804f-8008-9a531bc7e2ca",
+                                                  "name": "svg-rect",
+                                                  "type": "rectangle",
+                                                  "x": 328,
+                                                  "y": 70,
+                                                  "width": 40,
+                                                  "height": 40,
+                                                  "rotation": 0,
+                                                  "hidden": false,
+                                                  "fills": [
+                                                    {
+                                                      "fillColor": "#6d75e8",
+                                                      "fillOpacity": 1,
+                                                      "fillColorGradient": null,
+                                                      "fillColorRefFile": null,
+                                                      "fillColorRefId": null,
+                                                      "fillImage": null
+                                                    }
+                                                  ],
+                                                  "strokes": [],
+                                                  "tokens": {
+                                                    "fill": "brand"
+                                                  },
+                                                  "children": []
+                                                },
+                                                {
+                                                  "id": "6bdc1c40-ce96-804f-8008-9a531bc832fc",
+                                                  "name": "V",
+                                                  "type": "text",
+                                                  "x": 341.8000000000002,
+                                                  "y": 79.79999999999995,
+                                                  "width": 13,
+                                                  "height": 20,
+                                                  "rotation": 0,
+                                                  "hidden": false,
+                                                  "fills": [
+                                                    {
+                                                      "fillColor": "#f0f1f5",
+                                                      "fillOpacity": 1,
+                                                      "fillColorGradient": null,
+                                                      "fillColorRefFile": null,
+                                                      "fillColorRefId": null,
+                                                      "fillImage": null
+                                                    }
+                                                  ],
+                                                  "strokes": [],
+                                                  "tokens": {
+                                                    "fill": "text"
+                                                  },
+                                                  "characters": "V",
+                                                  "fontFamily": "Inter",
+                                                  "fontSize": "16",
+                                                  "fontWeight": "400",
+                                                  "children": []
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bc832fd",
+                                          "name": "visual-owner",
+                                          "type": "text",
+                                          "x": 384,
+                                          "y": 70,
+                                          "width": 95,
+                                          "height": 19,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#a4a8b3",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "muted"
+                                          },
+                                          "characters": "visual-owner",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "15.2",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bc832fe",
+                                          "name": "12:00",
+                                          "type": "text",
+                                          "x": 490.96999999999935,
+                                          "y": 74,
+                                          "width": 28,
+                                          "height": 14,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#727784",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "faint"
+                                          },
+                                          "characters": "12:00",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "10.88",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bc832ff",
+                                          "name": "Welcome to the deterministic visual fixture.",
+                                          "type": "text",
+                                          "x": 384,
+                                          "y": 91.3900000000001,
+                                          "width": 327,
+                                          "height": 20,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#d9dbe2",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "characters": "Welcome to the deterministic visual fixture.",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "16",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a5181808396",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 328,
+                                  "y": 122.78,
+                                  "width": 411,
+                                  "height": 41.39000000000007,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5181808397",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 328,
+                                      "y": 122.78,
+                                      "width": 40,
+                                      "height": 40,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a518180de82",
+                                          "name": "svg-rect",
+                                          "type": "rectangle",
+                                          "x": 328,
+                                          "y": 122.78,
+                                          "width": 40,
+                                          "height": 40,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#6d75e8",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "brand"
+                                          },
+                                          "children": []
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a522780a09f",
+                                          "name": "V",
+                                          "type": "text",
+                                          "x": 341.8000000000002,
+                                          "y": 132.57999999999993,
+                                          "width": 13,
+                                          "height": 20,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#f0f1f5",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "text"
+                                          },
+                                          "characters": "V",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "16",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a52278f4642",
+                                      "name": "visual-owner",
+                                      "type": "text",
+                                      "x": 384,
+                                      "y": 122.7800000000002,
+                                      "width": 95,
+                                      "height": 19,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#a4a8b3",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "muted"
+                                      },
+                                      "characters": "visual-owner",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "15.2",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5227a0b653",
+                                      "name": "12:00",
+                                      "type": "text",
+                                      "x": 490.96999999999935,
+                                      "y": 126.77999999999997,
+                                      "width": 28,
+                                      "height": 14,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#727784",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "faint"
+                                      },
+                                      "characters": "12:00",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "10.88",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5227af7d6d",
+                                      "name": "Desktop and mobile layouts should stay stable.",
+                                      "type": "text",
+                                      "x": 384,
+                                      "y": 144.17000000000007,
+                                      "width": 355,
+                                      "height": 20,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#d9dbe2",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "characters": "Desktop and mobile layouts should stay stable.",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "16",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a518181c2dc",
+                              "name": "svg-g",
+                              "type": "group",
+                              "x": 1040,
+                              "y": 48,
+                              "width": 240,
+                              "height": 672,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a51818225f5",
+                                  "name": "svg-rect",
+                                  "type": "rectangle",
+                                  "x": 1040,
+                                  "y": 48,
+                                  "width": 240,
+                                  "height": 672,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [
+                                    {
+                                      "fillColor": "#18191e",
+                                      "fillOpacity": 1,
+                                      "fillColorGradient": null,
+                                      "fillColorRefFile": null,
+                                      "fillColorRefId": null,
+                                      "fillImage": null
+                                    }
+                                  ],
+                                  "strokes": [],
+                                  "tokens": {
+                                    "fill": "bg-main"
+                                  },
+                                  "children": []
+                                },
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a5181825a9a",
+                                  "name": "svg-g",
+                                  "type": "group",
+                                  "x": 1057,
+                                  "y": 73,
+                                  "width": 182.2300000000032,
+                                  "height": 140.2199999999998,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a518182bc8d",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 1057,
+                                      "y": 73,
+                                      "width": 182.2300000000032,
+                                      "height": 59.110000000000014,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a518182fbce",
+                                          "name": "svg-g",
+                                          "type": "group",
+                                          "x": 1057,
+                                          "y": 99.11000000000001,
+                                          "width": 182.2300000000032,
+                                          "height": 33,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "children": [
+                                            {
+                                              "id": "6bdc1c40-ce96-804f-8008-9a518182fbcf",
+                                              "name": "svg-g",
+                                              "type": "group",
+                                              "x": 1057,
+                                              "y": 99.11000000000001,
+                                              "width": 182.2300000000032,
+                                              "height": 33,
+                                              "rotation": 0,
+                                              "hidden": false,
+                                              "fills": [],
+                                              "strokes": [],
+                                              "tokens": {},
+                                              "children": [
+                                                {
+                                                  "id": "6bdc1c40-ce96-804f-8008-9a518182fbd0",
+                                                  "name": "svg-g",
+                                                  "type": "group",
+                                                  "x": 1057,
+                                                  "y": 99.11000000000001,
+                                                  "width": 34,
+                                                  "height": 33,
+                                                  "rotation": 0,
+                                                  "hidden": false,
+                                                  "fills": [],
+                                                  "strokes": [],
+                                                  "tokens": {},
+                                                  "children": [
+                                                    {
+                                                      "id": "6bdc1c40-ce96-804f-8008-9a51818303cf",
+                                                      "name": "svg-g",
+                                                      "type": "group",
+                                                      "x": 1057,
+                                                      "y": 99.11000000000001,
+                                                      "width": 32,
+                                                      "height": 32,
+                                                      "rotation": 0,
+                                                      "hidden": false,
+                                                      "fills": [],
+                                                      "strokes": [],
+                                                      "tokens": {},
+                                                      "children": [
+                                                        {
+                                                          "id": "6bdc1c40-ce96-804f-8008-9a51818303d0",
+                                                          "name": "svg-rect",
+                                                          "type": "rectangle",
+                                                          "x": 1057,
+                                                          "y": 99.11000000000001,
+                                                          "width": 32,
+                                                          "height": 32,
+                                                          "rotation": 0,
+                                                          "hidden": false,
+                                                          "fills": [
+                                                            {
+                                                              "fillColor": "#6d75e8",
+                                                              "fillOpacity": 1,
+                                                              "fillColorGradient": null,
+                                                              "fillColorRefFile": null,
+                                                              "fillColorRefId": null,
+                                                              "fillImage": null
+                                                            }
+                                                          ],
+                                                          "strokes": [],
+                                                          "tokens": {
+                                                            "fill": "brand"
+                                                          },
+                                                          "children": []
+                                                        },
+                                                        {
+                                                          "id": "6bdc1c40-ce96-804f-8008-9a5227cba7b7",
+                                                          "name": "V",
+                                                          "type": "text",
+                                                          "x": 1068.3400000000001,
+                                                          "y": 107.70000000000005,
+                                                          "width": 10,
+                                                          "height": 15,
+                                                          "rotation": 0,
+                                                          "hidden": false,
+                                                          "fills": [
+                                                            {
+                                                              "fillColor": "#ffffff",
+                                                              "fillOpacity": 1,
+                                                              "fillColorGradient": null,
+                                                              "fillColorRefFile": null,
+                                                              "fillColorRefId": null,
+                                                              "fillImage": null
+                                                            }
+                                                          ],
+                                                          "strokes": [],
+                                                          "tokens": {},
+                                                          "characters": "V",
+                                                          "fontFamily": "Inter",
+                                                          "fontSize": "12",
+                                                          "fontWeight": "400",
+                                                          "children": []
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "id": "6bdc1c40-ce96-804f-8008-9a518183ac64",
+                                                      "name": "svg-rect",
+                                                      "type": "rectangle",
+                                                      "x": 1080,
+                                                      "y": 121.11000000000001,
+                                                      "width": 11,
+                                                      "height": 11,
+                                                      "rotation": 0,
+                                                      "hidden": false,
+                                                      "fills": [
+                                                        {
+                                                          "fillColor": "#727784",
+                                                          "fillOpacity": 1,
+                                                          "fillColorGradient": null,
+                                                          "fillColorRefFile": null,
+                                                          "fillColorRefId": null,
+                                                          "fillImage": null
+                                                        }
+                                                      ],
+                                                      "strokes": [
+                                                        {
+                                                          "strokeColor": "#111216",
+                                                          "strokeColorRefFile": null,
+                                                          "strokeColorRefId": null,
+                                                          "strokeOpacity": 1,
+                                                          "strokeStyle": null,
+                                                          "strokeWidth": 3,
+                                                          "strokeAlignment": null,
+                                                          "strokeCapStart": null,
+                                                          "strokeCapEnd": null,
+                                                          "strokeColorGradient": null
+                                                        }
+                                                      ],
+                                                      "tokens": {
+                                                        "fill": "faint"
+                                                      },
+                                                      "children": []
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "id": "6bdc1c40-ce96-804f-8008-9a518183ac65",
+                                                  "name": "svg-g",
+                                                  "type": "group",
+                                                  "x": 1099,
+                                                  "y": 104.91000000000008,
+                                                  "width": 140.2300000000032,
+                                                  "height": 20,
+                                                  "rotation": 0,
+                                                  "hidden": false,
+                                                  "fills": [],
+                                                  "strokes": [],
+                                                  "tokens": {},
+                                                  "children": [
+                                                    {
+                                                      "id": "6bdc1c40-ce96-804f-8008-9a5227db9f99",
+                                                      "name": "visual-owner",
+                                                      "type": "text",
+                                                      "x": 1099,
+                                                      "y": 104.91000000000008,
+                                                      "width": 105,
+                                                      "height": 20,
+                                                      "rotation": 0,
+                                                      "hidden": false,
+                                                      "fills": [
+                                                        {
+                                                          "fillColor": "#a4a8b3",
+                                                          "fillOpacity": 1,
+                                                          "fillColorGradient": null,
+                                                          "fillColorRefFile": null,
+                                                          "fillColorRefId": null,
+                                                          "fillImage": null
+                                                        }
+                                                      ],
+                                                      "strokes": [],
+                                                      "tokens": {
+                                                        "fill": "muted"
+                                                      },
+                                                      "characters": "visual-owner ",
+                                                      "fontFamily": "Inter",
+                                                      "fontSize": "16",
+                                                      "fontWeight": "400",
+                                                      "children": []
+                                                    },
+                                                    {
+                                                      "id": "6bdc1c40-ce96-804f-8008-9a5227eadac6",
+                                                      "name": "Owner",
+                                                      "type": "text",
+                                                      "x": 1206.2300000000032,
+                                                      "y": 109.91000000000008,
+                                                      "width": 33,
+                                                      "height": 13,
+                                                      "rotation": 0,
+                                                      "hidden": false,
+                                                      "fills": [
+                                                        {
+                                                          "fillColor": "#727784",
+                                                          "fillOpacity": 1,
+                                                          "fillColorGradient": null,
+                                                          "fillColorRefFile": null,
+                                                          "fillColorRefId": null,
+                                                          "fillImage": null
+                                                        }
+                                                      ],
+                                                      "strokes": [],
+                                                      "tokens": {
+                                                        "fill": "faint"
+                                                      },
+                                                      "characters": "Owner",
+                                                      "fontFamily": "Inter",
+                                                      "fontSize": "10.4",
+                                                      "fontWeight": "400",
+                                                      "children": []
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a5227bcd14f",
+                                          "name": "OWNER — 1",
+                                          "type": "text",
+                                          "x": 1059,
+                                          "y": 73,
+                                          "width": 66,
+                                          "height": 14,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#727784",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "faint"
+                                          },
+                                          "characters": "OWNER — 1",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "11.52",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5181841acb",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 1059,
+                                      "y": 159.11000000000013,
+                                      "width": 68,
+                                      "height": 14,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a5227f9ab5e",
+                                          "name": "ONLINE — 0",
+                                          "type": "text",
+                                          "x": 1059,
+                                          "y": 159.11000000000013,
+                                          "width": 68,
+                                          "height": 14,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#727784",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "faint"
+                                          },
+                                          "characters": "ONLINE — 0",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "11.52",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a5181844db8",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 1059,
+                                      "y": 199.2199999999998,
+                                      "width": 73,
+                                      "height": 14,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a5228084f19",
+                                          "name": "OFFLINE — 0",
+                                          "type": "text",
+                                          "x": 1059,
+                                          "y": 199.2199999999998,
+                                          "width": 73,
+                                          "height": 14,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#727784",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "faint"
+                                          },
+                                          "characters": "OFFLINE — 0",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "11.52",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "6bdc1c40-ce96-804f-8008-9a5181848e17",
+                          "name": "svg-g",
+                          "type": "group",
+                          "x": 328,
+                          "y": 642,
+                          "width": 696,
+                          "height": 46,
+                          "rotation": 0,
+                          "hidden": false,
+                          "fills": [],
+                          "strokes": [],
+                          "tokens": {},
+                          "children": [
+                            {
+                              "id": "6bdc1c40-ce96-804f-8008-9a531bf19878",
+                              "name": "Composer / Default",
+                              "type": "board",
+                              "x": 328,
+                              "y": 642,
+                              "width": 696,
+                              "height": 46,
+                              "rotation": 0,
+                              "hidden": false,
+                              "fills": [],
+                              "strokes": [],
+                              "tokens": {},
+                              "children": [
+                                {
+                                  "id": "6bdc1c40-ce96-804f-8008-9a531bf19879",
+                                  "name": "Composer / Default",
+                                  "type": "group",
+                                  "x": 328,
+                                  "y": 642,
+                                  "width": 696,
+                                  "height": 46,
+                                  "rotation": 0,
+                                  "hidden": false,
+                                  "fills": [],
+                                  "strokes": [],
+                                  "tokens": {},
+                                  "children": [
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531bf1987a",
+                                      "name": "svg-rect",
+                                      "type": "rectangle",
+                                      "x": 328,
+                                      "y": 642,
+                                      "width": 696,
+                                      "height": 46,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#222329",
+                                          "fillOpacity": null,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": []
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531bf1987b",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 337,
+                                      "y": 648,
+                                      "width": 636,
+                                      "height": 34,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bf1987c",
+                                          "name": "svg-rect",
+                                          "type": "rectangle",
+                                          "x": 337,
+                                          "y": 648,
+                                          "width": 636,
+                                          "height": 34,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#202127",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {
+                                            "fill": "bg-elevated"
+                                          },
+                                          "children": []
+                                        },
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bf1987d",
+                                          "name": "Message #general",
+                                          "type": "text",
+                                          "x": 341,
+                                          "y": 654,
+                                          "width": 141,
+                                          "height": 20,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [
+                                            {
+                                              "fillColor": "#757575",
+                                              "fillOpacity": 1,
+                                              "fillColorGradient": null,
+                                              "fillColorRefFile": null,
+                                              "fillColorRefId": null,
+                                              "fillImage": null
+                                            }
+                                          ],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "characters": "Message #general",
+                                          "fontFamily": "Inter",
+                                          "fontSize": "16",
+                                          "fontWeight": "400",
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531bf1987e",
+                                      "name": "svg-g",
+                                      "type": "group",
+                                      "x": 990.5012475401163,
+                                      "y": 657.0408316887915,
+                                      "width": 14.578752860426903,
+                                      "height": 15.45792018994689,
+                                      "rotation": 0,
+                                      "hidden": false,
+                                      "fills": [],
+                                      "strokes": [],
+                                      "tokens": {},
+                                      "children": [
+                                        {
+                                          "id": "6bdc1c40-ce96-804f-8008-9a531bf1987f",
+                                          "name": "Icon / paperclip",
+                                          "type": "group",
+                                          "x": 990.5012475401163,
+                                          "y": 657.0408316887915,
+                                          "width": 14.578752860426903,
+                                          "height": 15.45792018994689,
+                                          "rotation": 0,
+                                          "hidden": false,
+                                          "fills": [],
+                                          "strokes": [],
+                                          "tokens": {},
+                                          "children": [
+                                            {
+                                              "id": "6bdc1c40-ce96-804f-8008-9a531bf19880",
+                                              "name": "svg-path",
+                                              "type": "path",
+                                              "x": 990.5012475401163,
+                                              "y": 657.0408316887915,
+                                              "width": 14.578752860426903,
+                                              "height": 15.45792018994689,
+                                              "rotation": 0,
+                                              "hidden": false,
+                                              "fills": [],
+                                              "strokes": [
+                                                {
+                                                  "strokeColor": "#a4a8b3",
+                                                  "strokeColorRefFile": null,
+                                                  "strokeColorRefId": null,
+                                                  "strokeOpacity": 1,
+                                                  "strokeStyle": null,
+                                                  "strokeWidth": 2,
+                                                  "strokeAlignment": null,
+                                                  "strokeCapStart": "round",
+                                                  "strokeCapEnd": "round",
+                                                  "strokeColorGradient": null
+                                                }
+                                              ],
+                                              "tokens": {},
+                                              "children": []
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "6bdc1c40-ce96-804f-8008-9a531bf1eb13",
+                                      "name": "Message #general",
+                                      "type": "text",
+                                      "x": 336,
+                                      "y": 665.5,
+                                      "width": 116,
+                                      "height": 16,
+                                      "rotation": 0,
+                                      "hidden": true,
+                                      "fills": [
+                                        {
+                                          "fillColor": "#a4a8b3",
+                                          "fillOpacity": 1,
+                                          "fillColorGradient": null,
+                                          "fillColorRefFile": null,
+                                          "fillColorRefId": null,
+                                          "fillImage": null
+                                        }
+                                      ],
+                                      "strokes": [],
+                                      "tokens": {
+                                        "fill": "muted"
+                                      },
+                                      "characters": "Message #general",
+                                      "fontFamily": "Inter",
+                                      "fontSize": "12.8",
+                                      "fontWeight": "400",
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531b832c52",
+      "name": "Avatar / Avatar / Message",
+      "type": "board",
+      "x": 1400,
+      "y": 0,
+      "width": 40,
+      "height": 40,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a531b783de4",
+          "name": "Avatar / Message",
+          "type": "group",
+          "x": 1400,
+          "y": 0,
+          "width": 40,
+          "height": 40,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531b783de5",
+              "name": "svg-rect",
+              "type": "rectangle",
+              "x": 1400,
+              "y": 0,
+              "width": 40,
+              "height": 40,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#6d75e8",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "brand"
+              },
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531b783de6",
+              "name": "V",
+              "type": "text",
+              "x": 1413.8000000000002,
+              "y": 9.799999999999955,
+              "width": 13,
+              "height": 20,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#f0f1f5",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "text"
+              },
+              "characters": "V",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "400",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531ba08dd8",
+      "name": "Navigation / Navigation / Channel selected",
+      "type": "board",
+      "x": 1400,
+      "y": 150,
+      "width": 223,
+      "height": 40,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a531b96de71",
+          "name": "Navigation / Channel selected",
+          "type": "group",
+          "x": 1400,
+          "y": 150,
+          "width": 223,
+          "height": 40,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531b96de72",
+              "name": "svg-rect",
+              "type": "rectangle",
+              "x": 1400,
+              "y": 150,
+              "width": 223,
+              "height": 40,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#30323a",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "bg-active"
+              },
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531b96de73",
+              "name": "#",
+              "type": "text",
+              "x": 1409,
+              "y": 159.9999999999998,
+              "width": 13,
+              "height": 24,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#727784",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "faint"
+              },
+              "characters": "#",
+              "fontFamily": "Inter",
+              "fontSize": "20",
+              "fontWeight": "400",
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531b96de74",
+              "name": "general",
+              "type": "text",
+              "x": 1433.7700000000004,
+              "y": 159.79999999999998,
+              "width": 58,
+              "height": 20,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#f0f1f5",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "text"
+              },
+              "characters": "general",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "400",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531bc3e8d1",
+      "name": "Message / Message / Row",
+      "type": "board",
+      "x": 1400,
+      "y": 300,
+      "width": 383,
+      "height": 41.3900000000001,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a531bb8f210",
+          "name": "Message / Row",
+          "type": "group",
+          "x": 1400,
+          "y": 300,
+          "width": 383,
+          "height": 41.3900000000001,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531bb93360",
+              "name": "Avatar / Message",
+              "type": "board",
+              "x": 1400,
+              "y": 300,
+              "width": 40,
+              "height": 40,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": [
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531bb93364",
+                  "name": "Avatar / Message",
+                  "type": "group",
+                  "x": 1400,
+                  "y": 300,
+                  "width": 40,
+                  "height": 40,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [],
+                  "tokens": {},
+                  "children": [
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a531bb93365",
+                      "name": "svg-rect",
+                      "type": "rectangle",
+                      "x": 1400,
+                      "y": 300,
+                      "width": 40,
+                      "height": 40,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [
+                        {
+                          "fillColor": "#6d75e8",
+                          "fillOpacity": 1,
+                          "fillColorGradient": null,
+                          "fillColorRefFile": null,
+                          "fillColorRefId": null,
+                          "fillImage": null
+                        }
+                      ],
+                      "strokes": [],
+                      "tokens": {
+                        "fill": "brand"
+                      },
+                      "children": []
+                    },
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a531bb93366",
+                      "name": "V",
+                      "type": "text",
+                      "x": 1413.8000000000002,
+                      "y": 309.79999999999995,
+                      "width": 13,
+                      "height": 20,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [
+                        {
+                          "fillColor": "#f0f1f5",
+                          "fillOpacity": 1,
+                          "fillColorGradient": null,
+                          "fillColorRefFile": null,
+                          "fillColorRefId": null,
+                          "fillImage": null
+                        }
+                      ],
+                      "strokes": [],
+                      "tokens": {
+                        "fill": "text"
+                      },
+                      "characters": "V",
+                      "fontFamily": "Inter",
+                      "fontSize": "16",
+                      "fontWeight": "400",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531bb93361",
+              "name": "visual-owner",
+              "type": "text",
+              "x": 1456,
+              "y": 300,
+              "width": 95,
+              "height": 19,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#a4a8b3",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "muted"
+              },
+              "characters": "visual-owner",
+              "fontFamily": "Inter",
+              "fontSize": "15.2",
+              "fontWeight": "400",
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531bb93362",
+              "name": "12:00",
+              "type": "text",
+              "x": 1562.9699999999993,
+              "y": 304,
+              "width": 28,
+              "height": 14,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#727784",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "faint"
+              },
+              "characters": "12:00",
+              "fontFamily": "Inter",
+              "fontSize": "10.88",
+              "fontWeight": "400",
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531bb93363",
+              "name": "Welcome to the deterministic visual fixture.",
+              "type": "text",
+              "x": 1456,
+              "y": 321.3900000000001,
+              "width": 327,
+              "height": 20,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#d9dbe2",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {},
+              "characters": "Welcome to the deterministic visual fixture.",
+              "fontFamily": "Inter",
+              "fontSize": "16",
+              "fontWeight": "400",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531bee81eb",
+      "name": "Composer / Composer / Default",
+      "type": "board",
+      "x": 1400,
+      "y": 450,
+      "width": 696,
+      "height": 46,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a531be3dcfe",
+          "name": "Composer / Default",
+          "type": "group",
+          "x": 1400,
+          "y": 450,
+          "width": 696,
+          "height": 46,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531be3dcff",
+              "name": "svg-rect",
+              "type": "rectangle",
+              "x": 1400,
+              "y": 450,
+              "width": 696,
+              "height": 46,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#222329",
+                  "fillOpacity": null,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {},
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531be3dd00",
+              "name": "svg-g",
+              "type": "group",
+              "x": 1409,
+              "y": 456,
+              "width": 636,
+              "height": 34,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": [
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531be3dd03",
+                  "name": "svg-rect",
+                  "type": "rectangle",
+                  "x": 1409,
+                  "y": 456,
+                  "width": 636,
+                  "height": 34,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [
+                    {
+                      "fillColor": "#202127",
+                      "fillOpacity": 1,
+                      "fillColorGradient": null,
+                      "fillColorRefFile": null,
+                      "fillColorRefId": null,
+                      "fillImage": null
+                    }
+                  ],
+                  "strokes": [],
+                  "tokens": {
+                    "fill": "bg-elevated"
+                  },
+                  "children": []
+                },
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531be3dd04",
+                  "name": "Message #general",
+                  "type": "text",
+                  "x": 1413,
+                  "y": 462,
+                  "width": 141,
+                  "height": 20,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [
+                    {
+                      "fillColor": "#757575",
+                      "fillOpacity": 1,
+                      "fillColorGradient": null,
+                      "fillColorRefFile": null,
+                      "fillColorRefId": null,
+                      "fillImage": null
+                    }
+                  ],
+                  "strokes": [],
+                  "tokens": {},
+                  "characters": "Message #general",
+                  "fontFamily": "Inter",
+                  "fontSize": "16",
+                  "fontWeight": "400",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531be3dd01",
+              "name": "svg-g",
+              "type": "group",
+              "x": 2062.5012475401163,
+              "y": 465.0408316887915,
+              "width": 14.578752860426903,
+              "height": 15.45792018994689,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": [
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531be3dd05",
+                  "name": "Icon / paperclip",
+                  "type": "group",
+                  "x": 2062.5012475401163,
+                  "y": 465.0408316887915,
+                  "width": 14.578752860426903,
+                  "height": 15.45792018994689,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [],
+                  "tokens": {},
+                  "children": [
+                    {
+                      "id": "6bdc1c40-ce96-804f-8008-9a531be3dd06",
+                      "name": "svg-path",
+                      "type": "path",
+                      "x": 2062.5012475401163,
+                      "y": 465.0408316887915,
+                      "width": 14.578752860426903,
+                      "height": 15.45792018994689,
+                      "rotation": 0,
+                      "hidden": false,
+                      "fills": [],
+                      "strokes": [
+                        {
+                          "strokeColor": "#a4a8b3",
+                          "strokeColorRefFile": null,
+                          "strokeColorRefId": null,
+                          "strokeOpacity": 1,
+                          "strokeStyle": null,
+                          "strokeWidth": 2,
+                          "strokeAlignment": null,
+                          "strokeCapStart": "round",
+                          "strokeCapEnd": "round",
+                          "strokeColorGradient": null
+                        }
+                      ],
+                      "tokens": {},
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531be3dd02",
+              "name": "Message #general",
+              "type": "text",
+              "x": 1408,
+              "y": 473.5,
+              "width": 116,
+              "height": 16,
+              "rotation": 0,
+              "hidden": true,
+              "fills": [
+                {
+                  "fillColor": "#a4a8b3",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "muted"
+              },
+              "characters": "Message #general",
+              "fontFamily": "Inter",
+              "fontSize": "12.8",
+              "fontWeight": "400",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531c0a93ee",
+      "name": "Button / Button / Home",
+      "type": "board",
+      "x": 1400,
+      "y": 600,
+      "width": 48,
+      "height": 48,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a531c0212f3",
+          "name": "Button / Home",
+          "type": "group",
+          "x": 1400,
+          "y": 600,
+          "width": 48,
+          "height": 48,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [],
+          "strokes": [],
+          "tokens": {},
+          "children": [
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531c0212f4",
+              "name": "svg-rect",
+              "type": "rectangle",
+              "x": 1400,
+              "y": 600,
+              "width": 48,
+              "height": 48,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [
+                {
+                  "fillColor": "#6d75e8",
+                  "fillOpacity": 1,
+                  "fillColorGradient": null,
+                  "fillColorRefFile": null,
+                  "fillColorRefId": null,
+                  "fillImage": null
+                }
+              ],
+              "strokes": [],
+              "tokens": {
+                "fill": "brand"
+              },
+              "children": []
+            },
+            {
+              "id": "6bdc1c40-ce96-804f-8008-9a531c0212f5",
+              "name": "Icon / home",
+              "type": "group",
+              "x": 1415.75,
+              "y": 615.75,
+              "width": 16.5,
+              "height": 15.583333333333371,
+              "rotation": 0,
+              "hidden": false,
+              "fills": [],
+              "strokes": [],
+              "tokens": {},
+              "children": [
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531c0212f6",
+                  "name": "svg-path",
+                  "type": "path",
+                  "x": 1415.75,
+                  "y": 615.75,
+                  "width": 16.5,
+                  "height": 7.333333333333371,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "strokeColor": "#ffffff",
+                      "strokeColorRefFile": null,
+                      "strokeColorRefId": null,
+                      "strokeOpacity": 1,
+                      "strokeStyle": null,
+                      "strokeWidth": 2,
+                      "strokeAlignment": null,
+                      "strokeCapStart": "round",
+                      "strokeCapEnd": "round",
+                      "strokeColorGradient": null
+                    }
+                  ],
+                  "tokens": {},
+                  "children": []
+                },
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531c0212f7",
+                  "name": "svg-path",
+                  "type": "path",
+                  "x": 1417.5833333333333,
+                  "y": 622.1666666666666,
+                  "width": 12.833333333333485,
+                  "height": 9.166666666666742,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "strokeColor": "#ffffff",
+                      "strokeColorRefFile": null,
+                      "strokeColorRefId": null,
+                      "strokeOpacity": 1,
+                      "strokeStyle": null,
+                      "strokeWidth": 2,
+                      "strokeAlignment": null,
+                      "strokeCapStart": "round",
+                      "strokeCapEnd": "round",
+                      "strokeColorGradient": null
+                    }
+                  ],
+                  "tokens": {},
+                  "children": []
+                },
+                {
+                  "id": "6bdc1c40-ce96-804f-8008-9a531c0212f8",
+                  "name": "svg-path",
+                  "type": "path",
+                  "x": 1421.25,
+                  "y": 625.8333333333334,
+                  "width": 5.5,
+                  "height": 5.5,
+                  "rotation": 0,
+                  "hidden": false,
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "strokeColor": "#ffffff",
+                      "strokeColorRefFile": null,
+                      "strokeColorRefId": null,
+                      "strokeOpacity": 1,
+                      "strokeStyle": null,
+                      "strokeWidth": 2,
+                      "strokeAlignment": null,
+                      "strokeCapStart": "round",
+                      "strokeCapEnd": "round",
+                      "strokeColorGradient": null
+                    }
+                  ],
+                  "tokens": {},
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a5665418794",
+      "name": "Verification — temporary",
+      "type": "board",
+      "x": 2200,
+      "y": 0,
+      "width": 100,
+      "height": 100,
+      "rotation": 0,
+      "hidden": false,
+      "fills": [
+        {
+          "fillColor": "#ffffff",
+          "fillOpacity": 1,
+          "fillColorGradient": null,
+          "fillColorRefFile": null,
+          "fillColorRefId": null,
+          "fillImage": null
+        }
+      ],
+      "strokes": [],
+      "tokens": {},
+      "children": [
+        {
+          "id": "6bdc1c40-ce96-804f-8008-9a56654f4d7a",
+          "name": "Rectangle",
+          "type": "rectangle",
+          "x": 2210,
+          "y": 10,
+          "width": 20,
+          "height": 20,
+          "rotation": 0,
+          "hidden": false,
+          "fills": [
+            {
+              "fillColor": "#ff0000",
+              "fillOpacity": 1,
+              "fillColorGradient": null,
+              "fillColorRefFile": null,
+              "fillColorRefId": null,
+              "fillImage": null
+            }
+          ],
+          "strokes": [],
+          "tokens": {},
+          "children": []
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531b83a570",
+      "name": "Message",
+      "main": "6bdc1c40-ce96-804f-8008-9a531b832c52"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531ba1031f",
+      "name": "Channel selected",
+      "main": "6bdc1c40-ce96-804f-8008-9a531ba08dd8"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531bc45d0e",
+      "name": "Row",
+      "main": "6bdc1c40-ce96-804f-8008-9a531bc3e8d1"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531bef27b6",
+      "name": "Default",
+      "main": "6bdc1c40-ce96-804f-8008-9a531bee81eb"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a531c0b1da8",
+      "name": "Home",
+      "main": "6bdc1c40-ce96-804f-8008-9a531c0a93ee"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "AllChat",
+      "active": true,
+      "tokens": [
+        {
+          "name": "bg-active",
+          "type": "color",
+          "value": "#30323a"
+        },
+        {
+          "name": "bg-elevated",
+          "type": "color",
+          "value": "#202127"
+        },
+        {
+          "name": "bg-hover",
+          "type": "color",
+          "value": "#26282f"
+        },
+        {
+          "name": "bg-input",
+          "type": "color",
+          "value": "#202127"
+        },
+        {
+          "name": "bg-main",
+          "type": "color",
+          "value": "#18191e"
+        },
+        {
+          "name": "bg-rail",
+          "type": "color",
+          "value": "#0d0e11"
+        },
+        {
+          "name": "bg-sidebar",
+          "type": "color",
+          "value": "#111216"
+        },
+        {
+          "name": "border",
+          "type": "color",
+          "value": "rgba(255,255,255,.065)"
+        },
+        {
+          "name": "brand",
+          "type": "color",
+          "value": "#6d75e8"
+        },
+        {
+          "name": "brand-hover",
+          "type": "color",
+          "value": "#5962d6"
+        },
+        {
+          "name": "faint",
+          "type": "color",
+          "value": "#727784"
+        },
+        {
+          "name": "green",
+          "type": "color",
+          "value": "#35b978"
+        },
+        {
+          "name": "muted",
+          "type": "color",
+          "value": "#a4a8b3"
+        },
+        {
+          "name": "radius",
+          "type": "dimension",
+          "value": "8px"
+        },
+        {
+          "name": "rail",
+          "type": "dimension",
+          "value": "72px"
+        },
+        {
+          "name": "red",
+          "type": "color",
+          "value": "#e85561"
+        },
+        {
+          "name": "sidebar",
+          "type": "dimension",
+          "value": "240px"
+        },
+        {
+          "name": "text",
+          "type": "color",
+          "value": "#f0f1f5"
+        },
+        {
+          "name": "yellow",
+          "type": "color",
+          "value": "#d9a441"
+        },
+        {
+          "name": "typography.size-0",
+          "type": "dimension",
+          "value": "0px"
+        },
+        {
+          "name": "typography.size-10-4",
+          "type": "dimension",
+          "value": "10.4px"
+        },
+        {
+          "name": "typography.size-10-88",
+          "type": "dimension",
+          "value": "10.88px"
+        },
+        {
+          "name": "typography.size-11-52",
+          "type": "dimension",
+          "value": "11.52px"
+        },
+        {
+          "name": "typography.size-12",
+          "type": "dimension",
+          "value": "12px"
+        },
+        {
+          "name": "typography.size-12-8",
+          "type": "dimension",
+          "value": "12.8px"
+        },
+        {
+          "name": "typography.size-13-6",
+          "type": "dimension",
+          "value": "13.6px"
+        },
+        {
+          "name": "typography.size-15-2",
+          "type": "dimension",
+          "value": "15.2px"
+        },
+        {
+          "name": "typography.size-16",
+          "type": "dimension",
+          "value": "16px"
+        },
+        {
+          "name": "typography.size-17-6",
+          "type": "dimension",
+          "value": "17.6px"
+        },
+        {
+          "name": "typography.size-18-4",
+          "type": "dimension",
+          "value": "18.4px"
+        },
+        {
+          "name": "typography.size-22-4",
+          "type": "dimension",
+          "value": "22.4px"
+        },
+        {
+          "name": "spacing.space-0",
+          "type": "dimension",
+          "value": "0px"
+        },
+        {
+          "name": "spacing.space-2",
+          "type": "dimension",
+          "value": "2px"
+        },
+        {
+          "name": "spacing.space-3",
+          "type": "dimension",
+          "value": "3px"
+        },
+        {
+          "name": "spacing.space-4",
+          "type": "dimension",
+          "value": "4px"
+        },
+        {
+          "name": "spacing.space-5",
+          "type": "dimension",
+          "value": "5px"
+        },
+        {
+          "name": "spacing.space-6",
+          "type": "dimension",
+          "value": "6px"
+        },
+        {
+          "name": "spacing.space-6-4",
+          "type": "dimension",
+          "value": "6.4px"
+        },
+        {
+          "name": "spacing.space-7",
+          "type": "dimension",
+          "value": "7px"
+        },
+        {
+          "name": "spacing.space-8",
+          "type": "dimension",
+          "value": "8px"
+        },
+        {
+          "name": "spacing.space-9",
+          "type": "dimension",
+          "value": "9px"
+        },
+        {
+          "name": "spacing.space-10",
+          "type": "dimension",
+          "value": "10px"
+        },
+        {
+          "name": "spacing.space-12",
+          "type": "dimension",
+          "value": "12px"
+        },
+        {
+          "name": "spacing.space-14",
+          "type": "dimension",
+          "value": "14px"
+        },
+        {
+          "name": "spacing.space-16",
+          "type": "dimension",
+          "value": "16px"
+        },
+        {
+          "name": "spacing.space-18",
+          "type": "dimension",
+          "value": "18px"
+        },
+        {
+          "name": "spacing.space-28",
+          "type": "dimension",
+          "value": "28px"
+        },
+        {
+          "name": "spacing.space-48",
+          "type": "dimension",
+          "value": "48px"
+        },
+        {
+          "name": "spacing.space-72",
+          "type": "dimension",
+          "value": "72px"
+        },
+        {
+          "name": "spacing.space-132",
+          "type": "dimension",
+          "value": "132px"
+        }
+      ]
+    }
+  ],
+  "status": "Recovery snapshot only; not a native Penpot export or verified baseline"
+}

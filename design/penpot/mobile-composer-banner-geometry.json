@@ -1,0 +1,48 @@
+[
+  {
+    "name": "reply-composer-light",
+    "label": "Replying to visual-owner",
+    "bounds": [
+      26,
+      2026,
+      1054,
+      2168
+    ],
+    "labelBounds": [
+      57,
+      2071,
+      941,
+      2122
+    ],
+    "closeBounds": [
+      940,
+      2047,
+      1022,
+      2147
+    ],
+    "boundsEvidence": "Container flattened in accessibility tree; derived from child bounds and source padding/margins"
+  },
+  {
+    "name": "edit-composer-light",
+    "label": "Editing your Message",
+    "bounds": [
+      26,
+      1978,
+      1054,
+      2120
+    ],
+    "labelBounds": [
+      57,
+      2023,
+      941,
+      2074
+    ],
+    "closeBounds": [
+      940,
+      1999,
+      1022,
+      2099
+    ],
+    "boundsEvidence": "Container flattened in accessibility tree; derived from child bounds and source padding/margins"
+  }
+]

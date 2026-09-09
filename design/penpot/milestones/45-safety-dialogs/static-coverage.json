@@ -1,0 +1,2361 @@
+{
+  "scope": "Desktop first; complete static coverage, no new prototypes",
+  "families": [
+    {
+      "id": "desktop-shell",
+      "scope": "Title bar, update banner, tray and window states",
+      "source": "desktop/src/renderer/app.tsx:438",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "community-manager",
+      "scope": "Add/edit/remove communities, sign-in accounts, empty/error states",
+      "source": "desktop/src/renderer/app.tsx:16",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "authentication",
+      "scope": "Sign in, Register, Recovery and validation states",
+      "source": "desktop/src/renderer/app.tsx:16",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "main-navigation",
+      "scope": "Community menu, channel/DM navigation and member presence",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "main-popovers",
+      "scope": "Notification popover, search filter menu and role variants",
+      "source": "desktop/src/renderer/app.tsx:1240",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "messages",
+      "scope": "Message actions, reply/edit/delete, reactions, emoji, pinned messages",
+      "source": "desktop/src/renderer/app.tsx:1548",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "composer",
+      "scope": "Mention suggestions, draft/edit/reply, attachments and errors",
+      "source": "desktop/src/renderer/app.tsx:1548",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "rich-content",
+      "scope": "Code, links, files, image/video/audio, previews and lightbox",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "members",
+      "scope": "Member list, member card, profile/status, block controls",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "search",
+      "scope": "Filters, results, empty/error/loading/pagination",
+      "source": "desktop/src/renderer/app.tsx:1393",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "calls-media",
+      "scope": "Voice room, direct calls, incoming/outgoing, media controls, screen share",
+      "source": "desktop/src/renderer/app.tsx:2107",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "activities",
+      "scope": "Activities picker, soundboard and sketchboard surfaces",
+      "source": "desktop/src/renderer/app.tsx:457",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "profile-settings",
+      "scope": "Account/profile/avatar/banner controls and states",
+      "source": "desktop/src/renderer/app.tsx:3672",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "voice-video-settings",
+      "scope": "Devices, capture, processing and preview controls",
+      "source": "desktop/src/renderer/app.tsx:3556",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "notification-settings",
+      "scope": "Community/channel notification forms and states",
+      "source": "desktop/src/renderer/app.tsx:3465",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "ringtone-settings",
+      "scope": "Default/custom ringtone upload, playback and errors",
+      "source": "desktop/src/renderer/app.tsx:3536",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "sessions-safety",
+      "scope": "Sessions, blocking, reports and moderation records",
+      "source": "desktop/src/renderer/app.tsx:3736",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "administration",
+      "scope": "Dashboard, community settings, roles, invitations, channels and permissions",
+      "source": "desktop/src/renderer/app.tsx:3265",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    },
+    {
+      "id": "os-dialogs",
+      "scope": "File pickers, permission prompts and native dropdowns",
+      "source": "desktop/src/main/window-policy.ts",
+      "status": "needs item-level audit",
+      "note": "Historical artifacts are references, not proof of current Penpot coverage"
+    }
+  ],
+  "items": [
+    {
+      "key": "community-owner",
+      "id": "7299a615-462e-803f-8008-9b99d5b7163a",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:998",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "community-member",
+      "id": "7299a615-462e-803f-8008-9b99d6995243",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:998",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "presence",
+      "id": "7299a615-462e-803f-8008-9b99d71e936b",
+      "family": "main-navigation",
+      "source": "desktop/src/renderer/app.tsx:1154",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected in milestone 11",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "search-filters",
+      "id": "7299a615-462e-803f-8008-9b99d7bf7fc6",
+      "family": "main-popovers",
+      "source": "desktop/src/renderer/app.tsx:1393",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected",
+      "remaining": [
+        "hover/focus references"
+      ]
+    },
+    {
+      "key": "notifications",
+      "id": "7299a615-462e-803f-8008-9b99d943ce27",
+      "family": "main-popovers",
+      "source": "desktop/src/renderer/app.tsx:1256",
+      "state": "open/default",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "render inspected",
+      "remaining": [
+        "hover/focus references",
+        "applicable alternate values/checked states"
+      ]
+    },
+    {
+      "key": "own-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1b7f9d73",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "other-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c0a8649",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "pinned-actions",
+      "id": "7299a615-462e-803f-8008-9b9b1c8158a0",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "deleted",
+      "id": "7299a615-462e-803f-8008-9b9b1d22f537",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1600",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "reply-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d431b5a",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1767",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "edit-composer",
+      "id": "7299a615-462e-803f-8008-9b9b1d94f293",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1767",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime-reference comparison",
+        "applicable hover/focus refinements"
+      ]
+    },
+    {
+      "key": "reaction-empty",
+      "id": "7299a615-462e-803f-8008-9b9cbbe9057a",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "reaction-custom",
+      "id": "7299a615-462e-803f-8008-9b9cc31a4150",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:2781",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "mentions",
+      "id": "7299a615-462e-803f-8008-9b9cca2d2c61",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1853",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "pins-empty",
+      "id": "7299a615-462e-803f-8008-9b9ccb85b974",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1599",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "pins-populated",
+      "id": "7299a615-462e-803f-8008-9b9cccb6de3d",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1599",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "saveVerification": "confirmed in milestone 13 revision 35",
+      "remaining": [
+        "source geometry comparison"
+      ]
+    },
+    {
+      "key": "file-pending",
+      "id": "7299a615-462e-803f-8008-9b9e204df504",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:2826",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "remove-hover",
+      "id": "7299a615-462e-803f-8008-9b9e21cffcca",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:2826",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-drag",
+      "id": "7299a615-462e-803f-8008-9b9e235931b3",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1752",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-loading",
+      "id": "7299a615-462e-803f-8008-9b9e23d1d078",
+      "family": "rich-content",
+      "source": "desktop/src/renderer/app.tsx:2983",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "file-download",
+      "id": "7299a615-462e-803f-8008-9b9e255460cf",
+      "family": "rich-content",
+      "source": "desktop/src/renderer/app.tsx:2983",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "typing",
+      "id": "7299a615-462e-803f-8008-9b9e26d687e2",
+      "family": "composer",
+      "source": "desktop/src/renderer/app.tsx:1752",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered in local Chromium and visually inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "reply-excerpt",
+      "id": "7299a615-462e-803f-8008-9b9fddef6299",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1615",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered locally and inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "reply-deleted-excerpt",
+      "id": "7299a615-462e-803f-8008-9b9fdf04a601",
+      "family": "messages",
+      "source": "desktop/src/renderer/app.tsx:1615",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "native SVG rendered locally and inspected in milestone 14",
+      "remaining": [
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "account-top",
+      "id": "7299a615-462e-803f-8008-9ba144a91c5e",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1405; ProfileImages:3672",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Re-rendered and inspected in milestone 16 after source-defined profile control style corrections.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "file picker platform reference",
+        "required username validation"
+      ]
+    },
+    {
+      "key": "account-lower",
+      "id": "7299a615-462e-803f-8008-9ba15063b716",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1405; ProfileImages:3672",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Re-rendered and inspected in milestone 16 after source-defined profile control style corrections.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "file picker platform reference",
+        "required username validation"
+      ]
+    },
+    {
+      "key": "sessions-loading",
+      "id": "7299a615-462e-803f-8008-9ba15c091269",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "sessions-empty",
+      "id": "7299a615-462e-803f-8008-9ba16126b9a0",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "sessions-populated",
+      "id": "7299a615-462e-803f-8008-9ba165d477e3",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1472",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG board hierarchy rendered locally and visually inspected in milestone 15; duplicate exported top-level descendants excluded, native clipping retained.",
+      "remaining": [
+        "runtime geometry comparison",
+        "focus/hover and applicable control states",
+        "native Revoke confirmation",
+        "revocation failure feedback audit"
+      ]
+    },
+    {
+      "key": "avatar-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c1c1216a",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3c52fd1ec",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-crop",
+      "id": "7299a615-462e-803f-8008-9ba3c8684a29",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-crop-zoomed",
+      "id": "7299a615-462e-803f-8008-9ba3cb947ca0",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-updated",
+      "id": "7299a615-462e-803f-8008-9ba3cf5eb09b",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "banner-updated",
+      "id": "7299a615-462e-803f-8008-9ba3d0ee18f8",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3672; desktop/src/renderer/styles.css:538",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and inspected in milestone 16. Synthetic landscape fixture.",
+      "remaining": [
+        "full runtime comparison with Inter",
+        "focus/hover control variants",
+        "minimum-window clipping review"
+      ]
+    },
+    {
+      "key": "avatar-crop-cancelled",
+      "id": "7299a615-462e-803f-8008-9ba5684f5c22",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3731",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered and visually inspected in milestone 17",
+      "remaining": [
+        "runtime geometry comparison",
+        "minimum-window variant"
+      ]
+    },
+    {
+      "key": "banner-crop-cancelled",
+      "id": "7299a615-462e-803f-8008-9ba568d424aa",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:3731",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered and visually inspected in milestone 17",
+      "remaining": [
+        "runtime geometry comparison",
+        "minimum-window variant"
+      ]
+    },
+    {
+      "key": "account-username-hover",
+      "id": "7299a615-462e-803f-8008-9ba66a5a66c7",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-username-focus",
+      "id": "7299a615-462e-803f-8008-9ba66af05c14",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-save-focus",
+      "id": "7299a615-462e-803f-8008-9ba66ba256f4",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "account-username-required",
+      "id": "7299a615-462e-803f-8008-9ba66c3a5936",
+      "family": "profile-settings",
+      "source": "desktop/src/renderer/app.tsx:1424; desktop/src/renderer/styles.css:213,260\u2013261",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected; local Chromium CSS measurements and required-field popup screenshot retained in milestone 18",
+      "remaining": [
+        "cross-platform native validation appearance",
+        "full runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "sessions-revoke-confirm",
+      "id": "7299a615-462e-803f-8008-9ba76d5b6065",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1487\u20131500",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native Penpot SVG rendered and visually inspected; confirmation content based on isolated Electron Linux native screenshot",
+      "remaining": [
+        "native dialog placement and window decoration with a window manager",
+        "cross-platform typography and control appearance",
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "sessions-revoked",
+      "id": "7299a615-462e-803f-8008-9ba76f382fbe",
+      "family": "sessions-safety",
+      "source": "desktop/src/renderer/app.tsx:1487\u20131500",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native Penpot SVG rendered and visually inspected; confirmation content based on isolated Electron Linux native screenshot",
+      "remaining": [
+        "native dialog placement and window decoration with a window manager",
+        "cross-platform typography and control appearance",
+        "runtime geometry comparison"
+      ]
+    },
+    {
+      "key": "ringtone-generated",
+      "id": "7299a615-462e-803f-8008-9ba890dc36cd",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-community",
+      "id": "7299a615-462e-803f-8008-9ba897b59b5f",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-custom",
+      "id": "7299a615-462e-803f-8008-9ba89e4e86ec",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-saved",
+      "id": "7299a615-462e-803f-8008-9ba8a546b65d",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-error",
+      "id": "7299a615-462e-803f-8008-9ba8ac6d87a6",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-reset",
+      "id": "7299a615-462e-803f-8008-9ba8b3589d3c",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-muted",
+      "id": "7299a615-462e-803f-8008-9ba8ba893bb0",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3536; RingtoneSetting:3378",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG hierarchy rendered locally and visually inspected in milestone 20",
+      "remaining": [
+        "ringtone-state-audit.md remaining variants",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-error-custom",
+      "id": "7299a615-462e-803f-8008-9ba95973bbdb",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-reset-generated",
+      "id": "7299a615-462e-803f-8008-9ba95a5fa1b2",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-volume-half",
+      "id": "7299a615-462e-803f-8008-9ba95b505c31",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/app.tsx:3378,3536",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 21",
+      "remaining": [
+        "hover/focus states",
+        "minimum-window review",
+        "runtime geometry and typography comparison"
+      ]
+    },
+    {
+      "key": "ringtone-file-focus",
+      "id": "7299a615-462e-803f-8008-9baa945abd7e",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-reset-focus",
+      "id": "7299a615-462e-803f-8008-9baa94a6184f",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-volume-focus",
+      "id": "7299a615-462e-803f-8008-9baa94e88bca",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum",
+      "id": "7299a615-462e-803f-8008-9baa9531a870",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum-custom",
+      "id": "7299a615-462e-803f-8008-9baa95f10334",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "ringtone-minimum-scrolled",
+      "id": "7299a615-462e-803f-8008-9baa96c73618",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:213,407; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered at board dimensions and visually inspected in milestone 22; minimum layout and focus measured locally with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "native file picker"
+      ]
+    },
+    {
+      "key": "notifications-empty",
+      "id": "7299a615-462e-803f-8008-9babc636b1cd",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-overrides",
+      "id": "7299a615-462e-803f-8008-9baba02cddd8",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-muted",
+      "id": "7299a615-462e-803f-8008-9bab8dded5b7",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "notifications-default",
+      "id": "7299a615-462e-803f-8008-9bab7c636cf4",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3465\u20133534",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "notification-state-audit.md remaining states"
+      ]
+    },
+    {
+      "key": "ringtone-file-hover",
+      "id": "7299a615-462e-803f-8008-9babd6d4ddb7",
+      "family": "ringtone-settings",
+      "source": "desktop/src/renderer/styles.css:209",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 23",
+      "remaining": [
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-community-saved",
+      "id": "7299a615-462e-803f-8008-9bacf843f0e0",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-community-error",
+      "id": "7299a615-462e-803f-8008-9bacfbd4667b",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-channel-saved",
+      "id": "7299a615-462e-803f-8008-9bacff36ae1b",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-channel-error",
+      "id": "7299a615-462e-803f-8008-9bad0277b7a5",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-community-menu",
+      "id": "7299a615-462e-803f-8008-9bad05d18da2",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-channel-menu",
+      "id": "7299a615-462e-803f-8008-9bad0d9313ea",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/app.tsx:3485\u20133530",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 24; native menu captures retained; repaired channel text verified",
+      "remaining": [
+        "cross-platform native select appearance",
+        "runtime geometry/typography comparison",
+        "minimum-window/control variants"
+      ]
+    },
+    {
+      "key": "notifications-focus-community-level",
+      "id": "7299a615-462e-803f-8008-9baedbc4b79f",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:199,213",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 25",
+      "remaining": [
+        "minimum-window review",
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-focus-community-mute",
+      "id": "7299a615-462e-803f-8008-9baedcf274b4",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:199,213",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 25",
+      "remaining": [
+        "minimum-window review",
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-focus-sound",
+      "id": "7299a615-462e-803f-8008-9baeddeaaf9b",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:199,213",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 25",
+      "remaining": [
+        "minimum-window review",
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-focus-channel-level",
+      "id": "7299a615-462e-803f-8008-9baedf1217f8",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:199,213",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 25",
+      "remaining": [
+        "minimum-window review",
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-focus-channel-mute",
+      "id": "7299a615-462e-803f-8008-9baee03dd0c5",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:199,213",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG rendered and visually inspected in milestone 25",
+      "remaining": [
+        "minimum-window review",
+        "full runtime geometry/typography comparison"
+      ]
+    },
+    {
+      "key": "notifications-minimum",
+      "id": "7299a615-462e-803f-8008-9bafe82b1404",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:198,407,463; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 26; minimum layout/scroll measured with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "additional long-channel and multi-row minimum variants"
+      ]
+    },
+    {
+      "key": "notifications-minimum-scrolled",
+      "id": "7299a615-462e-803f-8008-9baff23815ee",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:198,407,463; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 26; minimum layout/scroll measured with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "additional long-channel and multi-row minimum variants"
+      ]
+    },
+    {
+      "key": "notifications-hover-community",
+      "id": "7299a615-462e-803f-8008-9baffcef5fb7",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:198,407,463; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 26; minimum layout/scroll measured with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "additional long-channel and multi-row minimum variants"
+      ]
+    },
+    {
+      "key": "notifications-hover-channel",
+      "id": "7299a615-462e-803f-8008-9baffe507c74",
+      "family": "notification-settings",
+      "source": "desktop/src/renderer/styles.css:198,407,463; desktop/src/main/window-policy.ts:7",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native SVG visually inspected in milestone 26; minimum layout/scroll measured with source CSS and Inter",
+      "remaining": [
+        "full runtime geometry/typography comparison",
+        "additional long-channel and multi-row minimum variants"
+      ]
+    },
+    {
+      "key": "voice-default",
+      "id": "7299a615-462e-803f-8008-9bb0ebcfd0d7",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; styles.css:438\u2013452; voice-capture.ts defaults",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four refreshed native SVG views visually inspected in milestone 27; sensitivity renders -50 dB",
+      "remaining": [
+        "device/processing/quality menus and alternate values",
+        "test feedback and camera-on states",
+        "focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing",
+      "id": "7299a615-462e-803f-8008-9bb207cf6191",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; styles.css:438\u2013452; voice-capture.ts defaults",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four refreshed native SVG views visually inspected in milestone 27; sensitivity renders -50 dB",
+      "remaining": [
+        "device/processing/quality menus and alternate values",
+        "test feedback and camera-on states",
+        "focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-camera",
+      "id": "7299a615-462e-803f-8008-9bb209ca9b77",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; styles.css:438\u2013452; voice-capture.ts defaults",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four refreshed native SVG views visually inspected in milestone 27; sensitivity renders -50 dB",
+      "remaining": [
+        "device/processing/quality menus and alternate values",
+        "test feedback and camera-on states",
+        "focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-advanced",
+      "id": "7299a615-462e-803f-8008-9bb20b8a0f3c",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; styles.css:438\u2013452; voice-capture.ts defaults",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four refreshed native SVG views visually inspected in milestone 27; sensitivity renders -50 dB",
+      "remaining": [
+        "device/processing/quality menus and alternate values",
+        "test feedback and camera-on states",
+        "focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-feedback-devices-unavailable",
+      "id": "7299a615-462e-803f-8008-9bb55a23d4c4",
+      "notice": "Media devices are unavailable.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-microphone-working",
+      "id": "7299a615-462e-803f-8008-9bb55befc1de",
+      "notice": "Microphone is working.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-microphone-enhanced",
+      "id": "7299a615-462e-803f-8008-9bb55d8b0147",
+      "notice": "Microphone is working with RNNoise.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-microphone-fallback",
+      "id": "7299a615-462e-803f-8008-9bb57ad8b1ae",
+      "notice": "Enhanced RNNoise is unavailable; standard WebRTC suppression is active.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-microphone-error",
+      "id": "7299a615-462e-803f-8008-9bb57c9ef8fa",
+      "notice": "Microphone permission was denied or the selected device is unavailable.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-camera-stopped",
+      "id": "7299a615-462e-803f-8008-9bb57e5c043c",
+      "notice": "Camera preview stopped.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-camera-error",
+      "id": "7299a615-462e-803f-8008-9bb58b558a22",
+      "notice": "Camera permission was denied or the selected device is unavailable.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-speaker-played",
+      "id": "7299a615-462e-803f-8008-9bb58d67aea9",
+      "notice": "Speaker test played.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-feedback-reset",
+      "id": "7299a615-462e-803f-8008-9bb58f618355",
+      "notice": "Voice & Video settings were reset.",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3556\u20133671; voice-capture.ts:95; styles.css:452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Nine final native SVG feedback views visually inspected in milestone 28",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "feedback at other scroll positions and minimum window"
+      ]
+    },
+    {
+      "key": "voice-camera-on-landscape",
+      "id": "7299a615-462e-803f-8008-9bb798ceea98",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3593\u20133613,3654\u20133658; styles.css:450\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three final native SVG views visually inspected in milestone 29; preview dimensions measured from source CSS using synthetic video",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "minimum-window and additional aspect/device fixtures"
+      ]
+    },
+    {
+      "key": "voice-camera-on-portrait",
+      "id": "7299a615-462e-803f-8008-9bb7a2891a50",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3593\u20133613,3654\u20133658; styles.css:450\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three final native SVG views visually inspected in milestone 29; preview dimensions measured from source CSS using synthetic video",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "minimum-window and additional aspect/device fixtures"
+      ]
+    },
+    {
+      "key": "voice-camera-started-notice",
+      "id": "7299a615-462e-803f-8008-9bb7ada686d6",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3593\u20133613,3654\u20133658; styles.css:450\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three final native SVG views visually inspected in milestone 29; preview dimensions measured from source CSS using synthetic video",
+      "remaining": [
+        "full runtime geometry/header/typography comparison",
+        "minimum-window and additional aspect/device fixtures"
+      ]
+    },
+    {
+      "key": "voice-menu-suppression",
+      "id": "7299a615-462e-803f-8008-9bba2c92c34c",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3638\u20133660; styles.css:199,213,443; local Chromium native select captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG menu views visually inspected in milestone 30 against local native-menu references",
+      "remaining": [
+        "selected alternatives and named/long device fixtures",
+        "minimum-window and cross-platform native appearance",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-menu-quality",
+      "id": "7299a615-462e-803f-8008-9bba33365d77",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3638\u20133660; styles.css:199,213,443; local Chromium native select captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG menu views visually inspected in milestone 30 against local native-menu references",
+      "remaining": [
+        "selected alternatives and named/long device fixtures",
+        "minimum-window and cross-platform native appearance",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-menu-microphone",
+      "id": "7299a615-462e-803f-8008-9bbac964311a",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3638\u20133660; styles.css:199,213,443; local Chromium native select captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG menu views visually inspected in milestone 30 against local native-menu references",
+      "remaining": [
+        "selected alternatives and named/long device fixtures",
+        "minimum-window and cross-platform native appearance",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-menu-speaker",
+      "id": "7299a615-462e-803f-8008-9bbad1a85b3a",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3638\u20133660; styles.css:199,213,443; local Chromium native select captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG menu views visually inspected in milestone 30 against local native-menu references",
+      "remaining": [
+        "selected alternatives and named/long device fixtures",
+        "minimum-window and cross-platform native appearance",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-menu-camera",
+      "id": "7299a615-462e-803f-8008-9bbad9787aa7",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3638\u20133660; styles.css:199,213,443; local Chromium native select captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG menu views visually inspected in milestone 30 against local native-menu references",
+      "remaining": [
+        "selected alternatives and named/long device fixtures",
+        "minimum-window and cross-platform native appearance",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing-echo-off",
+      "id": "7299a615-462e-803f-8008-9bbc0cb96e68",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3647\u20133650",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG processing states visually inspected in milestone 31; verifier checks exported sensitivity glyphs",
+      "remaining": [
+        "control focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing-gain-on",
+      "id": "7299a615-462e-803f-8008-9bbc0f34b992",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3647\u20133650",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG processing states visually inspected in milestone 31; verifier checks exported sensitivity glyphs",
+      "remaining": [
+        "control focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing-gate-off",
+      "id": "7299a615-462e-803f-8008-9bbc12efc7e4",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3647\u20133650",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG processing states visually inspected in milestone 31; verifier checks exported sensitivity glyphs",
+      "remaining": [
+        "control focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing-threshold-min",
+      "id": "7299a615-462e-803f-8008-9bbc32bc811a",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3647\u20133650",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG processing states visually inspected in milestone 31; verifier checks exported sensitivity glyphs",
+      "remaining": [
+        "control focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-processing-threshold-max",
+      "id": "7299a615-462e-803f-8008-9bbc353658e5",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3647\u20133650",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five native SVG processing states visually inspected in milestone 31; verifier checks exported sensitivity glyphs",
+      "remaining": [
+        "control focus/hover and minimum window",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-focus-selector",
+      "id": "7299a615-462e-803f-8008-9bbe3b0d0686",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:199,200\u2013213,443\u2013448",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG focus references visually inspected in milestone 32; focus styles measured in local Chromium",
+      "remaining": [
+        "minimum-window focus clipping",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-focus-range",
+      "id": "7299a615-462e-803f-8008-9bbe3cf1827d",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:199,200\u2013213,443\u2013448",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG focus references visually inspected in milestone 32; focus styles measured in local Chromium",
+      "remaining": [
+        "minimum-window focus clipping",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-focus-checkbox",
+      "id": "7299a615-462e-803f-8008-9bbe3f19ab74",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:199,200\u2013213,443\u2013448",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG focus references visually inspected in milestone 32; focus styles measured in local Chromium",
+      "remaining": [
+        "minimum-window focus clipping",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-focus-button",
+      "id": "7299a615-462e-803f-8008-9bbe40fd3951",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:199,200\u2013213,443\u2013448",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG focus references visually inspected in milestone 32; focus styles measured in local Chromium",
+      "remaining": [
+        "minimum-window focus clipping",
+        "full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-hover-selector",
+      "id": "7299a615-462e-803f-8008-9bbf2bed9852",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:198,204,210; local Chromium native hover captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native SVG hover references visually inspected in milestone 33; native paint colors sampled from browser captures",
+      "remaining": [
+        "cross-platform native paint",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-hover-range",
+      "id": "7299a615-462e-803f-8008-9bbf2d4f792b",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:198,204,210; local Chromium native hover captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native SVG hover references visually inspected in milestone 33; native paint colors sampled from browser captures",
+      "remaining": [
+        "cross-platform native paint",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-hover-button",
+      "id": "7299a615-462e-803f-8008-9bbf303660ef",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/styles.css:198,204,210; local Chromium native hover captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native SVG hover references visually inspected in milestone 33; native paint colors sampled from browser captures",
+      "remaining": [
+        "cross-platform native paint",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-enhanced",
+      "id": "7299a615-462e-803f-8008-9bc003cbcba1",
+      "value": "Enhanced (RNNoise)",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-off",
+      "id": "7299a615-462e-803f-8008-9bc0069f8db6",
+      "value": "Off",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-text",
+      "id": "7299a615-462e-803f-8008-9bc009655b2d",
+      "value": "Text",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-balanced",
+      "id": "7299a615-462e-803f-8008-9bc01f6dfd81",
+      "value": "Balanced",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-motion",
+      "id": "7299a615-462e-803f-8008-9bc0222922cd",
+      "value": "Motion",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-selected-data-saver",
+      "id": "7299a615-462e-803f-8008-9bc0250743a8",
+      "value": "Data saver",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3646,3660",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native SVG closed-selection states visually inspected in milestone 34; exported values and bold weight verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-device-microphone-selected",
+      "id": "7299a615-462e-803f-8008-9bc13200b9a5",
+      "value": "Microphone 1",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3637\u20133638,3655",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three selected-device native SVG views visually inspected in milestone 35; exported labels and bold weight verified",
+      "remaining": [
+        "named/long-device fixtures",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-device-speaker-selected",
+      "id": "7299a615-462e-803f-8008-9bc135560bc6",
+      "value": "Speaker 1",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3637\u20133638,3655",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three selected-device native SVG views visually inspected in milestone 35; exported labels and bold weight verified",
+      "remaining": [
+        "named/long-device fixtures",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-device-camera-selected",
+      "id": "7299a615-462e-803f-8008-9bc138797671",
+      "value": "Camera 1",
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3637\u20133638,3655",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three selected-device native SVG views visually inspected in milestone 35; exported labels and bold weight verified",
+      "remaining": [
+        "named/long-device fixtures",
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-volume-microphone-min",
+      "id": "7299a615-462e-803f-8008-9bc2022f0a89",
+      "value": 0,
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3640\u20133641",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG volume states visually inspected in milestone 36; actual percentage exports and range fractions verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-volume-microphone-max",
+      "id": "7299a615-462e-803f-8008-9bc2047aa0c6",
+      "value": 200,
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3640\u20133641",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG volume states visually inspected in milestone 36; actual percentage exports and range fractions verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-volume-speaker-min",
+      "id": "7299a615-462e-803f-8008-9bc2074c3dc1",
+      "value": 0,
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3640\u20133641",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG volume states visually inspected in milestone 36; actual percentage exports and range fractions verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-volume-speaker-half",
+      "id": "7299a615-462e-803f-8008-9bc20a067948",
+      "value": 50,
+      "family": "voice-video-settings",
+      "source": "desktop/src/renderer/app.tsx:3640\u20133641",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four native SVG volume states visually inspected in milestone 36; actual percentage exports and range fractions verified",
+      "remaining": [
+        "minimum-window and full runtime geometry/header/typography comparison"
+      ]
+    },
+    {
+      "key": "voice-minimum",
+      "id": "7299a615-462e-803f-8008-9bc445839346",
+      "family": "voice-video-settings",
+      "source": "desktop/src/main/window-policy.ts:7\u20138; app.tsx:VoiceVideoSettings; styles.css:407\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four 960\u00d7640 native views visually reviewed against source-JSX/CSS measurements in milestone 37; every default control fully visible in at least one view",
+      "remaining": [
+        "named/long-device and camera-on/menu minimum variants",
+        "full runtime header/native-control/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-minimum-processing",
+      "id": "7299a615-462e-803f-8008-9bc709d757b7",
+      "family": "voice-video-settings",
+      "source": "desktop/src/main/window-policy.ts:7\u20138; app.tsx:VoiceVideoSettings; styles.css:407\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four 960\u00d7640 native views visually reviewed against source-JSX/CSS measurements in milestone 37; every default control fully visible in at least one view",
+      "remaining": [
+        "named/long-device and camera-on/menu minimum variants",
+        "full runtime header/native-control/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-minimum-camera",
+      "id": "7299a615-462e-803f-8008-9bc70b2036c6",
+      "family": "voice-video-settings",
+      "source": "desktop/src/main/window-policy.ts:7\u20138; app.tsx:VoiceVideoSettings; styles.css:407\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four 960\u00d7640 native views visually reviewed against source-JSX/CSS measurements in milestone 37; every default control fully visible in at least one view",
+      "remaining": [
+        "named/long-device and camera-on/menu minimum variants",
+        "full runtime header/native-control/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-minimum-bottom",
+      "id": "7299a615-462e-803f-8008-9bc70c637f6f",
+      "family": "voice-video-settings",
+      "source": "desktop/src/main/window-policy.ts:7\u20138; app.tsx:VoiceVideoSettings; styles.css:407\u2013452",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Four 960\u00d7640 native views visually reviewed against source-JSX/CSS measurements in milestone 37; every default control fully visible in at least one view",
+      "remaining": [
+        "named/long-device and camera-on/menu minimum variants",
+        "full runtime header/native-control/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-menu-microphone",
+      "id": "7299a615-462e-803f-8008-9bc8d29f8944",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; native Chromium minimum-window captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five 960\u00d7640 expanded menus visually reviewed in milestone 38; option and popup bounds verified",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-menu-speaker",
+      "id": "7299a615-462e-803f-8008-9bc8d6603dca",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; native Chromium minimum-window captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five 960\u00d7640 expanded menus visually reviewed in milestone 38; option and popup bounds verified",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-menu-suppression",
+      "id": "7299a615-462e-803f-8008-9bc8da666fcf",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; native Chromium minimum-window captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five 960\u00d7640 expanded menus visually reviewed in milestone 38; option and popup bounds verified",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-menu-camera",
+      "id": "7299a615-462e-803f-8008-9bc91cd760f4",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; native Chromium minimum-window captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five 960\u00d7640 expanded menus visually reviewed in milestone 38; option and popup bounds verified",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-menu-quality",
+      "id": "7299a615-462e-803f-8008-9bc9210c160a",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; native Chromium minimum-window captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Five 960\u00d7640 expanded menus visually reviewed in milestone 38; option and popup bounds verified",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-camera-landscape",
+      "id": "7299a615-462e-803f-8008-9bcb3ac3b3ac",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; synthetic landscape/portrait video at 960\u00d7640",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native exported views inspected against local source captures; geometry, visible controls, notice and text checked",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-camera-portrait",
+      "id": "7299a615-462e-803f-8008-9bcb4aebab74",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; synthetic landscape/portrait video at 960\u00d7640",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native exported views inspected against local source captures; geometry, visible controls, notice and text checked",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "voice-small-camera-landscape-notice",
+      "id": "7299a615-462e-803f-8008-9bcb5a73a899",
+      "family": "voice-video-settings",
+      "source": "VoiceVideoSettings source fixture and CSS; synthetic landscape/portrait video at 960\u00d7640",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three native exported views inspected against local source captures; geometry, visible controls, notice and text checked",
+      "remaining": [
+        "named/long/empty device fixtures",
+        "full runtime native-control/header/typography fidelity"
+      ]
+    },
+    {
+      "key": "safety-loading",
+      "id": "7299a615-462e-803f-8008-9bccfc54d69b",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Loading, Member top and Member bottom exports visually reviewed; seven controls visible across references",
+      "remaining": [
+        "moderator tools",
+        "populated reports",
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-member",
+      "id": "7299a615-462e-803f-8008-9bccd3e940e0",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Loading, Member top and Member bottom exports visually reviewed; seven controls visible across references",
+      "remaining": [
+        "moderator tools",
+        "populated reports",
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-member-bottom",
+      "id": "7299a615-462e-803f-8008-9bcd38883010",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Loading, Member top and Member bottom exports visually reviewed; seven controls visible across references",
+      "remaining": [
+        "moderator tools",
+        "populated reports",
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-reports",
+      "id": "7299a615-462e-803f-8008-9bce50c7fec0",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-moderator",
+      "id": "7299a615-462e-803f-8008-9bce87708b78",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-records",
+      "id": "7299a615-462e-803f-8008-9bcf6ec5a874",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-reports-bottom",
+      "id": "7299a615-462e-803f-8008-9bd0c0ea57c9",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-moderator-middle",
+      "id": "7299a615-462e-803f-8008-9bd0d21c3dd3",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-moderator-bottom",
+      "id": "7299a615-462e-803f-8008-9bd0e6fa3bca",
+      "family": "sessions-safety",
+      "source": "SafetyPanel and settingsView=safety; source CSS measured in Chromium",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Six native views show Member reports, moderator form and collapsed/expanded records; controls verified across scroll views",
+      "remaining": [
+        "menus and validation",
+        "native dialogs",
+        "minimum window",
+        "full runtime typography/header fidelity"
+      ]
+    },
+    {
+      "key": "safety-menu-report",
+      "id": "7299a615-462e-803f-8008-9bd24d80f037",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixture and Chromium native dropdown captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three menus and nine option rows visually checked in native exports; placement and clipping verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "selected/input variants",
+        "minimum-window menus",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-menu-action",
+      "id": "7299a615-462e-803f-8008-9bd266fb2b9c",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixture and Chromium native dropdown captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three menus and nine option rows visually checked in native exports; placement and clipping verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "selected/input variants",
+        "minimum-window menus",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-menu-member",
+      "id": "7299a615-462e-803f-8008-9bd2819896ab",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixture and Chromium native dropdown captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three menus and nine option rows visually checked in native exports; placement and clipping verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "selected/input variants",
+        "minimum-window menus",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-filled-report",
+      "id": "7299a615-462e-803f-8008-9bd3d5debbb1",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and Chromium filled-field captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three filled forms with eight entered fields visually checked; field bounds and stale selections verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-filled-moderation",
+      "id": "7299a615-462e-803f-8008-9bd3ee7a5b2e",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and Chromium filled-field captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three filled forms with eight entered fields visually checked; field bounds and stale selections verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-filled-delete",
+      "id": "7299a615-462e-803f-8008-9bd404516517",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and Chromium filled-field captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Three filled forms with eight entered fields visually checked; field bounds and stale selections verified",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-report-member",
+      "id": "7299a615-462e-803f-8008-9bd5ae9d8430",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-report-reason",
+      "id": "7299a615-462e-803f-8008-9bd5c9c1e93b",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-report-short",
+      "id": "7299a615-462e-803f-8008-9bd5d789c8ed",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-moderation-reason",
+      "id": "7299a615-462e-803f-8008-9bd5ebd951fc",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-duration",
+      "id": "7299a615-462e-803f-8008-9bd5f8172112",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-password",
+      "id": "7299a615-462e-803f-8008-9bd6090845c9",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-confirmation",
+      "id": "7299a615-462e-803f-8008-9bd61b5b3eb7",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-invalid-confirmation-pattern",
+      "id": "7299a615-462e-803f-8008-9bd62efab7ca",
+      "family": "sessions-safety",
+      "source": "SafetyPanel source-derived fixtures and settled Chromium native validation captures",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Eight native-validation views visually checked against captured messages, focus and bubble bounds",
+      "remaining": [
+        "validation",
+        "native dialogs",
+        "remaining selection/input edge variants",
+        "minimum-window filled forms",
+        "long/empty Member fixtures",
+        "full runtime/platform fidelity"
+      ]
+    },
+    {
+      "key": "safety-delete-confirm",
+      "id": "7299a615-462e-803f-8008-9bd7ccc83583",
+      "family": "sessions-safety",
+      "source": "SafetyPanel window.confirm and isolated Electron 43.4.0 native capture",
+      "nativeTextAndLabelsVerified": true,
+      "prototypeInteractions": 0,
+      "visualReview": "Native question and Ok/Cancel buttons checked in final editable export",
+      "remaining": [
+        "window-manager decoration and placement",
+        "exact platform typography",
+        "other Safety states"
+      ]
+    }
+  ],
+  "renderReviewCaveat": "Milestone 15 found generateMarkup repeats descendants as top-level siblings, bypassing ancestor clipping in earlier review renders. Renderer now retains only the selected native board hierarchy and frames its native bounds. Earlier milestone SVGs remain original evidence; prior clipped/overlapping layouts require renewed render inspection with the corrected renderer.",
+  "profileStateAudit": "profile-state-audit.md: upload/decode failures have no implemented error notice; existing editor state remains. Native validation/file-picker/session confirmation references still missing.",
+  "nativePickerInvestigation": "investigations/native-picker/README.md: isolated Electron native picker not visible in capture; reference still missing."
+}

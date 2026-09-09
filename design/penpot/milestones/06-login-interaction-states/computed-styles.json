@@ -1,0 +1,54 @@
+[
+  {
+    "name": "username-focus",
+    "background": "rgb(32, 33, 39)",
+    "color": "rgb(240, 241, 245)",
+    "border": "1px solid rgb(113, 128, 255)",
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "shadow": "rgba(89, 101, 242, 0.18) 0px 0px 0px 3px",
+    "borderRadius": "4px",
+    "x": 484,
+    "y": 414.296875,
+    "width": 384,
+    "height": 42.28125
+  },
+  {
+    "name": "password-focus",
+    "background": "rgb(32, 33, 39)",
+    "color": "rgb(240, 241, 245)",
+    "border": "1px solid rgb(113, 128, 255)",
+    "outline": "rgb(0, 168, 252) solid 3px",
+    "shadow": "rgba(89, 101, 242, 0.18) 0px 0px 0px 3px",
+    "borderRadius": "4px",
+    "x": 484,
+    "y": 496.875,
+    "width": 384,
+    "height": 42.28125
+  },
+  {
+    "name": "register-hover",
+    "background": "rgb(48, 50, 58)",
+    "color": "rgb(240, 241, 245)",
+    "border": "0px none rgb(240, 241, 245)",
+    "outline": "rgb(240, 241, 245) none 3px",
+    "shadow": "none",
+    "borderRadius": "4px",
+    "x": 613.328125,
+    "y": 328.828125,
+    "width": 125.328125,
+    "height": 43.171875
+  },
+  {
+    "name": "submit-hover",
+    "background": "rgb(89, 98, 214)",
+    "color": "rgb(255, 255, 255)",
+    "border": "0px none rgb(255, 255, 255)",
+    "outline": "rgb(255, 255, 255) none 3px",
+    "shadow": "none",
+    "borderRadius": "4px",
+    "x": 484,
+    "y": 555.15625,
+    "width": 384,
+    "height": 43.171875
+  }
+]

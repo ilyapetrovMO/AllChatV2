@@ -1,0 +1,145 @@
+<svg width="480" xmlns="http://www.w3.org/2000/svg" height="240" viewBox="0 0 480 240" style="-webkit-print-color-adjust::exact" xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" version="1.1">
+  <style>
+  </style>
+  <g id="shape-7299a615-462e-803f-8008-9b83e3eb7f44">
+    <defs>
+      <clipPath id="frame-clip-7299a615-462e-803f-8008-9b83e3eb7f44-render-240" class="frame-clip frame-clip-def">
+        <rect rx="8" ry="8" x="0" y="0" width="480" height="240" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+        </rect>
+      </clipPath>
+    </defs>
+    <g class="frame-container-wrapper">
+      <g class="frame-container-blur">
+        <g class="frame-container-shadows">
+          <g clip-path="url(#frame-clip-7299a615-462e-803f-8008-9b83e3eb7f44-render-240)" fill="none">
+            <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e3eb7f44">
+              <rect rx="8" ry="8" x="0" y="0" width="480" height="240" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="frame-background" style="fill:#18191e;fill-opacity:1">
+              </rect>
+            </g>
+            <g class="frame-children">
+              <g id="shape-7299a615-462e-803f-8008-9b83e402695e">
+                <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="48" y="40" width="384" height="48" rx="0" ry="0">
+                  <defs>
+                    <pattern patternUnits="objectBoundingBox" width="191.43333435058594" height="38" id="fill-0-render-241-0">
+                      <g>
+                        <rect width="191.43333435058594" height="38" style="fill:#f0f1f5;fill-opacity:1">
+                        </rect>
+                      </g>
+                    </pattern>
+                  </defs>
+                  <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e402695e">
+                    <text x="48" y="75.80000305175781" dominant-baseline="ideographic" textLength="191.43333435058594" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;sourcesanspro&quot;;letter-spacing:normal;font-style:normal;font-weight:700;white-space:pre;font-size:28px;text-decoration:none;direction:ltr;fill:#f0f1f5;fill-opacity:1">Desktop sign-in</text>
+                  </g>
+                </g>
+              </g>
+              <g id="shape-7299a615-462e-803f-8008-9b83e426ae85">
+                <defs>
+                  <clipPath id="frame-clip-7299a615-462e-803f-8008-9b83e426ae85-render-242" class="frame-clip frame-clip-def">
+                    <rect rx="4" ry="4" x="48" y="132" width="384" height="44" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+                    </rect>
+                  </clipPath>
+                </defs>
+                <g class="frame-container-wrapper">
+                  <g class="frame-container-blur">
+                    <g class="frame-container-shadows">
+                      <g clip-path="url(#frame-clip-7299a615-462e-803f-8008-9b83e426ae85-render-242)" fill="none">
+                        <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e426ae85">
+                          <rect rx="4" ry="4" x="48" y="132" width="384" height="44" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="frame-background" style="fill:#6d75e8;fill-opacity:1">
+                          </rect>
+                        </g>
+                        <g class="frame-children">
+                          <g id="shape-7299a615-462e-803f-8008-9b83e42df80c">
+                            <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="48" y="142" width="384" height="24" rx="0" ry="0">
+                              <defs>
+                                <pattern patternUnits="objectBoundingBox" width="47.866668701171875" height="22" id="fill-0-render-243-0">
+                                  <g>
+                                    <rect width="47.866668701171875" height="22" style="fill:#ffffff;fill-opacity:1">
+                                    </rect>
+                                  </g>
+                                </pattern>
+                              </defs>
+                              <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e42df80c">
+                                <text x="216.06666564941406" y="162.60000610351562" dominant-baseline="ideographic" textLength="47.866668701171875" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;sourcesanspro&quot;;letter-spacing:normal;font-style:normal;font-weight:700;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#ffffff;fill-opacity:1">Sign in</text>
+                              </g>
+                            </g>
+                          </g>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="shape-7299a615-462e-803f-8008-9b83e402695e">
+    <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="48" y="40" width="384" height="48" rx="0" ry="0">
+      <defs>
+        <pattern patternUnits="objectBoundingBox" width="191.43333435058594" height="38" id="fill-0-render-244-0">
+          <g>
+            <rect width="191.43333435058594" height="38" style="fill:#f0f1f5;fill-opacity:1">
+            </rect>
+          </g>
+        </pattern>
+      </defs>
+      <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e402695e">
+        <text x="48" y="75.80000305175781" dominant-baseline="ideographic" textLength="191.43333435058594" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;sourcesanspro&quot;;letter-spacing:normal;font-style:normal;font-weight:700;white-space:pre;font-size:28px;text-decoration:none;direction:ltr;fill:#f0f1f5;fill-opacity:1">Desktop sign-in</text>
+      </g>
+    </g>
+  </g>
+  <g id="shape-7299a615-462e-803f-8008-9b83e426ae85">
+    <defs>
+      <clipPath id="frame-clip-7299a615-462e-803f-8008-9b83e426ae85-render-245" class="frame-clip frame-clip-def">
+        <rect rx="4" ry="4" x="48" y="132" width="384" height="44" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+        </rect>
+      </clipPath>
+    </defs>
+    <g class="frame-container-wrapper">
+      <g class="frame-container-blur">
+        <g class="frame-container-shadows">
+          <g clip-path="url(#frame-clip-7299a615-462e-803f-8008-9b83e426ae85-render-245)" fill="none">
+            <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e426ae85">
+              <rect rx="4" ry="4" x="48" y="132" width="384" height="44" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="frame-background" style="fill:#6d75e8;fill-opacity:1">
+              </rect>
+            </g>
+            <g class="frame-children">
+              <g id="shape-7299a615-462e-803f-8008-9b83e42df80c">
+                <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="48" y="142" width="384" height="24" rx="0" ry="0">
+                  <defs>
+                    <pattern patternUnits="objectBoundingBox" width="47.866668701171875" height="22" id="fill-0-render-246-0">
+                      <g>
+                        <rect width="47.866668701171875" height="22" style="fill:#ffffff;fill-opacity:1">
+                        </rect>
+                      </g>
+                    </pattern>
+                  </defs>
+                  <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e42df80c">
+                    <text x="216.06666564941406" y="162.60000610351562" dominant-baseline="ideographic" textLength="47.866668701171875" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;sourcesanspro&quot;;letter-spacing:normal;font-style:normal;font-weight:700;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#ffffff;fill-opacity:1">Sign in</text>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="shape-7299a615-462e-803f-8008-9b83e42df80c">
+    <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="48" y="142" width="384" height="24" rx="0" ry="0">
+      <defs>
+        <pattern patternUnits="objectBoundingBox" width="47.866668701171875" height="22" id="fill-0-render-247-0">
+          <g>
+            <rect width="47.866668701171875" height="22" style="fill:#ffffff;fill-opacity:1">
+            </rect>
+          </g>
+        </pattern>
+      </defs>
+      <g class="fills" id="fills-7299a615-462e-803f-8008-9b83e42df80c">
+        <text x="216.06666564941406" y="162.60000610351562" dominant-baseline="ideographic" textLength="47.866668701171875" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;sourcesanspro&quot;;letter-spacing:normal;font-style:normal;font-weight:700;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#ffffff;fill-opacity:1">Sign in</text>
+      </g>
+    </g>
+  </g>
+</svg>

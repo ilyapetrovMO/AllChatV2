@@ -1,0 +1,1 @@
+for(const b of penpot.currentPage.root.children.filter(b=>b.getPluginData('static-camera-preview-state')))for(const s of penpotUtils.findShapes(s=>s.name==='Stop Video label'||s.name==='Voice settings notice',b))s.growType='auto-width';return {sized:true};

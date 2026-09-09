@@ -1,0 +1,20 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "fileName": "New File 1",
+  "backupType": "Penpot native full-file version checkpoint",
+  "label": "Full project backup — cleaned Voice Rooms — 2026-09-09",
+  "createdAt": "2026-09-09T12:25:50.967Z",
+  "preCleanupLabel": "Before superseded Voice Rooms cleanup — 2026-09-09",
+  "preCleanupCreatedAt": "2026-09-09T12:25:40.514Z",
+  "removedSupersededBoards": 17,
+  "pages": [
+    {"name": "Desktop — Login", "boards": 37},
+    {"name": "Desktop — Main", "boards": 44},
+    {"name": "Desktop — Settings", "boards": 27},
+    {"name": "Desktop — Voice Rooms", "boards": 10}
+  ],
+  "totalBoards": 118,
+  "restore": "Open this file in Penpot, open version history, and select the named checkpoint.",
+  "externalArchiveCreated": false,
+  "externalArchiveError": "File.export('penpot','all') and File.export('zip','all') both failed with No matching clause. Native checkpoints were independently verified via File.findVersions()."
+}

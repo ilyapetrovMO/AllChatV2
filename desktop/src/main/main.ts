@@ -287,7 +287,7 @@ function registerIpc(): void {
   });
   ipcMain.on(IPC_CHANNELS.diagnostic, (event, diagnosticEvent: DesktopDiagnosticEvent, detail: string) => {
     if (event.sender !== mainWindow?.webContents) return;
-    if (diagnosticEvent !== 'rnnoise_initialization_failed' && diagnosticEvent !== 'screen_share_quality') return;
+    if (diagnosticEvent !== 'image_action_failed' && diagnosticEvent !== 'rnnoise_initialization_failed' && diagnosticEvent !== 'screen_share_quality') return;
     if (typeof detail !== 'string') return;
     console.warn('[AllChat desktop diagnostic]', JSON.stringify({ event: diagnosticEvent, detail: detail.slice(0, 1_000) }));
   });
@@ -491,6 +491,7 @@ function assertInstanceAction(value: import('../shared/instance-actions').Instan
   if (value.type === 'open_dm' || value.type === 'set_block') { assertString(value.memberId, 'Member identity'); if (value.type === 'set_block' && typeof value.blocked !== 'boolean') throw new Error('Block state is invalid'); return; }
   if (value.type === 'list_sessions') return;
   if (value.type === 'current_call' || value.type === 'turn_credentials') return;
+  if (value.type === 'end_media_session') { assertString(value.roomId, 'Voice Room identity'); return; }
   if (value.type === 'start_call') { assertString(value.directMessageId, 'Direct Message identity'); return; }
   if (value.type === 'call_action') {
     assertString(value.callId, 'Call identity');

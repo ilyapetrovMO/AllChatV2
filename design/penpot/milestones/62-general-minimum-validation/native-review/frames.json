@@ -1,0 +1,37 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bff2358bd7a",
+    "name": "Desktop / Settings / general-small-invalid-relay-url",
+    "filename": "Desktop--Settings--general-small-invalid-relay-url.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfefe005c2c",
+    "name": "Desktop / Settings / general-small-invalid-attachment-number",
+    "filename": "Desktop--Settings--general-small-invalid-attachment-number.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfeda11cd2e",
+    "name": "Desktop / Settings / general-small-invalid-attachment-step",
+    "filename": "Desktop--Settings--general-small-invalid-attachment-step.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfeb6f3f1e3",
+    "name": "Desktop / Settings / general-small-invalid-attachment-max",
+    "filename": "Desktop--Settings--general-small-invalid-attachment-max.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfe9351b27e",
+    "name": "Desktop / Settings / general-small-invalid-attachment-min",
+    "filename": "Desktop--Settings--general-small-invalid-attachment-min.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfe73ba05b6",
+    "name": "Desktop / Settings / general-small-invalid-attachment-required",
+    "filename": "Desktop--Settings--general-small-invalid-attachment-required.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bfe5b91425e",
+    "name": "Desktop / Settings / general-small-invalid-name",
+    "filename": "Desktop--Settings--general-small-invalid-name.svg"
+  }
+]

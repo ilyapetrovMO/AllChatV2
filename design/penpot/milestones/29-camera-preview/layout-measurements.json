@@ -1,0 +1,43 @@
+{
+  "rules": ".camera-test { min-height: 180px; display: grid; place-items: center; overflow: hidden; border-radius: var(--radius); background: var(--bg-elevated); color: var(--muted); }\n.camera-test video { width: 100%; max-height: 320px; object-fit: contain; }",
+  "results": [
+    {
+      "input": {
+        "width": 1280,
+        "height": 720
+      },
+      "video": {
+        "width": 854,
+        "height": 320
+      },
+      "preview": {
+        "width": 854,
+        "height": 320
+      },
+      "containedFrame": {
+        "width": 568.8888888888889,
+        "height": 320
+      },
+      "objectFit": "contain"
+    },
+    {
+      "input": {
+        "width": 360,
+        "height": 640
+      },
+      "video": {
+        "width": 854,
+        "height": 320
+      },
+      "preview": {
+        "width": 854,
+        "height": 320
+      },
+      "containedFrame": {
+        "width": 180,
+        "height": 320
+      },
+      "objectFit": "contain"
+    }
+  ]
+}

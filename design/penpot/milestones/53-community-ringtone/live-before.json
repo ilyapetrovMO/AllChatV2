@@ -1,0 +1,184 @@
+{
+  "existing": [],
+  "base": {
+    "id": "7299a615-462e-803f-8008-9be448c4b5f3",
+    "children": [
+      {
+        "name": "span community-settings-avatar",
+        "type": "board"
+      },
+      {
+        "name": "span text 1",
+        "type": "text",
+        "text": "A"
+      },
+      {
+        "name": "label text 2",
+        "type": "text",
+        "text": "Choose Community avatar"
+      },
+      {
+        "name": "input avatar",
+        "type": "board"
+      },
+      {
+        "name": "file content avatar button",
+        "type": "board"
+      },
+      {
+        "name": "file content avatar Choose File",
+        "type": "text",
+        "text": "Choose File"
+      },
+      {
+        "name": "file content avatar No file chosen",
+        "type": "text",
+        "text": "No file chosen"
+      },
+      {
+        "name": "section settings-card ringtone-setting",
+        "type": "board"
+      },
+      {
+        "name": "h3 text 5",
+        "type": "text",
+        "text": "Community ringtone"
+      },
+      {
+        "name": "p text 6",
+        "type": "text",
+        "text": "Generated tone"
+      },
+      {
+        "name": "label text 7",
+        "type": "text",
+        "text": "Choose audio file"
+      },
+      {
+        "name": "input ringtone",
+        "type": "board"
+      },
+      {
+        "name": "file content ringtone button",
+        "type": "board"
+      },
+      {
+        "name": "file content ringtone Choose File",
+        "type": "text",
+        "text": "Choose File"
+      },
+      {
+        "name": "file content ringtone No file chosen",
+        "type": "text",
+        "text": "No file chosen"
+      },
+      {
+        "name": "h2 text 11",
+        "type": "text",
+        "text": "General"
+      },
+      {
+        "name": "p text 12",
+        "type": "text",
+        "text": "Manage AllChat Community from the desktop client."
+      },
+      {
+        "name": "form Community nameMaximu",
+        "type": "board"
+      },
+      {
+        "name": "label text 14",
+        "type": "text",
+        "text": "Community name"
+      },
+      {
+        "name": "input name",
+        "type": "board"
+      },
+      {
+        "name": "value name",
+        "type": "text",
+        "text": "AllChat Community"
+      },
+      {
+        "name": "label text 16",
+        "type": "text",
+        "text": "Maximum attachment size (MiB)"
+      },
+      {
+        "name": "input maxAttachmentMiB",
+        "type": "board"
+      },
+      {
+        "name": "value maxAttachmentMiB",
+        "type": "text",
+        "text": "25"
+      },
+      {
+        "name": "p text 18",
+        "type": "text",
+        "text": "Applies immediately. Your reverse proxy must allow at least the same request size."
+      },
+      {
+        "name": "label text 19",
+        "type": "text",
+        "text": "Community Guide"
+      },
+      {
+        "name": "textarea homeMarkdown",
+        "type": "board"
+      },
+      {
+        "name": "value homeMarkdown",
+        "type": "text",
+        "text": "Welcome to AllChat Community."
+      },
+      {
+        "name": "label text 21",
+        "type": "text",
+        "text": "Mobile push relay"
+      },
+      {
+        "name": "input pushRelayURL",
+        "type": "board"
+      },
+      {
+        "name": "value pushRelayURL",
+        "type": "text",
+        "text": "https://push.example.com"
+      },
+      {
+        "name": "p text 23",
+        "type": "text",
+        "text": "Used only for Android and iOS background notifications. Leave empty to disable mobile push."
+      },
+      {
+        "name": "Relay disclosure",
+        "type": "text",
+        "text": "▸"
+      },
+      {
+        "name": "summary text 25",
+        "type": "text",
+        "text": "Relay authorization identity"
+      },
+      {
+        "name": "button Save settings",
+        "type": "board"
+      },
+      {
+        "name": "button text 29",
+        "type": "text",
+        "text": "Save settings"
+      },
+      {
+        "name": "textarea homeMarkdown resize mark 0",
+        "type": "rectangle"
+      },
+      {
+        "name": "textarea homeMarkdown resize mark 1",
+        "type": "rectangle"
+      }
+    ]
+  }
+}

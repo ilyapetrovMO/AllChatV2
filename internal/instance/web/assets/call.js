@@ -4,7 +4,7 @@
   window.__allchatCallRuntime = true;
 
   let call = null, connection = null, microphone = null, microphoneCapture = null, screenStream = null;
-  let localScreenVideo = null, screenSender = null;
+  let localScreenVideo = null, screenSender = null, cameraStream = null;
   let startButton = null, pollBusy = false, notifiedCallID = "", generation = 0, mediaPreparation = null;
   let ringContext = null, ringTimer = null, ringAudio = null, ringAudioURL = "", ringGeneration = 0;
   let mediaConfig = {audio_bitrate: 64000, screen_bitrate: 2500000};
@@ -53,7 +53,7 @@
     }
     if (call?.state === "accepted" && connection?.state === "connected" && currentDM() === call.direct_message_id) renderConnectedView();
     else attachPanel();
-    if (startButton) startButton.disabled = !!call;
+    if (startButton) {startButton.disabled = !!call;startButton.hidden=!!call;}
   };
 
   const restoreConversation = () => {
@@ -97,7 +97,7 @@
 
   const stopScreen = async ({renegotiate = true} = {}) => {
     const owner=connection,peer=connection?.peer;
-    const stream = screenStream; screenStream = null;
+    const stream = screenStream; screenStream = null; cameraStream=null;
     screenSender = null;
     localScreenVideo?.remove(); localScreenVideo = null;
     stream?.getTracks().forEach(track => {track.onended = null; track.stop();});
@@ -149,7 +149,23 @@
     toolbar.querySelector("[data-call-mute]").onclick = event => {const track = microphone?.getAudioTracks()[0];if(track){track.enabled=!track.enabled;event.currentTarget.textContent=track.enabled?"Mute":"Unmute";}};
     toolbar.querySelector("[data-call-screen]").onclick = event => toggleScreen(event.currentTarget).catch(error => {toolbar.querySelector("[data-call-status]").textContent=error?.message||"Screen sharing failed";});
     toolbar.querySelector("[data-call-end]").onclick = endCall;
-    stage.append(toolbar, grid); chat.append(conversation, composer); workspace.append(stage, chat); header.after(workspace);
+    stage.append(grid); chat.append(conversation, composer); workspace.append(stage, chat); header.after(workspace);
+    document.querySelector('[data-direct-call-panel]')?.remove();
+    const memberPanel=document.createElement('section');memberPanel.className='voice-connection-panel';memberPanel.dataset.directCallPanel='';
+    const identity=document.createElement('div');identity.innerHTML='<strong data-call-status>Voice Connected</strong><span>Direct Call</span>';
+    memberPanel.append(identity,toolbar.querySelector('.call-controls'));
+    (document.querySelector('.floating-member-panel')||stage).prepend(memberPanel);
+    const adapter={peer:()=>connection?.peer,settings:async settings=>{
+      const old=microphoneCapture,owner=connection;if(!old)return;
+      if(old.settings?.microphoneID===settings.microphoneID&&old.settings?.noiseSuppressionMode===settings.noiseSuppressionMode){old.setProcessing?.(settings);await old.raw?.getAudioTracks()[0]?.applyConstraints(window.AllChatVoiceSettings.constraints(settings));return;}
+      const capture=await window.AllChatVoiceSettings.capture(settings);if(connection!==owner){capture.stop();return;}
+      try{const sender=owner.peer.getSenders().find(sender=>sender.track===microphone.getAudioTracks()[0]);if(!sender)throw new Error('Microphone unavailable.');const track=capture.stream.getAudioTracks()[0];track.enabled=microphone.getAudioTracks()[0].enabled;await sender.replaceTrack(track);microphoneCapture=capture;microphone=owner.stream=capture.stream;old.stop();}catch(error){capture.stop();throw error;}
+    },mute:muted=>{const track=microphone?.getAudioTracks()[0];if(track){track.enabled=!muted;connection?.send('mute-state',{muted});}},open:()=>window.allchatNavigate?.(`/channels/${call.direct_message_id}`),soundboard:anchor=>window.allchatOpenSoundboard?.(connection,anchor),camera:async()=>{
+      if(cameraStream){await stopScreen();return;}
+      if(screenStream)await stopScreen();const owner=connection,stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      if(!owner||connection!==owner){stream.getTracks().forEach(track=>track.stop());return;}
+      try{await owner.setVideoTrack(stream.getVideoTracks()[0],stream);cameraStream=screenStream=stream;localScreenVideo=document.createElement('video');localScreenVideo.autoplay=true;localScreenVideo.muted=true;localScreenVideo.playsInline=true;localScreenVideo.srcObject=stream;stream.getVideoTracks()[0].onended=()=>stopScreen();renderMedia();}catch(error){stream.getTracks().forEach(track=>track.stop());throw error;}
+    }};window.allchatCallControls=adapter;window.AllChatDesign?.connectionPanel(memberPanel,adapter);
     renderMedia();
   };
 
@@ -164,6 +180,7 @@
 
   const cleanupMedia = ({explicit = false} = {}) => {
     stopRinging();
+    window.allchatCallControls=null;document.querySelector("[data-direct-call-panel]")?.remove();
     generation++;
     connection?.stop({explicit}); connection = null;
     microphoneCapture?.stop?.(); microphoneCapture = null; microphone?.getTracks().forEach(track => track.stop()); microphone = null; mediaIceServers = null;
@@ -217,6 +234,7 @@
       }
     };
     const receiveFrame = frame => {
+      if(frame.type === "soundboard-played" && frame.sound) window.allchatPlaySound?.(frame.sound);
       if ((frame.type === "screen-low" || frame.type === "screen-medium" || frame.type === "screen-high") && screenSender) {
         const parameters = screenSender.getParameters();
         const maximum=frame.type==="screen-low"?0:frame.type==="screen-medium"?1:2;(parameters.encodings || []).forEach((encoding,index) => {encoding.active = index<=maximum;});
@@ -270,13 +288,14 @@
     if (next.state === "accepted") {(async()=>{if(currentDM()!==next.direct_message_id){const target=`/channels/${next.direct_message_id}`;if(!window.allchatNavigate){location.assign(target);return}await window.allchatNavigate(target)}await connect(next)})().catch(error => {panel.hidden=false;panel.textContent=error.message||"Direct Call failed";attachPanel();});return;}
     if (next.state !== "ringing") {cleanupMedia();panel.textContent=`Direct Call ${next.state}`;return;}
     panel.replaceChildren();
-    const label = document.createElement("strong"); label.textContent = incoming ? "Incoming Direct Call" : "Calling… Waiting for an answer."; panel.append(label);
+    const label = document.createElement("strong"); label.textContent = incoming ? "Incoming Direct Call" : "Calling…"; panel.append(label);
     if (incoming) {
       const accept=document.createElement("button"),decline=document.createElement("button");accept.textContent="Accept";decline.textContent="Decline";decline.className="button-danger";
       accept.onclick=async()=>{const response=await request(`/api/v1/calls/${next.id}/accept`,"POST");if(response.ok)render(await response.json());};
       decline.onclick=async()=>{await request(`/api/v1/calls/${next.id}/decline`,"POST");cleanupMedia({explicit:true});call=null;panel.hidden=true;installView();};panel.append(accept,decline);
       if(notifiedCallID!==next.id&&document.hidden&&Notification.permission==="granted"){const notice=new Notification("Incoming AllChat Call",{body:"Open AllChat to accept or decline.",tag:"allchat-call"});notice.onclick=()=>{window.focus();window.allchatNavigate?.(`/channels/${next.direct_message_id}`);};notifiedCallID=next.id;}
-    } else {const cancel=document.createElement("button");cancel.textContent="Cancel";cancel.className="button-danger";cancel.onclick=endCall;panel.append(cancel);}
+    } else {const cancel=document.createElement("button");cancel.textContent="Cancel Call";cancel.className="button-danger";cancel.onclick=endCall;panel.append(cancel);}
+    const target=incoming?document.querySelector(".floating-member-panel"):document.querySelector(".header-actions");if(target)target.append(panel);
   };
 
   async function startCall(){const dm=currentDM();if(!dm)return;try{await prepareMedia(generation);const response=await request(`/api/v1/dms/${dm}/calls`,"POST");if(response.ok)render(await response.json());else{cleanupMedia({explicit:true});if(response.status===409)alert("One of you is already in another Call.");}}catch(error){cleanupMedia();panel.hidden=false;panel.textContent=error?.message||"Could not prepare Direct Call";attachPanel();}}

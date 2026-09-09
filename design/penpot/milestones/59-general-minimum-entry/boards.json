@@ -1,0 +1,26 @@
+[
+  {
+    "key": "general-small-loading",
+    "id": "7299a615-462e-803f-8008-9bf6cad6284a"
+  },
+  {
+    "key": "general-small-error",
+    "id": "7299a615-462e-803f-8008-9bf6d1ccba9f"
+  },
+  {
+    "key": "general-small-save-error",
+    "id": "7299a615-462e-803f-8008-9bf74b5d6d42"
+  },
+  {
+    "key": "general-small-save-error-middle",
+    "id": "7299a615-462e-803f-8008-9bf7577db77e"
+  },
+  {
+    "key": "general-small-save-error-bottom",
+    "id": "7299a615-462e-803f-8008-9bf759224780"
+  },
+  {
+    "key": "general-small-save-error-immediate",
+    "id": "7299a615-462e-803f-8008-9bf75a980662"
+  }
+]

@@ -36,5 +36,11 @@ describe('desktop window policy', () => {
     expect(isAllowedRendererPermission('geolocation', true)).toBe(false);
     expect(isAllowedRendererPermission('notifications', true)).toBe(false);
   });
+  it('allows image clipboard writes only for app windows without granting clipboard reads', () => {
+    expect(isAllowedRendererPermission('clipboard-sanitized-write', true)).toBe(true);
+    expect(isAllowedRendererPermission('clipboard-sanitized-write', false)).toBe(false);
+    expect(isAllowedRendererPermission('clipboard-read', true)).toBe(false);
+    expect(isAllowedRendererPermission('clipboard-read', false)).toBe(false);
+  });
 });
 // @vitest-environment node

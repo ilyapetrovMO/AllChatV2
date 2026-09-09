@@ -1,0 +1,22 @@
+[
+  {
+    "key": "notifications-focus-community-level",
+    "id": "7299a615-462e-803f-8008-9baedbc4b79f"
+  },
+  {
+    "key": "notifications-focus-community-mute",
+    "id": "7299a615-462e-803f-8008-9baedcf274b4"
+  },
+  {
+    "key": "notifications-focus-sound",
+    "id": "7299a615-462e-803f-8008-9baeddeaaf9b"
+  },
+  {
+    "key": "notifications-focus-channel-level",
+    "id": "7299a615-462e-803f-8008-9baedf1217f8"
+  },
+  {
+    "key": "notifications-focus-channel-mute",
+    "id": "7299a615-462e-803f-8008-9baee03dd0c5"
+  }
+]

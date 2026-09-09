@@ -1,0 +1,18 @@
+[
+  {
+    "key": "voice-default",
+    "id": "7299a615-462e-803f-8008-9bb0ebcfd0d7"
+  },
+  {
+    "key": "voice-processing",
+    "id": "7299a615-462e-803f-8008-9bb207cf6191"
+  },
+  {
+    "key": "voice-camera",
+    "id": "7299a615-462e-803f-8008-9bb209ca9b77"
+  },
+  {
+    "key": "voice-advanced",
+    "id": "7299a615-462e-803f-8008-9bb20b8a0f3c"
+  }
+]

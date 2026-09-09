@@ -1,4 +1,13 @@
-import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { MemberAudioControls, PanelIcon, ConnectionSignal, connectionPing } from "./member-audio-controls";
+import { ReplyComposerPreview, ReplyExcerpt } from "./message-reply";
+import { CallHistoryEvent } from "./call-history-event";
+import { ChannelManagement, RoleManagement, InvitationManagement, SoundboardManagement } from "./community-management";
+import { ImageContextMenu, copyImage } from "./image-context-menu";
+import { InlineMessageEditor } from "./inline-message-editor";
+import { SettingsHeading } from "./settings-heading";
+import { CallParticipantCell } from "./call-participant-cell";
+import { VoiceParticipantGrid } from "./voice-grid";
+import { FormEvent, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { createMediaConnectionWatchdog, createMediaFrameQueue, createMediaJoinFrame, desktopMediaOwnerID, mediaDisconnectMessage, serializeSessionDescription, type DesktopMediaFrame } from "./media-signaling";
 import { applyDesktopOutputPreferences, captureDesktopMicrophone, defaultDesktopVoicePreferences, desktopMemberOutputVolume, loadDesktopVoicePreferences, saveDesktopVoicePreferences, type DesktopMicrophoneCapture, type DesktopVoicePreferences } from "./voice-capture";
@@ -225,6 +234,7 @@ export function App({ bridge }: { bridge: DesktopBridge }) {
         current
           ? {
               ...current,
+              direct_messages: current.direct_messages.map((dm) => dm.id === result.conversationId ? { ...dm, unread: 0 } : dm),
               channel_states: current.channel_states.map((channel) =>
                 channel.channel_id === result.conversationId
                   ? { ...channel, read_sequence: result.sequence, unread: 0 }
@@ -432,7 +442,7 @@ export function mostRecentEditableMessage(
   return messages
     .slice(-10)
     .reverse()
-    .find((message) => message.author_id === currentMemberId && !message.deleted);
+    .find((message) => message.author_id === currentMemberId && !message.deleted && !message.call_event);
 }
 
 function DesktopTitleBar({ updateState, onInstallUpdate, onAction }: { updateState: DesktopUpdateState; onInstallUpdate(): void; onAction(action: import("../shared/desktop-bridge").WindowControlAction): void }) {
@@ -486,6 +496,7 @@ function CommunityShell({
   const [communityGuide, setCommunityGuide] = useState<string | null>(null);
   const [voiceParticipantsByChannel, setVoiceParticipantsByChannel] = useState<Record<string, import("../shared/instance-actions").VoiceParticipant[]>>({});
   const [requestedVoiceRoom, setRequestedVoiceRoom] = useState<string | null>(null);
+  const [activeInputStream, setActiveInputStream] = useState<MediaStream | null>(null);
   const [directCall, setDirectCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [focusedMediaMemberId, setFocusedMediaMemberId] = useState<string | null>(null);
   const [settingsView, setSettingsView] = useState<
@@ -496,7 +507,9 @@ function CommunityShell({
   const [mentionCaret, setMentionCaret] = useState(-1);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyTarget, setReplyTarget] = useState<import("../shared/instance-state").Message | null>(null);
+  const replyTo = replyTarget?.channel_id === conversation?.id ? replyTarget?.id : null;
+  const replyMessage = replyTo ? state.messages[conversation!.id]?.find(message => message.id === replyTo) || replyTarget : null;
   const [attachments, setAttachments] = useState<File[]>([]);
   const [draggingFiles, setDraggingFiles] = useState(false);
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null);
@@ -521,6 +534,21 @@ function CommunityShell({
     top: number;
   } | null>(null);
   const [memberActionsOpen, setMemberActionsOpen] = useState(false);
+  const memberCardRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const card = memberCardRef.current;
+    if (!card || !memberPopover) return;
+    const position = () => {
+      const bounds = card.getBoundingClientRect();
+      card.style.left = `${Math.max(8, Math.min(memberPopover.left, window.innerWidth - bounds.width - 8))}px`;
+      card.style.top = `${Math.max(8, Math.min(memberPopover.top, window.innerHeight - bounds.height - 8))}px`;
+    };
+    position();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(position) : null;
+    observer?.observe(card);
+    window.addEventListener("resize", position);
+    return () => { observer?.disconnect(); window.removeEventListener("resize", position); };
+  }, [memberPopover, memberActionsOpen]);
   const [voiceMemberMenu, setVoiceMemberMenu] = useState<{
     participant: import("../shared/instance-actions").VoiceParticipant;
     left: number;
@@ -627,11 +655,34 @@ function CommunityShell({
   const activeDirectMessage = conversation?.type === "dm"
     ? state.direct_messages.find(({ id }) => id === conversation.id)
     : undefined;
+  const directCallActive = !!(directCall?.state === "accepted" && conversation?.type === "dm" && directCall.direct_message_id === conversation.id);
+  const [collapsedCallChat, setCollapsedCallChat] = useState<{callId: string; sequence: number} | null>(null);
+  const callChatScroll = useRef<{conversationId: string; top: number} | null>(null);
+  const callChatHidden = directCallActive && collapsedCallChat?.callId === directCall?.id;
+  const hiddenChatUnread = callChatHidden ? Math.max(activeDirectMessage?.unread || 0,
+    (state.messages[conversation!.id] || []).filter(message => message.sequence > collapsedCallChat!.sequence && message.author_id !== state.member.id && !message.deleted).length) : 0;
+  const toggleCallChat = () => {
+    if (!directCall || !conversation) return;
+    if (callChatHidden) {
+      setCollapsedCallChat(null);
+      const last = state.messages[conversation.id]?.at(-1);
+      if (last) void onAction({type: "update_read_position", conversationId: conversation.id, direct: true, sequence: last.sequence});
+    } else {
+      callChatScroll.current = {conversationId: conversation.id, top: messageListRef.current?.scrollTop || 0};
+      setCollapsedCallChat({callId: directCall.id, sequence: state.messages[conversation.id]?.at(-1)?.sequence || 0});
+    }
+  };
+  useLayoutEffect(() => {
+    if (!callChatHidden && callChatScroll.current?.conversationId === conversation?.id && messageListRef.current && callChatScroll.current) {
+      messageListRef.current.scrollTop = callChatScroll.current.top;
+      callChatScroll.current = null;
+    }
+  }, [callChatHidden, conversation?.id]);
   const directMessageBlocked = !!(activeDirectMessage?.blocked_by_me || activeDirectMessage?.blocked_me);
   useEffect(() => {
-    onConversationChange?.(conversation && conversation.type !== "voice" ? conversation.id : null);
+    onConversationChange?.(conversation && conversation.type !== "voice" && !callChatHidden ? conversation.id : null);
     return () => onConversationChange?.(null);
-  }, [conversation?.id, conversation?.type, onConversationChange]);
+  }, [conversation?.id, conversation?.type, callChatHidden, onConversationChange]);
   const mentionMatch = useMemo(() => matchMention(draft, mentionCaret, state.members.map((member) => ({ id: member.id, username: member.username, displayName: member.displayName }))), [draft, mentionCaret, state.members]);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const chooseMention = (username: string) => {
@@ -645,8 +696,25 @@ function CommunityShell({
       textareaRef.current?.setSelectionRange(insertion.caret, insertion.caret);
     });
   };
-  const directCallActive = !!(directCall?.state === "accepted" && conversation?.type === "dm" && directCall.direct_message_id === conversation.id);
+
+  const openVoiceRoom = () => {
+    const room = channels.find(channel => channel.id === requestedVoiceRoom);
+    if (!room) return;
+    setSettingsView(null);
+    setConversation({ id: room.id, name: room.name, type: "voice" });
+  };
+  const openDirectCall = (directMessageId: string) => {
+    const directMessage = state.direct_messages.find(({ id }) => id === directMessageId);
+    if (!directMessage) return;
+    setSettingsView(null);
+    setHomeView("direct-messages");
+    setConversation({ id: directMessage.id, name: memberName(directMessage.other), type: "dm" });
+  };
 	const openActivityTray = () => {
+    if (!activityTrayOpen) {
+      if (requestedVoiceRoom) openVoiceRoom();
+      else if (directCall?.state === "accepted") openDirectCall(directCall.direct_message_id);
+    }
 		setActivityTrayOpen((current) => !current);
 		setActivityError("");
 		if (activityInstallations !== null) return;
@@ -655,7 +723,7 @@ function CommunityShell({
 		}).catch(() => setActivityError("Activities are unavailable on this Instance."));
 	};
 	const activityDock = () => <>
-		{activityLaunch && <iframe className="call-activity-frame" title="Call Activity" sandbox="allow-scripts" src={`${activityLaunch.runtimeUrl}#${activityLaunch.token}`} />}
+
 		<div className="call-activity-dock">
 			{activityTrayOpen && <section className="call-activity-picker" aria-label="Call Activities">
 				<header><strong>Activities</strong>{activityLaunch && <button type="button" onClick={() => setActivityLaunch(null)}>Close Activity</button>}</header>
@@ -669,7 +737,7 @@ function CommunityShell({
 				}}><span className="activity-mark">✎</span><span><strong>{item.manifest.name}</strong><small>{item.manifest.description}</small></span></button>)}
 				{activityInstallations?.filter((item) => item.enabled).length === 0 && <p>No Activities are enabled.</p>}
 			</section>}
-			<button className={activityTrayOpen || activityLaunch ? "active" : ""} type="button" aria-label="Open Activities" title="Activities" onClick={openActivityTray}><Icon name="rocket" /></button>
+
 		</div>
 	</>;
   useEffect(() => {
@@ -717,6 +785,7 @@ function CommunityShell({
         : "",
     );
     setEditingMessageId(null);
+    setReplyTarget(null);
 	setShowPins(false);
 	setPinnedMessages(null);
     if (conversation && conversation.type !== "voice") {
@@ -765,7 +834,7 @@ function CommunityShell({
   const visibleMessageCount = conversation ? (state.messages[conversation.id] || []).length : 0;
   useLayoutEffect(() => {
     const list = messageListRef.current;
-    if (!list) return;
+    if (!list || callChatHidden) return;
     if (prependScrollHeight.current !== null) {
       list.scrollTop += list.scrollHeight - prependScrollHeight.current;
       prependScrollHeight.current = null;
@@ -884,9 +953,7 @@ function CommunityShell({
         attachmentIds.push(result.attachment.id);
     }
     await onAction(
-      editingMessageId
-        ? { type: "edit_message", messageId: editingMessageId, body }
-        : {
+      {
             type: "send_message",
             conversationId: conversation.id,
             direct: conversation.type === "dm",
@@ -896,22 +963,18 @@ function CommunityShell({
           },
     );
     setDraft("");
-    setEditingMessageId(null);
-    setReplyTo(null);
+    setReplyTarget(null);
     setAttachments([]);
     localStorage.removeItem(draftKey(instanceId, conversation.id));
   }
   function beginEditingMessage(message: InstanceViewState["messages"][string][number]): void {
-    setDraft(message.body || "");
     setEditingMessageId(message.id);
-    requestAnimationFrame(() => {
-      document.getElementById(`message-${message.id}`)?.scrollIntoView({ block: "center" });
-      const input = textareaRef.current;
-      if (!input) return;
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-    });
   }
+  function closeMessageEditor(): void {
+    setEditingMessageId(null);
+    textareaRef.current?.focus();
+  }
+
   const memberGroups = [
     {
       label: "Owner",
@@ -934,20 +997,31 @@ function CommunityShell({
       ),
     },
   ];
-  const showMemberPopover = (memberId: string, bounds: DOMRect) => {
+  const showMemberPopover = (memberId: string, bounds: DOMRect, fromDirectory = false) => {
     setMemberActionsOpen(false);
     setMemberPopover({
       memberId,
-      left: Math.min(window.innerWidth - 308, Math.max(8, bounds.left)),
-      top: Math.min(window.innerHeight - 378, Math.max(8, bounds.bottom + 8)),
+      left: Math.max(8, Math.min(window.innerWidth - 328, fromDirectory ? bounds.left - 328 : bounds.left)),
+      top: Math.max(8, fromDirectory ? bounds.top : bounds.bottom + 8),
     });
   };
+  const jumpToPresentControl = awayFromPresent && (
+    <div className="jump-to-present">
+      <span>You're Viewing Older Messages</span>
+      <button type="button" onClick={() => { void loadPresentMessages(); }}>
+        Jump to Present
+      </button>
+    </div>
+  );
+
   return (
     <div className={`community-shell${settingsView === "community" ? " community-settings-open" : settingsView ? " member-settings-open" : ""}`}>
       <aside className="conversation-sidebar">
         {settingsView && settingsView !== "community" && (
           <>
-            <div className="member-settings-heading">Member Settings</div>
+            <button className="settings-back" type="button" onClick={() => setSettingsView(null)}>‹  Back to Community</button>
+            <div className="member-settings-heading">Settings</div>
+            <p className="settings-nav-label">Your account</p>
             <nav className="member-settings-navigation" aria-label="User settings">
               <button
                 aria-current={settingsView === "profile" ? "page" : undefined}
@@ -988,8 +1062,10 @@ function CommunityShell({
                   });
                 }}
               >Safety</button>
-              <div className="member-settings-separator" />
-              <button type="button" onClick={() => setSettingsView(null)}>Back to Community</button>
+              {state.member.owner && <>
+                <p className="settings-nav-label">Community</p>
+                <button type="button" onClick={() => setSettingsView("community")}>General</button>
+              </>}
             </nav>
           </>
         )}
@@ -1124,8 +1200,8 @@ function CommunityShell({
                             event.preventDefault();
                             setVoiceMemberMenu({
                               participant,
-                              left: Math.min(window.innerWidth - 224, event.clientX),
-                              top: Math.min(window.innerHeight - 250, event.clientY),
+                              left: event.clientX,
+                              top: event.clientY,
                             });
                           }}
                         >
@@ -1141,6 +1217,7 @@ function CommunityShell({
             </section>
           ))}
         </nav>
+        <div className="floating-member-panel">
         <div id="desktop-call-controls" />
         <footer className="member-panel">
           <div className="member-menu-anchor">
@@ -1156,6 +1233,7 @@ function CommunityShell({
               <button type="button" role="menuitem" onClick={() => { setPresenceOverride("dnd"); setMemberMenuOpen(false); void onAction({ type: "set_presence", mode: "dnd" }); }}><span className="presence-choice dnd" />Do Not Disturb</button>
             </nav>}
           </div>
+          <MemberAudioControls memberId={state.member.id} inputStream={activeInputStream} onVoiceSettings={() => setSettingsView("voice")} />
           <button
             type="button"
             aria-label="User Settings"
@@ -1164,9 +1242,11 @@ function CommunityShell({
             <Icon name="settings" />
           </button>
         </footer>
+        {activityDock()}
+        </div>
       </aside>
       <section className="conversation-content">
-        <header>
+        <header hidden={Boolean(settingsView)}>
           <h1>
             {!settingsView && conversation?.type === "text" && (
               <Icon name="hash" />
@@ -1199,7 +1279,7 @@ function CommunityShell({
           <div className="header-actions">
             {activeDirectMessage && (
               <button
-                className="header-button"
+                className="header-button header-text-button"
                 type="button"
                 onClick={() => void onAction({
                   type: "set_block",
@@ -1221,13 +1301,7 @@ function CommunityShell({
               requestedVoiceRoom={requestedVoiceRoom}
               requestedVoiceRoomName={channels.find(({ id }) => id === requestedVoiceRoom)?.name || "Voice Channel"}
               focusedMediaMemberId={focusedMediaMemberId}
-              onOpenDirectCall={(directMessageId) => {
-                const directMessage = state.direct_messages.find(({ id }) => id === directMessageId);
-                if (!directMessage) return;
-                setSettingsView(null);
-                setHomeView("direct-messages");
-                setConversation({ id: directMessage.id, name: memberName(directMessage.other), type: "dm" });
-              }}
+              onOpenDirectCall={openDirectCall}
               onVoiceRoomChange={(roomId) => {
                 const previousRoom = requestedVoiceRoom;
                 setRequestedVoiceRoom(roomId);
@@ -1238,6 +1312,9 @@ function CommunityShell({
                   }));
                 }
               }}
+              onInputStream={setActiveInputStream}
+              onOpenActivities={openActivityTray}
+              onOpenVoiceRoom={openVoiceRoom}
               onCallChange={setDirectCall}
             />
             {state.connection === "offline" && (
@@ -1396,17 +1473,16 @@ function CommunityShell({
         </header>
         {settingsView ? settingsView === "community" ? (
           <div className="community-settings-layout">
-            <CommunityAdministration state={state} onAction={onAction} onSectionChange={setCommunitySettingsSection} />
+            <CommunityAdministration state={state} onAction={onAction} onSectionChange={setCommunitySettingsSection} onBack={() => setSettingsView(null)} />
           </div>
         ) : (
           <div className="settings-layout">
             <section className="settings-content">
               {settingsView === "profile" && <>
-              <h2>Profile</h2>
-              <p className="settings-description">Control how other Members recognize you.</p>
-              <ProfileImages member={state.member} onAction={onAction} />
+              <SettingsHeading title="My Account" description="Make yourself at home. Choose how other Members see you." />
+              <div className="account-profile-grid">
               <form
-                className="profile-form"
+                className="profile-form settings-card"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const data = new FormData(event.currentTarget);
@@ -1417,6 +1493,7 @@ function CommunityShell({
                   });
                 }}
               >
+                <h3>Profile details</h3>
                 <label>
                   Username
                   <input
@@ -1432,23 +1509,28 @@ function CommunityShell({
                     defaultValue={state.member.displayName || ""}
                   />
                 </label>
-                <button type="submit">Save Profile</button>
+                <p>Your display name appears in conversations.</p>
+                <button className="settings-primary" type="submit">Save Profile</button>
               </form>
-              <div className="presence-controls">
-                <strong>Presence</strong>
+              <ProfileImages member={state.member} onAction={onAction} />
+              </div>
+              <div className="presence-controls settings-card">
+                <div><h3>Presence</h3><p>Choose when you’re available to chat.</p></div>
                 <button
                   type="button"
                   onClick={() =>
-                    void onAction({ type: "set_presence", mode: "available" })
+                    { setPresenceOverride("online"); void onAction({ type: "set_presence", mode: "available" }); }
                   }
+                  aria-pressed={(presenceOverride || state.presence[state.member.id]) === "online"}
                 >
                   Online
                 </button>
                 <button
                   type="button"
                   onClick={() =>
-                    void onAction({ type: "set_presence", mode: "dnd" })
+                    { setPresenceOverride("dnd"); void onAction({ type: "set_presence", mode: "dnd" }); }
                   }
+                  aria-pressed={(presenceOverride || state.presence[state.member.id]) === "dnd"}
                 >
                   Do Not Disturb
                 </button>
@@ -1468,18 +1550,24 @@ function CommunityShell({
               )}
               {settingsView === "sessions" && (
                 <section className="session-list">
-                  <h2>Sessions</h2>
-                  {!sessions && <p>Loading Sessions…</p>}
-                  {sessions?.map((session) => (
+                  <SettingsHeading title="Sessions" description="See where you’re signed in and manage access to your account." />
+                  {!sessions && <p role="status">Loading Sessions…</p>}
+                  {sessions && [true, false].map((currentDevice) => <section className="settings-card session-group" key={String(currentDevice)}>
+                    <h3>{currentDevice ? "This device" : "Other sessions"}</h3>
+                    {!currentDevice && <p>Revoke a session to sign out that device.</p>}
+                    {!currentDevice && !sessions.some((session) => !session.current) && <p>No other active sessions.</p>}
+                  {sessions.filter((session) => session.current === currentDevice).map((session) => (
                     <article key={session.id}>
-                      <span>
+                      {session.current && <span className="session-device-icon"><Icon name="monitor" /></span>}
+                      <span className="session-device-details">
                         <strong>{session.device}</strong>
                         <small>
                           {session.current
-                            ? "Current Session"
-                            : `Active ${session.last_activity}`}
+                            ? "You’re using AllChat here."
+                            : `Last active ${new Date(session.last_activity).toLocaleString()}`}
                         </small>
                       </span>
+                      {session.current && <span className="current-session-badge">●  Current Session</span>}
                       {!session.current && (
                         <button
                           type="button"
@@ -1498,17 +1586,17 @@ function CommunityShell({
                             );
                           }}
                         >
-                          Revoke
+                          Revoke session
                         </button>
                       )}
                     </article>
                   ))}
+                  </section>)}
                 </section>
               )}
               {settingsView === "safety" && (
                 <section className="settings-panel">
-                  <h2>Safety</h2>
-                  {!reports && <p>Loading Safety information…</p>}
+                  {!reports && <><SettingsHeading title="Safety" description="Manage reports and take control of your account data." /><p role="status">Loading Safety information…</p></>}
               {reports && (
                 <SafetyPanel
                   reports={reports}
@@ -1524,67 +1612,72 @@ function CommunityShell({
           </div>
         ) : conversation ? (
           conversation.type === "voice" ? (
-            <section className="media-stage">
-              <div className="media-stage-grid" data-tile-count={visibleVoiceParticipants.length}>
+            <section className="media-stage voice-room-stage">
+              <VoiceParticipantGrid count={visibleVoiceParticipants.length}>
                 {visibleVoiceParticipants.length === 0 ? (
                   <p className="media-stage-empty">No one is connected to this Voice Room.</p>
                 ) : visibleVoiceParticipants.map((participant) => {
                   const member = state.members.find(({ id }) => id === participant.member_id);
                   const name = member ? memberName(member) : "Member";
-                  return <article className={`media-stage-tile participant-tile ${participant.speaking ? "speaking" : ""} ${focusedMediaMemberId === participant.member_id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${name}`} data-media-member-id={participant.member_id} key={participant.member_id} onClick={() => setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id); } }} onContextMenu={(event) => {
+                  return <CallParticipantCell avatarPath={member?.avatarUrl} name={name} onAction={onAction} className={`${participant.speaking ? "speaking" : ""} ${focusedMediaMemberId === participant.member_id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${name}`} data-media-member-id={participant.member_id} key={participant.member_id} onClick={() => setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.member_id ? null : participant.member_id); } }} onContextMenu={(event) => {
                     event.preventDefault();
-                    setVoiceMemberMenu({ participant, left: Math.min(window.innerWidth - 224, event.clientX), top: Math.min(window.innerHeight - 280, event.clientY) });
+                    setVoiceMemberMenu({ participant, left: event.clientX, top: event.clientY });
                   }}>
-                    <div className="media-stage-visual"><AuthenticatedImage path={member?.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
                     <strong>{name}</strong>
-                    {participant.screen_sharing && <span>Sharing screen</span>}
+                    {participant.screen_sharing && <span>Sharing video</span>}
                     {focusedMediaMemberId === participant.member_id && <button className="media-focus-close" type="button" aria-label={`Exit focus for ${name}`} onClick={(event) => { event.stopPropagation(); setFocusedMediaMemberId(null); }}><Icon name="x" /></button>}
-                  </article>;
+                  </CallParticipantCell>;
                 })}
-              </div>
-				{requestedVoiceRoom === conversation.id && activityDock()}
+              </VoiceParticipantGrid>
+              {requestedVoiceRoom === conversation.id && activityLaunch && <iframe className="call-activity-frame" title="Call Activity" sandbox="allow-scripts" src={`${activityLaunch.runtimeUrl}#${activityLaunch.token}`} />}
             </section>
           ) : (
-            <section className={directCallActive ? "conversation-workspace direct-call-workspace" : "conversation-workspace"}>
+            <section className={directCallActive ? `conversation-workspace direct-call-workspace${callChatHidden ? " chat-collapsed" : ""}` : "conversation-workspace"}>
               {directCallActive && (
                 <section className="media-stage direct-call-stage" aria-label="Direct Call grid">
+                  <button type="button" className="call-chat-toggle" aria-label={callChatHidden ? "Show chat" : "Hide chat"} title={callChatHidden ? "Show chat" : "Hide chat"} aria-expanded={!callChatHidden} aria-controls="conversation-chat-pane" onClick={toggleCallChat}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={callChatHidden ? "m15 6-6 6 6 6" : "m9 6 6 6-6 6"}/></svg>
+                    {hiddenChatUnread > 0 && <span className="call-chat-unread" aria-label={`${hiddenChatUnread} unread messages`}>{hiddenChatUnread > 99 ? "99+" : hiddenChatUnread}</span>}
+                  </button>
                   <div className="media-stage-grid" data-tile-count={2}>
                     {[state.member, activeDirectMessage?.other].filter((member): member is import("../shared/desktop-bridge").MemberSummary => Boolean(member)).map((participant) => {
                       const name = memberName(participant);
-                      return <article className={`media-stage-tile participant-tile ${focusedMediaMemberId === participant.id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${participant.id === state.member.id ? "You" : name}`} data-media-member-id={participant.id} key={participant.id} onClick={() => setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id); } }} onContextMenu={(event) => {
+                      return <CallParticipantCell avatarPath={participant.avatarUrl} name={name} onAction={onAction} className={`${focusedMediaMemberId === participant.id ? "expanded" : ""}`} role="button" tabIndex={0} aria-label={`Focus ${participant.id === state.member.id ? "You" : name}`} data-media-member-id={participant.id} key={participant.id} onClick={() => setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFocusedMediaMemberId((current) => current === participant.id ? null : participant.id); } }} onContextMenu={(event) => {
                         if (participant.id === state.member.id || !directCall) return;
                         event.preventDefault();
                         setVoiceMemberMenu({
                           directCall: true,
                           participant: { member_id: participant.id, room_id: directCall.id, connected: true, joined_at: directCall.created_at, server_muted: false, muted: false, speaking: false, screen_sharing: false },
-                          left: Math.min(window.innerWidth - 224, event.clientX),
-                          top: Math.min(window.innerHeight - 280, event.clientY),
+                          left: event.clientX,
+                          top: event.clientY,
                         });
                       }}>
-                        <div className="media-stage-visual"><AuthenticatedImage path={participant.avatarUrl} alt="" className="media-stage-avatar" fallback={name.slice(0, 1).toUpperCase()} onAction={onAction} /></div>
-                        <strong>{participant.id === state.member.id ? "You" : name}</strong>
+                            <strong>{participant.id === state.member.id ? "You" : name}</strong>
                         {focusedMediaMemberId === participant.id && <button className="media-focus-close" type="button" aria-label={`Exit focus for ${participant.id === state.member.id ? "You" : name}`} onClick={(event) => { event.stopPropagation(); setFocusedMediaMemberId(null); }}><Icon name="x" /></button>}
-                      </article>;
+                      </CallParticipantCell>;
                     })}
                   </div>
-					{activityDock()}
+					{activityLaunch && <iframe className="call-activity-frame" title="Call Activity" sandbox="allow-scripts" src={`${activityLaunch.runtimeUrl}#${activityLaunch.token}`} />}
                 </section>
               )}
+            <div id="conversation-chat-pane" className="conversation-chat-pane" hidden={callChatHidden}>
+            {directCallActive && <header className="call-chat-heading">Chat</header>}
             <div
               className={directCallActive ? "message-list direct-call-chat" : "message-list"}
               aria-label={`${conversation.name} Messages`}
               ref={messageListRef}
               onLoadCapture={() => {
                 const list = messageListRef.current;
-                if (!list || !stickToBottom.current) return;
+                if (!list || callChatHidden || !stickToBottom.current) return;
                 list.scrollTop = list.scrollHeight;
                 requestAnimationFrame(() => { if (stickToBottom.current) list.scrollTop = list.scrollHeight; });
               }}
               onLoadedMetadataCapture={() => {
                 const list = messageListRef.current;
-                if (list && stickToBottom.current) list.scrollTop = list.scrollHeight;
+                if (list && !callChatHidden && stickToBottom.current) list.scrollTop = list.scrollHeight;
               }}
               onScroll={(event) => {
+                if (callChatHidden) return;
                 const list = event.currentTarget;
                 stickToBottom.current = list.scrollHeight - list.scrollTop - list.clientHeight < 72;
                 setAwayFromPresent(!stickToBottom.current);
@@ -1597,8 +1690,10 @@ function CommunityShell({
               }}
             >
 			  {(showPins ? (pinnedMessages || []) : renderedConversationMessages)
-                .map((message) => (
-                  <article className="message" id={`message-${message.id}`} key={message.id}>
+                .map((message) => message.call_event ? (
+                  <CallHistoryEvent key={message.id} message={message} currentMemberId={state.member.id} otherName={activeDirectMessage ? memberName(activeDirectMessage.other) : "Member"} />
+                ) : (
+                  <article className={`message${editingMessageId === message.id ? " message-editing" : ""}${replyTo === message.id ? " message-reply-target" : ""}${message.reply ? " has-reply" : ""}`} id={`message-${message.id}`} key={message.id}>
                     <AuthenticatedImage
                       path={message.author_avatar_url}
                       alt=""
@@ -1607,29 +1702,18 @@ function CommunityShell({
                       onAction={onAction}
                     />
                     <div>
-                      <strong>{message.author_name}</strong>
+                      {message.reply && <ReplyExcerpt reply={message.reply} />}
+                      <button type="button" className="message-author-trigger" data-member-trigger disabled={!state.members.some(member => member.id === message.author_id)} onClick={event => showMemberPopover(message.author_id, event.currentTarget.getBoundingClientRect())}>{message.author_name}</button>
                       <time dateTime={message.created_at}>
                         {formatMessageTime(message.created_at)}
                       </time>
-                      {message.reply && (
-                        <blockquote>
-                          Replying to {message.reply.author_name}:{" "}
-                          {message.reply.deleted
-                            ? "Message deleted"
-                            : message.reply.body}
-                        </blockquote>
-                      )}
-                      <div className="message-body">{message.deleted ? "Message deleted" : <MessageBody body={message.body || ""} mentions={message.mentions || []} />}</div>
+                      {editingMessageId === message.id && !message.deleted ? <InlineMessageEditor key={message.id} body={message.body || ""}
+                        onSave={async body => (await onAction({ type: "edit_message", messageId: message.id, body }))?.type === "message"}
+                        onClose={closeMessageEditor} /> : <div className="message-body">{message.deleted ? "Message deleted" : <MessageBody body={message.body || ""} mentions={message.mentions || []} />}</div>}
                       {message.body && (
                         <LinkPreview body={message.body} onAction={onAction} />
                       )}
-                      {message.attachments?.map((attachment) => (
-                        <AttachmentView
-                          attachment={attachment}
-                          key={attachment.id}
-                          onAction={onAction}
-                        />
-                      ))}
+                      <MessageAttachments attachments={message.attachments || []} onAction={onAction} />
                       {message.reactions?.map((reaction) => (
                         <button
                           className="reaction"
@@ -1648,11 +1732,11 @@ function CommunityShell({
                         </button>
                       ))}
                       {message.pinned && <span className="pinned">Pinned</span>}
-                      {!message.deleted && (
+                      {!message.deleted && editingMessageId !== message.id && (
                         <span className="message-actions">
                           <button
                             type="button"
-                            onClick={() => setReplyTo(message.id)}
+                            onClick={() => { setReplyTarget(message); textareaRef.current?.focus(); }}
                           >
                             Reply
                           </button>
@@ -1731,17 +1815,7 @@ function CommunityShell({
                     </div>
                   </article>
                 ))}
-              {awayFromPresent && (
-                <button
-                  className="jump-to-present"
-                  type="button"
-                  onClick={() => {
-                    void loadPresentMessages();
-                  }}
-                >
-                  Jump to present
-                </button>
-              )}
+              {directMessageBlocked && jumpToPresentControl}
               {directMessageBlocked && (
                 <div className="blocked-conversation">
                   {activeDirectMessage?.blocked_by_me
@@ -1750,6 +1824,7 @@ function CommunityShell({
                 </div>
               )}
               {!directMessageBlocked && <div className="message-composer-wrap">
+                {jumpToPresentControl}
                 <form
                 className={`message-composer${draggingFiles ? " file-drag-active" : ""}`}
                 onSubmit={(event) => void sendMessage(event)}
@@ -1763,34 +1838,14 @@ function CommunityShell({
                   if (files.length) setAttachments((current) => appendUniqueFiles(current, files));
                 }}
               >
-                {replyTo && (
-                  <div className="composer-context">
-                    Replying to a Message{" "}
-                    <button type="button" onClick={() => setReplyTo(null)}>
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {editingMessageId && (
-                  <div className="composer-context">
-                    Editing Message{" "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingMessageId(null);
-                        setDraft("");
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+                {replyMessage && <ReplyComposerPreview message={replyMessage} onCancel={() => { setReplyTarget(null); textareaRef.current?.focus(); }} />}
                 <textarea
                   ref={textareaRef}
                   aria-label={`Message ${conversation.name}`}
                   placeholder={`Message #${conversation.name}`}
                   value={draft}
                   onKeyDown={(event) => {
+                    if (event.key === "Escape" && replyTo && !mentionMatch) { event.preventDefault(); setReplyTarget(null); return; }
                     if (mentionMatch) {
                       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                         event.preventDefault();
@@ -1867,6 +1922,7 @@ function CommunityShell({
                 <small className="typing-indicator" aria-live="polite">{typingSummary(state.typing.filter((item) => item.channel_id === conversation.id && item.member_id !== state.member.id).map((item) => item.member_name))}</small>
               </div>}
             </div>
+            </div>
             </section>
           )
         ) : homeView === "direct-messages" ? (
@@ -1918,14 +1974,14 @@ function CommunityShell({
           </div>
         )}
       </section>
-      {searchResults ? (
+      {searchResults && !settingsView ? (
         <aside className="member-directory search-results-pane" aria-label="Search Results">
           <header><h2>Search Results — {searchResults.length}</h2><button type="button" aria-label="Close Search" onClick={() => { setSearchResults(null); setSearchNextCursor(null); }}><Icon name="x" /></button></header>
           <div className="search-results-list">
             {searchResults.length ? searchResults.map((result) => (
               <article className="search-result-message" key={result.message.id}>
                 <small>#{result.channel_name} · {result.category_name}</small>
-                <strong>{result.message.author_name}</strong>
+                <button type="button" className="message-author-trigger" data-member-trigger disabled={!state.members.some(member => member.id === result.message.author_id)} onClick={event => showMemberPopover(result.message.author_id, event.currentTarget.getBoundingClientRect())}>{result.message.author_name}</button>
                 <time>{formatMessageTime(result.message.created_at)}</time>
                 <div className="message-body"><MessageBody body={result.message.body || ""} mentions={result.message.mentions || []} /></div>
                 <button type="button" onClick={() => void jumpToSearchResult(result)}>Jump to message</button>
@@ -1945,7 +2001,7 @@ function CommunityShell({
                   key={member.id}
                   data-member-trigger
                   onClick={(event) => {
-                    showMemberPopover(member.id, event.currentTarget.getBoundingClientRect());
+                    showMemberPopover(member.id, event.currentTarget.getBoundingClientRect(), true);
                   }}
                 >
                   <span className="member-directory-avatar">
@@ -1980,6 +2036,7 @@ function CommunityShell({
           return createPortal(
             <section
               className="member-card"
+              ref={memberCardRef}
               role="dialog"
               aria-label="Member profile"
               data-member-popover
@@ -1996,17 +2053,21 @@ function CommunityShell({
                   className="member-banner"
                   onAction={onAction}
                 />
-                {member.id !== state.member.id && <button className="member-card-more" type="button" aria-label="Member actions" aria-expanded={memberActionsOpen} onClick={() => setMemberActionsOpen((open) => !open)}>•••</button>}
+                {member.id !== state.member.id && <button className="member-card-more" type="button" aria-label="Member actions" aria-expanded={memberActionsOpen} onClick={() => setMemberActionsOpen((open) => !open)}>⋯</button>}
+                <button className="member-card-close" type="button" aria-label="Close member profile" onClick={() => setMemberPopover(null)}>×</button>
               </div>
               <div className="member-card-body">
                 <AuthenticatedImage
                   path={member.avatarUrl}
                   alt=""
                   className="member-card-avatar"
+                  fallback={memberName(member).slice(0, 1).toUpperCase()}
                   onAction={onAction}
                 />
+                <span className={`member-card-presence presence-dot ${state.presence[member.id] || "offline"}`} aria-hidden="true" />
                 <h3>{memberName(member)}</h3>
 			    <p>@{member.username}{member.disabled ? " · Disabled" : ""}</p>
+                <div className="member-card-meta"><span>{member.owner ? "Owner" : "Member"}</span><span>{({ online: "Online", offline: "Offline", idle: "Idle", dnd: "Do Not Disturb", mobile: "Mobile" } as Record<string, string>)[state.presence[member.id] || "offline"]}</span></div>
               </div>
               {member.id !== state.member.id && (
                 <div className="member-card-actions" role="group" aria-label="Member actions" hidden={!memberActionsOpen}>
@@ -2044,10 +2105,10 @@ function CommunityShell({
                   >
                     {dm?.blocked_by_me ? "Unblock" : "Block"}
                   </button>
-				  {state.member.owner && !member.owner && <>
+				  {state.member.owner && !member.owner && <div className="member-card-moderation">
 					<button type="button" onClick={() => void onAction({ type: "set_member_disabled", memberId: member.id, disabled: !member.disabled }).then(() => setMemberPopover(null))}>{member.disabled ? "Restore" : "Disable"}</button>
 					<button className="danger-button" type="button" onClick={() => { const confirmation = window.prompt(`Permanently delete ${memberName(member)} and everything tied to this Member? Type understood to continue.`); if (confirmation !== "understood") return; void onAction({ type: "delete_member", memberId: member.id, confirmation }).then(() => setMemberPopover(null)); }}>Delete Member</button>
-				  </>}
+				  </div>}
                 </div>
               )}
             </section>,
@@ -2060,48 +2121,126 @@ function CommunityShell({
         const participant = voiceMemberMenu.participant;
         const preferences = loadDesktopVoicePreferences(state.member.id);
         const memberVolume = preferences.memberVolumes[member.id] ?? 1;
-        return <nav
-          className="voice-member-context"
-          role="menu"
-          aria-label="Voice Member actions"
-          data-voice-member-menu
-          style={{ position: "fixed", left: voiceMemberMenu.left, top: voiceMemberMenu.top }}
-        >
-          {member.id !== state.member.id && <label className="voice-member-volume">
-            <span><Icon name="volume" /> {memberName(member)} volume</span>
-            <output>{Math.round(memberVolume * 100)}%</output>
-            <input aria-label={`${memberName(member)} volume`} type="range" min="0" max="1" step="0.05" value={memberVolume} onChange={(event) => {
-              const next = Number(event.target.value);
-              saveDesktopVoicePreferences(state.member.id, { ...preferences, memberVolumes: { ...preferences.memberVolumes, [member.id]: next } });
-              setVoiceMemberMenu((current) => current ? { ...current } : null);
-            }} />
-          </label>}
-          <button type="button" role="menuitem" onClick={() => {
+        const self = member.id === state.member.id;
+        const roomName = voiceMemberMenu.directCall ? "Direct Call" : state.channels.find(channel => channel.id === participant.room_id)?.name || "Voice Room";
+        return <VoiceMemberMenu
+          name={memberName(member)} context={self ? `You · ${roomName}` : `In ${roomName}`}
+          avatar={<AuthenticatedImage path={member.avatarUrl} alt="" className="voice-menu-avatar" fallback={memberName(member).slice(0, 1).toUpperCase()} onAction={onAction} />}
+          presence={state.presence[member.id] || "offline"}
+          self={self} canModerate={!voiceMemberMenu.directCall && state.member.owner && !self}
+          serverMuted={participant.server_muted} volume={memberVolume}
+          left={voiceMemberMenu.left} top={voiceMemberMenu.top}
+          onClose={() => setVoiceMemberMenu(null)}
+          onVolume={(next) => {
+            saveDesktopVoicePreferences(state.member.id, { ...preferences, memberVolumes: { ...preferences.memberVolumes, [member.id]: next } });
+            setVoiceMemberMenu((current) => current ? { ...current } : null);
+          }}
+          onProfile={() => {
             showMemberPopover(member.id, new DOMRect(voiceMemberMenu.left, voiceMemberMenu.top, 0, 0));
             setVoiceMemberMenu(null);
-          }}>Profile</button>
-          {member.id !== state.member.id && <button type="button" role="menuitem" onClick={() => void onAction({ type: "open_dm", memberId: member.id }).then((result) => {
+          }}
+          onMessage={() => void onAction({ type: "open_dm", memberId: member.id }).then((result) => {
             if (result?.type === "direct_message") setConversation({ id: result.directMessage.id, name: memberName(result.directMessage.other), type: "dm" });
             setVoiceMemberMenu(null);
-          })}>Message</button>}
-          {!voiceMemberMenu.directCall && state.member.owner && member.id !== state.member.id && <>
-            <button type="button" role="menuitem" onClick={() => {
-              void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: participant.server_muted ? "unmute" : "mute" });
-              setVoiceMemberMenu(null);
-            }}>{participant.server_muted ? "Server Unmute" : "Server Mute"}</button>
-            <button className="danger-text" type="button" role="menuitem" onClick={() => {
-              void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: "disconnect" });
-              setVoiceMemberMenu(null);
-            }}>Disconnect</button>
-          </>}
-          <button type="button" role="menuitem" onClick={() => {
-            void navigator.clipboard.writeText(member.id);
+          })}
+          onMute={() => {
+            void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: participant.server_muted ? "unmute" : "mute" });
             setVoiceMemberMenu(null);
-          }}>Copy User ID</button>
-        </nav>;
+          }}
+          onDisconnect={() => {
+            void onAction({ type: "moderate_voice_participant", roomId: participant.room_id, memberId: member.id, action: "disconnect" });
+            setVoiceMemberMenu(null);
+          }}
+          onCopy={() => { void navigator.clipboard.writeText(member.id); setVoiceMemberMenu(null); }}
+        />;
       })(), document.body)}
     </div>
   );
+}
+
+export function VoiceMemberMenu(props: {
+  name: string; context: string; avatar: ReactNode; presence: string;
+  self: boolean; canModerate: boolean; serverMuted: boolean; volume: number;
+  left: number; top: number;
+  onVolume(value: number): void; onProfile(): void; onMessage(): void;
+  onMute(): void; onDisconnect(): void; onCopy(): void; onClose(): void;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const menu = ref.current;
+    if (!menu) return;
+    const position = () => {
+      const bounds = menu.getBoundingClientRect();
+      menu.style.left = `${Math.max(8, Math.min(props.left, window.innerWidth - bounds.width - 8))}px`;
+      menu.style.top = `${Math.max(8, Math.min(props.top, window.innerHeight - bounds.height - 8))}px`;
+    };
+    position();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(position);
+    observer?.observe(menu);
+    window.addEventListener("resize", position);
+    menu.focus();
+    return () => { observer?.disconnect(); window.removeEventListener("resize", position); };
+  }, [props.left, props.top, props.self, props.canModerate]);
+  const moderate = props.canModerate && !props.self;
+  return <nav ref={ref} className="voice-member-context" role="menu" aria-label="Voice Member actions" data-voice-member-menu tabIndex={-1}
+    style={{ position: "fixed", left: props.left, top: props.top }}
+    onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); props.onClose(); } }}>
+    <header className="voice-menu-identity">
+      <div className="voice-menu-avatar-wrap">{props.avatar}<span className={`presence-dot ${props.presence}`} aria-hidden="true" /></div>
+      <div><strong>{props.name}</strong><span>{props.context}</span></div>
+    </header>
+    {!props.self && <label className="voice-member-volume">
+      <span>Member volume</span><output>{Math.round(props.volume * 100)}%</output>
+      <input aria-label={`${props.name} volume`} type="range" min="0" max="1" step="0.05" value={props.volume} onChange={event => props.onVolume(Number(event.target.value))} />
+      <small>Only changes what you hear</small>
+    </label>}
+    <div className="voice-menu-actions">
+      <button type="button" role="menuitem" onClick={props.onProfile}><Icon name="user" />View profile</button>
+      {!props.self && <button type="button" role="menuitem" onClick={props.onMessage}><Icon name="messages" />Message</button>}
+    </div>
+    {moderate && <div className="voice-menu-moderation" role="group" aria-label="Community actions">
+      <span>Community actions</span>
+      <button type="button" role="menuitemcheckbox" aria-checked={props.serverMuted} onClick={props.onMute}><Icon name="mic-off" />Server mute<span className="voice-menu-toggle" aria-hidden="true" /></button>
+      <button className="danger-text" type="button" role="menuitem" onClick={props.onDisconnect}><Icon name="log-out" />Disconnect</button>
+    </div>}
+    <div className={`voice-menu-utility${props.self ? " self" : ""}`}><button type="button" role="menuitem" onClick={props.onCopy}><Icon name="copy" />Copy user ID</button></div>
+  </nav>;
+}
+
+export function SoundboardMenu({ sounds, onPlay, onClose, anchor }: {
+  sounds: { id: string; name: string; emoji?: string }[];
+  onPlay(id: string): void; onClose(): void; anchor?: HTMLElement | null;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("button")?.focus();
+  }, []);
+  const [position, setPosition] = useState<CSSProperties>({});
+  useLayoutEffect(() => {
+    if (!anchor) return;
+    const place = () => {
+      const box = anchor.getBoundingClientRect();
+      const width = Math.min(360, window.innerWidth - 16);
+      setPosition({
+        left: Math.max(8, Math.min(box.left, window.innerWidth - width - 8)),
+        bottom: window.innerHeight - box.top + 8,
+        width,
+        maxHeight: Math.max(0, Math.min(430, box.top - 16)),
+      });
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(anchor);
+    window.addEventListener("resize", place);
+    return () => { observer.disconnect(); window.removeEventListener("resize", place); };
+  }, [anchor]);
+  return createPortal(<div ref={ref} style={position} className="desktop-soundboard" role="dialog" aria-label="Community soundboard"
+    onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onClose(); } }}>
+    <header><strong>Soundboard</strong><button type="button" aria-label="Close soundboard" onClick={onClose}><Icon name="x" /></button></header>
+    {sounds.length ? <div className="soundboard-sounds">{sounds.map(sound => <button type="button" key={sound.id} title={sound.name} onClick={() => onPlay(sound.id)}>
+      <span aria-hidden="true">{sound.emoji || <Icon name="waveform" />}</span><strong>{sound.name}</strong>
+    </button>)}</div> : <div className="soundboard-empty"><span><Icon name="music" /></span><strong>No sounds yet</strong><p>Community sounds will appear here.</p></div>}
+  </div>, document.body);
 }
 
 export function DirectCallControls({
@@ -2116,6 +2255,9 @@ export function DirectCallControls({
   requestedVoiceRoomName,
   focusedMediaMemberId,
   onOpenDirectCall,
+  onInputStream,
+  onOpenActivities,
+  onOpenVoiceRoom,
   onVoiceRoomChange,
   onCallChange,
 }: {
@@ -2129,6 +2271,9 @@ export function DirectCallControls({
   requestedVoiceRoom: string | null;
   requestedVoiceRoomName: string;
   focusedMediaMemberId: string | null;
+  onInputStream?(stream: MediaStream | null): void;
+  onOpenActivities?(): void;
+  onOpenVoiceRoom?(): void;
   onOpenDirectCall?(directMessageId: string): void;
   onVoiceRoomChange(roomId: string | null): void;
   onCallChange(call: import("../shared/instance-actions").DirectCall | null): void;
@@ -2136,7 +2281,9 @@ export function DirectCallControls({
   const [call, setCall] = useState<import("../shared/instance-actions").DirectCall | null>(null);
   const [status, setStatus] = useState("");
   const transientStatus = useRef<ReturnType<typeof createTransientCallStatusController> | null>(null);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => { const p = loadDesktopVoicePreferences(currentMemberId); return Boolean(p.muted || p.deafened); });
+  const [ping, setPing] = useState<number | null>(null);
+  const [videoSource, setVideoSource] = useState<"camera" | "screen" | null>(null);
   const [sharing, setSharing] = useState(false);
   const [soundboardOpen, setSoundboardOpen] = useState(false);
   const [sounds, setSounds] = useState<import("../shared/instance-actions").SoundboardSound[]>([]);
@@ -2145,10 +2292,12 @@ export function DirectCallControls({
   const [remoteScreens, setRemoteScreens] = useState<Record<string, MediaStream>>({});
   const [voiceRoom, setVoiceRoom] = useState<string | null>(null);
   const voiceRoomRef = useRef<string | null>(null);
-  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[]; displayAudioSender: RTCRtpSender; signaling: ReturnType<typeof createMediaFrameQueue>; screenBusy?: boolean; screenQualityTimer?: number; requestedScreenTier: ScreenShareTier; automaticScreenTier: ScreenShareTier } | null>(null);
+  const media = useRef<{ stream: MediaStream; capture: DesktopMicrophoneCapture; peer: RTCPeerConnection; socket: import("../shared/desktop-bridge").DesktopMediaConnection; audio: Map<string, HTMLAudioElement[]>; screen?: MediaStream; videoSource?: "camera" | "screen"; screenSender?: RTCRtpSender; screenAudioSenders: RTCRtpSender[]; displayAudioSender: RTCRtpSender; signaling: ReturnType<typeof createMediaFrameQueue>; screenBusy?: boolean; screenQualityTimer?: number; requestedScreenTier: ScreenShareTier; automaticScreenTier: ScreenShareTier } | null>(null);
   const connectingRoom = useRef<string | null>(null);
   const mediaGeneration = useRef(0);
-  const disposeProvisional = useRef<(() => void) | null>(null);
+  const disposeProvisional = useRef<((explicit?: boolean) => void) | null>(null);
+  const pendingVoiceLeave = useRef<Promise<void> | null>(null);
+  const voiceJoinGeneration = useRef(0);
   const activeMediaCall = useRef<import('../shared/instance-actions').DirectCall | null>(null);
   const resumeToken = useRef('');
   const recovery = useRef<{deadline: number; attempts: number; timer?: ReturnType<typeof setTimeout>; capture?: DesktopMicrophoneCapture; muted: boolean}>({deadline: 0, attempts: 0, muted: false});
@@ -2168,7 +2317,7 @@ export function DirectCallControls({
 
   const cleanup = (recovering = false) => {
     mediaGeneration.current++;
-    disposeProvisional.current?.(); disposeProvisional.current = null;
+    disposeProvisional.current?.(!recovering); disposeProvisional.current = null;
     if (attemptDeadline.current) clearTimeout(attemptDeadline.current);
     if (recovery.current.timer) clearTimeout(recovery.current.timer);
     recovery.current.timer = undefined;
@@ -2188,7 +2337,9 @@ export function DirectCallControls({
     heartbeat.current = null;
     connectionWatchdog.current?.stop();
     connectingRoom.current = null;
-    setMuted(false);
+    setPing(null);
+    onInputStream?.(null);
+    setVideoSource(null);
     setSharing(false);
     setLocalScreen(null);
     setRemoteScreens({});
@@ -2231,7 +2382,8 @@ export function DirectCallControls({
     let provisionalCapture: DesktopMicrophoneCapture | null = null;
     let provisionalPeer: RTCPeerConnection | null = null;
     let provisionalSocket: import("../shared/desktop-bridge").DesktopMediaConnection | null = null;
-    const dispose = () => { provisionalCapture?.stop(); provisionalPeer?.close(); provisionalSocket?.close(); };
+    let explicitlyDisposed = false;
+    const dispose = (explicit = false) => { explicitlyDisposed ||= explicit; if (explicitlyDisposed) provisionalSocket?.send({version: 1, type: "leave"}); provisionalCapture?.stop(); provisionalPeer?.close(); provisionalSocket?.close(); };
     disposeProvisional.current = dispose;
     try {
     setStatus("Requesting microphone permission…");
@@ -2241,7 +2393,8 @@ export function DirectCallControls({
     const stream = capture.stream;
     provisionalCapture = capture;
     ensureCurrent();
-    if (recovery.current.muted) stream.getAudioTracks().forEach(track => { track.enabled = false; });
+    const initialAudioPreferences = loadDesktopVoicePreferences(currentMemberId);
+    stream.getAudioTracks().forEach(track => { track.enabled = !(initialAudioPreferences.muted || initialAudioPreferences.deafened || recovery.current.muted); });
     if (capture.compatibilityNotice) setStatus(capture.compatibilityNotice);
     const credentials = await onAction({ type: "turn_credentials" });
     ensureCurrent();
@@ -2301,7 +2454,7 @@ export function DirectCallControls({
           if (result?.type !== "asset") return;
           const url = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
           const element = new Audio(url);
-          element.volume = outputVolume;
+          applyDesktopOutputPreferences(element, currentMemberId);
           element.onended = () => URL.revokeObjectURL(url);
           void element.play().catch(() => URL.revokeObjectURL(url));
         });
@@ -2318,6 +2471,7 @@ export function DirectCallControls({
     });
     ensureCurrent();
     media.current = { stream, capture, peer, socket, audio, signaling, displayAudioSender, screenSender: videoTransceiver.sender, screenAudioSenders: [], requestedScreenTier: "high", automaticScreenTier: "high" };
+    onInputStream?.(stream);
     provisionalCapture = null; provisionalPeer = null; provisionalSocket = null;
     if (disposeProvisional.current === dispose) disposeProvisional.current = null;
     peer.ontrack = ({ streams, track }) => {
@@ -2393,6 +2547,7 @@ export function DirectCallControls({
   async function start(): Promise<void> {
     if (!conversation || conversation.type !== "dm") return;
     try {
+      if (pendingVoiceLeave.current) await pendingVoiceLeave.current;
       await navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then((stream) => stream.getTracks().forEach((track) => track.stop()));
       const result = await onAction({ type: "start_call", directMessageId: conversation.id });
       if (result?.type === "call") { setCall(result.call); onCallChange(result.call); setStatus("Calling…"); }
@@ -2409,14 +2564,20 @@ export function DirectCallControls({
   }
 
   async function joinVoice(room: string): Promise<void> {
-    if (voiceRoomRef.current === room) return;
-    if (voiceRoomRef.current) cleanup();
+    if (voiceRoomRef.current === room && !pendingVoiceLeave.current) return;
+    const joinGeneration = ++voiceJoinGeneration.current;
+    try {
+      if (pendingVoiceLeave.current) await pendingVoiceLeave.current;
+      else if (voiceRoomRef.current) await leaveVoice(false);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Could not leave Voice."); return; }
+    if (joinGeneration !== voiceJoinGeneration.current) return;
     mediaTerminated.current = false;
     voiceRoomRef.current = room;
     setVoiceRoom(room);
     try {
       await connect({ id: room, direct_message_id: "", caller_id: currentMemberId, recipient_id: "", state: "accepted", created_at: new Date().toISOString() }, true);
     } catch (error) {
+      if (joinGeneration !== voiceJoinGeneration.current) return;
       voiceRoomRef.current = null;
       setVoiceRoom(null);
       onVoiceRoomChange(null);
@@ -2429,16 +2590,28 @@ export function DirectCallControls({
     if (requestedVoiceRoom && voiceRoomRef.current !== requestedVoiceRoom) {
       void joinVoice(requestedVoiceRoom);
     } else if (!requestedVoiceRoom && voiceRoomRef.current) {
-      leaveVoice();
+      void leaveVoice().catch(error => setStatus(error instanceof Error ? error.message : "Could not leave Voice."));
     }
   }, [requestedVoiceRoom]);
 
-  function leaveVoice(): void {
+  function leaveVoice(notify = true): Promise<void> {
+    if (pendingVoiceLeave.current) return pendingVoiceLeave.current;
+    const room = voiceRoomRef.current;
+    if (!room) return Promise.resolve();
+    if (notify) voiceJoinGeneration.current++;
+    mediaTerminated.current = true;
     cleanup();
-    voiceRoomRef.current = null;
-    setVoiceRoom(null);
-    onVoiceRoomChange(null);
-    setStatus("");
+    setStatus("Disconnecting Voice…");
+    const pending = onAction({type: "end_media_session", roomId: room}).then(result => {
+      if (result?.type !== "accepted") throw new Error("Could not disconnect Voice. Try again.");
+      if (voiceRoomRef.current !== room) return;
+      voiceRoomRef.current = null;
+      setVoiceRoom(null);
+      if (notify) onVoiceRoomChange(null);
+      setStatus("");
+    }).finally(() => { if (pendingVoiceLeave.current === pending) pendingVoiceLeave.current = null; });
+    pendingVoiceLeave.current = pending;
+    return pending;
   }
 
   async function stopScreenShare(): Promise<void> {
@@ -2456,13 +2629,16 @@ export function DirectCallControls({
     active.screenQualityTimer = undefined;
     active.socket.send({ version: 1, type: "video-stopped" });
     setSharing(false);
+    setVideoSource(null);
+    active.videoSource = undefined;
   }
 
   async function toggleScreenShare(): Promise<void> {
     const active = media.current;
     if (!active) return;
     if (active.screenBusy) return;
-    if (active.screen) return stopScreenShare();
+    if (active.screen && active.videoSource === "screen") return stopScreenShare();
+    if (active.screen) await stopScreenShare();
     active.screenBusy = true;
     let acquired: MediaStream | undefined;
     try {
@@ -2472,6 +2648,7 @@ export function DirectCallControls({
     const video = screen.getVideoTracks()[0];
     if (!video) { screen.getTracks().forEach((track) => track.stop()); throw new Error("No screen was selected."); }
     active.screen = screen;
+    active.videoSource = "screen";
     const preferences = loadDesktopVoicePreferences(currentMemberId);
     const preset = screenSharePreset(preferences.screenShareMode);
     await prepareScreenShareTrack(video, preset);
@@ -2507,7 +2684,35 @@ export function DirectCallControls({
     if(media.current !== active) { screen.getTracks().forEach(track=>track.stop()); return; }
     active.socket.send({ version: 1, type: "video-started" });
     setSharing(true);
+    setVideoSource("screen");
     } catch(error) { acquired?.getTracks().forEach(track=>track.stop()); if(media.current===active) await stopScreenShare(); throw error; } finally { active.screenBusy=false; }
+  }
+
+  async function toggleCameraShare(): Promise<void> {
+    const active = media.current;
+    if (!active || active.screenBusy) return;
+    if (active.screen && active.videoSource === "camera") return stopScreenShare();
+    if (active.screen) await stopScreenShare();
+    active.screenBusy = true;
+    let camera: MediaStream | undefined;
+    try {
+      const preferences = loadDesktopVoicePreferences(currentMemberId);
+      camera = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...(preferences.cameraID ? { deviceId: { ideal: preferences.cameraID } } : {}), width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
+      if (media.current !== active) { camera.getTracks().forEach(track => track.stop()); return; }
+      const video = camera.getVideoTracks()[0];
+      if (!video || !active.screenSender) throw new Error("Camera sharing is unavailable.");
+      active.screen = camera;
+      active.videoSource = "camera";
+      await active.screenSender.replaceTrack(video);
+      if (media.current !== active) { camera.getTracks().forEach(track => track.stop()); return; }
+      video.onended = () => { if (media.current === active && active.screen === camera) void stopScreenShare(); };
+      active.socket.send({ version: 1, type: "video-started" });
+      setLocalScreen(camera); setVideoSource("camera"); setSharing(false);
+    } catch (error) {
+      camera?.getTracks().forEach(track => track.stop());
+      if (media.current === active) await stopScreenShare();
+      throw error;
+    } finally { active.screenBusy = false; }
   }
 
   async function openSoundboard(): Promise<void> {
@@ -2520,7 +2725,6 @@ export function DirectCallControls({
 
   function playSound(soundId: string): void {
     media.current?.socket.send({ version: 1, type: "soundboard-play", sound_id: soundId });
-    setSoundboardOpen(false);
   }
 
   const incoming = call?.state === "ringing" && call.recipient_id === currentMemberId;
@@ -2535,14 +2739,52 @@ export function DirectCallControls({
     return () => { window.dispatchEvent(new CustomEvent("allchat:direct-call-active", { detail: { active: false } })); };
   }, [Boolean(call)]);
   useEffect(() => {
-    const updateVolumes = (event: Event) => {
-      const preferences = (event as CustomEvent<DesktopVoicePreferences>).detail || loadDesktopVoicePreferences(currentMemberId);
+    let inputGeneration = 0;
+    let inputSwitch = Promise.resolve();
+    const inputKey = (p: DesktopVoicePreferences) => JSON.stringify([p.microphoneID, p.noiseSuppressionMode, p.echoCancellation, p.autoGainControl]);
+    let previousInput = inputKey(loadDesktopVoicePreferences(currentMemberId));
+    const updateVolumes = () => {
+      const preferences = loadDesktopVoicePreferences(currentMemberId);
       setOutputVolume(preferences.outputVolume);
-      media.current?.audio.forEach((elements, memberId) => elements.forEach((element) => { element.volume = desktopMemberOutputVolume(preferences, memberId); }));
+      setMuted(Boolean(preferences.muted || preferences.deafened));
+      const active = media.current;
+      active?.stream.getAudioTracks().forEach(track => { track.enabled = !(preferences.muted || preferences.deafened); });
+      active?.socket.send({ version: 1, type: "mute-state", muted: Boolean(preferences.muted || preferences.deafened) });
+      active?.capture.update?.(preferences);
+      active?.audio.forEach((elements, memberId) => elements.forEach(element => applyDesktopOutputPreferences(element, currentMemberId, memberId)));
+      const nextInput = inputKey(preferences);
+      if (nextInput === previousInput) return;
+      previousInput = nextInput;
+      const generation = ++inputGeneration;
+      if (!active) return;
+      inputSwitch = inputSwitch.then(async () => {
+        if (media.current !== active || generation !== inputGeneration) return;
+        const capture = await captureDesktopMicrophone(currentMemberId);
+        if (media.current !== active || generation !== inputGeneration) { capture.stop(); return; }
+        const oldTrack = active.stream.getAudioTracks()[0];
+        const sender = active.peer.getSenders().find(item => item.track === oldTrack);
+        const track = capture.stream.getAudioTracks()[0];
+        if (!sender || !track) { capture.stop(); return; }
+        const latest = loadDesktopVoicePreferences(currentMemberId);
+        track.enabled = !(latest.muted || latest.deafened);
+        try { await sender.replaceTrack(track); } catch (error) { capture.stop(); throw error; }
+        if (media.current !== active) { capture.stop(); return; }
+        active.capture.stop(); active.capture = capture; active.stream = capture.stream;
+        onInputStream?.(capture.stream);
+      }).catch(() => transientStatus.current?.show("Could not switch microphone. Check Voice Settings."));
     };
     window.addEventListener("allchat:voice-settings", updateVolumes);
-    return () => window.removeEventListener("allchat:voice-settings", updateVolumes);
+    return () => { inputGeneration++; window.removeEventListener("allchat:voice-settings", updateVolumes); };
   }, [currentMemberId]);
+  useEffect(() => {
+    let disposed = false;
+    const measure = () => { const active = media.current; if (!active) { setPing(null); return; }
+      if (typeof active.peer.getStats !== "function") return;
+      void active.peer.getStats().then(report => { if (!disposed && media.current === active) setPing(connectionPing(report)); }).catch(() => { if (!disposed) setPing(null); });
+    };
+    const timer = window.setInterval(measure, 2000);
+    return () => { disposed = true; clearInterval(timer); };
+  }, []);
   useEffect(() => {
     const publish = () => {
       for (const ownerID of Object.keys(remoteScreens)) {
@@ -2599,21 +2841,21 @@ export function DirectCallControls({
   const controlSlot = document.getElementById("desktop-call-controls");
   const connectedControls = connected && controlSlot ? createPortal(
     <section className="voice-connection-panel" aria-label={voiceRoom ? "Voice controls" : "Call controls"}>
-      {voiceRoom ? <div>
-        <strong>{status === "Call connected" ? "Connected" : status || "Connecting"}</strong>
-        <span>{requestedVoiceRoomName}</span>
-      </div> : <button className="voice-connection-identity" type="button" aria-label={`Return to Direct Message with ${directCallName}`} title={`Return to Direct Message with ${directCallName}`} onClick={() => call && onOpenDirectCall?.(call.direct_message_id)}>
-        <strong>{status === "Call connected" ? "Connected" : status || "Connecting"}</strong>
-        <span>{directCallName}</span>
-      </button>}
-      <div className="voice-connection-actions">
-        <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><Icon name="music" /></button>
-        <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop Sharing" : "Share Screen"} onClick={() => void toggleScreenShare().catch((error) => transientStatus.current?.show(error instanceof Error ? error.message : "Screen sharing failed."))}><Icon name="monitor" /></button>
-        <button className={muted ? "voice-mute muted" : "voice-mute"} type="button" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute" : "Mute"} onClick={() => { const track = media.current?.stream.getAudioTracks()[0]; if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); media.current?.socket.send({ version: 1, type: "mute-state", muted: !track.enabled }); } }}><Icon name="mic" /></button>
-        <button className="voice-hangup" type="button" aria-label={voiceRoom ? "Disconnect voice" : "End call"} title={voiceRoom ? "Disconnect Voice" : "End Call"} onClick={() => voiceRoom ? leaveVoice() : void act("end")}><Icon name="phone" /></button>
+      <div className="member-connection-heading">
+        <ConnectionSignal ping={ping} connected={media.current?.peer.connectionState === "connected"} />
+        <button className="voice-connection-identity" type="button" aria-label={voiceRoom ? `Return to Voice Room ${requestedVoiceRoomName}` : `Return to Direct Message with ${directCallName}`} title={voiceRoom ? requestedVoiceRoomName : directCallName} onClick={() => { if (voiceRoom) onOpenVoiceRoom?.(); else if (call) onOpenDirectCall?.(call.direct_message_id); }}>
+          <strong>{status === "Call connected" ? "Voice Connected" : status || "Connecting…"}</strong>
+          <span>{voiceRoom ? requestedVoiceRoomName : directCallName}</span>
+        </button>
+        <button className="voice-hangup" type="button" aria-label={voiceRoom ? "Disconnect voice" : "End call"} title={voiceRoom ? "Disconnect voice" : "End call"} onClick={() => { if (voiceRoom) void leaveVoice().catch(error => setStatus(error instanceof Error ? error.message : "Could not leave Voice.")); else void act("end"); }}><PanelIcon name="phone" /></button>
       </div>
-    </section>,
-    controlSlot,
+      <div className="member-call-actions">
+        <button className={videoSource === "camera" ? "active" : ""} type="button" aria-label={videoSource === "camera" ? "Stop camera share" : "Start camera share"} title={videoSource === "camera" ? "Stop camera share" : "Start camera share"} onClick={() => void toggleCameraShare().catch(error => transientStatus.current?.show(error instanceof Error ? error.message : "Camera sharing failed."))}><PanelIcon name="camera" /></button>
+        <button className={sharing ? "active" : ""} type="button" aria-label={sharing ? "Stop sharing screen" : "Share screen"} title={sharing ? "Stop sharing screen" : "Share screen"} onClick={() => void toggleScreenShare().catch(error => transientStatus.current?.show(error instanceof Error ? error.message : "Screen sharing failed."))}><PanelIcon name="screen" /></button>
+        <button type="button" aria-label="Open Activities" title="Activities" onClick={onOpenActivities}><PanelIcon name="activity" /></button>
+        <button type="button" aria-label="Open soundboard" title="Soundboard" onClick={() => void openSoundboard()}><PanelIcon name="soundboard" /></button>
+      </div>
+    </section>, controlSlot,
   ) : null;
   const incomingControls = incoming && controlSlot ? createPortal(<section className="voice-connection-panel incoming-call-panel" aria-label="Incoming Call controls"><div><strong>Incoming Direct Call</strong><span>{directCallName}</span></div><div className="voice-connection-actions"><button className="call-accept" type="button" onClick={() => void act("accept")}>Accept</button><button className="call-end" type="button" onClick={() => void act("decline")}>Decline</button></div></section>, controlSlot) : null;
   const screenPortals = Object.entries({ ...remoteScreens, ...(localScreen ? { [currentMemberId]: localScreen } : {}) }).map(([memberId, stream]) => {
@@ -2623,12 +2865,12 @@ export function DirectCallControls({
   });
   return <>
     {!call && !voiceRoom && conversation?.type === "dm" && <button className="header-button icon-button" type="button" aria-label="Start Call" title="Start Call" onClick={() => void start()}><Icon name="phone" /></button>}
-    {call && !incoming && call.state === "ringing" && <button className="call-end" type="button" onClick={() => void act("end")}>Cancel Call</button>}
+    {call && !incoming && call.state === "ringing" && <button className="call-end direct-call-cancel" type="button" onClick={() => void act("end")}>Cancel Call</button>}
     {!connected && status && <span className="call-status" role="status">{status}</span>}
     {connectedControls}
     {incomingControls}
     {screenPortals}
-    {soundboardOpen && <div className="desktop-soundboard" role="dialog" aria-label="Community soundboard"><header><strong>Soundboard</strong><button type="button" aria-label="Close soundboard" onClick={() => setSoundboardOpen(false)}><Icon name="x" /></button></header><div>{sounds.length ? sounds.map((sound) => <button type="button" key={sound.id} onClick={() => playSound(sound.id)}><span>{sound.emoji || "▶"}</span><strong>{sound.name}</strong></button>) : <span>No Community sounds have been added yet.</span>}</div></div>}
+    {soundboardOpen && <SoundboardMenu anchor={controlSlot?.closest<HTMLElement>(".floating-member-panel")} sounds={sounds} onPlay={playSound} onClose={() => setSoundboardOpen(false)} />}
   </>;
 }
 
@@ -2980,6 +3222,17 @@ function LinkPreview({
   ) : null;
 }
 
+export function MessageAttachments({ attachments, onAction }: {
+  attachments: Attachment[];
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+}) {
+  if (!attachments.length) return null;
+  const imageCount = attachments.filter(a => a.content_type.toLowerCase().startsWith("image/")).length;
+  return <div className={`message-attachments${imageCount > 1 ? " image-gallery" : ""}`}>
+    {attachments.map(attachment => <AttachmentView key={attachment.id} attachment={attachment} onAction={onAction} />)}
+  </div>;
+}
+
 function AttachmentView({
   attachment,
   onAction,
@@ -2987,9 +3240,11 @@ function AttachmentView({
   attachment: Attachment;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
 }) {
+  const [imageMenu, setImageMenu] = useState<{x:number;y:number;target:HTMLElement} | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [loadingOriginal, setLoadingOriginal] = useState(false);
+  const [imageError, setImageError] = useState("");
   const path = desktopAttachmentDisplayPath(attachment);
 
   useEffect(
@@ -3003,32 +3258,66 @@ function AttachmentView({
   useEffect(() => {
     let current = true;
     void onAction({ type: "load_asset", path }).then((result) => {
-      if (!current || result?.type !== "asset") return;
+      if (!current) return;
+      if (result?.type !== "asset") { setImageError("Image unavailable"); return; }
       const nextUrl = URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType }));
       setObjectUrl(nextUrl);
-    }).catch(() => undefined);
+    }).catch(() => { if (current) setImageError("Image unavailable"); });
     return () => { current = false; };
   }, [path]);
 
   async function openOriginalImage(): Promise<void> {
     setLoadingOriginal(true);
+    setImageError("");
     try {
       const originalPath = attachment.url || `/api/v1/attachments/${attachment.id}`;
       const result = await onAction({ type: "load_asset", path: originalPath });
-      if (result?.type !== "asset") return;
+      if (result?.type !== "asset") { setImageError("Couldn’t open image"); return; }
       if (viewerUrl) URL.revokeObjectURL(viewerUrl);
       setViewerUrl(URL.createObjectURL(new Blob([result.data as BlobPart], { type: result.contentType })));
+    } catch {
+      setImageError("Couldn’t open image");
     } finally {
       setLoadingOriginal(false);
     }
   }
 
-  const type = attachment.content_type;
+  function openImageMenu(event: React.MouseEvent<HTMLElement>) {
+    event.preventDefault(); event.stopPropagation();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setImageMenu({ x: event.clientX || bounds.left + 16, y: event.clientY || bounds.top + 16, target: event.currentTarget });
+  }
+  function imageMenuKey(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) return;
+    event.preventDefault();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    setImageMenu({x:bounds.left+16,y:bounds.top+16,target:event.currentTarget});
+  }
+  async function originalBlob(): Promise<Blob> {
+    const result = await onAction({type:'load_asset',path:attachment.url || `/api/v1/attachments/${attachment.id}`});
+    if (result?.type !== 'asset') throw new Error('Image unavailable');
+    return new Blob([result.data as BlobPart], {type:result.contentType});
+  }
+  async function downloadImage() {
+    const url = URL.createObjectURL(await originalBlob());
+    const link = document.createElement('a');
+    link.href = url; link.download = attachment.name;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+  const type = attachment.content_type.toLowerCase();
+  if (type.startsWith("image/")) return <div className="message-image">
+    {objectUrl ? <button onContextMenu={openImageMenu} onKeyDown={imageMenuKey} className="attachment-image-button" type="button" aria-label={`View ${attachment.name} at full size`} aria-busy={loadingOriginal} onClick={() => void openOriginalImage()}>
+      <img src={objectUrl} alt={attachment.name} onError={() => { setObjectUrl(null); setImageError("Image unavailable"); }} />
+    </button> : <span className="image-placeholder" role="status">{imageError || "Loading image…"}</span>}
+    {objectUrl && (loadingOriginal || imageError) && <span className="image-status" role="status">{imageError || "Opening image…"}</span>}
+    {viewerUrl && <ImageLightbox src={viewerUrl} alt={attachment.name} onContextMenu={openImageMenu} onImageKeyDown={imageMenuKey} onClose={() => { setImageMenu(null); setViewerUrl(null); }} />}
+    {imageMenu && <ImageContextMenu name={attachment.name} size={formatBytes(attachment.size)} x={imageMenu.x} y={imageMenu.y}
+      onCopy={async () => copyImage(await originalBlob())} onDownload={downloadImage}
+      onClose={() => { imageMenu.target.focus(); setImageMenu(null); }} />}
+  </div>;
   return (
     <figure className="attachment">
-      {objectUrl && type.startsWith("image/") && (
-        <button className="attachment-image-button" type="button" aria-label={`View ${attachment.name} at full size`} onClick={() => void openOriginalImage()}><img src={objectUrl} alt={attachment.name} /></button>
-      )}
       {objectUrl && type.startsWith("audio/") && (
         <audio src={objectUrl} controls />
       )}
@@ -3040,13 +3329,11 @@ function AttachmentView({
         <small>{formatBytes(attachment.size)}</small>
       </figcaption>
       {!objectUrl && <span className="attachment-loading">Loading…</span>}
-      {loadingOriginal && <span className="attachment-loading">Opening original…</span>}
       {objectUrl && (
         <a href={objectUrl} download={attachment.name}>
           Download
         </a>
       )}
-      {viewerUrl && <ImageLightbox src={viewerUrl} alt={attachment.name} onClose={() => setViewerUrl(null)} />}
     </figure>
   );
 }
@@ -3056,7 +3343,7 @@ export function desktopAttachmentDisplayPath(attachment: Attachment): string {
   return attachment.content_type.toLowerCase() === "image/gif" ? original : attachment.preview_url || original;
 }
 
-function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose(): void }) {
+function ImageLightbox({ src, alt, onClose, onContextMenu, onImageKeyDown }: { src: string; alt: string; onClose(): void; onContextMenu: React.MouseEventHandler<HTMLElement>; onImageKeyDown: React.KeyboardEventHandler<HTMLElement> }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -3067,7 +3354,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
   }, [onClose]);
   return createPortal(
     <section className={`image-lightbox${dragging ? " dragging" : ""}`} role="dialog" aria-modal="true" aria-label={`Image viewer: ${alt}`} onWheel={(event) => { event.preventDefault(); setScale((current) => Math.min(8, Math.max(.25, current * (event.deltaY < 0 ? 1.15 : .87)))); }} onPointerMove={(event) => { if (dragging) setPosition((current) => ({ x: current.x + event.movementX, y: current.y + event.movementY })); }} onPointerUp={(event) => { if (dragging && event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); setDragging(false); }}>
-      <img src={src} alt={alt} draggable={false} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }} onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); setDragging(true); event.currentTarget.closest<HTMLElement>(".image-lightbox")?.setPointerCapture(event.pointerId); }} />
+      <img src={src} alt={alt} tabIndex={0} onContextMenu={onContextMenu} onKeyDown={onImageKeyDown} draggable={false} style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }} onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); setDragging(true); event.currentTarget.closest<HTMLElement>(".image-lightbox")?.setPointerCapture(event.pointerId); }} />
       <output aria-live="polite">{Math.round(scale * 100)}%</output>
       <button className="image-lightbox-close" type="button" aria-label="Close image viewer" onClick={onClose}><Icon name="x" /></button>
     </section>,
@@ -3076,6 +3363,10 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
 }
 
 type IconName =
+  | "copy"
+  | "log-out"
+  | "mic-off"
+  | "waveform"
   | "bell"
   | "chevron-down"
   | "file"
@@ -3100,6 +3391,10 @@ type IconName =
 
 function Icon({ name }: { name: IconName }) {
   const paths = {
+    copy: <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H3V3h12v2" /></>,
+    "log-out": <path d="m10 17 5-5-5-5M15 12H3M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />,
+    "mic-off": <path d="m2 2 20 20M9 9v3a3 3 0 0 0 5 2M9 5V4a3 3 0 0 1 6 0v7M5 10v2a7 7 0 0 0 12 5M19 10v2M12 19v3M8 22h8" />,
+    waveform: <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4" />,
     bell: (
       <>
         <path d="M10.3 21a2 2 0 0 0 3.4 0" />
@@ -3266,10 +3561,12 @@ function CommunityAdministration({
   state,
   onAction,
   onSectionChange,
+  onBack,
 }: {
   state: InstanceViewState;
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   onSectionChange(section: string): void;
+  onBack(): void;
 }) {
   const onActionRef = useRef(onAction);
   onActionRef.current = onAction;
@@ -3351,24 +3648,75 @@ function CommunityAdministration({
   return (
     <section className="community-administration" data-community-administration>
       <nav aria-label="Community settings">
+        <button className="settings-back" type="button" onClick={onBack}>‹  Back to Community</button>
+        <div className="member-settings-heading">Settings</div>
+        <p className="settings-nav-label">Community</p>
         {(["dashboard", "general", "channels", "roles", "invitations", "soundboard"] as const).map((item) => <button type="button" key={item} aria-current={section === item ? "page" : undefined} onClick={() => select(item)}>{item === "general" ? "General" : item[0].toUpperCase() + item.slice(1)}</button>)}
       </nav>
-	  {section === "general" && communitySettings && <CommunityAvatarSetting settings={communitySettings} onAction={onAction} onChange={setCommunitySettings} />}
-	  {section === "general" && communitySettings && <RingtoneSetting scope="community" active={communitySettings.community_ringtone_set === true} fallbackLabel="Generated tone" onAction={onAction} onActiveChange={(active) => setCommunitySettings({ ...communitySettings, community_ringtone_set: active })} />}
-      {section === "general" && <section className="settings-panel administration-list"><h2>General</h2><p>Manage {state.community.name} from the desktop client.</p>{!communitySettings && !error && <p>Loading Community settings…</p>}{error && <p role="alert" className="notice-error">{error}</p>}{communitySettings && <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "update_community_settings", name: String(data.get("name") || ""), maxAttachmentMiB: Number(data.get("maxAttachmentMiB")), homeMarkdown: String(data.get("homeMarkdown") || ""), pushRelayURL: String(data.get("pushRelayURL") || "") }).then((result) => { if (result?.type === "community_settings") setCommunitySettings(result.settings); }).catch(() => setError("Could not save Community settings.")); }}><label>Community name<input name="name" maxLength={100} defaultValue={communitySettings.name} required /></label><label>Maximum attachment size (MiB)<input name="maxAttachmentMiB" type="number" min="1" max="256" defaultValue={communitySettings.max_attachment_mib} required /></label><p>Applies immediately. Your reverse proxy must allow at least the same request size.</p><label>Community Guide<textarea name="homeMarkdown" rows={8} defaultValue={communitySettings.home_markdown} /></label><label>Mobile push relay<input name="pushRelayURL" type="url" defaultValue={communitySettings.push_relay_url} placeholder="https://push.example.com" /></label><p>Used only for Android and iOS background notifications. Leave empty to disable mobile push.</p><details><summary>Relay authorization identity</summary><p>Key ID: <code>{communitySettings.push_key_id}</code></p><textarea readOnly rows={3} value={communitySettings.push_public_key} aria-label="Relay public key" /></details><button type="submit">Save settings</button></form>}</section>}
+      {section === "general" && <>
+        {!communitySettings && <><SettingsHeading community title="General" description={`Make ${state.community.name} feel like your own.`} />{!error && <p role="status">Loading Community settings…</p>}</>}
+        {error && <p role="alert" className="notice-error">{error}</p>}
+        {communitySettings && <CommunityGeneralSettings settings={communitySettings} onChange={setCommunitySettings} onAction={onAction} onError={setError} />}
+      </>}
       {section === "dashboard" && <AdminDashboardView dashboard={dashboard} history={dashboardHistory} error={error} />}
-      {section === "channels" && <section className="settings-panel administration-list"><h2>Channels</h2><p>Create and archive Community Categories and Channels.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_category", name: String(data.get("name") || ""), position: adminCategories.length }).then((result) => { if (result?.type === "category") setAdminCategories((current) => [...current, result.category]); }); event.currentTarget.reset(); }}><label>Category name<input name="name" required /></label><button type="submit">Create Category</button></form><form className="administration-inline-form channel-create-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_channel", categoryId: String(data.get("category")), name: String(data.get("name") || ""), channelType: String(data.get("type")) as "text" | "voice", position: adminChannels.length }).then((result) => { if (result?.type === "channel") setAdminChannels((current) => [...current, result.channel]); }); event.currentTarget.reset(); }}><label>Category<select name="category" required>{adminCategories.filter(({ archived }) => !archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Channel name<input name="name" required /></label><label>Type<select name="type"><option value="text">Text</option><option value="voice">Voice</option></select></label><button type="submit">Create Channel</button></form>{adminCategories.map((category) => <section className="admin-category" key={category.id}><h3>{category.name}</h3>{adminChannels.filter(({ category_id }) => category_id === category.id).map((channel) => <AdminChannelRow key={channel.id} channel={channel} roles={roles || []} onAction={onAction} onUpdate={(updated) => setAdminChannels((current) => updated ? current.map((item) => item.id === channel.id ? updated : item) : current.filter(({ id }) => id !== channel.id))} />)}</section>)}</section>}
-      {section === "roles" && <section className="settings-panel administration-list"><h2>Roles</h2><p>Create Roles and manage their permissions and ordering.</p><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_role", name: String(data.get("name") || ""), position: roles?.length || 0, permissions: data.getAll("permissions").map(String) }).then((result) => { if (result?.type === "role") setRoles((current) => [...(current || []), result.role]); }); event.currentTarget.reset(); }}><label>Role name<input name="name" required /></label><fieldset><legend>Permissions</legend>{["manage_channels", "manage_roles", "manage_invitations", "manage_soundboard", "moderate_members"].map((permission) => <label className="notification-check" key={permission}><input type="checkbox" name="permissions" value={permission} />{permission.replaceAll("_", " ")}</label>)}</fieldset><button type="submit">Create Role</button></form>{!roles && !error && <p>Loading Roles…</p>}{roles?.map((role) => <article key={role.id}><span><strong>{role.name}</strong><small>{role.permissions.join(", ") || "No permissions"}</small></span>{!role.default && !role.owner && <div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Role name", role.name); if (!name) return; void onAction({ type: "update_role", roleId: role.id, name, position: role.position, permissions: role.permissions }).then((result) => { if (result?.type === "role") setRoles((current) => current?.map((item) => item.id === role.id ? result.role : item) || null); }); }}>Edit</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Retire ${role.name}?`)) return; void onAction({ type: "retire_role", roleId: role.id }).then(() => setRoles((current) => current?.filter(({ id }) => id !== role.id) || null)); }}>Retire</button></div>}</article>)}</section>}
-      {section === "invitations" && <section className="settings-panel administration-list"><h2>Invitations</h2><p>Create and revoke Community Invitations.</p><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "create_invitation", expiresInMinutes: Number(data.get("expires")), maxUses: Number(data.get("uses")) }).then((result) => { if (result?.type === "invitation") setInvitations((current) => [result.invitation, ...(current || [])]); }); }}><label>Expires in minutes<input name="expires" type="number" min="1" defaultValue="1440" required /></label><label>Maximum uses<input name="uses" type="number" min="1" defaultValue="1" required /></label><button type="submit">Create Invitation</button></form>{!invitations && !error && <p>Loading Invitations…</p>}{invitations?.length === 0 && <p>No active Invitations.</p>}{invitations?.map((invitation) => <article key={invitation.id}><span><strong>{invitation.token || invitation.id}</strong><small>{invitation.use_count} / {invitation.max_uses} uses · expires {new Date(invitation.expires_at).toLocaleString()}</small></span><button className="danger-button" type="button" onClick={() => { if (!window.confirm("Revoke this Invitation?")) return; void onAction({ type: "revoke_invitation", invitationId: invitation.id }).then(() => setInvitations((current) => current?.filter(({ id }) => id !== invitation.id) || null)); }}>Revoke</button></article>)}</section>}
-      {section === "soundboard" && <section className="settings-panel administration-list"><h2>Soundboard</h2><p>Upload and manage sounds available in Voice Rooms.</p><form onSubmit={(event) => { event.preventDefault(); const form = event.currentTarget; const data = new FormData(form); const file = data.get("file"); if (!(file instanceof File)) return; void file.arrayBuffer().then((bytes) => onAction({ type: "upload_sound", name: String(data.get("name") || ""), emoji: String(data.get("emoji") || ""), position: sounds?.length || 0, contentType: file.type || "application/octet-stream", data: new Uint8Array(bytes) })).then((result) => { if (result?.type === "sound") setSounds((current) => [...(current || []), result.sound]); }); form.reset(); }}><label>Name<input name="name" required /></label><label>Emoji<input name="emoji" maxLength={8} /></label><label>Audio (MP3, WAV, Ogg; up to 1 MiB)<input name="file" type="file" accept="audio/mpeg,audio/wav,audio/ogg" required /></label><button type="submit">Upload sound</button></form><form className="administration-inline-form" onSubmit={(event) => { event.preventDefault(); const seconds = Number(new FormData(event.currentTarget).get("seconds")); void onAction({ type: "set_soundboard_limit", maxDurationMs: seconds * 1000 }).then(() => setSoundLimit(seconds * 1000)); }}><label>Maximum clip length (seconds)<input name="seconds" type="number" min="1" max="30" defaultValue={Math.round(soundLimit / 1000)} required /></label><button type="submit">Save limit</button></form>{!sounds && !error && <p>Loading sounds…</p>}{sounds?.length === 0 && <p>No sounds uploaded.</p>}{sounds?.map((sound) => <article key={sound.id}><span><strong>{sound.emoji} {sound.name}</strong><small>{(sound.duration_ms / 1000).toFixed(1)}s · {formatBytes(sound.size)}</small></span><div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Sound name", sound.name); if (!name) return; const emoji = window.prompt("Sound emoji", sound.emoji || "") ?? sound.emoji ?? ""; void onAction({ type: "update_sound", soundId: sound.id, name, emoji, position: sound.position }).then((result) => { if (result?.type === "sound") setSounds((current) => current?.map((item) => item.id === sound.id ? result.sound : item) || null); }); }}>Edit</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Delete ${sound.name}?`)) return; void onAction({ type: "delete_sound", soundId: sound.id }).then(() => setSounds((current) => current?.filter(({ id }) => id !== sound.id) || null)); }}>Delete</button></div></article>)}</section>}
+      {section === "channels" && <ChannelManagement categories={adminCategories} channels={adminChannels} roles={roles || []} onCategories={setAdminCategories} onChannels={setAdminChannels} onAction={onAction} loadError={error} />}
+      {section === "roles" && <RoleManagement roles={roles} onRoles={setRoles} onAction={onAction} loadError={error} />}
+      {section === "invitations" && <InvitationManagement invitations={invitations} onInvitations={setInvitations} onAction={onAction} loadError={error} />}
+      {section === "soundboard" && <SoundboardManagement sounds={sounds} limit={soundLimit} onSounds={setSounds} onLimit={setSoundLimit} onAction={onAction} loadError={error} />}
     </section>
   );
+}
+
+function CommunityGeneralSettings({ settings, onChange, onAction, onError }: {
+  settings: import("../shared/instance-actions").CommunitySettings;
+  onChange(settings: import("../shared/instance-actions").CommunitySettings): void;
+  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
+  onError(error: string): void;
+}) {
+  const [infrastructure, setInfrastructure] = useState(false);
+  const [notice, setNotice] = useState("");
+  return <section className="community-general-settings">
+    <SettingsHeading community title={infrastructure ? "Infrastructure" : "General"} description={infrastructure ? "Configure attachment limits and mobile push for your Community." : `Make ${settings.name} feel like your own.`} />
+    <form className="community-general-form" onInvalidCapture={(event) => {
+      const field = event.target as HTMLInputElement;
+      if (!field.closest("[hidden]")) return;
+      event.preventDefault();
+      setInfrastructure(Boolean(field.closest(".infrastructure-settings")));
+      requestAnimationFrame(() => { field.focus(); field.reportValidity(); });
+    }} onSubmit={(event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      onError(""); setNotice("");
+      void onAction({ type: "update_community_settings", name: String(data.get("name") || ""), maxAttachmentMiB: Number(data.get("maxAttachmentMiB")), homeMarkdown: String(data.get("homeMarkdown") || ""), pushRelayURL: String(data.get("pushRelayURL") || "") }).then((result) => {
+        if (result?.type === "community_settings") { onChange(result.settings); setNotice("Community settings saved."); }
+      }).catch(() => onError("Could not save Community settings."));
+    }}>
+      <div className="community-general-grid" hidden={infrastructure}>
+        <section className="settings-card community-profile-card">
+          <h3>Community profile</h3>
+          <CommunityAvatarSetting settings={settings} onAction={onAction} onChange={onChange} />
+          <label>Community name<input name="name" maxLength={100} defaultValue={settings.name} required /></label>
+          <label>Community Guide<textarea name="homeMarkdown" rows={3} defaultValue={settings.home_markdown} /></label>
+          <button className="settings-primary" type="submit">Save settings</button>
+        </section>
+        <RingtoneSetting scope="community" active={settings.community_ringtone_set === true} fallbackLabel="Generated tone" onAction={onAction} onActiveChange={(active) => onChange({ ...settings, community_ringtone_set: active })} />
+        <section className="settings-card infrastructure-link"><h3>Infrastructure</h3><p>Attachments and mobile notifications.</p><p>Maximum attachment size: {settings.max_attachment_mib} MiB</p><button type="button" onClick={() => setInfrastructure(true)}>Manage infrastructure</button></section>
+      </div>
+      <div className="infrastructure-settings" hidden={!infrastructure}>
+        <section className="settings-card"><h3>Attachments</h3><div className="attachment-limit-row"><label>Maximum attachment size (MiB)<input name="maxAttachmentMiB" type="number" min="1" max="256" defaultValue={settings.max_attachment_mib} required /></label><p>Applies immediately. Your reverse proxy must allow at least the same request size.</p></div></section>
+        <section className="settings-card"><h3>Mobile push relay</h3><label>Relay URL<input aria-label="Mobile push relay" name="pushRelayURL" type="url" defaultValue={settings.push_relay_url} placeholder="https://push.example.com" /></label><p>Used for Android and iOS background notifications. Leave empty to disable.</p><details><summary>Relay authorization identity</summary><p>Key ID: <code>{settings.push_key_id}</code></p><textarea readOnly rows={3} value={settings.push_public_key} aria-label="Relay public key" /></details></section>
+        <div className="settings-actions"><button className="settings-primary" type="submit">Save settings</button><button type="button" onClick={() => setInfrastructure(false)}>Back to General</button></div>
+      </div>
+    </form>
+    <p role="status">{notice}</p>
+  </section>;
 }
 
 function CommunityAvatarSetting({ settings, onAction, onChange }: { settings: import("../shared/instance-actions").CommunitySettings; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>; onChange(settings: import("../shared/instance-actions").CommunitySettings): void }) {
   return <div className="community-avatar-setting">
 	{settings.avatar_url ? <AuthenticatedImage path={settings.avatar_url} alt="Community avatar" className="community-settings-avatar" fallback={settings.name.slice(0, 1).toUpperCase()} onAction={onAction} /> : <span className="community-settings-avatar">{settings.name.slice(0, 1).toUpperCase()}</span>}
-	<label>Choose Community avatar<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_community_avatar", contentType: file.type, data: new Uint8Array(bytes) })).then(() => onChange({ ...settings, avatar_url: `/api/v1/community-avatar?v=${Date.now()}` })); }} /></label>
+	<label className="settings-upload">Change avatar<input aria-label="Choose Community avatar" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_community_avatar", contentType: file.type, data: new Uint8Array(bytes) })).then(() => onChange({ ...settings, avatar_url: `/api/v1/community-avatar?v=${Date.now()}` })); }} /></label>
 	{settings.avatar_url && <button type="button" onClick={() => void onAction({ type: "remove_community_avatar" }).then(() => onChange({ ...settings, avatar_url: undefined }))}>Remove avatar</button>}
   </div>;
 }
@@ -3378,17 +3726,9 @@ function ringtoneFileType(file: File): string { return file.type || (/\.ogg$/i.t
 function RingtoneSetting({ scope, active, fallbackLabel, onAction, onActiveChange }: { scope: "community" | "member"; active: boolean; fallbackLabel: string; onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>; onActiveChange(active: boolean): void }) {
   const [notice, setNotice] = useState("");
   const label = scope === "community" ? "Community ringtone" : "Incoming call ringtone";
-  return <section className="settings-card ringtone-setting"><h3>{label}</h3><p>{active ? "Custom audio is active." : fallbackLabel}</p><label>Choose audio file<input type="file" accept="audio/mpeg,audio/wav,audio/ogg" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_ringtone", scope, contentType: ringtoneFileType(file), data: new Uint8Array(bytes) })).then(() => { onActiveChange(true); setNotice("Ringtone saved."); }).catch(() => setNotice("Could not save ringtone.")); }} /></label>{active && <button type="button" onClick={() => void onAction({ type: "remove_ringtone", scope }).then(() => { onActiveChange(false); setNotice(scope === "member" ? "Using the Community ringtone." : "Using the generated tone."); })}>{scope === "member" ? "Use Community default" : "Remove custom ringtone"}</button>}<p role="status">{notice}</p></section>;
+  return <section className="settings-card ringtone-setting"><h3>{label}</h3><p>A familiar sound when someone calls.</p><div className="ringtone-tone"><span aria-hidden="true">♪</span><div><strong>{active ? "Custom ringtone" : fallbackLabel.includes("Community") ? "Community ringtone" : "Generated tone"}</strong><p>{active ? "Custom audio is active." : fallbackLabel}</p></div></div><label className="settings-upload">Choose audio file<input type="file" accept="audio/mpeg,audio/wav,audio/ogg" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; void file.arrayBuffer().then((bytes) => onAction({ type: "update_ringtone", scope, contentType: ringtoneFileType(file), data: new Uint8Array(bytes) })).then(() => { onActiveChange(true); setNotice("Ringtone saved."); }).catch(() => setNotice("Could not save ringtone.")); }} /></label>{active && <button type="button" onClick={() => void onAction({ type: "remove_ringtone", scope }).then(() => { onActiveChange(false); setNotice(scope === "member" ? "Using the Community ringtone." : "Using the generated tone."); })}>{scope === "member" ? "Use Community default" : "Remove custom ringtone"}</button>}<p role="status">{notice}</p></section>;
 }
 
-function AdminChannelRow({ channel, roles, onAction, onUpdate }: {
-  channel: InstanceViewState["channels"][number];
-  roles: import("../shared/instance-actions").CommunityRole[];
-  onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
-  onUpdate(channel: InstanceViewState["channels"][number] | null): void;
-}) {
-  return <article><span><strong><Icon name={channel.type === "voice" ? "volume" : "hash"} />{channel.name}</strong><small>{channel.type} Channel{channel.archived ? " · archived" : ""}</small></span><div className="administration-actions"><button type="button" onClick={() => { const name = window.prompt("Channel name", channel.name); if (!name) return; void onAction({ type: "update_channel", channelId: channel.id, categoryId: channel.category_id, name, channelType: channel.type, position: channel.position }).then((result) => { if (result?.type === "channel") onUpdate(result.channel); }); }}>Edit</button><button type="button" onClick={() => void onAction({ type: "set_channel_archived", channelId: channel.id, archived: !channel.archived }).then(() => onUpdate({ ...channel, archived: !channel.archived }))}>{channel.archived ? "Restore" : "Archive"}</button><button className="danger-button" type="button" onClick={() => { if (!window.confirm(`Permanently delete #${channel.name}?`)) return; void onAction({ type: "delete_channel", channelId: channel.id }).then(() => onUpdate(null)); }}>Delete</button></div><details className="channel-permissions"><summary>Permission override</summary><form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void onAction({ type: "set_channel_override", channelId: channel.id, roleId: String(data.get("roleId")), permission: String(data.get("permission")), effect: String(data.get("effect")) as "allow" | "deny" | "inherit" }); }}><label>Role<select name="roleId" required>{roles.map((role) => <option value={role.id} key={role.id}>{role.name}</option>)}</select></label><label>Permission<select name="permission"><option value="view_channel">View Channel</option><option value="send_messages">Send Messages</option><option value="connect_voice">Connect Voice</option></select></label><label>Effect<select name="effect"><option value="inherit">Inherit</option><option value="allow">Allow</option><option value="deny">Deny</option></select></label><button type="submit">Save override</button></form></details></article>;
-}
 
 function DashboardStat({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return <article className="dashboard-stat"><span>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</article>;
@@ -3462,6 +3802,7 @@ function MarkdownContent({ value }: { value: string }) {
   })}</>;
 }
 
+
 function NotificationSettings({
   state,
   onAction,
@@ -3504,21 +3845,23 @@ function NotificationSettings({
 
   return (
     <section className="settings-panel notification-settings-page" data-notification-settings>
-      <p className="eyebrow">Member settings</p>
-      <h2>Notifications</h2>
-      <p>Choose when this Community may notify you. Electron delivers native operating-system notifications.</p>
+      <SettingsHeading title="Notifications" description={`Choose what gets your attention in ${state.community.name}.`} />
       <section className="settings-card">
         <h3>Desktop notifications</h3>
         <p className="notification-permission-state"><span className="presence-dot online" /> Native notifications enabled</p>
       </section>
       <section className="settings-card">
         <h3>Community defaults</h3>
+        <div className="notification-defaults-grid">
         <label>Notification level<select aria-label="Community notification level" value={community.level} onChange={(event) => void saveCommunity({ ...community, level: event.target.value as CommunityLevel })}><option value="all_messages">All Messages</option><option value="mentions_only">Only @mentions</option><option value="nothing">Nothing</option></select></label>
-        <label className="notification-check"><input type="checkbox" checked={community.muted} onChange={(event) => void saveCommunity({ ...community, muted: event.target.checked })} />Mute Community</label>
-        <label className="notification-check"><input type="checkbox" checked={community.soundEnabled} onChange={(event) => void saveCommunity({ ...community, soundEnabled: event.target.checked })} />Notification sound</label>
+        <label className="notification-check"><input type="checkbox" checked={community.muted} onChange={(event) => void saveCommunity({ ...community, muted: event.target.checked })} /><span>Mute Community<small>Pause notifications from this Community.</small></span></label>
+        <label className="notification-check"><input type="checkbox" checked={community.soundEnabled} onChange={(event) => void saveCommunity({ ...community, soundEnabled: event.target.checked })} /><span>Notification sound<small>Play a sound with desktop notifications.</small></span></label>
+        </div>
       </section>
       <section className="settings-card channel-overrides">
         <h3>Channel overrides</h3>
+        <p>Fine-tune individual channels.</p>
+        {!state.channels.some(({ type, archived }) => type === "text" && !archived) && <p>No Text Channels to customize yet.</p>}
         {state.channels.filter(({ type, archived }) => type === "text" && !archived).map((channel) => {
           const setting = channels[channel.id] || { level: "default" as const, muted: false };
           return <div className="channel-override" key={channel.id}>
@@ -3542,24 +3885,25 @@ function RingtoneSettings({ state, onAction }: { state: InstanceViewState; onAct
     setVolume(saved.ringtoneVolume);
   };
   return <section className="settings-panel ringtone-settings-page" data-ringtone-settings>
-    <p className="eyebrow">Member settings</p>
-    <h2>Ringtone</h2>
-    <p>Choose the sound and volume used for incoming Direct Calls on this device.</p>
+    <SettingsHeading title="Ringtone" description="Set the sound for incoming Direct Calls on this device." />
     <RingtoneSetting scope="member" active={memberRingtone} fallbackLabel={state.notifications.community_ringtone_set ? "Using the Community ringtone." : "Using the generated tone."} onAction={onAction} onActiveChange={setMemberRingtone} />
     <section className="settings-card">
-      <h3>Ringtone volume</h3>
-      <label className="setting-slider"><span>Volume</span><output>{Math.round(volume * 100)}%</output><input aria-label="Ringtone volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => saveVolume(Number(event.target.value))} /></label>
+      <h3>Ringtone volume</h3><p>Adjust how loudly incoming calls ring.</p>
+      <label className="setting-slider"><span>Volume</span><output>{Math.round(volume * 100)}%</output><input aria-label="Ringtone volume" type="range" min="0" max="1" step="0.05" value={volume} style={{ "--range-progress": `${volume * 100}%` } as CSSProperties} onChange={(event) => saveVolume(Number(event.target.value))} /></label>
     </section>
   </section>;
 }
 
 function VoiceVideoSettings({ memberId }: { memberId: string }) {
   const [preferences, setPreferences] = useState<DesktopVoicePreferences>(() => loadDesktopVoicePreferences(memberId));
+  const [tab, setTab] = useState<"audio" | "camera">("audio");
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [notice, setNotice] = useState("");
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const cameraPreview = useRef<HTMLVideoElement>(null);
+  const cameraRequest = useRef(0);
 
+  useEffect(() => () => { cameraRequest.current += 1; }, []);
   useEffect(() => {
     if (!navigator.mediaDevices?.enumerateDevices) return;
     void navigator.mediaDevices.enumerateDevices().then(setDevices).catch(() => {
@@ -3591,6 +3935,7 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
   }
 
   async function toggleCamera(): Promise<void> {
+    const request = ++cameraRequest.current;
     if (cameraStream) {
       cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
@@ -3602,10 +3947,14 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
         audio: false,
         video: preferences.cameraID ? { deviceId: { ideal: preferences.cameraID } } : true,
       });
+      if (request !== cameraRequest.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       setCameraStream(stream);
       setNotice("Camera preview started.");
     } catch {
-      setNotice("Camera permission was denied or the selected device is unavailable.");
+      if (request === cameraRequest.current) setNotice("Camera permission was denied or the selected device is unavailable.");
     }
   }
 
@@ -3626,44 +3975,50 @@ function VoiceVideoSettings({ memberId }: { memberId: string }) {
   const cameras = devices.filter(({ kind }) => kind === "videoinput");
   return (
     <section className="settings-panel voice-video-settings" data-voice-settings>
-      <header className="voice-settings-intro">
-        <p className="eyebrow">Local media preferences</p>
-        <h2>Voice &amp; Video</h2>
-        <p>Choose how you sound and look in Voice Rooms and Direct Calls. Your microphone audio is processed locally.</p>
-      </header>
-      <section className="voice-settings-section">
-        <h3>Voice</h3>
-        <div className="voice-device-grid">
+      <div className="voice-settings-intro">
+        <SettingsHeading title={tab === "audio" ? "Voice & Video" : "Camera & sharing"} description={tab === "audio" ? "Feel ready before you join a Voice Room or Direct Call." : "Preview your video and tune screen sharing for your conversation."} />
+      </div>
+      <nav className="settings-tabs" aria-label="Voice & Video sections">
+        <button type="button" aria-current={tab === "audio" ? "page" : undefined} onClick={() => { cameraRequest.current += 1; setTab("audio"); setCameraStream(null); }}>Audio</button>
+        <button type="button" aria-current={tab === "camera" ? "page" : undefined} onClick={() => setTab("camera")}>Camera &amp; sharing</button>
+      </nav>
+      <div className="voice-audio-grid" hidden={tab !== "audio"}>
+      <section className="voice-settings-section audio-devices">
+        <h3>Audio devices</h3><p>Choose your input and output.</p>
           <label>Microphone<select aria-label="Microphone" value={preferences.microphoneID} onChange={(event) => patch({ microphoneID: event.target.value })}><option value="">System default</option>{microphones.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Microphone ${index + 1}`}</option>)}</select></label>
+        <label className="setting-row"><span><strong>Microphone volume</strong><small>Adjust the level sent to other Members.</small></span><output>{Math.round(preferences.inputGain * 100)}%</output><input aria-label="Microphone volume" type="range" min="0" max="2" step="0.05" value={preferences.inputGain} style={{ "--range-progress": `${preferences.inputGain * 50}%` } as CSSProperties} onChange={(event) => patch({ inputGain: Number(event.target.value) })} /></label>
           <label>Speaker<select aria-label="Speaker" value={preferences.speakerID} onChange={(event) => patch({ speakerID: event.target.value })}><option value="">System default</option>{speakers.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Speaker ${index + 1}`}</option>)}</select></label>
-        </div>
-        <label className="setting-row"><span><strong>Microphone volume</strong><small>Adjust the level sent to other Members.</small></span><output>{Math.round(preferences.inputGain * 100)}%</output><input aria-label="Microphone volume" type="range" min="0" max="2" step="0.05" value={preferences.inputGain} onChange={(event) => patch({ inputGain: Number(event.target.value) })} /></label>
-        <label className="setting-row"><span><strong>Speaker volume</strong><small>Adjust all incoming voice audio.</small></span><output>{Math.round(preferences.outputVolume * 100)}%</output><input aria-label="Speaker volume" type="range" min="0" max="1" step="0.05" value={preferences.outputVolume} onChange={(event) => patch({ outputVolume: Number(event.target.value) })} /></label>
-        <button type="button" onClick={() => void testMicrophone()}>Mic Test</button>
+        <label className="setting-row"><span><strong>Speaker volume</strong><small>Adjust all incoming voice audio.</small></span><output>{Math.round(preferences.outputVolume * 100)}%</output><input aria-label="Speaker volume" type="range" min="0" max="1" step="0.05" value={preferences.outputVolume} style={{ "--range-progress": `${preferences.outputVolume * 100}%` } as CSSProperties} onChange={(event) => patch({ outputVolume: Number(event.target.value) })} /></label>
       </section>
       <section className="voice-settings-section">
-        <h3>Input processing</h3>
-        <label className="setting-row"><span><strong>Noise suppression</strong><small>Enhanced uses local RNNoise; Standard uses WebRTC.</small></span><select aria-label="Noise suppression" value={preferences.noiseSuppressionMode} onChange={(event) => patch({ noiseSuppressionMode: event.target.value as DesktopVoicePreferences["noiseSuppressionMode"] })}><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
-        <label className="setting-row setting-toggle"><span><strong>Echo cancellation</strong><small>Reduces sound from your speakers returning through the microphone.</small></span><input type="checkbox" checked={preferences.echoCancellation} onChange={(event) => patch({ echoCancellation: event.target.checked })} /></label>
-        <label className="setting-row setting-toggle"><span><strong>Automatic gain control</strong><small>Compensates for microphones that are unusually quiet.</small></span><input type="checkbox" checked={preferences.autoGainControl} onChange={(event) => patch({ autoGainControl: event.target.checked })} /></label>
-        <label className="setting-row setting-toggle"><span><strong>Noise gate</strong><small>Closes the microphone below the sensitivity threshold.</small></span><input type="checkbox" checked={preferences.noiseGate} onChange={(event) => patch({ noiseGate: event.target.checked })} /></label>
-        <label className="setting-row"><span><strong>Input sensitivity</strong></span><output>{preferences.noiseGateThresholdDB} dB</output><input aria-label="Input sensitivity" type="range" min="-80" max="-20" step="1" value={preferences.noiseGateThresholdDB} onChange={(event) => patch({ noiseGateThresholdDB: Number(event.target.value) })} /></label>
+        <h3>Input processing</h3><p>Your microphone audio is processed on this device.</p>
+        <label className="setting-row"><span><strong>Noise suppression</strong><small>Reduce background noise before it reaches others.</small></span><select aria-label="Noise suppression" value={preferences.noiseSuppressionMode} onChange={(event) => patch({ noiseSuppressionMode: event.target.value as DesktopVoicePreferences["noiseSuppressionMode"] })}><option value="standard">Standard</option><option value="enhanced">Enhanced (RNNoise)</option><option value="off">Off</option></select></label>
+        <label className="setting-row setting-toggle"><span><strong>Echo cancellation</strong><small>Keep speaker audio out of your microphone.</small></span><input type="checkbox" checked={preferences.echoCancellation} onChange={(event) => patch({ echoCancellation: event.target.checked })} /></label>
+        <label className="setting-row setting-toggle"><span><strong>Automatic gain control</strong><small>Balance quiet and loud microphones.</small></span><input type="checkbox" checked={preferences.autoGainControl} onChange={(event) => patch({ autoGainControl: event.target.checked })} /></label>
+        <label className="setting-row setting-toggle"><span><strong>Noise gate</strong><small>Mute input below your sensitivity threshold.</small></span><input type="checkbox" checked={preferences.noiseGate} onChange={(event) => patch({ noiseGate: event.target.checked })} /></label>
+
       </section>
-      <section className="voice-settings-section">
+      </div>
+      <div className="voice-audio-footer" hidden={tab !== "audio"}>
+        <div className="settings-actions"><button type="button" onClick={() => void testMicrophone()}>Test microphone</button><button type="button" onClick={playSpeakerTest}>Play test sound</button></div>
+        <label className="setting-row"><span><strong>Input sensitivity</strong></span><output>{preferences.noiseGateThresholdDB} dB</output><input aria-label="Input sensitivity" type="range" min="-80" max="-20" step="1" value={preferences.noiseGateThresholdDB} style={{ "--range-progress": `${(preferences.noiseGateThresholdDB + 80) / 60 * 100}%` } as CSSProperties} onChange={(event) => patch({ noiseGateThresholdDB: Number(event.target.value) })} /></label>
+      </div>
+      <div className="voice-camera-grid" hidden={tab !== "camera"}>
+      <section className="voice-settings-section camera-settings">
         <h3>Camera</h3>
         <div className="camera-test"><video ref={cameraPreview} autoPlay muted playsInline hidden={!cameraStream} /><div className="camera-placeholder" hidden={Boolean(cameraStream)}>Camera preview is off</div></div>
         <label>Camera<select aria-label="Camera" value={preferences.cameraID} onChange={(event) => patch({ cameraID: event.target.value })}><option value="">System default</option>{cameras.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}</select></label>
         <button type="button" onClick={() => void toggleCamera()}>{cameraStream ? "Stop Video" : "Test Video"}</button>
       </section>
-      <section className="voice-settings-section">
-        <h3>Screen sharing</h3>
+      <section className="voice-settings-section sharing-settings">
+        <h3>Screen sharing</h3><p>Match the quality to what you share.</p>
         <label className="setting-row"><span><strong>Quality mode</strong><small>Auto protects frame delivery; Text preserves readability; Motion prioritizes smoothness.</small></span><select aria-label="Screen share quality" value={preferences.screenShareMode} onChange={(event) => patch({ screenShareMode: event.target.value as DesktopVoicePreferences["screenShareMode"] })}><option value="auto">Auto</option><option value="text">Text</option><option value="balanced">Balanced</option><option value="motion">Motion</option><option value="data-saver">Data saver</option></select></label>
       </section>
-      <section className="voice-settings-section">
-        <h3>Advanced</h3>
-        <div className="setting-row"><span><strong>Speaker test</strong><small>Play a short tone through the selected output device.</small></span><button type="button" onClick={playSpeakerTest}>Play sound</button></div>
-        <div className="setting-row"><span><strong>Reset Voice &amp; Video settings</strong><small>Restore safe defaults.</small></span><button className="danger-button" type="button" onClick={() => { save({ ...defaultDesktopVoicePreferences, ringtoneVolume: preferences.ringtoneVolume }); setNotice("Voice & Video settings were reset."); }}>Reset</button></div>
+      <section className="voice-settings-section reset-settings">
+        <h3>Restore defaults</h3><p>Reset all Voice &amp; Video preferences.</p>
+        <div className="settings-actions"><button type="button" onClick={() => { save({ ...defaultDesktopVoicePreferences, ringtoneVolume: preferences.ringtoneVolume }); setNotice("Voice & Video settings were reset."); }}>Reset settings</button></div>
       </section>
+      </div>
       <p className="voice-settings-notice" role="status" aria-live="polite">{notice}</p>
     </section>
   );
@@ -3711,22 +4066,15 @@ function ProfileImages({
   }
   return (
     <div className="profile-images">
-      <fieldset className="profile-image-field profile-avatar-field">
-        <legend>Avatar</legend>
-        <AuthenticatedImage path={member.avatarUrl} alt="Profile avatar" className="profile-avatar" onAction={onAction} />
-        <div className="profile-image-actions">
-          <label>Choose image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => choose("avatar", event.target.files?.[0])} /></label>
-          <button type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "avatar" })}>Remove avatar</button>
-        </div>
-      </fieldset>
-      <fieldset className="profile-image-field profile-banner-field">
-        <legend>Profile banner</legend>
-        <AuthenticatedImage path={member.bannerUrl} alt="Profile banner" className="profile-banner" onAction={onAction} />
-        <div className="profile-image-actions">
-          <label>Choose image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => choose("banner", event.target.files?.[0])} /></label>
-          <button type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "banner" })}>Remove banner</button>
-        </div>
-      </fieldset>
+      <div className="profile-preview-banner"><AuthenticatedImage path={member.bannerUrl} alt="Profile banner" className="profile-banner" onAction={onAction} /></div>
+      <AuthenticatedImage path={member.avatarUrl} alt="Profile avatar" className="profile-avatar" fallback={(member.displayName || member.username).slice(0, 1).toUpperCase()} onAction={onAction} />
+      <div className="profile-preview-identity"><strong>{member.displayName || member.username}</strong><span>@{member.username}</span></div>
+      <div className="profile-image-actions">
+        <label className="settings-upload">Change avatar<input aria-label="Change avatar" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { choose("avatar", event.target.files?.[0]); event.target.value = ""; }} /></label>
+        <label className="settings-upload">Change banner<input aria-label="Change banner" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { choose("banner", event.target.files?.[0]); event.target.value = ""; }} /></label>
+        <button className="settings-text-button" type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "avatar" })}>Remove avatar</button>
+        <button className="settings-text-button" type="button" onClick={() => void onAction({ type: "remove_profile_image", kind: "banner" })}>Remove banner</button>
+      </div>
       <p className="profile-image-status" role="status">{status}</p>
       {editor && createPortal(<section className="image-crop-dialog" role="dialog" aria-modal="true" aria-label={`Crop ${editor.kind}`}><h2>Crop {editor.kind === "avatar" ? "Avatar" : "Profile Banner"}</h2><div className={`image-crop-preview image-crop-${editor.kind}`}><img src={editor.url} alt="Crop preview" style={{ transform: `scale(${editor.zoom})` }} /></div><label>Zoom<input aria-label="Crop zoom" type="range" min="1" max="3" step="0.05" value={editor.zoom} onChange={(event) => setEditor({ ...editor, zoom: Number(event.target.value) })} /></label><div className="dialog-actions"><button type="button" onClick={() => void uploadCrop()}>Upload {editor.kind}</button><button type="button" onClick={() => setEditor(null)}>Cancel</button></div></section>, document.body)}
     </div>
@@ -3746,6 +4094,7 @@ function SafetyPanel({
   onAction(action: InstanceAction): Promise<InstanceActionResult | undefined>;
   onReports(value: import("../shared/instance-actions").Report[]): void;
 }) {
+  const [view, setView] = useState<"overview" | "moderation" | "delete">("overview");
   async function exportAccount(): Promise<void> {
     const result = await onAction({ type: "export_account" });
     if (result?.type !== "asset") return;
@@ -3760,8 +4109,10 @@ function SafetyPanel({
   }
   return (
     <section className="safety-panel">
-      <h3>Safety</h3>
-      <form
+      <SettingsHeading title={view === "moderation" ? "Moderation" : view === "delete" ? "Delete Account" : "Safety"} description={view === "moderation" ? "Review Community reports and manage moderation actions." : view === "delete" ? "Confirm that you want to permanently delete your account." : "Manage reports and take control of your account data."} />
+      {view !== "overview" && <button className="settings-text-button" type="button" onClick={() => setView("overview")}>‹ Back to Safety</button>}
+      <div className="safety-overview-grid" hidden={view !== "overview"}>
+      <form className="settings-card report-form"
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
@@ -3775,8 +4126,9 @@ function SafetyPanel({
           });
         }}
       >
+        <h3>Report a Member</h3><p>Tell us about behavior that needs attention.</p>
         <label>
-          Report a Member
+          Member
           <select name="memberId" required>
             <option value="">Choose a Member</option>
             {members.map((member) => (
@@ -3790,11 +4142,17 @@ function SafetyPanel({
           Reason
           <textarea name="reason" minLength={3} maxLength={1000} required />
         </label>
-        <button type="submit">Submit Report</button>
+        <button className="settings-primary" type="submit">Submit Report</button>
       </form>
-      <div className="report-list">
+      <section className="settings-card account-data-card"><h3>Your account data</h3><p>Download a copy of your account data.</p><button type="button" onClick={() => void exportAccount()}>Export Account Data</button></section>
+      <section className="settings-card delete-account-card"><h3>Delete Account</h3><p>Permanently remove your account.</p><p className="settings-danger-copy">This action cannot be undone.</p><button type="button" className="danger-button" onClick={() => setView("delete")}>Delete Account</button></section>
+      {records && <section className="settings-card moderation-link"><div><h3>Moderation</h3><p>Reports, actions, and records.</p></div><button type="button" onClick={() => setView("moderation")}>Open moderation</button></section>}
+      </div>
+      <div className="moderation-grid" hidden={records ? view !== "moderation" : view !== "overview"}>
+      <div className="report-list settings-card"><h3>{records ? "Reports" : "Your reports"}</h3>
+        {reports.length === 0 && <p>No reports to review.</p>}
         {reports.map((report) => (
-          <article key={report.id}>
+          <article key={report.id} data-status={report.status}>
             <strong>
               {report.status === "open" ? "Open Report" : "Resolved Report"}
             </strong>
@@ -3827,7 +4185,7 @@ function SafetyPanel({
       </div>
       {records && (
         <>
-          <form
+          <form className="settings-card moderation-action-form"
             onSubmit={(event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
@@ -3840,7 +4198,7 @@ function SafetyPanel({
               });
             }}
           >
-            <h4>Moderation Action</h4>
+            <h3>Moderation Action</h3>
             <label>
               Action
               <select name="action">
@@ -3868,10 +4226,11 @@ function SafetyPanel({
               Duration in minutes
               <input name="duration" type="number" min="0" />
             </label>
-            <button type="submit">Apply Action</button>
+            <button className="settings-primary" type="submit">Apply Action</button>
           </form>
-          <details>
+          <section className="settings-card moderation-records"><details>
             <summary>Moderation Records</summary>
+            {records.length === 0 && <p>No moderation records yet.</p>}
             {records.map((record) => (
               <article key={record.id}>
                 <strong>{record.action}</strong>
@@ -3892,14 +4251,13 @@ function SafetyPanel({
             }}
           >
             Purge Old Records
-          </button>
+          </button></section>
         </>
       )}
-      <button type="button" onClick={() => void exportAccount()}>
-        Export Account Data
-      </button>
+      </div>
       <form
-        className="danger-zone"
+        hidden={view !== "delete"}
+        className="danger-zone settings-card"
         onSubmit={(event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
@@ -3911,7 +4269,7 @@ function SafetyPanel({
           });
         }}
       >
-        <h4>Delete Account</h4>
+        <h3>Delete your account</h3><p className="settings-danger-copy">This action cannot be undone.</p><p>Enter your password and type DELETE to confirm.</p>
         <label>
           Password
           <input name="password" type="password" required />
@@ -3920,7 +4278,7 @@ function SafetyPanel({
           Type DELETE
           <input name="confirmation" pattern="DELETE" required />
         </label>
-        <button type="submit">Delete Account</button>
+        <div className="settings-actions"><button type="button" onClick={() => setView("overview")}>Cancel</button><button className="danger-button" type="submit">Delete Account</button></div>
       </form>
     </section>
   );

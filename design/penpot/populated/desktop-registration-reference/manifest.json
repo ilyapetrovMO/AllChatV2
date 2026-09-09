@@ -1,0 +1,137 @@
+{
+  "platform": "Electron Linux; OS differences still require verification",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "items": [
+    {
+      "name": "add-instance",
+      "screenshot": "add-instance.png",
+      "controls": "add-instance.json",
+      "vector": "add-instance.svg",
+      "layers": "add-instance.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "sign-in",
+      "screenshot": "sign-in.png",
+      "controls": "sign-in.json",
+      "vector": "sign-in.svg",
+      "layers": "sign-in.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "register",
+      "screenshot": "register.png",
+      "controls": "register.json",
+      "vector": "register.svg",
+      "layers": "register.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "invitation-focused",
+      "screenshot": "invitation-focused.png",
+      "controls": "invitation-focused.json",
+      "vector": "invitation-focused.svg",
+      "layers": "invitation-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "username-focused",
+      "screenshot": "username-focused.png",
+      "controls": "username-focused.json",
+      "vector": "username-focused.svg",
+      "layers": "username-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-focused",
+      "screenshot": "password-focused.png",
+      "controls": "password-focused.json",
+      "vector": "password-focused.svg",
+      "layers": "password-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-keyboard-focused",
+      "screenshot": "submit-keyboard-focused.png",
+      "controls": "submit-keyboard-focused.json",
+      "vector": "submit-keyboard-focused.svg",
+      "layers": "submit-keyboard-focused.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "submit-hovered",
+      "screenshot": "submit-hovered.png",
+      "controls": "submit-hovered.json",
+      "vector": "submit-hovered.svg",
+      "layers": "submit-hovered.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "invitation-required",
+      "screenshot": "invitation-required.png",
+      "controls": "invitation-required.json",
+      "vector": "invitation-required.svg",
+      "layers": "invitation-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "username-required",
+      "screenshot": "username-required.png",
+      "controls": "username-required.json",
+      "vector": "username-required.svg",
+      "layers": "username-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-required",
+      "screenshot": "password-required.png",
+      "controls": "password-required.json",
+      "vector": "password-required.svg",
+      "layers": "password-required.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "password-too-short",
+      "screenshot": "password-too-short.png",
+      "controls": "password-too-short.json",
+      "vector": "password-too-short.svg",
+      "layers": "password-too-short.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "registration-filled",
+      "screenshot": "registration-filled.png",
+      "controls": "registration-filled.json",
+      "vector": "registration-filled.svg",
+      "layers": "registration-filled.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "invalid-invitation-error",
+      "screenshot": "invalid-invitation-error.png",
+      "controls": "invalid-invitation-error.json",
+      "vector": "invalid-invitation-error.svg",
+      "layers": "invalid-invitation-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "registration-edited-after-error",
+      "screenshot": "registration-edited-after-error.png",
+      "controls": "registration-edited-after-error.json",
+      "vector": "registration-edited-after-error.svg",
+      "layers": "registration-edited-after-error.layers.json",
+      "status": "captured-unreviewed"
+    },
+    {
+      "name": "registration-success-home",
+      "screenshot": "registration-success-home.png",
+      "controls": "registration-success-home.json",
+      "vector": "registration-success-home.svg",
+      "layers": "registration-success-home.layers.json",
+      "status": "captured-unreviewed"
+    }
+  ]
+}

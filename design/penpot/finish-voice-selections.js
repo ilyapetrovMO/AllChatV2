@@ -1,0 +1,1 @@
+const keys=['voice-selected-enhanced','voice-selected-off','voice-selected-text','voice-selected-balanced','voice-selected-motion','voice-selected-data-saver'];for(const b of penpot.currentPage.root.children.filter(b=>b.getPluginData('static-voice-selection-state'))){b.x=94000+keys.indexOf(b.getPluginData('static-voice-selection-state'))*1400;b.y=0;}return {placed:keys.length};

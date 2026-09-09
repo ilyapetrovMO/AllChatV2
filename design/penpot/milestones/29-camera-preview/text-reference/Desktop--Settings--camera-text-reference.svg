@@ -1,0 +1,86 @@
+<svg width="400" xmlns="http://www.w3.org/2000/svg" height="120" viewBox="0 0 400 120" style="-webkit-print-color-adjust::exact" xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" version="1.1">
+  <style>
+  </style>
+  <g id="shape-7299a615-462e-803f-8008-9bb87c7f8ca6">
+    <defs>
+      <clipPath id="frame-clip-7299a615-462e-803f-8008-9bb87c7f8ca6-render-140811" class="frame-clip frame-clip-def">
+        <rect rx="0" ry="0" x="0" y="0" width="400" height="120" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)">
+        </rect>
+      </clipPath>
+    </defs>
+    <g class="frame-container-wrapper">
+      <g class="frame-container-blur">
+        <g class="frame-container-shadows">
+          <g clip-path="url(#frame-clip-7299a615-462e-803f-8008-9bb87c7f8ca6-render-140811)" fill="none">
+            <g class="fills" id="fills-7299a615-462e-803f-8008-9bb87c7f8ca6">
+              <rect rx="0" ry="0" x="0" y="0" width="400" height="120" transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="frame-background" style="fill:#18191e;fill-opacity:1">
+              </rect>
+            </g>
+            <g class="frame-children">
+              <g id="shape-7299a615-462e-803f-8008-9bb87d519cfa">
+                <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="20" y="20" width="360" height="24" rx="0" ry="0">
+                  <defs>
+                    <pattern patternUnits="objectBoundingBox" width="82.89999389648438" height="20" id="fill-0-render-140812-0">
+                      <g>
+                        <rect width="82.89999389648438" height="20" style="fill:#ffffff;fill-opacity:1">
+                        </rect>
+                      </g>
+                    </pattern>
+                  </defs>
+                  <g class="fills" id="fills-7299a615-462e-803f-8008-9bb87d519cfa">
+                    <text x="20" y="39.600006103515625" dominant-baseline="ideographic" textLength="82.89999389648438" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;Inter&quot;;letter-spacing:normal;font-style:normal;font-weight:400;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#ffffff;fill-opacity:1">Stop Video</text>
+                  </g>
+                </g>
+              </g>
+              <g id="shape-7299a615-462e-803f-8008-9bb87e7f5bfa">
+                <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="20" y="60" width="360" height="24" rx="0" ry="0">
+                  <defs>
+                    <pattern patternUnits="objectBoundingBox" width="185.4499969482422" height="20" id="fill-0-render-140813-0">
+                      <g>
+                        <rect width="185.4499969482422" height="20" style="fill:#a4a8b3;fill-opacity:1">
+                        </rect>
+                      </g>
+                    </pattern>
+                  </defs>
+                  <g class="fills" id="fills-7299a615-462e-803f-8008-9bb87e7f5bfa">
+                    <text x="20" y="79.60000610351562" dominant-baseline="ideographic" textLength="185.4499969482422" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;Inter&quot;;letter-spacing:normal;font-style:normal;font-weight:400;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#a4a8b3;fill-opacity:1">Camera preview started.</text>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g id="shape-7299a615-462e-803f-8008-9bb87d519cfa">
+    <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="20" y="20" width="360" height="24" rx="0" ry="0">
+      <defs>
+        <pattern patternUnits="objectBoundingBox" width="82.89999389648438" height="20" id="fill-0-render-140814-0">
+          <g>
+            <rect width="82.89999389648438" height="20" style="fill:#ffffff;fill-opacity:1">
+            </rect>
+          </g>
+        </pattern>
+      </defs>
+      <g class="fills" id="fills-7299a615-462e-803f-8008-9bb87d519cfa">
+        <text x="20" y="39.600006103515625" dominant-baseline="ideographic" textLength="82.89999389648438" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;Inter&quot;;letter-spacing:normal;font-style:normal;font-weight:400;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#ffffff;fill-opacity:1">Stop Video</text>
+      </g>
+    </g>
+  </g>
+  <g id="shape-7299a615-462e-803f-8008-9bb87e7f5bfa">
+    <g transform="matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)" class="text-container" x="20" y="60" width="360" height="24" rx="0" ry="0">
+      <defs>
+        <pattern patternUnits="objectBoundingBox" width="185.4499969482422" height="20" id="fill-0-render-140815-0">
+          <g>
+            <rect width="185.4499969482422" height="20" style="fill:#a4a8b3;fill-opacity:1">
+            </rect>
+          </g>
+        </pattern>
+      </defs>
+      <g class="fills" id="fills-7299a615-462e-803f-8008-9bb87e7f5bfa">
+        <text x="20" y="79.60000610351562" dominant-baseline="ideographic" textLength="185.4499969482422" lengthAdjust="spacingAndGlyphs" style="text-transform:none;font-family:&quot;Inter&quot;;letter-spacing:normal;font-style:normal;font-weight:400;white-space:pre;font-size:16px;text-decoration:none;direction:ltr;fill:#a4a8b3;fill-opacity:1">Camera preview started.</text>
+      </g>
+    </g>
+  </g>
+</svg>

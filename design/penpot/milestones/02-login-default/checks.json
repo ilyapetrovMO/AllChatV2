@@ -1,0 +1,18 @@
+{
+  "frame": [
+    1280,
+    720
+  ],
+  "card": [
+    436,
+    101.67,
+    480,
+    544.66
+  ],
+  "nativeTextLayers": 12,
+  "componentDefinitions": 4,
+  "linkedInstances": 6,
+  "validatorErrors": 0,
+  "revision": 12,
+  "namedVersionConfirmed": true
+}

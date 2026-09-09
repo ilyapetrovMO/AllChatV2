@@ -1,0 +1,669 @@
+{
+  "pass": true,
+  "problems": [],
+  "reachable": 6,
+  "graph": {
+    "no-results": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Members icon",
+        "to": "members-hidden"
+      },
+      {
+        "name": "base-background",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "default"
+      },
+      {
+        "name": "Send label",
+        "to": "default"
+      },
+      {
+        "name": "Close search",
+        "to": "default"
+      },
+      {
+        "name": "Close search label",
+        "to": "default"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ],
+    "search": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Members icon",
+        "to": "members-hidden"
+      },
+      {
+        "name": "base-background",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "default"
+      },
+      {
+        "name": "Send label",
+        "to": "default"
+      },
+      {
+        "name": "Close search",
+        "to": "sent"
+      },
+      {
+        "name": "Close search label",
+        "to": "sent"
+      },
+      {
+        "name": "Jump to message",
+        "to": "sent"
+      },
+      {
+        "name": "Jump to message label",
+        "to": "sent"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ],
+    "sent": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Members icon",
+        "to": "members-hidden"
+      },
+      {
+        "name": "base-background",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "sent"
+      },
+      {
+        "name": "Send label",
+        "to": "sent"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ],
+    "draft": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Members icon",
+        "to": "members-hidden"
+      },
+      {
+        "name": "base-background",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "sent"
+      },
+      {
+        "name": "Send label",
+        "to": "sent"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ],
+    "members-hidden": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "default"
+      },
+      {
+        "name": "Members icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "default"
+      },
+      {
+        "name": "Send label",
+        "to": "default"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ],
+    "default": [
+      {
+        "name": "Selected text channel",
+        "to": "default"
+      },
+      {
+        "name": "Channel icon",
+        "to": "default"
+      },
+      {
+        "name": "base-background",
+        "to": "default"
+      },
+      {
+        "name": "svg-path",
+        "to": "default"
+      },
+      {
+        "name": "Channel name",
+        "to": "default"
+      },
+      {
+        "name": "Members toggled",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Members icon",
+        "to": "members-hidden"
+      },
+      {
+        "name": "base-background",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "svg-path",
+        "to": "members-hidden"
+      },
+      {
+        "name": "Search field",
+        "to": "search"
+      },
+      {
+        "name": "Search icon",
+        "to": "search"
+      },
+      {
+        "name": "base-background",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "svg-path",
+        "to": "search"
+      },
+      {
+        "name": "Search placeholder",
+        "to": "search"
+      },
+      {
+        "name": "Composer placeholder",
+        "to": "draft"
+      },
+      {
+        "name": "Send message",
+        "to": "default"
+      },
+      {
+        "name": "Send label",
+        "to": "default"
+      },
+      {
+        "name": "Search example",
+        "to": "search"
+      },
+      {
+        "name": "Search example label",
+        "to": "search"
+      },
+      {
+        "name": "No results example",
+        "to": "no-results"
+      },
+      {
+        "name": "No results example label",
+        "to": "no-results"
+      },
+      {
+        "name": "Restart main",
+        "to": "default"
+      },
+      {
+        "name": "Restart main label",
+        "to": "default"
+      }
+    ]
+  },
+  "validation": [],
+  "revision": 22
+}

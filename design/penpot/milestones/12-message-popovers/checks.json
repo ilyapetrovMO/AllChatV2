@@ -1,0 +1,38 @@
+{
+  "pass": true,
+  "problems": [],
+  "checks": [
+    {
+      "key": "pins-populated",
+      "id": "7299a615-462e-803f-8008-9b9cccb6de3d",
+      "textLayers": 28,
+      "links": 0
+    },
+    {
+      "key": "pins-empty",
+      "id": "7299a615-462e-803f-8008-9b9ccb85b974",
+      "textLayers": 23,
+      "links": 0
+    },
+    {
+      "key": "mentions",
+      "id": "7299a615-462e-803f-8008-9b9cca2d2c61",
+      "textLayers": 35,
+      "links": 0
+    },
+    {
+      "key": "reaction-custom",
+      "id": "7299a615-462e-803f-8008-9b9cc31a4150",
+      "textLayers": 62,
+      "links": 0
+    },
+    {
+      "key": "reaction-empty",
+      "id": "7299a615-462e-803f-8008-9b9cbbe9057a",
+      "textLayers": 62,
+      "links": 0
+    }
+  ],
+  "validation": [],
+  "revision": 31
+}

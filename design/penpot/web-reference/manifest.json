@@ -1,0 +1,192 @@
+{
+  "fixture": "disposable owner and signed-out contexts; current default and empty states only",
+  "items": [
+    {
+      "route": "/",
+      "screenshot": "home.png",
+      "controls": "home.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/profile",
+      "screenshot": "profile.png",
+      "controls": "profile.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/sessions",
+      "screenshot": "sessions.png",
+      "controls": "sessions.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/voice-video",
+      "screenshot": "voice-video.png",
+      "controls": "voice-video.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/ringtone",
+      "screenshot": "ringtone.png",
+      "controls": "ringtone.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/settings",
+      "screenshot": "admin-settings.png",
+      "controls": "admin-settings.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/channels",
+      "screenshot": "admin-channels.png",
+      "controls": "admin-channels.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/roles",
+      "screenshot": "admin-roles.png",
+      "controls": "admin-roles.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/invitations",
+      "screenshot": "admin-invitations.png",
+      "controls": "admin-invitations.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/soundboard",
+      "screenshot": "admin-soundboard.png",
+      "controls": "admin-soundboard.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/admin/activities",
+      "screenshot": "admin-activities.png",
+      "controls": "admin-activities.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/activities",
+      "screenshot": "activities.png",
+      "controls": "activities.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/dms",
+      "screenshot": "dms.png",
+      "controls": "dms.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/search",
+      "screenshot": "search.png",
+      "controls": "search.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/login",
+      "screenshot": "login.png",
+      "controls": "login.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/recover",
+      "screenshot": "recover.png",
+      "controls": "recover.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    },
+    {
+      "route": "/join",
+      "screenshot": "join.png",
+      "controls": "join.json",
+      "status": "captured-unreviewed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true
+    }
+  ]
+}

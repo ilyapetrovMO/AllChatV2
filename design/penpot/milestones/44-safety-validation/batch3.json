@@ -1,0 +1,18 @@
+{
+  "made": 1,
+  "remaining": 5,
+  "boards": [
+    {
+      "key": "safety-invalid-report-member",
+      "id": "7299a615-462e-803f-8008-9bd5ae9d8430"
+    },
+    {
+      "key": "safety-invalid-report-reason",
+      "id": "7299a615-462e-803f-8008-9bd5c9c1e93b"
+    },
+    {
+      "key": "safety-invalid-report-short",
+      "id": "7299a615-462e-803f-8008-9bd5d789c8ed"
+    }
+  ]
+}

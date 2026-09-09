@@ -1,0 +1,34 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "loading",
+      "texts": 3,
+      "contentHeight": 71.984375,
+      "scroll": 0
+    },
+    {
+      "key": "member",
+      "texts": 12,
+      "contentHeight": 757.453125,
+      "scroll": 0
+    },
+    {
+      "key": "member-bottom",
+      "texts": 12,
+      "contentHeight": 757.453125,
+      "scroll": 141
+    }
+  ],
+  "visibleControls": [
+    "select memberId",
+    "textarea reason",
+    "button Submit Report",
+    "button Export Account Data",
+    "input password",
+    "input confirmation",
+    "button Delete Account"
+  ]
+}

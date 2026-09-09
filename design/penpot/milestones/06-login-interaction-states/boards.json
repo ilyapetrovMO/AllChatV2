@@ -1,0 +1,18 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9b916c4b0bad",
+    "name": "Desktop / Login / Interaction / username-focus"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b916ce891f7",
+    "name": "Desktop / Login / Interaction / password-focus"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b916d592029",
+    "name": "Desktop / Login / Interaction / register-hover"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9b916db4bd78",
+    "name": "Desktop / Login / Interaction / submit-hover"
+  }
+]

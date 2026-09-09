@@ -1,0 +1,203 @@
+{
+  "platform": "Android 35 Pixel 7 emulator",
+  "items": [
+    {
+      "name": "add-instance-dark",
+      "theme": "dark",
+      "screenshot": "add-instance-dark.png",
+      "hierarchy": "add-instance-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "community-home-dark",
+      "theme": "dark",
+      "screenshot": "community-home-dark.png",
+      "hierarchy": "community-home-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "text-channel-dark",
+      "theme": "dark",
+      "screenshot": "text-channel-dark.png",
+      "hierarchy": "text-channel-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "pinned-messages-dark",
+      "theme": "dark",
+      "screenshot": "pinned-messages-dark.png",
+      "hierarchy": "pinned-messages-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "search-messages-dark",
+      "theme": "dark",
+      "screenshot": "search-messages-dark.png",
+      "hierarchy": "search-messages-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "conversation-notifications-dark",
+      "theme": "dark",
+      "screenshot": "conversation-notifications-dark.png",
+      "hierarchy": "conversation-notifications-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "conversation-notifications-muted-dark",
+      "theme": "dark",
+      "screenshot": "conversation-notifications-muted-dark.png",
+      "hierarchy": "conversation-notifications-muted-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "conversation-notifications-save-result-dark",
+      "theme": "dark",
+      "screenshot": "conversation-notifications-save-result-dark.png",
+      "hierarchy": "conversation-notifications-save-result-dark.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "conversation-notifications-default-light",
+      "theme": "light",
+      "screenshot": "conversation-notifications-default-light.png",
+      "hierarchy": "conversation-notifications-default-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "conversation-notifications-save-result-light",
+      "theme": "light",
+      "screenshot": "conversation-notifications-save-result-light.png",
+      "hierarchy": "conversation-notifications-save-result-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "own-message-actions-light",
+      "theme": "light",
+      "screenshot": "own-message-actions-light.png",
+      "hierarchy": "own-message-actions-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "reply-composer-light",
+      "theme": "light",
+      "screenshot": "reply-composer-light.png",
+      "hierarchy": "reply-composer-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "edit-composer-light",
+      "theme": "light",
+      "screenshot": "edit-composer-light.png",
+      "hierarchy": "edit-composer-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "members-panel-light",
+      "theme": "light",
+      "screenshot": "members-panel-light.png",
+      "hierarchy": "members-panel-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "member-profile-light",
+      "theme": "light",
+      "screenshot": "member-profile-light.png",
+      "hierarchy": "member-profile-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "member-report-light",
+      "theme": "light",
+      "screenshot": "member-report-light.png",
+      "hierarchy": "member-report-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "community-home-reconnecting-light",
+      "theme": "light",
+      "screenshot": "community-home-reconnecting-light.png",
+      "hierarchy": "community-home-reconnecting-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    },
+    {
+      "name": "member-moderation-light",
+      "theme": "light",
+      "screenshot": "member-moderation-light.png",
+      "hierarchy": "member-moderation-light.xml",
+      "pixels": {
+        "width": 1080,
+        "height": 2400
+      },
+      "status": "native capture; design comparison pending"
+    }
+  ]
+}

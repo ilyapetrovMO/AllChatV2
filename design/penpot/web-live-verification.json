@@ -1,0 +1,180 @@
+{
+  "status": "live presence and geometry only; visual comparison and persisted export pending",
+  "boards": [
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a2b216f6e",
+      "name": "Web / activities / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 12
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a26fba1b6",
+      "name": "Web / admin-activities / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 20
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6cc8c18005",
+      "name": "Web / admin-dashboard / Draft",
+      "width": 1280,
+      "height": 1507,
+      "textLayers": 79
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a35478a56",
+      "name": "Web / login / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 5
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a69f7b9b1a6",
+      "name": "Web / home / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 42
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a101bc1c2",
+      "name": "Web / admin-channels / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 35
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a2e043911",
+      "name": "Web / dms / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 26
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a397e3397",
+      "name": "Web / join / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 5
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a69fbc0f828",
+      "name": "Web / profile / Draft",
+      "width": 1280,
+      "height": 840,
+      "textLayers": 25
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a1a91fd61",
+      "name": "Web / admin-invitations / Draft",
+      "width": 1280,
+      "height": 1006,
+      "textLayers": 35
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a093706f9",
+      "name": "Web / ringtone / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 18
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a150fb4b9",
+      "name": "Web / admin-roles / Draft",
+      "width": 1280,
+      "height": 1198,
+      "textLayers": 38
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a32ed3857",
+      "name": "Web / search / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 7
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a69fef8f357",
+      "name": "Web / sessions / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 26
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a37540dda",
+      "name": "Web / recover / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 5
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a0c0f175e",
+      "name": "Web / admin-settings / Draft",
+      "width": 1280,
+      "height": 1258,
+      "textLayers": 30
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a21e2c4ad",
+      "name": "Web / admin-soundboard / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 23
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6a0297e9fe",
+      "name": "Web / voice-video / Draft",
+      "width": 1280,
+      "height": 2285,
+      "textLayers": 62
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6ccf79db16",
+      "name": "Web / Conversation \u2014 taylor / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 36
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6cd398591a",
+      "name": "Web / Conversation \u2014 jordan / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 36
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6cd7c2788e",
+      "name": "Web / Conversation \u2014 mobile-member / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 36
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6cdc4177df",
+      "name": "Web / Conversation \u2014 sam / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 36
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6ce0c36884",
+      "name": "Web / Conversation \u2014 alex / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 36
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6ce59b3306",
+      "name": "Web / Conversation \u2014 general / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 76
+    },
+    {
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6cedfeb095",
+      "name": "Web / Voice channel \u2014 Lounge / Draft",
+      "width": 1280,
+      "height": 720,
+      "textLayers": 12
+    }
+  ]
+}

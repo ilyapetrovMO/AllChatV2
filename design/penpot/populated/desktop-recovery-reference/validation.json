@@ -1,0 +1,18 @@
+[
+  {
+    "state": "token-required",
+    "valueMissing": true,
+    "message": "Please fill out this field."
+  },
+  {
+    "state": "password-required",
+    "valueMissing": true,
+    "message": "Please fill out this field."
+  },
+  {
+    "state": "password-too-short",
+    "tooShort": true,
+    "minLength": 12,
+    "message": "Please lengthen this text to 12 characters or more (you are currently using 5 characters)."
+  }
+]

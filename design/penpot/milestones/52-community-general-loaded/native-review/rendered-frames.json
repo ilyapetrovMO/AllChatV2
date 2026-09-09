@@ -1,0 +1,50 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9be2878d90a3",
+    "name": "Desktop / Settings / community-general-error",
+    "filename": "Desktop--Settings--community-general-error.svg",
+    "png": "Desktop--Settings--community-general-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be241a44bd2",
+    "name": "Desktop / Settings / community-general-loading",
+    "filename": "Desktop--Settings--community-general-loading.svg",
+    "png": "Desktop--Settings--community-general-loading.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be4de9570a8",
+    "name": "Desktop / Settings / community-general-relay",
+    "filename": "Desktop--Settings--community-general-relay.svg",
+    "png": "Desktop--Settings--community-general-relay.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be5a1e995f0",
+    "name": "Desktop / Settings / community-general-relay-bottom",
+    "filename": "Desktop--Settings--community-general-relay-bottom.svg",
+    "png": "Desktop--Settings--community-general-relay-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be5a1079027",
+    "name": "Desktop / Settings / community-general-relay-middle",
+    "filename": "Desktop--Settings--community-general-relay-middle.svg",
+    "png": "Desktop--Settings--community-general-relay-middle.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be448c4b5f3",
+    "name": "Desktop / Settings / community-general-default",
+    "filename": "Desktop--Settings--community-general-default.svg",
+    "png": "Desktop--Settings--community-general-default.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be5919e19cd",
+    "name": "Desktop / Settings / community-general-default-bottom",
+    "filename": "Desktop--Settings--community-general-default-bottom.svg",
+    "png": "Desktop--Settings--community-general-default-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9be5906d675d",
+    "name": "Desktop / Settings / community-general-default-middle",
+    "filename": "Desktop--Settings--community-general-default-middle.svg",
+    "png": "Desktop--Settings--community-general-default-middle.png"
+  }
+]

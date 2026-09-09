@@ -1,0 +1,748 @@
+{
+  "revision": 65,
+  "board": {
+    "id": "7299a615-462e-803f-8008-9bc445839346",
+    "state": "voice-minimum",
+    "width": 960,
+    "height": 640,
+    "text": [
+      {
+        "name": "App name",
+        "width": 90,
+        "height": 15.400000000000006,
+        "bounds": {
+          "x": 110,
+          "y": 105.60000610351562,
+          "width": 39.58332824707031,
+          "height": 14
+        }
+      },
+      {
+        "name": "Window minimize",
+        "width": 22,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 959.6999969482422,
+          "y": 102.60000610351562,
+          "width": 10.583343505859375,
+          "height": 20
+        }
+      },
+      {
+        "name": "Window maximize",
+        "width": 22,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 998.1666717529297,
+          "y": 102.60000610351562,
+          "width": 9.666656494140625,
+          "height": 20
+        }
+      },
+      {
+        "name": "Window close",
+        "width": 22,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 1035.6999969482422,
+          "y": 102.60000610351562,
+          "width": 10.583343505859375,
+          "height": 20
+        }
+      },
+      {
+        "name": "Community initial",
+        "width": 48,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 130.01666259765625,
+          "y": 211.60000610351562,
+          "width": 11.949996948242188,
+          "height": 20
+        }
+      },
+      {
+        "name": "Avatar initial",
+        "width": 32,
+        "height": 19.600000000000023,
+        "bounds": {
+          "x": 194.76666259765625,
+          "y": 703.8999938964844,
+          "width": 10.449996948242188,
+          "height": 17
+        }
+      },
+      {
+        "name": "Current member name",
+        "width": 135,
+        "height": 21,
+        "bounds": {
+          "x": 224,
+          "y": 695.5,
+          "width": 32.600006103515625,
+          "height": 19
+        }
+      },
+      {
+        "name": "Current member handle",
+        "width": 135,
+        "height": 16.799999999999955,
+        "bounds": {
+          "x": 224,
+          "y": 715.6999969482422,
+          "width": 34.5,
+          "height": 15
+        }
+      },
+      {
+        "name": "Settings navigation heading",
+        "width": 208,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 188,
+          "y": 140.60000610351562,
+          "width": 133.89999389648438,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / My Account",
+        "width": 204,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 190,
+          "y": 196.60000610351562,
+          "width": 91.08332824707031,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / Voice & Video",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 236.60000610351562,
+          "width": 105.13333129882812,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / Ringtone",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 276.6000061035156,
+          "width": 66.91667175292969,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / Notifications",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 316.6000061035156,
+          "width": 95.46665954589844,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / Sessions",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 356.6000061035156,
+          "width": 67.88333129882812,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings nav label / Safety",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 396.6000061035156,
+          "width": 48.58332824707031,
+          "height": 20
+        }
+      },
+      {
+        "name": "Back to Community",
+        "width": 204,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 190,
+          "y": 459.6000061035156,
+          "width": 147.71665954589844,
+          "height": 20
+        }
+      },
+      {
+        "name": "Settings title",
+        "width": 616,
+        "height": 22.400000000000006,
+        "bounds": {
+          "x": 428,
+          "y": 139.60000610351562,
+          "width": 108.10000610351562,
+          "height": 20
+        }
+      },
+      {
+        "name": "Voice eyebrow",
+        "width": 584,
+        "height": 16.796875,
+        "bounds": {
+          "x": 444,
+          "y": 203.6999969482422,
+          "width": 171.56666564941406,
+          "height": 15
+        }
+      },
+      {
+        "name": "Voice title",
+        "width": 584,
+        "height": 33.59375,
+        "bounds": {
+          "x": 444,
+          "y": 228.69686889648438,
+          "width": 162.1666717529297,
+          "height": 29
+        }
+      },
+      {
+        "name": "Voice introduction",
+        "width": 584,
+        "height": 44.78125,
+        "bounds": {
+          "x": 444,
+          "y": 268.3812561035156,
+          "width": 833.9500122070312,
+          "height": 20
+        }
+      },
+      {
+        "name": "Voice section heading",
+        "width": 542,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 362.1625061035156,
+          "width": 44.06666564941406,
+          "height": 20
+        }
+      },
+      {
+        "name": "Microphone device label",
+        "width": 264,
+        "height": 17.91999999999996,
+        "bounds": {
+          "x": 465,
+          "y": 398.7531280517578,
+          "width": 76.35000610351562,
+          "height": 16
+        }
+      },
+      {
+        "name": "Microphone device value",
+        "width": 226,
+        "height": 18,
+        "bounds": {
+          "x": 479,
+          "y": 432.6593780517578,
+          "width": 95.96665954589844,
+          "height": 16
+        }
+      },
+      {
+        "name": "Microphone device arrow",
+        "width": 16,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 709,
+          "y": 428.4593811035156,
+          "width": 11.25,
+          "height": 21
+        }
+      },
+      {
+        "name": "Speaker device label",
+        "width": 264,
+        "height": 17.91999999999996,
+        "bounds": {
+          "x": 743,
+          "y": 398.7531280517578,
+          "width": 52.43333435058594,
+          "height": 16
+        }
+      },
+      {
+        "name": "Speaker device value",
+        "width": 226,
+        "height": 18,
+        "bounds": {
+          "x": 757,
+          "y": 432.6593780517578,
+          "width": 95.96665954589844,
+          "height": 16
+        }
+      },
+      {
+        "name": "Speaker device arrow",
+        "width": 16,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 987,
+          "y": 428.4593811035156,
+          "width": 11.25,
+          "height": 21
+        }
+      },
+      {
+        "name": "Microphone volume label",
+        "width": 253,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 485.6593780517578,
+          "width": 126.19999694824219,
+          "height": 16
+        }
+      },
+      {
+        "name": "Microphone volume description",
+        "width": 253,
+        "height": 14.9375,
+        "bounds": {
+          "x": 465,
+          "y": 506.3656311035156,
+          "width": 203.8000030517578,
+          "height": 14
+        }
+      },
+      {
+        "name": "Microphone volume output",
+        "width": 37,
+        "height": 17.90625,
+        "bounds": {
+          "x": 734,
+          "y": 494.6281280517578,
+          "width": 36.33332824707031,
+          "height": 16
+        }
+      },
+      {
+        "name": "Speaker volume label",
+        "width": 253,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 556.5031280517578,
+          "width": 102.28334045410156,
+          "height": 16
+        }
+      },
+      {
+        "name": "Speaker volume description",
+        "width": 253,
+        "height": 14.9375,
+        "bounds": {
+          "x": 465,
+          "y": 577.2093811035156,
+          "width": 164.18333435058594,
+          "height": 14
+        }
+      },
+      {
+        "name": "Speaker volume output",
+        "width": 37,
+        "height": 17.90625,
+        "bounds": {
+          "x": 734,
+          "y": 565.4718780517578,
+          "width": 36.33332824707031,
+          "height": 16
+        }
+      },
+      {
+        "name": "Mic Test label",
+        "width": 534,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 859.9666748046875,
+          "y": 619.1468811035156,
+          "width": 64.06668090820312,
+          "height": 20
+        }
+      },
+      {
+        "name": "Input processing heading",
+        "width": 542,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 706.5375061035156,
+          "width": 131.48333740234375,
+          "height": 20
+        }
+      },
+      {
+        "name": "Noise suppression label",
+        "width": 118,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 754.1281280517578,
+          "width": 118.18333435058594,
+          "height": 16
+        }
+      },
+      {
+        "name": "Noise suppression description",
+        "width": 118,
+        "height": 44.8125,
+        "bounds": {
+          "x": 465,
+          "y": 774.8343811035156,
+          "width": 287.79998779296875,
+          "height": 14
+        }
+      },
+      {
+        "name": "Noise suppression value",
+        "width": 134,
+        "height": 18,
+        "bounds": {
+          "x": 613,
+          "y": 777.9875030517578,
+          "width": 57.91667175292969,
+          "height": 16
+        }
+      },
+      {
+        "name": "Noise suppression arrow",
+        "width": 16,
+        "height": 22.399999999999977,
+        "bounds": {
+          "x": 751,
+          "y": 773.7875061035156,
+          "width": 11.25,
+          "height": 21
+        }
+      },
+      {
+        "name": "Echo cancellation label",
+        "width": 506,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 854.8468780517578,
+          "width": 112.46665954589844,
+          "height": 16
+        }
+      },
+      {
+        "name": "Echo cancellation description",
+        "width": 506,
+        "height": 14.9375,
+        "bounds": {
+          "x": 465,
+          "y": 875.5531311035156,
+          "width": 366.04998779296875,
+          "height": 14
+        }
+      },
+      {
+        "name": "Echo cancellation tick",
+        "width": 16,
+        "height": 19.600000000000023,
+        "bounds": {
+          "x": 990,
+          "y": 862.8687438964844,
+          "width": 10.76666259765625,
+          "height": 19
+        }
+      },
+      {
+        "name": "Automatic gain control label",
+        "width": 506,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 925.6906280517578,
+          "width": 144.25,
+          "height": 16
+        }
+      },
+      {
+        "name": "Automatic gain control description",
+        "width": 506,
+        "height": 14.9375,
+        "bounds": {
+          "x": 465,
+          "y": 946.3968811035156,
+          "width": 287.4666748046875,
+          "height": 14
+        }
+      },
+      {
+        "name": "Noise gate label",
+        "width": 506,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 996.5343780517578,
+          "width": 67.66667175292969,
+          "height": 16
+        }
+      },
+      {
+        "name": "Noise gate description",
+        "width": 506,
+        "height": 14.9375,
+        "bounds": {
+          "x": 465,
+          "y": 1017.2406311035156,
+          "width": 284.316650390625,
+          "height": 14
+        }
+      },
+      {
+        "name": "Noise gate tick",
+        "width": 16,
+        "height": 19.59999999999991,
+        "bounds": {
+          "x": 990,
+          "y": 1004.5562438964844,
+          "width": 10.76666259765625,
+          "height": 19
+        }
+      },
+      {
+        "name": "Input sensitivity label",
+        "width": 248,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 1068.4250030517578,
+          "width": 102.31666564941406,
+          "height": 16
+        }
+      },
+      {
+        "name": "Input sensitivity output",
+        "width": 42,
+        "height": 17.90625,
+        "bounds": {
+          "x": 729,
+          "y": 1068.441665649414,
+          "width": 42.866668701171875,
+          "height": 16
+        }
+      },
+      {
+        "name": "Camera heading",
+        "width": 542,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 1159.1781311035156,
+          "width": 60.83332824707031,
+          "height": 20
+        }
+      },
+      {
+        "name": "Camera preview status",
+        "width": 542,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 809.3666687011719,
+          "y": 1273.5687561035156,
+          "width": 165.25,
+          "height": 20
+        }
+      },
+      {
+        "name": "Camera device label",
+        "width": 542,
+        "height": 17.920000000000073,
+        "bounds": {
+          "x": 465,
+          "y": 1389.7687530517578,
+          "width": 49.44999694824219,
+          "height": 16
+        }
+      },
+      {
+        "name": "Camera device value",
+        "width": 504,
+        "height": 18,
+        "bounds": {
+          "x": 479,
+          "y": 1423.6750030517578,
+          "width": 95.96665954589844,
+          "height": 16
+        }
+      },
+      {
+        "name": "Camera device arrow",
+        "width": 16,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 987,
+          "y": 1419.4750061035156,
+          "width": 11.25,
+          "height": 21
+        }
+      },
+      {
+        "name": "Test Video label",
+        "width": 534,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 851.8666687011719,
+          "y": 1468.4750061035156,
+          "width": 80.25,
+          "height": 20
+        }
+      },
+      {
+        "name": "Screen sharing heading",
+        "width": 542,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 1555.8656311035156,
+          "width": 118.05000305175781,
+          "height": 20
+        }
+      },
+      {
+        "name": "Quality mode label",
+        "width": 182,
+        "height": 17.90625,
+        "bounds": {
+          "x": 465,
+          "y": 1603.4562530517578,
+          "width": 84.53334045410156,
+          "height": 16
+        }
+      },
+      {
+        "name": "Quality mode description",
+        "width": 182,
+        "height": 44.8125,
+        "bounds": {
+          "x": 465,
+          "y": 1624.1625061035156,
+          "width": 455.51666259765625,
+          "height": 14
+        }
+      },
+      {
+        "name": "Screen share quality value",
+        "width": 70,
+        "height": 18,
+        "bounds": {
+          "x": 677,
+          "y": 1627.3156280517578,
+          "width": 30.399993896484375,
+          "height": 16
+        }
+      },
+      {
+        "name": "Screen share quality arrow",
+        "width": 16,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 751,
+          "y": 1623.1156311035156,
+          "width": 11.25,
+          "height": 21
+        }
+      },
+      {
+        "name": "Advanced heading",
+        "width": 542,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 1740.9750061035156,
+          "width": 79.55000305175781,
+          "height": 20
+        }
+      },
+      {
+        "name": "Speaker test label",
+        "width": 191,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 1788.3656311035156,
+          "width": 98.35000610351562,
+          "height": 20
+        }
+      },
+      {
+        "name": "Speaker test description",
+        "width": 191,
+        "height": 37.3125,
+        "bounds": {
+          "x": 465,
+          "y": 1814.15625,
+          "width": 333.33331298828125,
+          "height": 16
+        }
+      },
+      {
+        "name": "Play sound label",
+        "width": 91,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 681.9333343505859,
+          "y": 1808.5218811035156,
+          "width": 83.11666870117188,
+          "height": 20
+        }
+      },
+      {
+        "name": "Reset Voice & Video settings label",
+        "width": 233,
+        "height": 22.390625,
+        "bounds": {
+          "x": 465,
+          "y": 1886.0687561035156,
+          "width": 223.31666564941406,
+          "height": 20
+        }
+      },
+      {
+        "name": "Reset Voice & Video settings description",
+        "width": 233,
+        "height": 18.65625,
+        "bounds": {
+          "x": 465,
+          "y": 1911.859375,
+          "width": 136.86666870117188,
+          "height": 16
+        }
+      },
+      {
+        "name": "Reset label",
+        "width": 49,
+        "height": 22.40000000000009,
+        "bounds": {
+          "x": 723.2833404541016,
+          "y": 1896.8968811035156,
+          "width": 42.416656494140625,
+          "height": 20
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+const boards=penpot.currentPage.root.children.filter(b=>b.getPluginData('static-voice-menu-state'));for(const b of boards)for(const t of penpotUtils.findShapes(s=>s.type==='text'&&s.name.startsWith('Menu option '),b)){t.growType='auto-height';t.resize(t.width,18);}penpot.viewport.zoomIntoView(boards.filter(b=>b.x<10000));return {boards:boards.length};

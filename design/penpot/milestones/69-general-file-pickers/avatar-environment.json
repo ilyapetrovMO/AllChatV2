@@ -1,0 +1,11 @@
+{
+  "electron": "43.4.0",
+  "chrome": "150.0.7871.224",
+  "key": "avatar",
+  "sourceInput": "image/png,image/jpeg,image/webp",
+  "fixtureDirectory": "/home/gosha/src/AllChatV2/design/penpot/milestones/69-general-file-pickers/fixture-files",
+  "dimensions": {
+    "width": 1280,
+    "height": 800
+  }
+}

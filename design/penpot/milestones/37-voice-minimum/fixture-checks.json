@@ -1,0 +1,11 @@
+{
+  "pass": true,
+  "selectors": 5,
+  "ranges": 3,
+  "checkboxes": 3,
+  "buttons": 4,
+  "sourceRangeLimitsVerified": true,
+  "eventHandlers": 0,
+  "mappedShapes": 87,
+  "mappedTextLabels": 43
+}

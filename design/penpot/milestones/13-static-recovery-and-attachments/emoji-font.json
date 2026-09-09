@@ -1,0 +1,12 @@
+{
+  "font": "Noto Color Emoji",
+  "variants": [
+    {
+      "name": "400",
+      "fontVariantId": "regular",
+      "fontWeight": "400",
+      "fontStyle": "normal"
+    }
+  ],
+  "changed": 49
+}

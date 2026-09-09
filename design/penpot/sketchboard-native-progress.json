@@ -1,0 +1,86 @@
+[
+  {
+    "name": "board-list",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e381b1c7f",
+    "nativeTextLayers": 8,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "board-list-populated",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e39ab5326",
+    "nativeTextLayers": 11,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "delete-confirmation",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e3b39f53c",
+    "nativeTextLayers": 11,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-pen",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e3c98657a",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-highlighter",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e3e743fdb",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-line",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e40400ba9",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-rectangle",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e420abb6b",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-ellipse",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e43fa3814",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-text",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e45f2d969",
+    "nativeTextLayers": 20,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-note",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e47c047a5",
+    "nativeTextLayers": 20,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-eraser",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e49aa8b61",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-pan",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e4bd55e7f",
+    "nativeTextLayers": 24,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "clear-confirmation",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e4df3c3b7",
+    "nativeTextLayers": 25,
+    "status": "native draft; visual verification pending"
+  },
+  {
+    "name": "workspace-toolbar-right",
+    "boardId": "6bdc1c40-ce96-804f-8008-9a6e9f9d91e9",
+    "nativeTextLayers": 23,
+    "status": "native draft; visual verification pending"
+  }
+]

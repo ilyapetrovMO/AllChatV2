@@ -1,0 +1,30 @@
+{
+  "boards": [
+    {
+      "mode": "pins",
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6afe94b8c9"
+    },
+    {
+      "mode": "search",
+      "boardId": "6bdc1c40-ce96-804f-8008-9a6afed7272b"
+    }
+  ],
+  "components": [
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe48b815",
+      "name": "Dark",
+      "mainId": "6bdc1c40-ce96-804f-8008-9a6afe129c0c"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe6e3f82",
+      "name": "Dark",
+      "mainId": "6bdc1c40-ce96-804f-8008-9a6afe4c3ba3"
+    },
+    {
+      "id": "6bdc1c40-ce96-804f-8008-9a6afe8fd245",
+      "name": "Empty dark",
+      "mainId": "6bdc1c40-ce96-804f-8008-9a6afe70ed52"
+    }
+  ],
+  "status": "Editable drafts; visual verification pending"
+}

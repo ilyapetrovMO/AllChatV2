@@ -343,3 +343,16 @@ describe('InstanceCoordinator', () => {
   });
 });
 // @vitest-environment node
+
+it('explicitly ends the authenticated media session and rejects failed disconnects', async () => {
+  const registry = new InstanceRegistry(() => 'home');
+  registry.add({displayName:'Home',baseUrl:'https://chat.example'});
+  registry.setSession('home','desktop-session:home',{member:{id:'me',username:'nora',owner:false},sessionId:'session',expiresAt:'2099-01-01T00:00:00Z'});
+  const vault = new MemoryDesktopCredentialVault(); await vault.put('desktop-session:home','fixture-token');
+  const request = vi.fn(async()=>new Response(null,{status:204}));
+  const coordinator = new InstanceCoordinator(registry,vault,request);
+  await expect(coordinator.execute('home',{type:'end_media_session',roomId:'voice/one'})).resolves.toEqual({type:'accepted'});
+  expect(request).toHaveBeenCalledWith('https://chat.example/api/v1/media/rooms/voice%2Fone/session',{method:'DELETE',headers:{Authorization:'Bearer fixture-token'}});
+  request.mockResolvedValueOnce(new Response(null,{status:503}));
+  await expect(coordinator.execute('home',{type:'end_media_session',roomId:'voice/one'})).rejects.toThrow('Could not disconnect Voice');
+});

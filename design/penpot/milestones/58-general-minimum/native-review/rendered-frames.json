@@ -1,0 +1,38 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bf47f07ef26",
+    "name": "Desktop / Settings / general-small-relay",
+    "filename": "Desktop--Settings--general-small-relay.svg",
+    "png": "Desktop--Settings--general-small-relay.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4d7007747",
+    "name": "Desktop / Settings / general-small-relay-bottom",
+    "filename": "Desktop--Settings--general-small-relay-bottom.svg",
+    "png": "Desktop--Settings--general-small-relay-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4d575116e",
+    "name": "Desktop / Settings / general-small-relay-middle",
+    "filename": "Desktop--Settings--general-small-relay-middle.svg",
+    "png": "Desktop--Settings--general-small-relay-middle.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf45b69eebc",
+    "name": "Desktop / Settings / general-small-default",
+    "filename": "Desktop--Settings--general-small-default.svg",
+    "png": "Desktop--Settings--general-small-default.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4cac8003a",
+    "name": "Desktop / Settings / general-small-default-bottom",
+    "filename": "Desktop--Settings--general-small-default-bottom.svg",
+    "png": "Desktop--Settings--general-small-default-bottom.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bf4c95dbade",
+    "name": "Desktop / Settings / general-small-default-middle",
+    "filename": "Desktop--Settings--general-small-default-middle.svg",
+    "png": "Desktop--Settings--general-small-default-middle.png"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bb7ada686d6",
+    "name": "Desktop / Settings / voice-camera-started-notice",
+    "filename": "Desktop--Settings--voice-camera-started-notice.svg",
+    "png": "Desktop--Settings--voice-camera-started-notice.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb7a2891a50",
+    "name": "Desktop / Settings / voice-camera-on-portrait",
+    "filename": "Desktop--Settings--voice-camera-on-portrait.svg",
+    "png": "Desktop--Settings--voice-camera-on-portrait.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bb798ceea98",
+    "name": "Desktop / Settings / voice-camera-on-landscape",
+    "filename": "Desktop--Settings--voice-camera-on-landscape.svg",
+    "png": "Desktop--Settings--voice-camera-on-landscape.png"
+  }
+]

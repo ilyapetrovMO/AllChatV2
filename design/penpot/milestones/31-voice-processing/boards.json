@@ -1,0 +1,22 @@
+[
+  {
+    "key": "voice-processing-echo-off",
+    "id": "7299a615-462e-803f-8008-9bbc0cb96e68"
+  },
+  {
+    "key": "voice-processing-gain-on",
+    "id": "7299a615-462e-803f-8008-9bbc0f34b992"
+  },
+  {
+    "key": "voice-processing-gate-off",
+    "id": "7299a615-462e-803f-8008-9bbc12efc7e4"
+  },
+  {
+    "key": "voice-processing-threshold-min",
+    "id": "7299a615-462e-803f-8008-9bbc32bc811a"
+  },
+  {
+    "key": "voice-processing-threshold-max",
+    "id": "7299a615-462e-803f-8008-9bbc353658e5"
+  }
+]

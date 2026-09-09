@@ -1,0 +1,17 @@
+[
+  {
+    "state": "Outgoing",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a781d90bbd0",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a781d3a4599"
+  },
+  {
+    "state": "Incoming",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a781df211f7",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a781d93ee79"
+  },
+  {
+    "state": "Connected",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a781e333a8f",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a781df5e2a6"
+  }
+]

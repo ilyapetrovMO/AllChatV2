@@ -1,0 +1,53 @@
+{
+  "fileId": "c828d3cf-7d4e-8145-8008-9a4f1a6ff37f",
+  "pageId": "7299a615-462e-803f-8008-9b924ded07cb",
+  "revision": 22,
+  "boardId": "7299a615-462e-803f-8008-9b92a8b52d0f",
+  "nativeTextLayers": 31,
+  "unrendered": [],
+  "regions": [
+    {
+      "name": "Community rail",
+      "x": 0,
+      "y": 28,
+      "width": 72,
+      "height": 772
+    },
+    {
+      "name": "Conversation sidebar",
+      "x": 72,
+      "y": 28,
+      "width": 240,
+      "height": 772
+    },
+    {
+      "name": "Channel header",
+      "x": 312,
+      "y": 28,
+      "width": 968,
+      "height": 48
+    },
+    {
+      "name": "Message workspace",
+      "x": 312,
+      "y": 76,
+      "width": 728,
+      "height": 724
+    },
+    {
+      "name": "Message composer",
+      "x": 320,
+      "y": 736,
+      "width": 712,
+      "height": 44
+    },
+    {
+      "name": "Member directory",
+      "x": 1040,
+      "y": 76,
+      "width": 240,
+      "height": 724
+    }
+  ],
+  "validation": []
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Mobile / Composer context / reply-composer-light",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a7b641f7297",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a7b63ef9c1b"
+  },
+  {
+    "name": "Mobile / Composer context / edit-composer-light",
+    "componentId": "6bdc1c40-ce96-804f-8008-9a7b644ff672",
+    "mainId": "6bdc1c40-ce96-804f-8008-9a7b64225715"
+  }
+]

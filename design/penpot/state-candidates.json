@@ -1,0 +1,1444 @@
+{
+  "notice": "Existing parity evidence is a discovery aid, not Penpot verification. Mobile states must be reviewed separately.",
+  "items": [
+    {
+      "screen": "community-home",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-community-home-default"
+      ]
+    },
+    {
+      "screen": "community-home",
+      "state": "guide-content",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-community-guide"
+      ]
+    },
+    {
+      "screen": "community-home",
+      "state": "member-presence-menu",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-member-presence-controls"
+      ]
+    },
+    {
+      "screen": "community-home",
+      "state": "mobile-presence",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-mobile-presence-style-contract"
+      ]
+    },
+    {
+      "screen": "community-home",
+      "state": "return-from-settings",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-community-rail-navigation"
+      ]
+    },
+    {
+      "screen": "community-home",
+      "state": "loading",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "community-home",
+      "state": "error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-channel-default"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "empty",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "loading",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "message-hover-actions",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "reaction-selected",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-emoji-picker-add-remove"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "reaction-picker-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-emoji-picker-add-remove"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "reply-active",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-message-reply-action"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "edit-active",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-message-edit-action"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "attachment-preview",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-attachment-auto-load"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "image-lightbox-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-original-image-lightbox-interactions"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "image-lightbox-zoomed-and-panned",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-original-image-lightbox-interactions"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "composer-attachment-previews",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-file-drop-preview-remove"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "composer-file-drag-active",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-file-drop-preview-remove"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "composer-keyboard-send",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "web-desktop-enter-send-shift-enter-newline"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "mention-suggestions-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "web-desktop-and-mobile-mention-completion-tests"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "structured-mention-rendered",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "web-desktop-and-mobile-structured-mention-tests"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "link-embed-loaded",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "plain-link-clickable",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-safe-external-link-navigation"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "fenced-code-block",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "web-and-renderer-syntax-highlighted-fenced-code-tests"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "member-popover-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-member-popover-anchor-dismissal-and-action-menu"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "notification-menu-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-notification-menu-and-persistence"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "mentions-only-native-notification",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "server-web-desktop-and-mobile-notification-policy-tests-and-windows-application-identity"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "pinned-messages-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-pinned-message-filter"
+      ]
+    },
+    {
+      "screen": "text-channel",
+      "state": "search-results-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "unread-and-jump-to-present",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "text-channel",
+      "state": "paginated-history-window",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-bidirectional-bounded-history",
+        "renderer-jump-to-present"
+      ]
+    },
+    {
+      "screen": "direct-messages-home",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-direct-messages-home-default"
+      ]
+    },
+    {
+      "screen": "direct-messages-home",
+      "state": "empty",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "direct-messages-home",
+      "state": "member-search",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-open-direct-message"
+      ]
+    },
+    {
+      "screen": "direct-messages-home",
+      "state": "blocked-member",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-direct-message-blocked-state"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-direct-message-default"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "message-hover-actions",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "direct-message",
+      "state": "blocked",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-direct-message-blocked-state"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "outgoing-call",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "direct-message",
+      "state": "incoming-call",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "direct-message",
+      "state": "active-call",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-global-direct-call-controls"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "incoming-ringtone",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-resolved-member-community-ringtone"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "screen-sharing",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-desktop-screen-share-owner-routing"
+      ]
+    },
+    {
+      "screen": "direct-message",
+      "state": "call-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "voice-room",
+      "state": "disconnected",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-channel-auto-join"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "connecting",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "voice-room",
+      "state": "connected",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-bottom-left-voice-connection-controls"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "participant-volume-menu",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-participant-context-volume"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "screen-sharing",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-desktop-screen-share-owner-routing"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "soundboard-playback",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-desktop-soundboard-controls"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "participant-list",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-all-voice-channel-participant-polling"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "first-click-connects-in-place",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-first-click-stays-in-current-view"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "connected-channel-opens-grid",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-second-click-opens-stage"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "participant-menu",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-participant-context-menu"
+      ]
+    },
+    {
+      "screen": "voice-room",
+      "state": "media-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "global-search",
+      "state": "global-header-availability",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-global-search-availability"
+      ]
+    },
+    {
+      "screen": "global-search",
+      "state": "empty-query",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "global-search",
+      "state": "results",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "global-search",
+      "state": "no-results",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "global-search",
+      "state": "filters-applied",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-search-filter-menu"
+      ]
+    },
+    {
+      "screen": "global-search",
+      "state": "error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "profile-settings",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-profile-settings-default"
+      ]
+    },
+    {
+      "screen": "profile-settings",
+      "state": "avatar-upload",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-profile-image-upload"
+      ]
+    },
+    {
+      "screen": "profile-settings",
+      "state": "avatar-editor",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-profile-image-crop-editor"
+      ]
+    },
+    {
+      "screen": "profile-settings",
+      "state": "banner-upload",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-profile-image-upload"
+      ]
+    },
+    {
+      "screen": "profile-settings",
+      "state": "save-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "voice-video-settings",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-video-settings"
+      ]
+    },
+    {
+      "screen": "voice-video-settings",
+      "state": "device-selection",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-video-settings"
+      ]
+    },
+    {
+      "screen": "voice-video-settings",
+      "state": "processing-controls",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-video-settings"
+      ]
+    },
+    {
+      "screen": "voice-video-settings",
+      "state": "permission-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-voice-video-settings"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-notification-settings"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "permission-granted",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-native-notification-status"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "permission-denied",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "native-notifications"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "member-ringtone-override",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-member-ringtone-settings"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "channel-overrides",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-notification-settings"
+      ]
+    },
+    {
+      "screen": "notification-settings",
+      "state": "save-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-notification-settings"
+      ]
+    },
+    {
+      "screen": "sessions-settings",
+      "state": "loading",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "sessions-settings",
+      "state": "populated",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "sessions-settings",
+      "state": "revoke-confirmation",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-session-revoke-confirmation"
+      ]
+    },
+    {
+      "screen": "sessions-settings",
+      "state": "error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "safety-settings",
+      "state": "loading",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "safety-settings",
+      "state": "reports",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "safety-settings",
+      "state": "moderation-history",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "safety-settings",
+      "state": "report-dialog",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-safety-report-form"
+      ]
+    },
+    {
+      "screen": "safety-settings",
+      "state": "error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "community-settings",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-community-general-settings"
+      ]
+    },
+    {
+      "screen": "community-settings",
+      "state": "community-menu-open",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "community-settings",
+      "state": "save-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-community-general-settings"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "create-category-dialog",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "create-channel-dialog",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "edit-channel-dialog",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "permissions-overrides",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "channel-administration",
+      "state": "deletion-confirmation",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-channel-administration"
+      ]
+    },
+    {
+      "screen": "role-administration",
+      "state": "default",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-role-administration"
+      ]
+    },
+    {
+      "screen": "role-administration",
+      "state": "create",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-role-administration"
+      ]
+    },
+    {
+      "screen": "role-administration",
+      "state": "edit",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-role-administration"
+      ]
+    },
+    {
+      "screen": "role-administration",
+      "state": "retire-confirmation",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-role-administration"
+      ]
+    },
+    {
+      "screen": "invitation-administration",
+      "state": "empty",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-invitation-administration"
+      ]
+    },
+    {
+      "screen": "invitation-administration",
+      "state": "populated",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-invitation-administration"
+      ]
+    },
+    {
+      "screen": "invitation-administration",
+      "state": "create",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-invitation-administration"
+      ]
+    },
+    {
+      "screen": "invitation-administration",
+      "state": "revoke-confirmation",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-invitation-administration"
+      ]
+    },
+    {
+      "screen": "soundboard-administration",
+      "state": "empty",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-soundboard-administration"
+      ]
+    },
+    {
+      "screen": "soundboard-administration",
+      "state": "populated",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-soundboard-administration"
+      ]
+    },
+    {
+      "screen": "soundboard-administration",
+      "state": "upload",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-soundboard-administration"
+      ]
+    },
+    {
+      "screen": "soundboard-administration",
+      "state": "edit",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-soundboard-administration"
+      ]
+    },
+    {
+      "screen": "admin-dashboard",
+      "state": "healthy",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "packaged-admin-dashboard-visual-comparison"
+      ]
+    },
+    {
+      "screen": "admin-dashboard",
+      "state": "degraded",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-admin-dashboard-degraded-health"
+      ]
+    },
+    {
+      "screen": "admin-dashboard",
+      "state": "loading",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-admin-dashboard-loading"
+      ]
+    },
+    {
+      "screen": "admin-dashboard",
+      "state": "refresh-error",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "renderer-admin-dashboard-refresh-error"
+      ]
+    },
+    {
+      "screen": "authentication",
+      "state": "add-instance",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "authentication",
+      "state": "login",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "authentication",
+      "state": "invalid-credentials",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification"
+    },
+    {
+      "screen": "authentication",
+      "state": "registration",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-native-registration"
+      ]
+    },
+    {
+      "screen": "authentication",
+      "state": "recovery",
+      "platforms": [
+        "web",
+        "desktop"
+      ],
+      "source": "ui-parity/manifest.yaml",
+      "catalogStatus": "requires-current-source-and-design-verification",
+      "priorEvidence": [
+        "desktop-native-recovery"
+      ]
+    }
+  ]
+}

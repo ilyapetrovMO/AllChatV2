@@ -1,0 +1,26 @@
+[
+  {
+    "key": "own-actions",
+    "id": "7299a615-462e-803f-8008-9b9b1b7f9d73"
+  },
+  {
+    "key": "other-actions",
+    "id": "7299a615-462e-803f-8008-9b9b1c0a8649"
+  },
+  {
+    "key": "pinned-actions",
+    "id": "7299a615-462e-803f-8008-9b9b1c8158a0"
+  },
+  {
+    "key": "deleted",
+    "id": "7299a615-462e-803f-8008-9b9b1d22f537"
+  },
+  {
+    "key": "reply-composer",
+    "id": "7299a615-462e-803f-8008-9b9b1d431b5a"
+  },
+  {
+    "key": "edit-composer",
+    "id": "7299a615-462e-803f-8008-9b9b1d94f293"
+  }
+]

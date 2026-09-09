@@ -1,0 +1,44 @@
+[
+  {
+    "key": "wide",
+    "narrow": false,
+    "contentHeight": 1134.734375,
+    "filename": "avatar.png",
+    "initial": "A",
+    "file": {
+      "x": 610,
+      "y": 142.953125,
+      "w": 306,
+      "h": 34
+    },
+    "button": {
+      "x": 926,
+      "y": 133.796875,
+      "w": 129,
+      "h": 28.390625
+    },
+    "buttonCopy": "Remove avatar",
+    "disabled": false
+  },
+  {
+    "key": "small",
+    "narrow": true,
+    "contentHeight": 1179.515625,
+    "filename": "avatar.png",
+    "initial": "A",
+    "file": {
+      "x": 610,
+      "y": 142.953125,
+      "w": 213.25,
+      "h": 34
+    },
+    "button": {
+      "x": 833.25,
+      "y": 122.609375,
+      "w": 94.75,
+      "h": 50.78125
+    },
+    "buttonCopy": "Remove avatar",
+    "disabled": false
+  }
+]

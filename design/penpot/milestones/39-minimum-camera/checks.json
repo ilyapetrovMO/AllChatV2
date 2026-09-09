@@ -1,0 +1,64 @@
+{
+  "pass": true,
+  "problems": [],
+  "validation": [],
+  "details": [
+    {
+      "key": "landscape-notice",
+      "preview": {
+        "w": 542,
+        "h": 304.875
+      },
+      "frame": {
+        "w": 542,
+        "h": 304.875
+      },
+      "contentHeight": 1924.78125,
+      "targetY": 537.390625,
+      "labelBounds": {
+        "x": 128794.55000305176,
+        "y": 24.350006103515625,
+        "width": 82.89999389648438,
+        "height": 20
+      }
+    },
+    {
+      "key": "portrait",
+      "preview": {
+        "w": 542,
+        "h": 320
+      },
+      "frame": {
+        "w": 180,
+        "h": 320
+      },
+      "contentHeight": 1939.90625,
+      "targetY": 570.875,
+      "labelBounds": {
+        "x": 127694.55000305176,
+        "y": 573.4750061035156,
+        "width": 82.89999389648438,
+        "height": 20
+      }
+    },
+    {
+      "key": "landscape",
+      "preview": {
+        "w": 542,
+        "h": 304.87500000000006
+      },
+      "frame": {
+        "w": 542,
+        "h": 304.875
+      },
+      "contentHeight": 1924.78125,
+      "targetY": 555.75,
+      "labelBounds": {
+        "x": 126594.55000305176,
+        "y": 558.3500061035156,
+        "width": 82.89999389648438,
+        "height": 20
+      }
+    }
+  ]
+}

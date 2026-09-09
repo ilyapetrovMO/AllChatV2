@@ -1,0 +1,3 @@
+const boards=penpot.currentPage.root.children.filter(b=>b.name.startsWith('Desktop / Login / Minimum / '));
+const checks=boards.map(b=>{const shapes=penpotUtils.findShapes(()=>true,b),card=shapes.find(s=>s.name==='Authentication card');return {id:b.id,name:b.name,width:b.width,height:b.height,card:{x:card.x-b.x,y:card.y-b.y,width:card.width,height:card.height},textRendered:shapes.filter(s=>s.type==='text').every(s=>s.textBounds?.width>0),interactionCount:shapes.reduce((n,s)=>n+s.interactions.length,0)}});
+return {checks,validation:penpot.currentFile.validate(),revision:penpot.currentFile.revn};

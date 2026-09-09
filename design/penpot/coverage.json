@@ -1,0 +1,871 @@
+{
+  "status": "Initial source-backed surface map; not complete or visually verified",
+  "items": [
+    {
+      "id": "web-001",
+      "platform": "web",
+      "name": "activities",
+      "kind": "screen",
+      "source": "internal/instance/activity_http.go",
+      "line": 437,
+      "anchor": "template.New(\"activities\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/activities.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-002",
+      "platform": "web",
+      "name": "activities-admin",
+      "kind": "screen",
+      "source": "internal/instance/activity_http.go",
+      "line": 438,
+      "anchor": "template.New(\"activities-admin\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-activities.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-003",
+      "platform": "web",
+      "name": "activity-host",
+      "kind": "screen",
+      "source": "internal/instance/activity_http.go",
+      "line": 439,
+      "anchor": "template.New(\"activity-host\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-004",
+      "platform": "web",
+      "name": "admin-dashboard",
+      "kind": "screen",
+      "source": "internal/instance/admin_dashboard.go",
+      "line": 194,
+      "anchor": "template.New(\"admin-dashboard\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-005",
+      "platform": "web",
+      "name": "auth",
+      "kind": "screen",
+      "source": "internal/instance/auth_http.go",
+      "line": 282,
+      "anchor": "template.New(\"auth\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-006",
+      "platform": "web",
+      "name": "home",
+      "kind": "screen",
+      "source": "internal/instance/channel_http.go",
+      "line": 277,
+      "anchor": "template.New(\"home\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/home.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-007",
+      "platform": "web",
+      "name": "channels-admin",
+      "kind": "screen",
+      "source": "internal/instance/channel_http.go",
+      "line": 278,
+      "anchor": "template.New(\"channels-admin\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-channels.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-008",
+      "platform": "web",
+      "name": "direct-messages",
+      "kind": "screen",
+      "source": "internal/instance/direct_message_http.go",
+      "line": 214,
+      "anchor": "template.New(\"direct-messages\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/dms.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-009",
+      "platform": "web",
+      "name": "voice-room",
+      "kind": "screen",
+      "source": "internal/instance/media_http.go",
+      "line": 279,
+      "anchor": "template.New(\"voice-room\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-010",
+      "platform": "web",
+      "name": "join",
+      "kind": "screen",
+      "source": "internal/instance/member_http.go",
+      "line": 374,
+      "anchor": "template.New(\"join\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-011",
+      "platform": "web",
+      "name": "profile",
+      "kind": "screen",
+      "source": "internal/instance/member_http.go",
+      "line": 382,
+      "anchor": "template.New(\"profile\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/profile.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-012",
+      "platform": "web",
+      "name": "invitations",
+      "kind": "screen",
+      "source": "internal/instance/member_http.go",
+      "line": 384,
+      "anchor": "template.New(\"invitations\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-invitations.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-013",
+      "platform": "web",
+      "name": "channel",
+      "kind": "screen",
+      "source": "internal/instance/message_http.go",
+      "line": 273,
+      "anchor": "template.New(\"channel\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-014",
+      "platform": "web",
+      "name": "ringtone-settings",
+      "kind": "screen",
+      "source": "internal/instance/ringtone_settings_http.go",
+      "line": 21,
+      "anchor": "template.New(\"ringtone-settings\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/ringtone.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-015",
+      "platform": "web",
+      "name": "roles",
+      "kind": "screen",
+      "source": "internal/instance/role_http.go",
+      "line": 220,
+      "anchor": "template.New(\"roles\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-roles.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-016",
+      "platform": "web",
+      "name": "search",
+      "kind": "screen",
+      "source": "internal/instance/search_http.go",
+      "line": 44,
+      "anchor": "template.New(\"search\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/search.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-017",
+      "platform": "web",
+      "name": "sessions",
+      "kind": "screen",
+      "source": "internal/instance/session_http.go",
+      "line": 241,
+      "anchor": "template.New(\"sessions\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/sessions.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-018",
+      "platform": "web",
+      "name": "recovery",
+      "kind": "screen",
+      "source": "internal/instance/session_http.go",
+      "line": 243,
+      "anchor": "template.New(\"recovery\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-019",
+      "platform": "web",
+      "name": "community-settings",
+      "kind": "screen",
+      "source": "internal/instance/settings_http.go",
+      "line": 240,
+      "anchor": "template.New(\"community-settings\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-settings.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-020",
+      "platform": "web",
+      "name": "soundboard",
+      "kind": "screen",
+      "source": "internal/instance/soundboard_http.go",
+      "line": 144,
+      "anchor": "template.New(\"soundboard\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/admin-soundboard.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "web-021",
+      "platform": "web",
+      "name": "voice-video-settings",
+      "kind": "screen",
+      "source": "internal/instance/voice_settings_http.go",
+      "line": 16,
+      "anchor": "template.New(\"voice-video-settings\")",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "web-reference/voice-video.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-022",
+      "platform": "desktop",
+      "name": "Application and authentication",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 16,
+      "anchor": "export function App(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/add-instance.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-023",
+      "platform": "desktop",
+      "name": "Desktop title bar and updates",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 438,
+      "anchor": "function DesktopTitleBar(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/text-channel.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-024",
+      "platform": "desktop",
+      "name": "Community shell and navigation",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 457,
+      "anchor": "function CommunityShell(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/community-home.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-025",
+      "platform": "desktop",
+      "name": "Direct calls and media controls",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2107,
+      "anchor": "export function DirectCallControls(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-026",
+      "platform": "desktop",
+      "name": "Emoji picker",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2781,
+      "anchor": "function EmojiPicker(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-027",
+      "platform": "desktop",
+      "name": "Pending attachments",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2818,
+      "anchor": "function AttachmentPreviewList(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-028",
+      "platform": "desktop",
+      "name": "Message formatting and code",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2877,
+      "anchor": "function MessageBody(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-029",
+      "platform": "desktop",
+      "name": "Link preview",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2933,
+      "anchor": "function LinkPreview(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-030",
+      "platform": "desktop",
+      "name": "Attachment card and media",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 2983,
+      "anchor": "function AttachmentView(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-031",
+      "platform": "desktop",
+      "name": "Image lightbox",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3059,
+      "anchor": "function ImageLightbox(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-032",
+      "platform": "desktop",
+      "name": "Community administration",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3265,
+      "anchor": "function CommunityAdministration(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-033",
+      "platform": "desktop",
+      "name": "Community avatar settings",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3368,
+      "anchor": "function CommunityAvatarSetting(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-034",
+      "platform": "desktop",
+      "name": "Ringtone control",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3378,
+      "anchor": "function RingtoneSetting(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-035",
+      "platform": "desktop",
+      "name": "Admin channel row",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3384,
+      "anchor": "function AdminChannelRow(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-036",
+      "platform": "desktop",
+      "name": "Admin dashboard",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3397,
+      "anchor": "function AdminDashboardView(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "desktop-037",
+      "platform": "desktop",
+      "name": "Notification settings",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3465,
+      "anchor": "function NotificationSettings(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/settings-notifications.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-038",
+      "platform": "desktop",
+      "name": "Ringtone settings",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3536,
+      "anchor": "function RingtoneSettings(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/settings-ringtone.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-039",
+      "platform": "desktop",
+      "name": "Voice and video settings",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3556,
+      "anchor": "function VoiceVideoSettings(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/settings-voice-video.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-040",
+      "platform": "desktop",
+      "name": "Profile image editor",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3672,
+      "anchor": "function ProfileImages(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/settings-my-account.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "desktop-041",
+      "platform": "desktop",
+      "name": "Safety panel",
+      "kind": "screen",
+      "source": "desktop/src/renderer/app.tsx",
+      "line": 3736,
+      "anchor": "function SafetyPanel(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null,
+      "reference": {
+        "path": "desktop-reference/settings-safety.png",
+        "status": "captured; pending design comparison",
+        "scope": "default visible state only; does not prove all branches"
+      }
+    },
+    {
+      "id": "mobile-042",
+      "platform": "mobile",
+      "name": "Account loading and add instance",
+      "kind": "screen",
+      "source": "mobile/App.tsx",
+      "line": 46,
+      "anchor": "function AppContent(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-043",
+      "platform": "mobile",
+      "name": "Active community and account management",
+      "kind": "screen",
+      "source": "mobile/App.tsx",
+      "line": 152,
+      "anchor": "function ActiveCommunity(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-044",
+      "platform": "mobile",
+      "name": "Community and conversations",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 173,
+      "anchor": "export function CommunityScreen(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-045",
+      "platform": "mobile",
+      "name": "Call banner",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 1693,
+      "anchor": "export function CallBanner(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-046",
+      "platform": "mobile",
+      "name": "Media room",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 1768,
+      "anchor": "function MediaRoomScreen(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-047",
+      "platform": "mobile",
+      "name": "Media participant tile",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2346,
+      "anchor": "function MediaParticipantTile(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-048",
+      "platform": "mobile",
+      "name": "Participant volume",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2513,
+      "anchor": "export function ParticipantVolumeModal(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-049",
+      "platform": "mobile",
+      "name": "Soundboard",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2563,
+      "anchor": "function SoundboardModal(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-050",
+      "platform": "mobile",
+      "name": "Selected attachment",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2647,
+      "anchor": "function SelectedFile(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-051",
+      "platform": "mobile",
+      "name": "Conversation timeline",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2690,
+      "anchor": "export function ConversationTimeline(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-052",
+      "platform": "mobile",
+      "name": "Message row",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2750,
+      "anchor": "export function MessageRow(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-053",
+      "platform": "mobile",
+      "name": "Attachment view",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2871,
+      "anchor": "function AttachmentView(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-054",
+      "platform": "mobile",
+      "name": "Image viewer",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 2975,
+      "anchor": "function AuthenticatedImage(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-055",
+      "platform": "mobile",
+      "name": "Link preview",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 3174,
+      "anchor": "function MessageLinkPreview(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-056",
+      "platform": "mobile",
+      "name": "Message action menu",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 3269,
+      "anchor": "function MessageActions(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-057",
+      "platform": "mobile",
+      "name": "Conversation panel",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 3373,
+      "anchor": "export function ConversationPanel(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-058",
+      "platform": "mobile",
+      "name": "Members panel",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 3493,
+      "anchor": "function MembersPanel(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-059",
+      "platform": "mobile",
+      "name": "Member profile",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 3572,
+      "anchor": "function MemberProfile(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-060",
+      "platform": "mobile",
+      "name": "Moderation panel",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 4050,
+      "anchor": "function ModerationPanel(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-061",
+      "platform": "mobile",
+      "name": "Notification settings",
+      "kind": "screen",
+      "source": "mobile/src/screens/CommunityScreen.tsx",
+      "line": 4168,
+      "anchor": "function NotificationSettingsPanel(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "mobile-062",
+      "platform": "mobile",
+      "name": "Voice and video settings",
+      "kind": "screen",
+      "source": "mobile/src/screens/VoiceVideoSettingsScreen.tsx",
+      "line": 35,
+      "anchor": "export function VoiceVideoSettingsScreen(",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    },
+    {
+      "id": "web-063",
+      "platform": "web",
+      "name": "Sketchboard activity",
+      "kind": "embedded-activity",
+      "source": "internal/instance/web/activities/sketchboard/index.html",
+      "line": 1,
+      "anchor": "<!doctype html>",
+      "status": "source-identified",
+      "statesStatus": "requires branch review and runtime capture",
+      "penpot": null
+    }
+  ]
+}

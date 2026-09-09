@@ -1,0 +1,88 @@
+{
+  "controls": [
+    {
+      "tag": "button",
+      "label": "Minimize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Maximize window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Close window",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Home",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "127.0.0.1:4187 Instance",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Add Community",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Sign in",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Register",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Recovery",
+      "type": "button",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Username",
+      "type": null,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "input",
+      "label": "Password",
+      "type": "password",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "tag": "button",
+      "label": "Sign in",
+      "type": "submit",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}

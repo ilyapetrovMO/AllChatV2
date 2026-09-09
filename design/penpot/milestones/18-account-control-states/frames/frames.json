@@ -1,0 +1,22 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9ba66c3a5936",
+    "name": "Desktop / Settings / Control / username-required",
+    "filename": "Desktop--Settings--Control--username-required.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba66ba256f4",
+    "name": "Desktop / Settings / Control / save-focus",
+    "filename": "Desktop--Settings--Control--save-focus.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba66af05c14",
+    "name": "Desktop / Settings / Control / username-focus",
+    "filename": "Desktop--Settings--Control--username-focus.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba66a5a66c7",
+    "name": "Desktop / Settings / Control / username-hover",
+    "filename": "Desktop--Settings--Control--username-hover.svg"
+  }
+]

@@ -1,0 +1,103 @@
+{
+  "source": "internal/instance/web/activities/sketchboard/index.html",
+  "items": [
+    {
+      "name": "board-list",
+      "screenshot": "board-list.png",
+      "vector": "board-list.svg",
+      "controls": "board-list.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "board-list-populated",
+      "screenshot": "board-list-populated.png",
+      "vector": "board-list-populated.svg",
+      "controls": "board-list-populated.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "delete-confirmation",
+      "screenshot": "delete-confirmation.png",
+      "vector": "delete-confirmation.svg",
+      "controls": "delete-confirmation.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-pen",
+      "screenshot": "workspace-pen.png",
+      "vector": "workspace-pen.svg",
+      "controls": "workspace-pen.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-highlighter",
+      "screenshot": "workspace-highlighter.png",
+      "vector": "workspace-highlighter.svg",
+      "controls": "workspace-highlighter.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-line",
+      "screenshot": "workspace-line.png",
+      "vector": "workspace-line.svg",
+      "controls": "workspace-line.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-rectangle",
+      "screenshot": "workspace-rectangle.png",
+      "vector": "workspace-rectangle.svg",
+      "controls": "workspace-rectangle.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-ellipse",
+      "screenshot": "workspace-ellipse.png",
+      "vector": "workspace-ellipse.svg",
+      "controls": "workspace-ellipse.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-text",
+      "screenshot": "workspace-text.png",
+      "vector": "workspace-text.svg",
+      "controls": "workspace-text.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-note",
+      "screenshot": "workspace-note.png",
+      "vector": "workspace-note.svg",
+      "controls": "workspace-note.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-eraser",
+      "screenshot": "workspace-eraser.png",
+      "vector": "workspace-eraser.svg",
+      "controls": "workspace-eraser.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-pan",
+      "screenshot": "workspace-pan.png",
+      "vector": "workspace-pan.svg",
+      "controls": "workspace-pan.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "clear-confirmation",
+      "screenshot": "clear-confirmation.png",
+      "vector": "clear-confirmation.svg",
+      "controls": "clear-confirmation.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    },
+    {
+      "name": "workspace-toolbar-right",
+      "screenshot": "workspace-toolbar-right.png",
+      "vector": "workspace-toolbar-right.svg",
+      "controls": "workspace-toolbar-right.json",
+      "status": "capture; iframe host offset and canvas reconstruction pending"
+    }
+  ]
+}

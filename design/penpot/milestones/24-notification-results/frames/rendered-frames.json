@@ -1,0 +1,38 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bad0d9313ea",
+    "name": "Desktop / Settings / notifications-channel-menu",
+    "filename": "Desktop--Settings--notifications-channel-menu.svg",
+    "png": "Desktop--Settings--notifications-channel-menu.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bad05d18da2",
+    "name": "Desktop / Settings / notifications-community-menu",
+    "filename": "Desktop--Settings--notifications-community-menu.svg",
+    "png": "Desktop--Settings--notifications-community-menu.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bad0277b7a5",
+    "name": "Desktop / Settings / notifications-channel-error",
+    "filename": "Desktop--Settings--notifications-channel-error.svg",
+    "png": "Desktop--Settings--notifications-channel-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bacff36ae1b",
+    "name": "Desktop / Settings / notifications-channel-saved",
+    "filename": "Desktop--Settings--notifications-channel-saved.svg",
+    "png": "Desktop--Settings--notifications-channel-saved.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bacfbd4667b",
+    "name": "Desktop / Settings / notifications-community-error",
+    "filename": "Desktop--Settings--notifications-community-error.svg",
+    "png": "Desktop--Settings--notifications-community-error.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bacf843f0e0",
+    "name": "Desktop / Settings / notifications-community-saved",
+    "filename": "Desktop--Settings--notifications-community-saved.svg",
+    "png": "Desktop--Settings--notifications-community-saved.png"
+  }
+]

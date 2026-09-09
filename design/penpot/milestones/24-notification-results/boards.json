@@ -1,0 +1,26 @@
+[
+  {
+    "key": "notifications-community-saved",
+    "id": "7299a615-462e-803f-8008-9bacf843f0e0"
+  },
+  {
+    "key": "notifications-community-error",
+    "id": "7299a615-462e-803f-8008-9bacfbd4667b"
+  },
+  {
+    "key": "notifications-channel-saved",
+    "id": "7299a615-462e-803f-8008-9bacff36ae1b"
+  },
+  {
+    "key": "notifications-channel-error",
+    "id": "7299a615-462e-803f-8008-9bad0277b7a5"
+  },
+  {
+    "key": "notifications-community-menu",
+    "id": "7299a615-462e-803f-8008-9bad05d18da2"
+  },
+  {
+    "key": "notifications-channel-menu",
+    "id": "7299a615-462e-803f-8008-9bad0d9313ea"
+  }
+]

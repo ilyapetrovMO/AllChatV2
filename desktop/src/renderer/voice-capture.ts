@@ -2,6 +2,8 @@ import rnnoiseWorkletUrl from './rnnoise-worklet?worker&url';
 
 export type DesktopVoicePreferences = {
   version: 1;
+  muted?: boolean;
+  deafened?: boolean;
   microphoneID: string;
   speakerID: string;
   cameraID: string;
@@ -30,6 +32,7 @@ export interface DesktopMicrophoneCapture {
   stream: MediaStream;
   enhanced: boolean;
   compatibilityNotice?: string;
+  update?(preferences: DesktopVoicePreferences): void;
   stop(): void;
 }
 
@@ -64,10 +67,11 @@ export async function captureDesktopMicrophone(memberId: string): Promise<Deskto
 export function applyDesktopOutputPreferences(element: HTMLAudioElement, memberId: string, remoteMemberId = ''): void {
   const preferences = loadDesktopVoicePreferences(memberId);
   element.volume = desktopMemberOutputVolume(preferences, remoteMemberId);
-  if (preferences.speakerID && typeof element.setSinkId === 'function') void element.setSinkId(preferences.speakerID).catch(() => undefined);
+  if (typeof element.setSinkId === 'function') void element.setSinkId(preferences.speakerID).catch(() => undefined);
 }
 
 export function desktopMemberOutputVolume(preferences: DesktopVoicePreferences, remoteMemberId: string): number {
+  if (preferences.deafened) return 0;
   return clamp(preferences.outputVolume * (preferences.memberVolumes[remoteMemberId] ?? 1), 0, 1, 1);
 }
 
@@ -124,6 +128,7 @@ async function capture(preferences: DesktopVoicePreferences): Promise<DesktopMic
   return {
     stream: destination.stream,
     enhanced: Boolean(enhanced),
+    update(next) { preferences = next; },
     stop() {
       window.clearInterval(timer);
       enhanced?.port.postMessage({ type: 'destroy' });
@@ -162,6 +167,7 @@ function normalizeDesktopVoicePreferences(value: unknown): DesktopVoicePreferenc
     ? source.screenShareMode as ScreenShareMode : 'auto';
   return {
     ...defaultDesktopVoicePreferences, ...source, version: 1,
+    muted: source.muted === true, deafened: source.deafened === true,
     microphoneID: typeof source.microphoneID === 'string' ? source.microphoneID : '',
     speakerID: typeof source.speakerID === 'string' ? source.speakerID : '',
     cameraID: typeof source.cameraID === 'string' ? source.cameraID : '',

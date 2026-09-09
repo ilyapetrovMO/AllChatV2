@@ -1,0 +1,415 @@
+{
+  "results": [
+    {
+      "active": false,
+      "scrollHeight": 633,
+      "clientHeight": 564,
+      "items": [
+        {
+          "tag": "P",
+          "cls": "eyebrow",
+          "text": "Member settings",
+          "bounds": {
+            "x": 344,
+            "y": 116,
+            "w": 584,
+            "h": 16.796875
+          },
+          "font": "800 12px / 16.8px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "H2",
+          "cls": "",
+          "text": "Ringtone",
+          "bounds": {
+            "x": 344,
+            "y": 144.796875,
+            "w": 584,
+            "h": 33.59375
+          },
+          "font": "700 24px / 33.6px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "Choose the sound and volume used for incoming Direct Calls on this device.",
+          "bounds": {
+            "x": 344,
+            "y": 194.390625,
+            "w": 584,
+            "h": 22.390625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "SECTION",
+          "cls": "settings-card ringtone-setting",
+          "text": "Incoming call ringtoneUsing the generated tone.Choose audio file",
+          "bounds": {
+            "x": 344,
+            "y": 232.78125,
+            "w": 584,
+            "h": 248.5
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(17, 18, 22)"
+        },
+        {
+          "tag": "H3",
+          "cls": "",
+          "text": "Incoming call ringtone",
+          "bounds": {
+            "x": 365,
+            "y": 253.78125,
+            "w": 542,
+            "h": 26.203125
+          },
+          "font": "700 18.72px / 26.208px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "Using the generated tone.",
+          "bounds": {
+            "x": 365,
+            "y": 307.984375,
+            "w": 542,
+            "h": 22.390625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "LABEL",
+          "cls": "",
+          "text": "Choose audio file",
+          "bounds": {
+            "x": 365,
+            "y": 358.375,
+            "w": 542,
+            "h": 57.90625
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "INPUT",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 365,
+            "y": 382.28125,
+            "w": 542,
+            "h": 34
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 365,
+            "y": 444.28125,
+            "w": 542,
+            "h": 0
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "SECTION",
+          "cls": "settings-card",
+          "text": "Ringtone volumeVolume100%",
+          "bounds": {
+            "x": 344,
+            "y": 481.28125,
+            "w": 584,
+            "h": 148.015625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(17, 18, 22)"
+        },
+        {
+          "tag": "H3",
+          "cls": "",
+          "text": "Ringtone volume",
+          "bounds": {
+            "x": 365,
+            "y": 502.28125,
+            "w": 542,
+            "h": 26.203125
+          },
+          "font": "700 18.72px / 26.208px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "LABEL",
+          "cls": "setting-slider",
+          "text": "Volume100%",
+          "bounds": {
+            "x": 365,
+            "y": 540.484375,
+            "w": 542,
+            "h": 67.8125
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "OUTPUT",
+          "cls": "",
+          "text": "100%",
+          "bounds": {
+            "x": 365,
+            "y": 564.390625,
+            "w": 542,
+            "h": 17.90625
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "INPUT",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 367,
+            "y": 590.296875,
+            "w": 538,
+            "h": 16
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(59, 59, 59)"
+        }
+      ]
+    },
+    {
+      "active": true,
+      "scrollHeight": 674,
+      "clientHeight": 564,
+      "items": [
+        {
+          "tag": "P",
+          "cls": "eyebrow",
+          "text": "Member settings",
+          "bounds": {
+            "x": 344,
+            "y": 116,
+            "w": 584,
+            "h": 16.796875
+          },
+          "font": "800 12px / 16.8px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "H2",
+          "cls": "",
+          "text": "Ringtone",
+          "bounds": {
+            "x": 344,
+            "y": 144.796875,
+            "w": 584,
+            "h": 33.59375
+          },
+          "font": "700 24px / 33.6px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "Choose the sound and volume used for incoming Direct Calls on this device.",
+          "bounds": {
+            "x": 344,
+            "y": 194.390625,
+            "w": 584,
+            "h": 22.390625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "SECTION",
+          "cls": "settings-card ringtone-setting",
+          "text": "Incoming call ringtoneCustom audio is active.Choose audio fileUse Community default",
+          "bounds": {
+            "x": 344,
+            "y": 232.78125,
+            "w": 584,
+            "h": 288.890625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(17, 18, 22)"
+        },
+        {
+          "tag": "H3",
+          "cls": "",
+          "text": "Incoming call ringtone",
+          "bounds": {
+            "x": 365,
+            "y": 253.78125,
+            "w": 542,
+            "h": 26.203125
+          },
+          "font": "700 18.72px / 26.208px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "Custom audio is active.",
+          "bounds": {
+            "x": 365,
+            "y": 307.984375,
+            "w": 542,
+            "h": 22.390625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "LABEL",
+          "cls": "",
+          "text": "Choose audio file",
+          "bounds": {
+            "x": 365,
+            "y": 358.375,
+            "w": 542,
+            "h": 57.90625
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "INPUT",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 365,
+            "y": 382.28125,
+            "w": 542,
+            "h": 34
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "Use Community default",
+          "bounds": {
+            "x": 365,
+            "y": 428.28125,
+            "w": 542,
+            "h": 28.390625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(107, 107, 107)"
+        },
+        {
+          "tag": "P",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 365,
+            "y": 484.671875,
+            "w": 542,
+            "h": 0
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "SECTION",
+          "cls": "settings-card",
+          "text": "Ringtone volumeVolume100%",
+          "bounds": {
+            "x": 344,
+            "y": 521.671875,
+            "w": 584,
+            "h": 148.015625
+          },
+          "font": "16px / 22.4px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(17, 18, 22)"
+        },
+        {
+          "tag": "H3",
+          "cls": "",
+          "text": "Ringtone volume",
+          "bounds": {
+            "x": 365,
+            "y": 542.671875,
+            "w": 542,
+            "h": 26.203125
+          },
+          "font": "700 18.72px / 26.208px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "LABEL",
+          "cls": "setting-slider",
+          "text": "Volume100%",
+          "bounds": {
+            "x": 365,
+            "y": 580.875,
+            "w": 542,
+            "h": 67.8125
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "OUTPUT",
+          "cls": "",
+          "text": "100%",
+          "bounds": {
+            "x": 365,
+            "y": 604.78125,
+            "w": 542,
+            "h": 17.90625
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "INPUT",
+          "cls": "",
+          "text": "",
+          "bounds": {
+            "x": 367,
+            "y": 630.6875,
+            "w": 538,
+            "h": 16
+          },
+          "font": "700 12.8px / 17.92px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+          "bg": "rgb(59, 59, 59)"
+        }
+      ]
+    }
+  ],
+  "focus": [
+    {
+      "type": "file",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "type": "submit",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "bg": "rgb(107, 107, 107)"
+    },
+    {
+      "type": "range",
+      "outline": "rgb(0, 168, 252) solid 3px",
+      "offset": "2px",
+      "bg": "rgb(59, 59, 59)"
+    }
+  ]
+}

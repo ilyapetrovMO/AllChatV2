@@ -1,0 +1,21 @@
+{
+  "created": 3,
+  "remaining": 0,
+  "boards": [
+    {
+      "key": "voice-device-microphone-selected",
+      "id": "7299a615-462e-803f-8008-9bc13200b9a5",
+      "value": "Microphone 1"
+    },
+    {
+      "key": "voice-device-speaker-selected",
+      "id": "7299a615-462e-803f-8008-9bc135560bc6",
+      "value": "Speaker 1"
+    },
+    {
+      "key": "voice-device-camera-selected",
+      "id": "7299a615-462e-803f-8008-9bc138797671",
+      "value": "Camera 1"
+    }
+  ]
+}

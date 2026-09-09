@@ -1,0 +1,68 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9ba165d477e3",
+    "name": "Desktop / Settings / sessions-populated",
+    "filename": "Desktop--Settings--sessions-populated.svg",
+    "png": "Desktop--Settings--sessions-populated.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba16126b9a0",
+    "name": "Desktop / Settings / sessions-empty",
+    "filename": "Desktop--Settings--sessions-empty.svg",
+    "png": "Desktop--Settings--sessions-empty.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba15c091269",
+    "name": "Desktop / Settings / sessions-loading",
+    "filename": "Desktop--Settings--sessions-loading.svg",
+    "png": "Desktop--Settings--sessions-loading.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba15063b716",
+    "name": "Desktop / Settings / account-lower",
+    "filename": "Desktop--Settings--account-lower.svg",
+    "png": "Desktop--Settings--account-lower.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba144a91c5e",
+    "name": "Desktop / Settings / account-top",
+    "filename": "Desktop--Settings--account-top.svg",
+    "png": "Desktop--Settings--account-top.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3d0ee18f8",
+    "name": "Desktop / Settings / banner-updated",
+    "filename": "Desktop--Settings--banner-updated.svg",
+    "png": "Desktop--Settings--banner-updated.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3cf5eb09b",
+    "name": "Desktop / Settings / avatar-updated",
+    "filename": "Desktop--Settings--avatar-updated.svg",
+    "png": "Desktop--Settings--avatar-updated.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3cb947ca0",
+    "name": "Desktop / Settings / banner-crop-zoomed",
+    "filename": "Desktop--Settings--banner-crop-zoomed.svg",
+    "png": "Desktop--Settings--banner-crop-zoomed.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3c8684a29",
+    "name": "Desktop / Settings / banner-crop",
+    "filename": "Desktop--Settings--banner-crop.svg",
+    "png": "Desktop--Settings--banner-crop.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3c52fd1ec",
+    "name": "Desktop / Settings / avatar-crop-zoomed",
+    "filename": "Desktop--Settings--avatar-crop-zoomed.svg",
+    "png": "Desktop--Settings--avatar-crop-zoomed.png"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9ba3c1c1216a",
+    "name": "Desktop / Settings / avatar-crop",
+    "filename": "Desktop--Settings--avatar-crop.svg",
+    "png": "Desktop--Settings--avatar-crop.png"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "7299a615-462e-803f-8008-9bc20a067948",
+    "name": "Desktop / Settings / voice-volume-speaker-half",
+    "filename": "Desktop--Settings--voice-volume-speaker-half.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc2074c3dc1",
+    "name": "Desktop / Settings / voice-volume-speaker-min",
+    "filename": "Desktop--Settings--voice-volume-speaker-min.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc2047aa0c6",
+    "name": "Desktop / Settings / voice-volume-microphone-max",
+    "filename": "Desktop--Settings--voice-volume-microphone-max.svg"
+  },
+  {
+    "id": "7299a615-462e-803f-8008-9bc2022f0a89",
+    "name": "Desktop / Settings / voice-volume-microphone-min",
+    "filename": "Desktop--Settings--voice-volume-microphone-min.svg"
+  }
+]
